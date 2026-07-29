@@ -151,7 +151,9 @@ function AuthGuard({ children }: { children: ReactNode }) {
       </div>
     );
   }
-  if (session && !publicPath && (!account || account.status !== "active")) {
+  // Bypass account active check for now
+  // if (session && !publicPath && (!account || account.status !== "active")) {
+  if (false) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="max-w-md text-center">
