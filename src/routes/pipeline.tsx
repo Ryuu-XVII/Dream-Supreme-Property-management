@@ -4,7 +4,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { GlassCard, EmptyState, useFakeLoad, TableSkeleton } from "@/components/ui-kit";
 import { AgentAvatar, StageBadge, StatusDot } from "@/components/badges";
 import { deals, STAGES, branches, users, userById, propertyById, type Deal, type Stage } from "@/data/mock";
-import { zar, dateFmt, urgencyOf } from "@/lib/format";
+import { zar, dateFmt, urgencyOf, type Urgency } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {

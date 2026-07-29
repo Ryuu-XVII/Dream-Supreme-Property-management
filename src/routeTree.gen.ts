@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as CountdownRouteImport } from './routes/countdown'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -30,6 +31,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocumentsRoute = DocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CountdownRoute = CountdownRouteImport.update({
   id: '/countdown',
   path: '/countdown',
@@ -44,6 +50,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/countdown': typeof CountdownRoute
+  '/documents': typeof DocumentsRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/countdown': typeof CountdownRoute
+  '/documents': typeof DocumentsRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -59,21 +67,42 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/countdown': typeof CountdownRoute
+  '/documents': typeof DocumentsRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/countdown' | '/login' | '/pipeline' | '/sitemap.xml'
+  fullPaths:
+    | '/'
+    | '/countdown'
+    | '/documents'
+    | '/login'
+    | '/pipeline'
+    | '/sitemap.xml'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/countdown' | '/login' | '/pipeline' | '/sitemap.xml'
-  id: '__root__' | '/' | '/countdown' | '/login' | '/pipeline' | '/sitemap.xml'
+  to:
+    | '/'
+    | '/countdown'
+    | '/documents'
+    | '/login'
+    | '/pipeline'
+    | '/sitemap.xml'
+  id:
+    | '__root__'
+    | '/'
+    | '/countdown'
+    | '/documents'
+    | '/login'
+    | '/pipeline'
+    | '/sitemap.xml'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CountdownRoute: typeof CountdownRoute
+  DocumentsRoute: typeof DocumentsRoute
   LoginRoute: typeof LoginRoute
   PipelineRoute: typeof PipelineRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -102,6 +131,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/documents': {
+      id: '/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof DocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/countdown': {
       id: '/countdown'
       path: '/countdown'
@@ -122,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CountdownRoute: CountdownRoute,
+  DocumentsRoute: DocumentsRoute,
   LoginRoute: LoginRoute,
   PipelineRoute: PipelineRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
