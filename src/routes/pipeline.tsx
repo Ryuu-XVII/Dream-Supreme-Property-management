@@ -41,17 +41,17 @@ function daysInStage(deal: Deal) {
   return Math.round((Date.now() - new Date(deal.stageSince).getTime()) / 86400000);
 }
 
-function mostUrgentTone(deal: Deal) {
+function mostUrgentTone(deal: Deal): Urgency {
   const open = deal.conditions.filter((c) => c.status === "Open" || c.status === "Extended");
-  if (open.length === 0) return "safe" as const;
-  const worst = open.reduce((acc, c) => {
+  if (open.length === 0) return "safe";
+  const rank: Record<Urgency, number> = { lapsed: 0, critical: 1, warning: 2, safe: 3 };
+  return open.reduce<Urgency>((acc, c) => {
     const days = Math.round((new Date(c.dueDate).getTime() - Date.now()) / 86400000);
     const u = urgencyOf(days);
-    const rank = { lapsed: 0, critical: 1, warning: 2, safe: 3 } as const;
     return rank[u] < rank[acc] ? u : acc;
-  }, "safe" as const);
-  return worst;
+  }, "safe");
 }
+
 
 interface Filters {
   agent: string;
