@@ -16,6 +16,7 @@ import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as CountdownRouteImport } from './routes/countdown'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ComplianceFfcRouteImport } from './routes/compliance/ffc'
+import { Route as CalculatorsTransferRouteImport } from './routes/calculators/transfer'
 import { Route as CalculatorsBondRouteImport } from './routes/calculators/bond'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -53,6 +54,11 @@ const ComplianceFfcRoute = ComplianceFfcRouteImport.update({
   path: '/compliance/ffc',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CalculatorsTransferRoute = CalculatorsTransferRouteImport.update({
+  id: '/calculators/transfer',
+  path: '/calculators/transfer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CalculatorsBondRoute = CalculatorsBondRouteImport.update({
   id: '/calculators/bond',
   path: '/calculators/bond',
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/pipeline': typeof PipelineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/calculators/bond': typeof CalculatorsBondRoute
+  '/calculators/transfer': typeof CalculatorsTransferRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/pipeline': typeof PipelineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/calculators/bond': typeof CalculatorsBondRoute
+  '/calculators/transfer': typeof CalculatorsTransferRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
 }
 export interface FileRoutesById {
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/pipeline': typeof PipelineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/calculators/bond': typeof CalculatorsBondRoute
+  '/calculators/transfer': typeof CalculatorsTransferRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/sitemap.xml'
     | '/calculators/bond'
+    | '/calculators/transfer'
     | '/compliance/ffc'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/sitemap.xml'
     | '/calculators/bond'
+    | '/calculators/transfer'
     | '/compliance/ffc'
   id:
     | '__root__'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/sitemap.xml'
     | '/calculators/bond'
+    | '/calculators/transfer'
     | '/compliance/ffc'
   fileRoutesById: FileRoutesById
 }
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   PipelineRoute: typeof PipelineRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CalculatorsBondRoute: typeof CalculatorsBondRoute
+  CalculatorsTransferRoute: typeof CalculatorsTransferRoute
   ComplianceFfcRoute: typeof ComplianceFfcRoute
 }
 
@@ -185,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComplianceFfcRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/calculators/transfer': {
+      id: '/calculators/transfer'
+      path: '/calculators/transfer'
+      fullPath: '/calculators/transfer'
+      preLoaderRoute: typeof CalculatorsTransferRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/calculators/bond': {
       id: '/calculators/bond'
       path: '/calculators/bond'
@@ -203,6 +223,7 @@ const rootRouteChildren: RootRouteChildren = {
   PipelineRoute: PipelineRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   CalculatorsBondRoute: CalculatorsBondRoute,
+  CalculatorsTransferRoute: CalculatorsTransferRoute,
   ComplianceFfcRoute: ComplianceFfcRoute,
 }
 export const routeTree = rootRouteImport
