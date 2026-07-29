@@ -8,7 +8,7 @@ import { GlassCard, KpiCard, EmptyState, useFakeLoad, TableSkeleton } from "@/co
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { deals, propertyById, monthlyCommission, advances, userById, netPayable } from "@/data/mock";
+import { deals, propertyById, monthlyCommission, advances, userById, netPayable } from "@/data/state";
 import { dateFmt, zar } from "@/lib/format";
 
 export const Route = createFileRoute("/commission/earnings")({

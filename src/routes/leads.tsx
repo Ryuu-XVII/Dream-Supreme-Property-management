@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/app-shell";
 import { GlassCard, EmptyState, TableSkeleton, useFakeLoad } from "@/components/ui-kit";
 import { AgentAvatar } from "@/components/badges";
-import { leads as seedLeads, users, userById, type Lead } from "@/data/mock";
+import { leads as seedLeads, users, userById, type Lead } from "@/data/state";
 import { dateFmt, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";

@@ -114,7 +114,23 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-import { AuthProvider } from "@/lib/auth";
+import { AuthProvider, useAuth } from "@/lib/auth";
+
+function AuthGuard({ children }: { children: ReactNode }) {
+  const { session, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !session) {
+      const path = window.location.pathname;
+      if (path !== '/login' && path !== '/register') {
+        router.navigate({ to: '/login', replace: true });
+      }
+    }
+  }, [session, loading, router]);
+
+  return <>{children}</>;
+}
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -123,8 +139,10 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AppProvider>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
+          <AuthGuard>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </AuthGuard>
           <Toaster position="top-right" richColors closeButton />
         </AppProvider>
       </AuthProvider>

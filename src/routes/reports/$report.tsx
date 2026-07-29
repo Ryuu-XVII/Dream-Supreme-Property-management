@@ -11,7 +11,7 @@ import { GlassCard } from "@/components/ui-kit";
 import {
   deals, STAGES, branches, users, fallThroughReasons, monthlyCommission, forecast,
   type Stage,
-} from "@/data/mock";
+} from "@/data/state";
 import { zar, zarCompact, dateFmt, pct } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -384,11 +384,11 @@ function CommissionReport() {
   }, []);
 
   const totalGross = monthlyCommission.reduce((a, m) => a + m.gross, 0);
-  const nextForecast = forecast[0];
+  const nextForecast = forecast[0] ?? { projected: 0 };
 
   const csvRows: (string | number)[][] = [
     ["Month", "Agency gross (ZAR)", "Cumulative YTD (ZAR)"],
-    ...monthlyCommission.map((m, i) => [m.month, m.gross / 100, cumulative[i].cumulative / 100]),
+    ...monthlyCommission.map((m, i) => [m.month, m.gross / 100, cumulative[i]?.cumulative ? cumulative[i].cumulative / 100 : 0]),
   ];
 
   return (
@@ -400,11 +400,11 @@ function CommissionReport() {
         </GlassCard>
         <GlassCard>
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Last month gross</p>
-          <p className="money mt-2 text-2xl font-semibold">{zar(monthlyCommission[monthlyCommission.length - 1].gross, { decimals: false })}</p>
+          <p className="money mt-2 text-2xl font-semibold">{zar(monthlyCommission[monthlyCommission.length - 1]?.gross ?? 0, { decimals: false })}</p>
         </GlassCard>
         <GlassCard>
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Next month forecast</p>
-          <p className="money mt-2 text-2xl font-semibold text-info">{zar(nextForecast.projected, { decimals: false })}</p>
+          <p className="money mt-2 text-2xl font-semibold text-info">{zar(nextForecast?.projected ?? 0, { decimals: false })}</p>
         </GlassCard>
       </div>
 

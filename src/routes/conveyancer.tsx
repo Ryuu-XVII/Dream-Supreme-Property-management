@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { deals, propertyById, STAGES } from "@/data/mock";
+import { deals, propertyById, STAGES } from "@/data/state";
 
 export const Route = createFileRoute("/conveyancer")({
   head: () => ({
@@ -26,9 +26,9 @@ export const Route = createFileRoute("/conveyancer")({
 type ViewState = "loading" | "form" | "success" | "expired";
 
 const deal = deals.find((d) => d.stage === "Documents & Guarantees") ?? deals[0];
-const property = propertyById(deal.propertyId);
-const currentIdx = STAGES.indexOf(deal.stage);
-const nextStage = STAGES[Math.min(currentIdx + 1, STAGES.length - 1)];
+const property = deal ? propertyById(deal.propertyId) : undefined;
+const currentIdx = deal ? STAGES.indexOf(deal.stage) : -1;
+const nextStage = currentIdx >= 0 ? STAGES[Math.min(currentIdx + 1, STAGES.length - 1)] : "";
 
 function ConveyancerPage() {
   const loading = useFakeLoad(800);

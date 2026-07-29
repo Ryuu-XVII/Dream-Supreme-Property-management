@@ -22,7 +22,7 @@ import {
   openConditions,
   STAGES,
   users,
-} from "@/data/mock";
+} from "@/data/state";
 import { dateFmt, dateTimeFmt, daysUntil, relative, urgencyOf, zar, zarCompact } from "@/lib/format";
 
 export const Route = createFileRoute("/")({

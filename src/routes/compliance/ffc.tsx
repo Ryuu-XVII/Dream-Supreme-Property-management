@@ -19,7 +19,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { dateFmt, daysUntil } from "@/lib/format";
-import { users, agency } from "@/data/mock";
+import { users, agency } from "@/data/state";
 import { ShieldCheck, ShieldAlert, ShieldX, ShieldQuestion, Eye, UploadCloud, Award } from "lucide-react";
 
 export const Route = createFileRoute("/compliance/ffc")({

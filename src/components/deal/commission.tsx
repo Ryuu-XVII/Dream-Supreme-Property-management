@@ -1,6 +1,6 @@
 import { GlassCard } from "@/components/ui-kit";
 import { AgentAvatar } from "@/components/badges";
-import { userById, commissionWaterfall, type Deal } from "@/data/mock";
+import { userById, commissionWaterfall, type Deal } from "@/data/state";
 import { zar, dateFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,11 +11,11 @@ import { cn } from "@/lib/utils";
 export function DealCommissionTab({ deal }: { deal: Deal }) {
   const steps = commissionWaterfall(deal);
   const totalSplit = deal.practitioners.reduce((sum, p) => sum + p.splitPct, 0);
-  const netPayable = steps[steps.length - 1].amount;
+  const netPayable = steps[steps.length - 1]?.amount ?? 0;
 
   const expiredFFC = deal.practitioners
     .map((p) => userById(p.userId))
-    .filter((u) => !u.ffc || (u.ffc.expiry && new Date(u.ffc.expiry) < new Date()));
+    .filter((u) => u && (!u.ffc || (u.ffc.expiry && new Date(u.ffc.expiry) < new Date())));
 
   return (
     <div className="space-y-5">

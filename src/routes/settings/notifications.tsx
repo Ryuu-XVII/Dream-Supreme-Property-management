@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/app-shell";
 import { SettingsTabs } from "@/components/settings/settings-tabs";
 import { GlassCard } from "@/components/ui-kit";
-import { notificationTypes } from "@/data/mock";
+import { notificationTypes } from "@/data/state";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

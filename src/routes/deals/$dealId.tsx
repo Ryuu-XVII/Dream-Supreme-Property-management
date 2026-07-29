@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { StageBadge, StatusDot } from "@/components/badges";
-import { STAGES, propertyById, type Deal, type Stage } from "@/data/mock";
+import { STAGES, propertyById, type Deal, type Stage } from "@/data/state";
 import { zar, urgencyOf } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { deals, propertyById, userById, grossCommission, netPayable, ruleSets, VAT_RATE } from "@/data/mock";
+import { deals, propertyById, userById, grossCommission, netPayable, ruleSets, VAT_RATE } from "@/data/state";
 import { useCan } from "@/lib/app-state";
 import { dateFmt, zar } from "@/lib/format";
 

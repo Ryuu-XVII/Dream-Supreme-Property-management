@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/app-shell";
 import { GlassCard } from "@/components/ui-kit";
-import { deals, fallThroughReasons, monthlyCommission, users } from "@/data/mock";
+import { deals, fallThroughReasons, monthlyCommission, users } from "@/data/state";
 import { zarCompact, pct } from "@/lib/format";
 import { ArrowRight, GitBranch, AlertTriangle, Wallet, ShieldCheck } from "lucide-react";
 
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/reports/")({
 
 const totalCancellations = fallThroughReasons.reduce((a, r) => a + r.count, 0);
 const activeDeals = deals.filter((d) => !d.cancelled).length;
-const lastMonth = monthlyCommission[monthlyCommission.length - 1];
+const lastMonth = monthlyCommission[monthlyCommission.length - 1] ?? { gross: 0 };
 const compliantUsers = users.filter((u) => u.ffc && new Date(u.ffc.expiry ?? 0) > new Date()).length;
 
 const reportCards = [

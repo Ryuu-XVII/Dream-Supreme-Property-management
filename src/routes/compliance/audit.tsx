@@ -17,7 +17,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { dateTimeFmt } from "@/lib/format";
-import { auditEvents, users, type AuditEvent } from "@/data/mock";
+import { auditEvents, users, type AuditEvent } from "@/data/state";
 import {
   Search,
   Download,

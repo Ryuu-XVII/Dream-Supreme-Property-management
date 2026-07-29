@@ -50,7 +50,7 @@ import {
   VAT_RATE,
   type RuleSet,
   type DeductionLine,
-} from "@/data/mock";
+} from "@/data/state";
 import { dateFmt, zar } from "@/lib/format";
 
 export const Route = createFileRoute("/commission/")({

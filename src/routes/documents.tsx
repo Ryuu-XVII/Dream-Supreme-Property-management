@@ -53,7 +53,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { branches, deals, dealById, propertyById, type Deal } from "@/data/mock";
+import { branches, deals, dealById, propertyById, type Deal } from "@/data/state";
 import { dateFmt, zar } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -444,11 +444,11 @@ function TemplatesTab() {
 
 function GenerateDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const [templateId, setTemplateId] = useState<string>(templates[0].id);
-  const [dealId, setDealId] = useState<string>(deals[0].id);
+  const [dealId, setDealId] = useState<string>(deals[0]?.id ?? "");
 
   const template = templates.find((t) => t.id === templateId)!;
   const deal = dealById(dealId) ?? deals[0];
-  const property = propertyById(deal.propertyId);
+  const property = deal ? propertyById(deal.propertyId) : undefined;
 
 
   return (

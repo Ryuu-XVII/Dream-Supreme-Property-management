@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/app-shell";
 import { GlassCard, EmptyState, TableSkeleton } from "@/components/ui-kit";
 import { AgentAvatar, StageBadge, StatusDot } from "@/components/badges";
-import { STAGES, type Stage } from "@/data/mock"; // STAGES is still fine as constants
+import { STAGES, type Stage } from "@/data/state"; // STAGES is still fine as constants
 import { zar, dateFmt, urgencyOf, type Urgency } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

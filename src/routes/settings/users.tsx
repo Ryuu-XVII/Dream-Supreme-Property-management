@@ -6,7 +6,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { SettingsTabs } from "@/components/settings/settings-tabs";
 import { GlassCard, EmptyState } from "@/components/ui-kit";
 import { AgentAvatar, FicaBadge } from "@/components/badges";
-import { users as initialUsers, branches, type Role, type User } from "@/data/mock";
+import { users as initialUsers, branches, type Role, type User } from "@/data/state";
 import { useCan } from "@/lib/app-state";
 import { dateFmt } from "@/lib/format";
 import { Button } from "@/components/ui/button";

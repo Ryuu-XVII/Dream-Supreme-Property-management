@@ -13,9 +13,9 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useApp } from "@/lib/app-state";
-import { deals, notifications, users, agency, type Role } from "@/data/mock";
+import { deals, notifications, users, agency, type Role } from "@/data/state";
 import { initials, zar, relative, dateFmt } from "@/lib/format";
-import { propertyById } from "@/data/mock";
+import { propertyById } from "@/data/state";
 import { navItems } from "./sidebar";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +38,7 @@ export function Header() {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  const me = users[0];
+  const me = users[0] ?? { name: "Agent User", role: role };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-background/80 px-3 backdrop-blur-md sm:px-6">
@@ -60,21 +60,6 @@ export function Header() {
       </button>
 
       <div className="hidden items-center gap-2 lg:flex">
-        <span className="text-xs text-muted-foreground">Demo role</span>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1">
-              <UserCog className="size-4" /> {role} <ChevronDown className="size-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {roles.map((r) => (
-              <DropdownMenuItem key={r} onSelect={() => setRole(r)}>
-                {r}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
       <DropdownMenu>

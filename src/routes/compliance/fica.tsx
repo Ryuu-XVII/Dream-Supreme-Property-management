@@ -20,7 +20,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { dateTimeFmt } from "@/lib/format";
-import { deals, type Party } from "@/data/mock";
+import { deals, type Party } from "@/data/state";
 import { ChevronDown, ChevronRight, UploadCloud, ShieldCheck, ShieldOff } from "lucide-react";
 
 export const Route = createFileRoute("/compliance/fica")({

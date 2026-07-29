@@ -35,7 +35,7 @@ import {
   type Condition,
   type ConditionType,
   type Deal,
-} from "@/data/mock";
+} from "@/data/state";
 import {
   LayoutGrid,
   Rows3,
@@ -270,7 +270,7 @@ function ConditionCard({
   const active = status === "Open" || status === "Extended";
   const Icon = typeIcon[row.type];
   const agent = userById(row.responsibleUserId);
-  const property = propertyById(row.deal.propertyId);
+  const property = propertyById(row.deal?.propertyId);
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -357,7 +357,7 @@ function ConditionRowView({
   const active = status === "Open" || status === "Extended";
   const Icon = typeIcon[row.type];
   const agent = userById(row.responsibleUserId);
-  const property = propertyById(row.deal.propertyId);
+  const property = propertyById(row.deal?.propertyId);
   return (
     <div
       className={cn(

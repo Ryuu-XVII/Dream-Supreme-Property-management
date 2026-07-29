@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { GlassCard } from "@/components/ui-kit";
-import { STAGES, users, conveyancerFirms, deals, type Deal, type Property, type Party, type Condition, type DocumentRec, type Offer } from "@/data/mock";
+import { STAGES, users, conveyancerFirms, deals, type Deal, type Property, type Party, type Condition, type DocumentRec, type Offer } from "@/data/state";
 import { zar } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { GlassCard } from "@/components/ui-kit";
 import { UrgencyBadge } from "@/components/badges";
-import { userById, type Deal, type Condition, type ConditionStatus } from "@/data/mock";
+import { userById, type Deal, type Condition, type ConditionStatus } from "@/data/state";
 import { dateFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

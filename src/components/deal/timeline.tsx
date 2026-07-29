@@ -1,5 +1,5 @@
 import { GlassCard, EmptyState } from "@/components/ui-kit";
-import { auditEvents, type Deal } from "@/data/mock";
+import { auditEvents, type Deal } from "@/data/state";
 import { dateTimeFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, History } from "lucide-react";

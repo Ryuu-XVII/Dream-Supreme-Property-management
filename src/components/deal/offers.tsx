@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { GlassCard, EmptyState } from "@/components/ui-kit";
-import { type Deal } from "@/data/mock";
+import { type Deal } from "@/data/state";
 import { zar, dateFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

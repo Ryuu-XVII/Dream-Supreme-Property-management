@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { transferDutyBrackets } from "@/data/mock";
+import { transferDutyBrackets } from "@/data/state";
 
 export const Route = createFileRoute("/calculators/transfer")({
   head: () => ({
