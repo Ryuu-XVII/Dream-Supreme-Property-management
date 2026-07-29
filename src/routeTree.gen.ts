@@ -9,38 +9,399 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SignRouteImport } from './routes/sign'
+import { Route as PipelineRouteImport } from './routes/pipeline'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as LeadsRouteImport } from './routes/leads'
+import { Route as DocumentsRouteImport } from './routes/documents'
+import { Route as CountdownRouteImport } from './routes/countdown'
+import { Route as ConveyancerRouteImport } from './routes/conveyancer'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ReportsIndexRouteImport } from './routes/reports/index'
+import { Route as CommissionIndexRouteImport } from './routes/commission/index'
+import { Route as SettingsUsersRouteImport } from './routes/settings/users'
+import { Route as SettingsNotificationsRouteImport } from './routes/settings/notifications'
+import { Route as SettingsAgencyRouteImport } from './routes/settings/agency'
+import { Route as ReportsReportRouteImport } from './routes/reports/$report'
+import { Route as ComplianceFicaRouteImport } from './routes/compliance/fica'
+import { Route as ComplianceFfcRouteImport } from './routes/compliance/ffc'
+import { Route as ComplianceAuditRouteImport } from './routes/compliance/audit'
+import { Route as CommissionReconciliationRouteImport } from './routes/commission/reconciliation'
+import { Route as CommissionEarningsRouteImport } from './routes/commission/earnings'
+import { Route as CalculatorsYieldRouteImport } from './routes/calculators/yield'
+import { Route as CalculatorsTransferRouteImport } from './routes/calculators/transfer'
+import { Route as CalculatorsBondRouteImport } from './routes/calculators/bond'
+import { Route as CalculatorsAffordabilityRouteImport } from './routes/calculators/affordability'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignRoute = SignRouteImport.update({
+  id: '/sign',
+  path: '/sign',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PipelineRoute = PipelineRouteImport.update({
+  id: '/pipeline',
+  path: '/pipeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadsRoute = LeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocumentsRoute = DocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CountdownRoute = CountdownRouteImport.update({
+  id: '/countdown',
+  path: '/countdown',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConveyancerRoute = ConveyancerRouteImport.update({
+  id: '/conveyancer',
+  path: '/conveyancer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsIndexRoute = ReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommissionIndexRoute = CommissionIndexRouteImport.update({
+  id: '/commission/',
+  path: '/commission/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsUsersRoute = SettingsUsersRouteImport.update({
+  id: '/settings/users',
+  path: '/settings/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
+  id: '/settings/notifications',
+  path: '/settings/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsAgencyRoute = SettingsAgencyRouteImport.update({
+  id: '/settings/agency',
+  path: '/settings/agency',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsReportRoute = ReportsReportRouteImport.update({
+  id: '/reports/$report',
+  path: '/reports/$report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComplianceFicaRoute = ComplianceFicaRouteImport.update({
+  id: '/compliance/fica',
+  path: '/compliance/fica',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComplianceFfcRoute = ComplianceFfcRouteImport.update({
+  id: '/compliance/ffc',
+  path: '/compliance/ffc',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComplianceAuditRoute = ComplianceAuditRouteImport.update({
+  id: '/compliance/audit',
+  path: '/compliance/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommissionReconciliationRoute =
+  CommissionReconciliationRouteImport.update({
+    id: '/commission/reconciliation',
+    path: '/commission/reconciliation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CommissionEarningsRoute = CommissionEarningsRouteImport.update({
+  id: '/commission/earnings',
+  path: '/commission/earnings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalculatorsYieldRoute = CalculatorsYieldRouteImport.update({
+  id: '/calculators/yield',
+  path: '/calculators/yield',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalculatorsTransferRoute = CalculatorsTransferRouteImport.update({
+  id: '/calculators/transfer',
+  path: '/calculators/transfer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalculatorsBondRoute = CalculatorsBondRouteImport.update({
+  id: '/calculators/bond',
+  path: '/calculators/bond',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalculatorsAffordabilityRoute =
+  CalculatorsAffordabilityRouteImport.update({
+    id: '/calculators/affordability',
+    path: '/calculators/affordability',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/conveyancer': typeof ConveyancerRoute
+  '/countdown': typeof CountdownRoute
+  '/documents': typeof DocumentsRoute
+  '/leads': typeof LeadsRoute
+  '/login': typeof LoginRoute
+  '/pipeline': typeof PipelineRoute
+  '/sign': typeof SignRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/calculators/affordability': typeof CalculatorsAffordabilityRoute
+  '/calculators/bond': typeof CalculatorsBondRoute
+  '/calculators/transfer': typeof CalculatorsTransferRoute
+  '/calculators/yield': typeof CalculatorsYieldRoute
+  '/commission/earnings': typeof CommissionEarningsRoute
+  '/commission/reconciliation': typeof CommissionReconciliationRoute
+  '/compliance/audit': typeof ComplianceAuditRoute
+  '/compliance/ffc': typeof ComplianceFfcRoute
+  '/compliance/fica': typeof ComplianceFicaRoute
+  '/reports/$report': typeof ReportsReportRoute
+  '/settings/agency': typeof SettingsAgencyRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/users': typeof SettingsUsersRoute
+  '/commission/': typeof CommissionIndexRoute
+  '/reports/': typeof ReportsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/conveyancer': typeof ConveyancerRoute
+  '/countdown': typeof CountdownRoute
+  '/documents': typeof DocumentsRoute
+  '/leads': typeof LeadsRoute
+  '/login': typeof LoginRoute
+  '/pipeline': typeof PipelineRoute
+  '/sign': typeof SignRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/calculators/affordability': typeof CalculatorsAffordabilityRoute
+  '/calculators/bond': typeof CalculatorsBondRoute
+  '/calculators/transfer': typeof CalculatorsTransferRoute
+  '/calculators/yield': typeof CalculatorsYieldRoute
+  '/commission/earnings': typeof CommissionEarningsRoute
+  '/commission/reconciliation': typeof CommissionReconciliationRoute
+  '/compliance/audit': typeof ComplianceAuditRoute
+  '/compliance/ffc': typeof ComplianceFfcRoute
+  '/compliance/fica': typeof ComplianceFicaRoute
+  '/reports/$report': typeof ReportsReportRoute
+  '/settings/agency': typeof SettingsAgencyRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/users': typeof SettingsUsersRoute
+  '/commission': typeof CommissionIndexRoute
+  '/reports': typeof ReportsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/conveyancer': typeof ConveyancerRoute
+  '/countdown': typeof CountdownRoute
+  '/documents': typeof DocumentsRoute
+  '/leads': typeof LeadsRoute
+  '/login': typeof LoginRoute
+  '/pipeline': typeof PipelineRoute
+  '/sign': typeof SignRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/calculators/affordability': typeof CalculatorsAffordabilityRoute
+  '/calculators/bond': typeof CalculatorsBondRoute
+  '/calculators/transfer': typeof CalculatorsTransferRoute
+  '/calculators/yield': typeof CalculatorsYieldRoute
+  '/commission/earnings': typeof CommissionEarningsRoute
+  '/commission/reconciliation': typeof CommissionReconciliationRoute
+  '/compliance/audit': typeof ComplianceAuditRoute
+  '/compliance/ffc': typeof ComplianceFfcRoute
+  '/compliance/fica': typeof ComplianceFicaRoute
+  '/reports/$report': typeof ReportsReportRoute
+  '/settings/agency': typeof SettingsAgencyRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/users': typeof SettingsUsersRoute
+  '/commission/': typeof CommissionIndexRoute
+  '/reports/': typeof ReportsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/conveyancer'
+    | '/countdown'
+    | '/documents'
+    | '/leads'
+    | '/login'
+    | '/pipeline'
+    | '/sign'
+    | '/sitemap.xml'
+    | '/calculators/affordability'
+    | '/calculators/bond'
+    | '/calculators/transfer'
+    | '/calculators/yield'
+    | '/commission/earnings'
+    | '/commission/reconciliation'
+    | '/compliance/audit'
+    | '/compliance/ffc'
+    | '/compliance/fica'
+    | '/reports/$report'
+    | '/settings/agency'
+    | '/settings/notifications'
+    | '/settings/users'
+    | '/commission/'
+    | '/reports/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/conveyancer'
+    | '/countdown'
+    | '/documents'
+    | '/leads'
+    | '/login'
+    | '/pipeline'
+    | '/sign'
+    | '/sitemap.xml'
+    | '/calculators/affordability'
+    | '/calculators/bond'
+    | '/calculators/transfer'
+    | '/calculators/yield'
+    | '/commission/earnings'
+    | '/commission/reconciliation'
+    | '/compliance/audit'
+    | '/compliance/ffc'
+    | '/compliance/fica'
+    | '/reports/$report'
+    | '/settings/agency'
+    | '/settings/notifications'
+    | '/settings/users'
+    | '/commission'
+    | '/reports'
+  id:
+    | '__root__'
+    | '/'
+    | '/conveyancer'
+    | '/countdown'
+    | '/documents'
+    | '/leads'
+    | '/login'
+    | '/pipeline'
+    | '/sign'
+    | '/sitemap.xml'
+    | '/calculators/affordability'
+    | '/calculators/bond'
+    | '/calculators/transfer'
+    | '/calculators/yield'
+    | '/commission/earnings'
+    | '/commission/reconciliation'
+    | '/compliance/audit'
+    | '/compliance/ffc'
+    | '/compliance/fica'
+    | '/reports/$report'
+    | '/settings/agency'
+    | '/settings/notifications'
+    | '/settings/users'
+    | '/commission/'
+    | '/reports/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ConveyancerRoute: typeof ConveyancerRoute
+  CountdownRoute: typeof CountdownRoute
+  DocumentsRoute: typeof DocumentsRoute
+  LeadsRoute: typeof LeadsRoute
+  LoginRoute: typeof LoginRoute
+  PipelineRoute: typeof PipelineRoute
+  SignRoute: typeof SignRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  CalculatorsAffordabilityRoute: typeof CalculatorsAffordabilityRoute
+  CalculatorsBondRoute: typeof CalculatorsBondRoute
+  CalculatorsTransferRoute: typeof CalculatorsTransferRoute
+  CalculatorsYieldRoute: typeof CalculatorsYieldRoute
+  CommissionEarningsRoute: typeof CommissionEarningsRoute
+  CommissionReconciliationRoute: typeof CommissionReconciliationRoute
+  ComplianceAuditRoute: typeof ComplianceAuditRoute
+  ComplianceFfcRoute: typeof ComplianceFfcRoute
+  ComplianceFicaRoute: typeof ComplianceFicaRoute
+  ReportsReportRoute: typeof ReportsReportRoute
+  SettingsAgencyRoute: typeof SettingsAgencyRoute
+  SettingsNotificationsRoute: typeof SettingsNotificationsRoute
+  SettingsUsersRoute: typeof SettingsUsersRoute
+  CommissionIndexRoute: typeof CommissionIndexRoute
+  ReportsIndexRoute: typeof ReportsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign': {
+      id: '/sign'
+      path: '/sign'
+      fullPath: '/sign'
+      preLoaderRoute: typeof SignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pipeline': {
+      id: '/pipeline'
+      path: '/pipeline'
+      fullPath: '/pipeline'
+      preLoaderRoute: typeof PipelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leads': {
+      id: '/leads'
+      path: '/leads'
+      fullPath: '/leads'
+      preLoaderRoute: typeof LeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/documents': {
+      id: '/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof DocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/countdown': {
+      id: '/countdown'
+      path: '/countdown'
+      fullPath: '/countdown'
+      preLoaderRoute: typeof CountdownRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conveyancer': {
+      id: '/conveyancer'
+      path: '/conveyancer'
+      fullPath: '/conveyancer'
+      preLoaderRoute: typeof ConveyancerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +409,140 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports/': {
+      id: '/reports/'
+      path: '/reports'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof ReportsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/commission/': {
+      id: '/commission/'
+      path: '/commission'
+      fullPath: '/commission/'
+      preLoaderRoute: typeof CommissionIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/users': {
+      id: '/settings/users'
+      path: '/settings/users'
+      fullPath: '/settings/users'
+      preLoaderRoute: typeof SettingsUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/notifications': {
+      id: '/settings/notifications'
+      path: '/settings/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof SettingsNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/agency': {
+      id: '/settings/agency'
+      path: '/settings/agency'
+      fullPath: '/settings/agency'
+      preLoaderRoute: typeof SettingsAgencyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports/$report': {
+      id: '/reports/$report'
+      path: '/reports/$report'
+      fullPath: '/reports/$report'
+      preLoaderRoute: typeof ReportsReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compliance/fica': {
+      id: '/compliance/fica'
+      path: '/compliance/fica'
+      fullPath: '/compliance/fica'
+      preLoaderRoute: typeof ComplianceFicaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compliance/ffc': {
+      id: '/compliance/ffc'
+      path: '/compliance/ffc'
+      fullPath: '/compliance/ffc'
+      preLoaderRoute: typeof ComplianceFfcRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compliance/audit': {
+      id: '/compliance/audit'
+      path: '/compliance/audit'
+      fullPath: '/compliance/audit'
+      preLoaderRoute: typeof ComplianceAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/commission/reconciliation': {
+      id: '/commission/reconciliation'
+      path: '/commission/reconciliation'
+      fullPath: '/commission/reconciliation'
+      preLoaderRoute: typeof CommissionReconciliationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/commission/earnings': {
+      id: '/commission/earnings'
+      path: '/commission/earnings'
+      fullPath: '/commission/earnings'
+      preLoaderRoute: typeof CommissionEarningsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calculators/yield': {
+      id: '/calculators/yield'
+      path: '/calculators/yield'
+      fullPath: '/calculators/yield'
+      preLoaderRoute: typeof CalculatorsYieldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calculators/transfer': {
+      id: '/calculators/transfer'
+      path: '/calculators/transfer'
+      fullPath: '/calculators/transfer'
+      preLoaderRoute: typeof CalculatorsTransferRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calculators/bond': {
+      id: '/calculators/bond'
+      path: '/calculators/bond'
+      fullPath: '/calculators/bond'
+      preLoaderRoute: typeof CalculatorsBondRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calculators/affordability': {
+      id: '/calculators/affordability'
+      path: '/calculators/affordability'
+      fullPath: '/calculators/affordability'
+      preLoaderRoute: typeof CalculatorsAffordabilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ConveyancerRoute: ConveyancerRoute,
+  CountdownRoute: CountdownRoute,
+  DocumentsRoute: DocumentsRoute,
+  LeadsRoute: LeadsRoute,
+  LoginRoute: LoginRoute,
+  PipelineRoute: PipelineRoute,
+  SignRoute: SignRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  CalculatorsAffordabilityRoute: CalculatorsAffordabilityRoute,
+  CalculatorsBondRoute: CalculatorsBondRoute,
+  CalculatorsTransferRoute: CalculatorsTransferRoute,
+  CalculatorsYieldRoute: CalculatorsYieldRoute,
+  CommissionEarningsRoute: CommissionEarningsRoute,
+  CommissionReconciliationRoute: CommissionReconciliationRoute,
+  ComplianceAuditRoute: ComplianceAuditRoute,
+  ComplianceFfcRoute: ComplianceFfcRoute,
+  ComplianceFicaRoute: ComplianceFicaRoute,
+  ReportsReportRoute: ReportsReportRoute,
+  SettingsAgencyRoute: SettingsAgencyRoute,
+  SettingsNotificationsRoute: SettingsNotificationsRoute,
+  SettingsUsersRoute: SettingsUsersRoute,
+  CommissionIndexRoute: CommissionIndexRoute,
+  ReportsIndexRoute: ReportsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
