@@ -2,7 +2,7 @@
 
 An internal South African estate-agency operations platform for mandates, deals, suspensive conditions, documents, FFC compliance, leads, audit trails, and commission calculations. The product is a React/Vite client backed by Supabase Auth, PostgreSQL, Row Level Security, and private Supabase Storage.
 
-The product requirements and legal/operational scope are in [Mandate_Product_Technical_Specification_v1.md](Mandate_Product_Technical_Specification_v1.md). The researched sale-capture field matrix and validation policy are in [DEAL_CAPTURE_REQUIREMENTS.md](DEAL_CAPTURE_REQUIREMENTS.md).
+The product requirements and legal/operational scope are in [Mandate_Product_Technical_Specification_v1.md](Mandate_Product_Technical_Specification_v1.md). The researched field matrices and validation policies are in [DEAL_CAPTURE_REQUIREMENTS.md](DEAL_CAPTURE_REQUIREMENTS.md) and [CLIENT_ONBOARDING_REQUIREMENTS.md](CLIENT_ONBOARDING_REQUIREMENTS.md).
 
 ## Local setup
 

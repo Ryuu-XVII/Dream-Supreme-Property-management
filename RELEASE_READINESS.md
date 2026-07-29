@@ -9,6 +9,7 @@ Status: **repository ready for a staging deployment; production release is block
 - Agency RLS, accessible-deal scoping, removal of legacy permissive policies, and private document storage.
 - Atomic deal creation, controlled stage transitions, mandatory reversal reasons, cancellation taxonomy, commission reversal, and clawback creation.
 - Research-backed deal capture with multiple transferors/transferees, conveyancer-ready property and tax particulars, conditional finance/entity/non-resident rules, and a generated evidence checklist.
+- Staged client capture with multi-role relationships, minimal POPIA-aware contact collection, separate direct-marketing consent, conditional natural-person/entity FICA fields, TFS/risk controls, duplicate checks, assignment authorization, and audited database creation.
 - Persisted condition and bond updates with audit entries.
 - Persisted commission snapshots and allocations with 100% split and valid-FFC gates; registration triggers calculation.
 - Live dashboard, pipeline/detail, countdown, audit, leads, client, FICA, FFC, notifications, document upload, and agent earnings data paths.
