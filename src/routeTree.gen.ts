@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as CountdownRouteImport } from './routes/countdown'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ComplianceFicaRouteImport } from './routes/compliance/fica'
 import { Route as ComplianceFfcRouteImport } from './routes/compliance/ffc'
 import { Route as CalculatorsTransferRouteImport } from './routes/calculators/transfer'
 import { Route as CalculatorsBondRouteImport } from './routes/calculators/bond'
@@ -34,6 +36,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LeadsRoute = LeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DocumentsRoute = DocumentsRouteImport.update({
   id: '/documents',
   path: '/documents',
@@ -47,6 +54,11 @@ const CountdownRoute = CountdownRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComplianceFicaRoute = ComplianceFicaRouteImport.update({
+  id: '/compliance/fica',
+  path: '/compliance/fica',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ComplianceFfcRoute = ComplianceFfcRouteImport.update({
@@ -69,35 +81,41 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/countdown': typeof CountdownRoute
   '/documents': typeof DocumentsRoute
+  '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
+  '/compliance/fica': typeof ComplianceFicaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/countdown': typeof CountdownRoute
   '/documents': typeof DocumentsRoute
+  '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
+  '/compliance/fica': typeof ComplianceFicaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/countdown': typeof CountdownRoute
   '/documents': typeof DocumentsRoute
+  '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
+  '/compliance/fica': typeof ComplianceFicaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -105,46 +123,54 @@ export interface FileRouteTypes {
     | '/'
     | '/countdown'
     | '/documents'
+    | '/leads'
     | '/login'
     | '/pipeline'
     | '/sitemap.xml'
     | '/calculators/bond'
     | '/calculators/transfer'
     | '/compliance/ffc'
+    | '/compliance/fica'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/countdown'
     | '/documents'
+    | '/leads'
     | '/login'
     | '/pipeline'
     | '/sitemap.xml'
     | '/calculators/bond'
     | '/calculators/transfer'
     | '/compliance/ffc'
+    | '/compliance/fica'
   id:
     | '__root__'
     | '/'
     | '/countdown'
     | '/documents'
+    | '/leads'
     | '/login'
     | '/pipeline'
     | '/sitemap.xml'
     | '/calculators/bond'
     | '/calculators/transfer'
     | '/compliance/ffc'
+    | '/compliance/fica'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CountdownRoute: typeof CountdownRoute
   DocumentsRoute: typeof DocumentsRoute
+  LeadsRoute: typeof LeadsRoute
   LoginRoute: typeof LoginRoute
   PipelineRoute: typeof PipelineRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CalculatorsBondRoute: typeof CalculatorsBondRoute
   CalculatorsTransferRoute: typeof CalculatorsTransferRoute
   ComplianceFfcRoute: typeof ComplianceFfcRoute
+  ComplianceFicaRoute: typeof ComplianceFicaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -170,6 +196,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/leads': {
+      id: '/leads'
+      path: '/leads'
+      fullPath: '/leads'
+      preLoaderRoute: typeof LeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/documents': {
       id: '/documents'
       path: '/documents'
@@ -189,6 +222,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compliance/fica': {
+      id: '/compliance/fica'
+      path: '/compliance/fica'
+      fullPath: '/compliance/fica'
+      preLoaderRoute: typeof ComplianceFicaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compliance/ffc': {
@@ -219,12 +259,14 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CountdownRoute: CountdownRoute,
   DocumentsRoute: DocumentsRoute,
+  LeadsRoute: LeadsRoute,
   LoginRoute: LoginRoute,
   PipelineRoute: PipelineRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   CalculatorsBondRoute: CalculatorsBondRoute,
   CalculatorsTransferRoute: CalculatorsTransferRoute,
   ComplianceFfcRoute: ComplianceFfcRoute,
+  ComplianceFicaRoute: ComplianceFicaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
