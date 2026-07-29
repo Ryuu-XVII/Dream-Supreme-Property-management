@@ -20,11 +20,13 @@ import { Route as ConveyancerRouteImport } from './routes/conveyancer'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as CommissionIndexRouteImport } from './routes/commission/index'
+import { Route as SettingsUsersRouteImport } from './routes/settings/users'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings/notifications'
 import { Route as SettingsAgencyRouteImport } from './routes/settings/agency'
 import { Route as ComplianceFicaRouteImport } from './routes/compliance/fica'
 import { Route as ComplianceFfcRouteImport } from './routes/compliance/ffc'
 import { Route as ComplianceAuditRouteImport } from './routes/compliance/audit'
+import { Route as CommissionReconciliationRouteImport } from './routes/commission/reconciliation'
 import { Route as CalculatorsYieldRouteImport } from './routes/calculators/yield'
 import { Route as CalculatorsTransferRouteImport } from './routes/calculators/transfer'
 import { Route as CalculatorsBondRouteImport } from './routes/calculators/bond'
@@ -85,6 +87,11 @@ const CommissionIndexRoute = CommissionIndexRouteImport.update({
   path: '/commission/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsUsersRoute = SettingsUsersRouteImport.update({
+  id: '/settings/users',
+  path: '/settings/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
   id: '/settings/notifications',
   path: '/settings/notifications',
@@ -110,6 +117,12 @@ const ComplianceAuditRoute = ComplianceAuditRouteImport.update({
   path: '/compliance/audit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CommissionReconciliationRoute =
+  CommissionReconciliationRouteImport.update({
+    id: '/commission/reconciliation',
+    path: '/commission/reconciliation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const CalculatorsYieldRoute = CalculatorsYieldRouteImport.update({
   id: '/calculators/yield',
   path: '/calculators/yield',
@@ -146,11 +159,13 @@ export interface FileRoutesByFullPath {
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
   '/calculators/yield': typeof CalculatorsYieldRoute
+  '/commission/reconciliation': typeof CommissionReconciliationRoute
   '/compliance/audit': typeof ComplianceAuditRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
   '/compliance/fica': typeof ComplianceFicaRoute
   '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/users': typeof SettingsUsersRoute
   '/commission/': typeof CommissionIndexRoute
   '/reports/': typeof ReportsIndexRoute
 }
@@ -168,11 +183,13 @@ export interface FileRoutesByTo {
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
   '/calculators/yield': typeof CalculatorsYieldRoute
+  '/commission/reconciliation': typeof CommissionReconciliationRoute
   '/compliance/audit': typeof ComplianceAuditRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
   '/compliance/fica': typeof ComplianceFicaRoute
   '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/users': typeof SettingsUsersRoute
   '/commission': typeof CommissionIndexRoute
   '/reports': typeof ReportsIndexRoute
 }
@@ -191,11 +208,13 @@ export interface FileRoutesById {
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
   '/calculators/yield': typeof CalculatorsYieldRoute
+  '/commission/reconciliation': typeof CommissionReconciliationRoute
   '/compliance/audit': typeof ComplianceAuditRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
   '/compliance/fica': typeof ComplianceFicaRoute
   '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/users': typeof SettingsUsersRoute
   '/commission/': typeof CommissionIndexRoute
   '/reports/': typeof ReportsIndexRoute
 }
@@ -215,11 +234,13 @@ export interface FileRouteTypes {
     | '/calculators/bond'
     | '/calculators/transfer'
     | '/calculators/yield'
+    | '/commission/reconciliation'
     | '/compliance/audit'
     | '/compliance/ffc'
     | '/compliance/fica'
     | '/settings/agency'
     | '/settings/notifications'
+    | '/settings/users'
     | '/commission/'
     | '/reports/'
   fileRoutesByTo: FileRoutesByTo
@@ -237,11 +258,13 @@ export interface FileRouteTypes {
     | '/calculators/bond'
     | '/calculators/transfer'
     | '/calculators/yield'
+    | '/commission/reconciliation'
     | '/compliance/audit'
     | '/compliance/ffc'
     | '/compliance/fica'
     | '/settings/agency'
     | '/settings/notifications'
+    | '/settings/users'
     | '/commission'
     | '/reports'
   id:
@@ -259,11 +282,13 @@ export interface FileRouteTypes {
     | '/calculators/bond'
     | '/calculators/transfer'
     | '/calculators/yield'
+    | '/commission/reconciliation'
     | '/compliance/audit'
     | '/compliance/ffc'
     | '/compliance/fica'
     | '/settings/agency'
     | '/settings/notifications'
+    | '/settings/users'
     | '/commission/'
     | '/reports/'
   fileRoutesById: FileRoutesById
@@ -282,11 +307,13 @@ export interface RootRouteChildren {
   CalculatorsBondRoute: typeof CalculatorsBondRoute
   CalculatorsTransferRoute: typeof CalculatorsTransferRoute
   CalculatorsYieldRoute: typeof CalculatorsYieldRoute
+  CommissionReconciliationRoute: typeof CommissionReconciliationRoute
   ComplianceAuditRoute: typeof ComplianceAuditRoute
   ComplianceFfcRoute: typeof ComplianceFfcRoute
   ComplianceFicaRoute: typeof ComplianceFicaRoute
   SettingsAgencyRoute: typeof SettingsAgencyRoute
   SettingsNotificationsRoute: typeof SettingsNotificationsRoute
+  SettingsUsersRoute: typeof SettingsUsersRoute
   CommissionIndexRoute: typeof CommissionIndexRoute
   ReportsIndexRoute: typeof ReportsIndexRoute
 }
@@ -370,6 +397,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommissionIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/users': {
+      id: '/settings/users'
+      path: '/settings/users'
+      fullPath: '/settings/users'
+      preLoaderRoute: typeof SettingsUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/notifications': {
       id: '/settings/notifications'
       path: '/settings/notifications'
@@ -403,6 +437,13 @@ declare module '@tanstack/react-router' {
       path: '/compliance/audit'
       fullPath: '/compliance/audit'
       preLoaderRoute: typeof ComplianceAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/commission/reconciliation': {
+      id: '/commission/reconciliation'
+      path: '/commission/reconciliation'
+      fullPath: '/commission/reconciliation'
+      preLoaderRoute: typeof CommissionReconciliationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/calculators/yield': {
@@ -450,14 +491,26 @@ const rootRouteChildren: RootRouteChildren = {
   CalculatorsBondRoute: CalculatorsBondRoute,
   CalculatorsTransferRoute: CalculatorsTransferRoute,
   CalculatorsYieldRoute: CalculatorsYieldRoute,
+  CommissionReconciliationRoute: CommissionReconciliationRoute,
   ComplianceAuditRoute: ComplianceAuditRoute,
   ComplianceFfcRoute: ComplianceFfcRoute,
   ComplianceFicaRoute: ComplianceFicaRoute,
   SettingsAgencyRoute: SettingsAgencyRoute,
   SettingsNotificationsRoute: SettingsNotificationsRoute,
+  SettingsUsersRoute: SettingsUsersRoute,
   CommissionIndexRoute: CommissionIndexRoute,
   ReportsIndexRoute: ReportsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

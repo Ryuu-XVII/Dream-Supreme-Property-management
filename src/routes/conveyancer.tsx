@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { deals, dealById, propertyById, STAGES } from "@/data/mock";
+import { deals, propertyById, STAGES } from "@/data/mock";
 
 export const Route = createFileRoute("/conveyancer")({
   head: () => ({
