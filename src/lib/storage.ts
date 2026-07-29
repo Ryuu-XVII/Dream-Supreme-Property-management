@@ -22,7 +22,7 @@ export const r2Client = new S3Client({
 export async function uploadFileToR2(file: File | Blob, path: string): Promise<string> {
   if (!accessKeyId || !secretAccessKey || !accountId) {
     console.warn("Cloudflare R2 credentials missing in .env. Skipping actual upload.");
-    return `mock_r2_key_${Date.now()}_${path.split('/').pop()}`;
+    return `mock_r2_key_${Date.now()}_${path.split("/").pop()}`;
   }
 
   const arrayBuffer = await file.arrayBuffer();

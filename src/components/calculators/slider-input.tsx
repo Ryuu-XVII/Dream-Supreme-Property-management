@@ -43,7 +43,11 @@ export function SliderInput({
       />
       <div className="flex items-center justify-between gap-2">
         <span className="text-[11px] text-muted-foreground">
-          {format === "zar" ? `R ${min.toLocaleString("en-ZA")}` : format === "pct" ? `${min}%` : `${min}`}
+          {format === "zar"
+            ? `R ${min.toLocaleString("en-ZA")}`
+            : format === "pct"
+              ? `${min}%`
+              : `${min}`}
         </span>
         <Input
           type="number"
@@ -59,7 +63,11 @@ export function SliderInput({
           className="money h-8 w-28 text-right text-xs"
         />
         <span className="text-[11px] text-muted-foreground">
-          {format === "zar" ? `R ${max.toLocaleString("en-ZA")}` : format === "pct" ? `${max}%` : `${max}`}
+          {format === "zar"
+            ? `R ${max.toLocaleString("en-ZA")}`
+            : format === "pct"
+              ? `${max}%`
+              : `${max}`}
         </span>
       </div>
       {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}

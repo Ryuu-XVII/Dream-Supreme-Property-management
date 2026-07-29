@@ -66,7 +66,7 @@ function RegisterPage() {
       // 1. Upload Profile Picture to Cloudflare R2 if provided
       let avatarKey: string | null = null;
       if (avatarFile) {
-        const fileExt = avatarFile.name.split('.').pop();
+        const fileExt = avatarFile.name.split(".").pop();
         const r2Path = `avatars/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
         avatarKey = await uploadFileToR2(avatarFile, r2Path);
       }
@@ -93,7 +93,9 @@ function RegisterPage() {
           password: data.password,
         });
         if (signInError) {
-          toast.success("Account created! Please check your email to confirm registration.", { id: "register" });
+          toast.success("Account created! Please check your email to confirm registration.", {
+            id: "register",
+          });
           navigate({ to: "/login" });
           return;
         }
@@ -140,7 +142,9 @@ function RegisterPage() {
             </div>
             <div>
               <h1 className="font-display text-xl font-semibold">Agent Registration</h1>
-              <p className="text-sm text-muted-foreground">Join the Dream Supreme Properties team</p>
+              <p className="text-sm text-muted-foreground">
+                Join the Dream Supreme Properties team
+              </p>
             </div>
           </div>
 
@@ -150,7 +154,11 @@ function RegisterPage() {
               <Label>Profile Picture</Label>
               <div className="relative group size-20 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center overflow-hidden bg-muted/40 hover:bg-muted/60 transition-colors">
                 {avatarPreview ? (
-                  <img src={avatarPreview} alt="Avatar preview" className="size-full object-cover" />
+                  <img
+                    src={avatarPreview}
+                    alt="Avatar preview"
+                    className="size-full object-cover"
+                  />
                 ) : (
                   <Upload className="size-6 text-muted-foreground group-hover:scale-110 transition-transform" />
                 )}
@@ -169,10 +177,17 @@ function RegisterPage() {
                 <Label htmlFor="firstName">First Name</Label>
                 <div className="relative">
                   <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input id="firstName" placeholder="John" className="pl-9" {...form.register("firstName")} />
+                  <Input
+                    id="firstName"
+                    placeholder="John"
+                    className="pl-9"
+                    {...form.register("firstName")}
+                  />
                 </div>
                 {form.formState.errors.firstName && (
-                  <p className="text-xs text-destructive">{form.formState.errors.firstName.message}</p>
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.firstName.message}
+                  </p>
                 )}
               </div>
 
@@ -180,10 +195,17 @@ function RegisterPage() {
                 <Label htmlFor="lastName">Surname</Label>
                 <div className="relative">
                   <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input id="lastName" placeholder="Doe" className="pl-9" {...form.register("lastName")} />
+                  <Input
+                    id="lastName"
+                    placeholder="Doe"
+                    className="pl-9"
+                    {...form.register("lastName")}
+                  />
                 </div>
                 {form.formState.errors.lastName && (
-                  <p className="text-xs text-destructive">{form.formState.errors.lastName.message}</p>
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.lastName.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -192,7 +214,13 @@ function RegisterPage() {
               <Label htmlFor="email">Email Address</Label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="email" type="email" placeholder="john.doe@dreamsupreme.co.za" className="pl-9" {...form.register("email")} />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="john.doe@dreamsupreme.co.za"
+                  className="pl-9"
+                  {...form.register("email")}
+                />
               </div>
               {form.formState.errors.email && (
                 <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
@@ -203,7 +231,13 @@ function RegisterPage() {
               <Label htmlFor="phone">Phone / Mobile Number</Label>
               <div className="relative">
                 <Phone className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="phone" type="tel" placeholder="+27 82 123 4567" className="pl-9" {...form.register("phone")} />
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+27 82 123 4567"
+                  className="pl-9"
+                  {...form.register("phone")}
+                />
               </div>
               {form.formState.errors.phone && (
                 <p className="text-xs text-destructive">{form.formState.errors.phone.message}</p>
@@ -214,8 +248,18 @@ function RegisterPage() {
               <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" className="pl-9 pr-10" {...form.register("password")} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  className="pl-9 pr-10"
+                  {...form.register("password")}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>

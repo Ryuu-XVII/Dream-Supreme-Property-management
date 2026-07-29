@@ -24,7 +24,9 @@ export function CommissionTabs() {
               )}
             >
               {t.label}
-              {active && <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-primary" />}
+              {active && (
+                <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-primary" />
+              )}
             </Link>
           );
         })}

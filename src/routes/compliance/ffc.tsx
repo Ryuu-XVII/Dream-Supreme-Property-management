@@ -16,20 +16,41 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { dateFmt, daysUntil } from "@/lib/format";
 import { users, agency } from "@/data/state";
-import { ShieldCheck, ShieldAlert, ShieldX, ShieldQuestion, Eye, UploadCloud, Award } from "lucide-react";
+import {
+  ShieldCheck,
+  ShieldAlert,
+  ShieldX,
+  ShieldQuestion,
+  Eye,
+  UploadCloud,
+  Award,
+} from "lucide-react";
 
 export const Route = createFileRoute("/compliance/ffc")({
   component: FfcRegister,
   head: () => ({
     meta: [
       { title: "FFC Register | Dream Supreme Properties" },
-      { name: "description", content: "Fidelity Fund Certificate register and expiry tracking for all practitioners." },
+      {
+        name: "description",
+        content: "Fidelity Fund Certificate register and expiry tracking for all practitioners.",
+      },
       { property: "og:title", content: "FFC Register | Dream Supreme Properties" },
-      { property: "og:description", content: "Fidelity Fund Certificate register and expiry tracking for all practitioners." },
+      {
+        property: "og:description",
+        content: "Fidelity Fund Certificate register and expiry tracking for all practitioners.",
+      },
     ],
   }),
 });
@@ -45,12 +66,13 @@ function statusOf(expiry: string | null | undefined): { status: FfcStatus; days:
 }
 
 function StatusBadge({ status }: { status: FfcStatus }) {
-  const map: Record<FfcStatus, { cls: string; icon: React.ComponentType<{ className?: string }> }> = {
-    Valid: { cls: "border-success/30 bg-success/10 text-success", icon: ShieldCheck },
-    "Expiring Soon": { cls: "border-warning/40 bg-warning/15 text-warning", icon: ShieldAlert },
-    Expired: { cls: "border-destructive/30 bg-destructive/10 text-destructive", icon: ShieldX },
-    Missing: { cls: "border-border bg-muted text-muted-foreground", icon: ShieldQuestion },
-  };
+  const map: Record<FfcStatus, { cls: string; icon: React.ComponentType<{ className?: string }> }> =
+    {
+      Valid: { cls: "border-success/30 bg-success/10 text-success", icon: ShieldCheck },
+      "Expiring Soon": { cls: "border-warning/40 bg-warning/15 text-warning", icon: ShieldAlert },
+      Expired: { cls: "border-destructive/30 bg-destructive/10 text-destructive", icon: ShieldX },
+      Missing: { cls: "border-border bg-muted text-muted-foreground", icon: ShieldQuestion },
+    };
   const { cls, icon: Icon } = map[status];
   return (
     <Badge variant="outline" className={cn("gap-1", cls)}>
@@ -73,7 +95,9 @@ function CertificateDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Fidelity Fund Certificate</DialogTitle>
-          <DialogDescription>Issued by the Property Practitioners Regulatory Authority (PPRA)</DialogDescription>
+          <DialogDescription>
+            Issued by the Property Practitioners Regulatory Authority (PPRA)
+          </DialogDescription>
         </DialogHeader>
         <div className="glass rounded-xl border-2 border-dashed border-primary/30 p-6 text-center">
           <Award className="mx-auto size-10 text-primary" />
@@ -133,21 +157,38 @@ function UploadDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Upload FFC certificate</DialogTitle>
-          <DialogDescription>Update {user.name}'s Fidelity Fund Certificate record.</DialogDescription>
+          <DialogDescription>
+            Update {user.name}'s Fidelity Fund Certificate record.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label htmlFor="ffc-number">Certificate number</Label>
-            <Input id="ffc-number" className="font-mono" value={number} onChange={(e) => setNumber(e.target.value)} />
+            <Input
+              id="ffc-number"
+              className="font-mono"
+              value={number}
+              onChange={(e) => setNumber(e.target.value)}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="ffc-issued">Issued date</Label>
-              <Input id="ffc-issued" type="date" value={issued} onChange={(e) => setIssued(e.target.value)} />
+              <Input
+                id="ffc-issued"
+                type="date"
+                value={issued}
+                onChange={(e) => setIssued(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ffc-expiry">Expiry date</Label>
-              <Input id="ffc-expiry" type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+              <Input
+                id="ffc-expiry"
+                type="date"
+                value={expiry}
+                onChange={(e) => setExpiry(e.target.value)}
+              />
             </div>
           </div>
           <div className="space-y-1.5">
@@ -162,7 +203,9 @@ function UploadDialog({
           <Button
             onClick={() => {
               onOpenChange(false);
-              toast.success("Certificate uploaded", { description: `${user.name} · ${number || "no number"}` });
+              toast.success("Certificate uploaded", {
+                description: `${user.name} · ${number || "no number"}`,
+              });
             }}
           >
             Save certificate
@@ -207,9 +250,27 @@ function FfcRegister() {
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard label="Total practitioners" value={counts.total} icon={ShieldQuestion} />
-        <KpiCard label="Valid" value={counts.valid} tone="success" icon={ShieldCheck} delay={0.05} />
-        <KpiCard label="Expiring soon" value={counts.expiring} tone="warning" icon={ShieldAlert} delay={0.1} />
-        <KpiCard label="Expired / missing" value={counts.expired} tone="danger" icon={ShieldX} delay={0.15} />
+        <KpiCard
+          label="Valid"
+          value={counts.valid}
+          tone="success"
+          icon={ShieldCheck}
+          delay={0.05}
+        />
+        <KpiCard
+          label="Expiring soon"
+          value={counts.expiring}
+          tone="warning"
+          icon={ShieldAlert}
+          delay={0.1}
+        />
+        <KpiCard
+          label="Expired / missing"
+          value={counts.expired}
+          tone="danger"
+          icon={ShieldX}
+          delay={0.15}
+        />
       </div>
 
       <GlassCard className="mt-6 p-0">
@@ -254,10 +315,20 @@ function FfcRegister() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1.5">
-                        <Button size="sm" variant="outline" className="h-7 gap-1" onClick={() => setViewUser(user)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 gap-1"
+                          onClick={() => setViewUser(user)}
+                        >
                           <Eye className="size-3.5" /> View
                         </Button>
-                        <Button size="sm" variant="outline" className="h-7 gap-1" onClick={() => setUploadUser(user)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 gap-1"
+                          onClick={() => setUploadUser(user)}
+                        >
                           <UploadCloud className="size-3.5" /> Upload
                         </Button>
                       </div>
@@ -270,9 +341,19 @@ function FfcRegister() {
         )}
       </GlassCard>
 
-      {viewUser && <CertificateDialog open={!!viewUser} onOpenChange={(v) => !v && setViewUser(null)} user={viewUser} />}
+      {viewUser && (
+        <CertificateDialog
+          open={!!viewUser}
+          onOpenChange={(v) => !v && setViewUser(null)}
+          user={viewUser}
+        />
+      )}
       {uploadUser && (
-        <UploadDialog open={!!uploadUser} onOpenChange={(v) => !v && setUploadUser(null)} user={uploadUser} />
+        <UploadDialog
+          open={!!uploadUser}
+          onOpenChange={(v) => !v && setUploadUser(null)}
+          user={uploadUser}
+        />
       )}
     </AppShell>
   );

@@ -56,7 +56,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
 
   return (
-    <Ctx.Provider value={{ theme, setTheme, resolved, role, setRole, sidebarCollapsed, toggleSidebar }}>
+    <Ctx.Provider
+      value={{ theme, setTheme, resolved, role, setRole, sidebarCollapsed, toggleSidebar }}
+    >
       {children}
     </Ctx.Provider>
   );

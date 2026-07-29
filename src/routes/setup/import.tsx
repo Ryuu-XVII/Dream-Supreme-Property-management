@@ -5,18 +5,42 @@ import { AppShell } from "@/components/layout/app-shell";
 import { GlassCard } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import {
-  FileSpreadsheet, Upload, CheckCircle2, AlertTriangle, ArrowLeft, ArrowRight, RotateCcw, ShieldCheck,
+  FileSpreadsheet,
+  Upload,
+  CheckCircle2,
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  RotateCcw,
+  ShieldCheck,
 } from "lucide-react";
 
 export const Route = createFileRoute("/setup/import")({
   head: () => ({
     meta: [
       { title: "CSV Data Migration Import | Dream Supreme Properties" },
-      { name: "description", content: "Bulk import deals, properties, and parties with column mapping, dry-run validation, and 24-hour rollback." },
+      {
+        name: "description",
+        content:
+          "Bulk import deals, properties, and parties with column mapping, dry-run validation, and 24-hour rollback.",
+      },
     ],
   }),
   component: CSVImportPage,
@@ -75,9 +99,12 @@ function CSVImportPage() {
                 <ArrowLeft className="size-3.5" /> Back to Setup Wizard
               </Link>
             </div>
-            <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">CSV Data Migration Import</h1>
+            <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">
+              CSV Data Migration Import
+            </h1>
             <p className="text-sm text-muted-foreground">
-              Bulk import properties, active deals, or contacts with dry-run validation and 24-hour rollback guarantee.
+              Bulk import properties, active deals, or contacts with dry-run validation and 24-hour
+              rollback guarantee.
             </p>
           </div>
 
@@ -92,7 +119,9 @@ function CSVImportPage() {
             <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
               <FileSpreadsheet className="size-7" />
             </div>
-            <h3 className="font-display text-lg font-semibold">Upload your CSV or Excel Spreadsheet</h3>
+            <h3 className="font-display text-lg font-semibold">
+              Upload your CSV or Excel Spreadsheet
+            </h3>
             <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground mb-6">
               Select an export file from your legacy CRM or spreadsheet to map columns.
             </p>
@@ -101,7 +130,9 @@ function CSVImportPage() {
               <div className="space-y-1.5 text-left">
                 <Label>Import Entity Type</Label>
                 <Select value={importType} onValueChange={setImportType}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="deals">Active Sales Deals</SelectItem>
                     <SelectItem value="properties">Property Catalog</SelectItem>
@@ -114,7 +145,12 @@ function CSVImportPage() {
               <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-6 hover:border-primary/50 hover:bg-muted/30 transition-colors">
                 <Upload className="mb-2 size-6 text-muted-foreground" />
                 <span className="text-xs font-medium">Choose .csv or .xlsx file</span>
-                <input type="file" accept=".csv,.xlsx" className="hidden" onChange={handleFileUpload} />
+                <input
+                  type="file"
+                  accept=".csv,.xlsx"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
               </label>
             </div>
           </GlassCard>
@@ -126,7 +162,9 @@ function CSVImportPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-display text-lg font-semibold">Map Spreadsheet Columns</h3>
-                <p className="text-xs text-muted-foreground">Match headers from <strong>{fileName}</strong> to Mandate fields.</p>
+                <p className="text-xs text-muted-foreground">
+                  Match headers from <strong>{fileName}</strong> to Mandate fields.
+                </p>
               </div>
               <Badge variant="outline">{columns.length} columns detected</Badge>
             </div>
@@ -143,8 +181,12 @@ function CSVImportPage() {
                 <TableBody>
                   {columns.map((col, idx) => (
                     <TableRow key={idx}>
-                      <TableCell className="font-mono text-xs font-semibold">{col.csvHeader}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{col.sampleValue}</TableCell>
+                      <TableCell className="font-mono text-xs font-semibold">
+                        {col.csvHeader}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {col.sampleValue}
+                      </TableCell>
                       <TableCell>
                         <Select
                           value={col.mappedField}
@@ -154,7 +196,9 @@ function CSVImportPage() {
                             setColumns(updated);
                           }}
                         >
-                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="ref">Deal Reference</SelectItem>
                             <SelectItem value="address">Street Address</SelectItem>
@@ -215,7 +259,8 @@ function CSVImportPage() {
                 <AlertTriangle className="size-4" /> Warning Notification
               </div>
               <p className="text-xs text-muted-foreground">
-                Row 4 (14 Riviera Road): Purchaser mobile number is blank. Record will be imported with FICA status "Pending".
+                Row 4 (14 Riviera Road): Purchaser mobile number is blank. Record will be imported
+                with FICA status "Pending".
               </p>
             </div>
 
@@ -223,7 +268,10 @@ function CSVImportPage() {
               <Button variant="outline" onClick={() => setStep("map")}>
                 <ArrowLeft className="mr-1 size-4" /> Adjust Mapping
               </Button>
-              <Button onClick={handleExecuteImport} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button
+                onClick={handleExecuteImport}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
                 Execute Import & Commit (24h Rollback Active)
               </Button>
             </div>
@@ -238,14 +286,18 @@ function CSVImportPage() {
             </div>
             <h3 className="font-display text-xl font-bold">Import Successfully Completed!</h3>
             <p className="mx-auto max-w-md text-xs text-muted-foreground">
-              12 deal records have been added to your pipeline. Per <strong>FR-ON-02</strong>, this batch import is idempotent and can be reversed within 24 hours.
+              12 deal records have been added to your pipeline. Per <strong>FR-ON-02</strong>, this
+              batch import is idempotent and can be reversed within 24 hours.
             </p>
 
             <div className="pt-4 flex flex-wrap justify-center gap-3">
               <Link to="/pipeline">
                 <Button>Go to Deal Pipeline</Button>
               </Link>
-              <Button variant="outline" onClick={() => toast.info("Import session reversed cleanly.")}>
+              <Button
+                variant="outline"
+                onClick={() => toast.info("Import session reversed cleanly.")}
+              >
                 <RotateCcw className="mr-1.5 size-4" /> Revert Import (Rollback)
               </Button>
             </div>

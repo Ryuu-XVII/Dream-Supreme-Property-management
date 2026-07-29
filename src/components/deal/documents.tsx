@@ -44,7 +44,9 @@ export function DealDocumentsTab({ deal }: { deal: Deal }) {
                 onCheckedChange={(v) => setChecked((c) => ({ ...c, [item]: !!v }))}
                 className="mt-0.5"
               />
-              <span className={checked[item] ? "text-muted-foreground line-through" : ""}>{item}</span>
+              <span className={checked[item] ? "text-muted-foreground line-through" : ""}>
+                {item}
+              </span>
             </label>
           ))}
         </div>
@@ -56,7 +58,10 @@ export function DealDocumentsTab({ deal }: { deal: Deal }) {
           <Badge variant="outline">{deal.documents.length} files</Badge>
         </div>
         <div
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
           onDragLeave={() => setDragOver(false)}
           onDrop={(e) => {
             e.preventDefault();
@@ -69,16 +74,23 @@ export function DealDocumentsTab({ deal }: { deal: Deal }) {
         >
           <UploadCloud className="size-8 text-muted-foreground" />
           <p className="text-sm font-medium">Drag & drop documents here</p>
-          <p className="text-xs text-muted-foreground">or click to browse — PDF, DOCX, JPG up to 20MB</p>
+          <p className="text-xs text-muted-foreground">
+            or click to browse — PDF, DOCX, JPG up to 20MB
+          </p>
         </div>
         <div className="space-y-2">
           {deal.documents.map((doc) => (
-            <div key={doc.id} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
+            <div
+              key={doc.id}
+              className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2"
+            >
               <span className="flex min-w-0 items-center gap-2.5">
                 <FileText className="size-4 shrink-0 text-primary" />
                 <span className="min-w-0">
                   <p className="truncate text-sm font-medium">{doc.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">{doc.category} · v{doc.version} · {doc.uploadedBy} · {dateFmt(doc.uploadedAt)}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {doc.category} · v{doc.version} · {doc.uploadedBy} · {dateFmt(doc.uploadedAt)}
+                  </p>
                 </span>
               </span>
               <span className="shrink-0 text-xs text-muted-foreground">{doc.sizeKb} KB</span>
@@ -92,7 +104,10 @@ export function DealDocumentsTab({ deal }: { deal: Deal }) {
         <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-border bg-muted/30 py-16 text-center">
           <File className="size-12 text-muted-foreground" />
           <p className="text-sm font-medium">{deal.documents[0]?.name ?? "No document selected"}</p>
-          <p className="max-w-xs text-xs text-muted-foreground">Select a document from the list above to preview it here. PDF rendering is simulated in this demo environment.</p>
+          <p className="max-w-xs text-xs text-muted-foreground">
+            Select a document from the list above to preview it here. PDF rendering is simulated in
+            this demo environment.
+          </p>
         </div>
       </GlassCard>
     </div>

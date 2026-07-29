@@ -6,18 +6,37 @@ import { GlassCard } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
-  Building2, Users, Receipt, ShieldCheck, CheckCircle2, ArrowRight, ArrowLeft, Upload, FileSpreadsheet, Sparkles,
+  Building2,
+  Users,
+  Receipt,
+  ShieldCheck,
+  CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
+  Upload,
+  FileSpreadsheet,
+  Sparkles,
 } from "lucide-react";
 
 export const Route = createFileRoute("/setup/")({
   head: () => ({
     meta: [
       { title: "Agency Onboarding Setup | Dream Supreme Properties" },
-      { name: "description", content: "Guided setup wizard to configure agency profile, branches, team practitioners, and default commission rules." },
+      {
+        name: "description",
+        content:
+          "Guided setup wizard to configure agency profile, branches, team practitioners, and default commission rules.",
+      },
     ],
   }),
   component: SetupPage,
@@ -86,7 +105,9 @@ function SetupPage() {
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <Badge variant="outline" className="mb-1">FR-ON-03 Guided Onboarding</Badge>
+            <Badge variant="outline" className="mb-1">
+              FR-ON-03 Guided Onboarding
+            </Badge>
             <h1 className="font-display text-2xl font-bold tracking-tight">Agency Setup Wizard</h1>
             <p className="text-sm text-muted-foreground">
               Configure your estate agency operations platform in under 30 minutes.
@@ -94,7 +115,8 @@ function SetupPage() {
           </div>
           <Link to="/setup/import">
             <Button variant="outline" size="sm">
-              <FileSpreadsheet className="mr-1.5 size-4 text-emerald-500" /> Import Existing CSV Data
+              <FileSpreadsheet className="mr-1.5 size-4 text-emerald-500" /> Import Existing CSV
+              Data
             </Button>
           </Link>
         </div>
@@ -118,13 +140,15 @@ function SetupPage() {
                     isActive
                       ? "bg-primary text-primary-foreground shadow-md ring-4 ring-primary/20"
                       : isDone
-                      ? "bg-primary/20 text-primary"
-                      : "bg-muted text-muted-foreground"
+                        ? "bg-primary/20 text-primary"
+                        : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {isDone ? <CheckCircle2 className="size-4" /> : <Icon className="size-4" />}
                 </div>
-                <span className={`text-xs font-medium ${isActive ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
+                <span
+                  className={`text-xs font-medium ${isActive ? "text-foreground font-semibold" : "text-muted-foreground"}`}
+                >
                   {s.title}
                 </span>
               </div>
@@ -137,18 +161,28 @@ function SetupPage() {
           {step === 1 && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-display text-lg font-semibold">Step 1: Agency Regulatory Details</h3>
-                <p className="text-xs text-muted-foreground">Provide official entity registration and PPRA details.</p>
+                <h3 className="font-display text-lg font-semibold">
+                  Step 1: Agency Regulatory Details
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Provide official entity registration and PPRA details.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label>Registered Agency Name *</Label>
-                  <Input value={form.agencyName} onChange={(e) => update("agencyName", e.target.value)} />
+                  <Input
+                    value={form.agencyName}
+                    onChange={(e) => update("agencyName", e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>CIPC Registration Number</Label>
-                  <Input value={form.regNumber} onChange={(e) => update("regNumber", e.target.value)} />
+                  <Input
+                    value={form.regNumber}
+                    onChange={(e) => update("regNumber", e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>PPRA Firm Reference Number *</Label>
@@ -157,14 +191,22 @@ function SetupPage() {
                 <div className="flex items-center justify-between rounded-lg border border-border p-3 sm:col-span-2">
                   <div>
                     <Label className="mb-0.5 block">VAT Registered Vendor</Label>
-                    <p className="text-xs text-muted-foreground">Is the agency registered for VAT with SARS?</p>
+                    <p className="text-xs text-muted-foreground">
+                      Is the agency registered for VAT with SARS?
+                    </p>
                   </div>
-                  <Switch checked={form.isVatVendor} onCheckedChange={(v) => update("isVatVendor", v)} />
+                  <Switch
+                    checked={form.isVatVendor}
+                    onCheckedChange={(v) => update("isVatVendor", v)}
+                  />
                 </div>
                 {form.isVatVendor && (
                   <div className="sm:col-span-2 space-y-1.5">
                     <Label>SARS VAT Registration Number</Label>
-                    <Input value={form.vatNumber} onChange={(e) => update("vatNumber", e.target.value)} />
+                    <Input
+                      value={form.vatNumber}
+                      onChange={(e) => update("vatNumber", e.target.value)}
+                    />
                   </div>
                 )}
               </div>
@@ -175,31 +217,50 @@ function SetupPage() {
           {step === 2 && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-display text-lg font-semibold">Step 2: Branches & Primary Contact</h3>
-                <p className="text-xs text-muted-foreground">Set up office locations and principal administrator credentials.</p>
+                <h3 className="font-display text-lg font-semibold">
+                  Step 2: Branches & Primary Contact
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Set up office locations and principal administrator credentials.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>Primary Branch / Head Office *</Label>
-                  <Input value={form.mainBranch} onChange={(e) => update("mainBranch", e.target.value)} />
+                  <Input
+                    value={form.mainBranch}
+                    onChange={(e) => update("mainBranch", e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Secondary Branch (Optional)</Label>
-                  <Input value={form.secondaryBranch} onChange={(e) => update("secondaryBranch", e.target.value)} />
+                  <Input
+                    value={form.secondaryBranch}
+                    onChange={(e) => update("secondaryBranch", e.target.value)}
+                  />
                 </div>
 
                 <div className="sm:col-span-2 border-t border-border pt-4">
-                  <h4 className="mb-2 font-display text-sm font-semibold">Principal / Managing Practitioner</h4>
+                  <h4 className="mb-2 font-display text-sm font-semibold">
+                    Principal / Managing Practitioner
+                  </h4>
                 </div>
 
                 <div className="space-y-1.5">
                   <Label>Principal Full Name *</Label>
-                  <Input value={form.adminName} onChange={(e) => update("adminName", e.target.value)} />
+                  <Input
+                    value={form.adminName}
+                    onChange={(e) => update("adminName", e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Principal Email Address *</Label>
-                  <Input type="email" value={form.adminEmail} onChange={(e) => update("adminEmail", e.target.value)} />
+                  <Input
+                    type="email"
+                    value={form.adminEmail}
+                    onChange={(e) => update("adminEmail", e.target.value)}
+                  />
                 </div>
               </div>
             </div>
@@ -209,25 +270,40 @@ function SetupPage() {
           {step === 3 && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-display text-lg font-semibold">Step 3: Default Commission Rules</h3>
-                <p className="text-xs text-muted-foreground">Set up default commission rates and office split percentages.</p>
+                <h3 className="font-display text-lg font-semibold">
+                  Step 3: Default Commission Rules
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Set up default commission rates and office split percentages.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>Default Sales Commission Rate (%)</Label>
-                  <Input value={form.defaultCommissionPct} onChange={(e) => update("defaultCommissionPct", e.target.value)} />
+                  <Input
+                    value={form.defaultCommissionPct}
+                    onChange={(e) => update("defaultCommissionPct", e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Franchise Royalty Fee (%)</Label>
-                  <Input value={form.franchiseFeePct} onChange={(e) => update("franchiseFeePct", e.target.value)} />
+                  <Input
+                    value={form.franchiseFeePct}
+                    onChange={(e) => update("franchiseFeePct", e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>Default Office Share vs Agent Pool (%)</Label>
                   <div className="flex items-center gap-3">
-                    <Input type="number" value={form.officeSharePct} onChange={(e) => update("officeSharePct", e.target.value)} />
+                    <Input
+                      type="number"
+                      value={form.officeSharePct}
+                      onChange={(e) => update("officeSharePct", e.target.value)}
+                    />
                     <span className="text-sm text-muted-foreground">
-                      Office: {form.officeSharePct}% / Agent Pool: {100 - Number(form.officeSharePct || 0)}%
+                      Office: {form.officeSharePct}% / Agent Pool:{" "}
+                      {100 - Number(form.officeSharePct || 0)}%
                     </span>
                   </div>
                 </div>
@@ -239,20 +315,30 @@ function SetupPage() {
           {step === 4 && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-display text-lg font-semibold">Step 4: Launch & Historical Data Import</h3>
-                <p className="text-xs text-muted-foreground">Choose how to bring your existing pipeline into Mandate.</p>
+                <h3 className="font-display text-lg font-semibold">
+                  Step 4: Launch & Historical Data Import
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Choose how to bring your existing pipeline into Mandate.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div
                   onClick={() => update("initialImportChoice", "manual")}
                   className={`lift cursor-pointer rounded-xl border p-4 transition-colors ${
-                    form.initialImportChoice === "manual" ? "border-primary bg-primary/5" : "border-border"
+                    form.initialImportChoice === "manual"
+                      ? "border-primary bg-primary/5"
+                      : "border-border"
                   }`}
                 >
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="font-display text-sm font-semibold">Start Fresh / Manual Capture</span>
-                    {form.initialImportChoice === "manual" && <CheckCircle2 className="size-4 text-primary" />}
+                    <span className="font-display text-sm font-semibold">
+                      Start Fresh / Manual Capture
+                    </span>
+                    {form.initialImportChoice === "manual" && (
+                      <CheckCircle2 className="size-4 text-primary" />
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Start with a clean database and add new deals as they arrive.
@@ -262,15 +348,22 @@ function SetupPage() {
                 <div
                   onClick={() => update("initialImportChoice", "csv")}
                   className={`lift cursor-pointer rounded-xl border p-4 transition-colors ${
-                    form.initialImportChoice === "csv" ? "border-primary bg-primary/5" : "border-border"
+                    form.initialImportChoice === "csv"
+                      ? "border-primary bg-primary/5"
+                      : "border-border"
                   }`}
                 >
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="font-display text-sm font-semibold">Import CSV Spreadsheet</span>
-                    {form.initialImportChoice === "csv" && <CheckCircle2 className="size-4 text-primary" />}
+                    <span className="font-display text-sm font-semibold">
+                      Import CSV Spreadsheet
+                    </span>
+                    {form.initialImportChoice === "csv" && (
+                      <CheckCircle2 className="size-4 text-primary" />
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Upload your active Excel/CSV pipeline to bulk-import practitioners, properties & deals.
+                    Upload your active Excel/CSV pipeline to bulk-import practitioners, properties &
+                    deals.
                   </p>
                 </div>
               </div>
@@ -288,7 +381,10 @@ function SetupPage() {
                 Next <ArrowRight className="ml-1 size-4" />
               </Button>
             ) : (
-              <Button onClick={handleFinish} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button
+                onClick={handleFinish}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
                 Complete Setup
               </Button>
             )}

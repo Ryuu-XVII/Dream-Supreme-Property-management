@@ -14,7 +14,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { dateTimeFmt } from "@/lib/format";
 import { auditEvents, users, type AuditEvent } from "@/data/state";
@@ -35,9 +42,15 @@ export const Route = createFileRoute("/compliance/audit")({
   head: () => ({
     meta: [
       { title: "Audit Log | Dream Supreme Properties" },
-      { name: "description", content: "Full audit trail of every action taken across deals, commissions, and records." },
+      {
+        name: "description",
+        content: "Full audit trail of every action taken across deals, commissions, and records.",
+      },
       { property: "og:title", content: "Audit Log | Dream Supreme Properties" },
-      { property: "og:description", content: "Full audit trail of every action taken across deals, commissions, and records." },
+      {
+        property: "og:description",
+        content: "Full audit trail of every action taken across deals, commissions, and records.",
+      },
     ],
   }),
 });
@@ -63,7 +76,15 @@ function diffKeys(before: Record<string, unknown>, after: Record<string, unknown
   return Array.from(keys);
 }
 
-function JsonBlock({ data, compareWith, tint }: { data: Record<string, unknown>; compareWith: Record<string, unknown>; tint: "success" | "destructive" }) {
+function JsonBlock({
+  data,
+  compareWith,
+  tint,
+}: {
+  data: Record<string, unknown>;
+  compareWith: Record<string, unknown>;
+  tint: "success" | "destructive";
+}) {
   const keys = diffKeys(data, compareWith);
   return (
     <pre className="overflow-x-auto rounded-lg border border-border bg-muted/40 p-3 text-xs">
@@ -73,7 +94,13 @@ function JsonBlock({ data, compareWith, tint }: { data: Record<string, unknown>;
         return (
           <div
             key={k}
-            className={cn("pl-3", changed && (tint === "success" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"))}
+            className={cn(
+              "pl-3",
+              changed &&
+                (tint === "success"
+                  ? "bg-success/10 text-success"
+                  : "bg-destructive/10 text-destructive"),
+            )}
           >
             "{k}": {JSON.stringify(data[k])},
           </div>
@@ -84,12 +111,26 @@ function JsonBlock({ data, compareWith, tint }: { data: Record<string, unknown>;
   );
 }
 
-function AuditRow({ event, expanded, onToggle }: { event: AuditEvent; expanded: boolean; onToggle: () => void }) {
+function AuditRow({
+  event,
+  expanded,
+  onToggle,
+}: {
+  event: AuditEvent;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
   const Icon = actionIcon[event.action];
   return (
     <>
       <TableRow className="cursor-pointer" onClick={onToggle}>
-        <TableCell>{expanded ? <ChevronDown className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />}</TableCell>
+        <TableCell>
+          {expanded ? (
+            <ChevronDown className="size-4 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="size-4 text-muted-foreground" />
+          )}
+        </TableCell>
         <TableCell className="money whitespace-nowrap">{dateTimeFmt(event.at)}</TableCell>
         <TableCell>{event.user}</TableCell>
         <TableCell>
@@ -101,18 +142,24 @@ function AuditRow({ event, expanded, onToggle }: { event: AuditEvent; expanded: 
             <Icon className="size-3" /> {event.action}
           </Badge>
         </TableCell>
-        <TableCell className="max-w-[280px] truncate text-muted-foreground">{event.summary}</TableCell>
+        <TableCell className="max-w-[280px] truncate text-muted-foreground">
+          {event.summary}
+        </TableCell>
       </TableRow>
       {expanded && (
         <TableRow className="hover:bg-transparent">
           <TableCell colSpan={7} className="p-0">
             <div className="grid gap-4 border-t border-border bg-muted/30 p-5 sm:grid-cols-2">
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Before</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Before
+                </p>
                 <JsonBlock data={event.before} compareWith={event.after} tint="destructive" />
               </div>
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">After</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  After
+                </p>
                 <JsonBlock data={event.after} compareWith={event.before} tint="success" />
               </div>
             </div>
@@ -152,7 +199,8 @@ function AuditLog() {
       if (to && new Date(e.at) > new Date(to + "T23:59:59")) return false;
       if (search) {
         const q = search.toLowerCase();
-        const hay = `${e.user} ${e.entityType} ${e.entityRef} ${e.action} ${e.summary}`.toLowerCase();
+        const hay =
+          `${e.user} ${e.entityType} ${e.entityRef} ${e.action} ${e.summary}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -167,7 +215,9 @@ function AuditLog() {
     const header = ["Timestamp", "User", "Entity Type", "Entity Ref", "Action", "Summary"];
     const lines = [header.join(",")].concat(
       filtered.map((e) =>
-        [dateTimeFmt(e.at), e.user, e.entityType, e.entityRef, e.action, e.summary].map(toCsvValue).join(","),
+        [dateTimeFmt(e.at), e.user, e.entityType, e.entityRef, e.action, e.summary]
+          .map(toCsvValue)
+          .join(","),
       ),
     );
     const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
@@ -177,7 +227,9 @@ function AuditLog() {
     a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Audit log exported", { description: `${filtered.length} events exported to CSV` });
+    toast.success("Audit log exported", {
+      description: `${filtered.length} events exported to CSV`,
+    });
   }
 
   return (
@@ -207,9 +259,29 @@ function AuditLog() {
               }}
             />
           </div>
-          <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} />
-          <Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} />
-          <Select value={userFilter} onValueChange={(v) => { setUserFilter(v); setPage(1); }}>
+          <Input
+            type="date"
+            value={from}
+            onChange={(e) => {
+              setFrom(e.target.value);
+              setPage(1);
+            }}
+          />
+          <Input
+            type="date"
+            value={to}
+            onChange={(e) => {
+              setTo(e.target.value);
+              setPage(1);
+            }}
+          />
+          <Select
+            value={userFilter}
+            onValueChange={(v) => {
+              setUserFilter(v);
+              setPage(1);
+            }}
+          >
             <SelectTrigger>
               <SelectValue placeholder="User" />
             </SelectTrigger>
@@ -222,7 +294,13 @@ function AuditLog() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={entityFilter} onValueChange={(v) => { setEntityFilter(v); setPage(1); }}>
+          <Select
+            value={entityFilter}
+            onValueChange={(v) => {
+              setEntityFilter(v);
+              setPage(1);
+            }}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Entity type" />
             </SelectTrigger>
@@ -237,7 +315,13 @@ function AuditLog() {
           </Select>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(1); }}>
+          <Select
+            value={actionFilter}
+            onValueChange={(v) => {
+              setActionFilter(v);
+              setPage(1);
+            }}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Action" />
             </SelectTrigger>
@@ -261,7 +345,10 @@ function AuditLog() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-8">
-            <EmptyState title="No audit events found" message="Try widening your filters or date range." />
+            <EmptyState
+              title="No audit events found"
+              message="Try widening your filters or date range."
+            />
           </div>
         ) : (
           <>
@@ -293,7 +380,13 @@ function AuditLog() {
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>Rows per page</span>
-                <Select value={pageSize} onValueChange={(v) => { setPageSize(v); setPage(1); }}>
+                <Select
+                  value={pageSize}
+                  onValueChange={(v) => {
+                    setPageSize(v);
+                    setPage(1);
+                  }}
+                >
                   <SelectTrigger className="h-8 w-[80px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -305,13 +398,23 @@ function AuditLog() {
                 </Select>
               </div>
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                >
                   Previous
                 </Button>
                 <span className="text-xs text-muted-foreground">
                   Page {page} of {totalPages}
                 </span>
-                <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                >
                   Next
                 </Button>
               </div>

@@ -16,9 +16,15 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Sign in | Dream Supreme Properties" },
-      { name: "description", content: "Sign in to the Dream Supreme Properties agency management platform." },
+      {
+        name: "description",
+        content: "Sign in to the Dream Supreme Properties agency management platform.",
+      },
       { property: "og:title", content: "Sign in | Dream Supreme Properties" },
-      { property: "og:description", content: "Sign in to the Dream Supreme Properties agency management platform." },
+      {
+        property: "og:description",
+        content: "Sign in to the Dream Supreme Properties agency management platform.",
+      },
     ],
   }),
   component: LoginPage,
@@ -90,7 +96,13 @@ function LoginPage() {
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input id="email" type="email" placeholder="you@dreamsupreme.co.za" className="pl-9" {...form.register("email")} />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@dreamsupreme.co.za"
+                    className="pl-9"
+                    {...form.register("email")}
+                  />
                 </div>
                 {form.formState.errors.email && (
                   <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
@@ -100,17 +112,33 @@ function LoginPage() {
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" className="pl-9 pr-10" {...form.register("password")} />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className="pl-9 pr-10"
+                    {...form.register("password")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
                     {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </button>
                 </div>
                 {form.formState.errors.password && (
-                  <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.password.message}
+                  </p>
                 )}
               </div>
               <div className="flex items-center justify-end">
-                <button type="button" className="text-xs text-primary hover:underline" onClick={() => toast.info("Password reset link sent (demo)")}>
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline"
+                  onClick={() => toast.info("Password reset link sent (demo)")}
+                >
                   Forgot password?
                 </button>
               </div>

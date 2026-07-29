@@ -112,11 +112,11 @@ PAGE 3: DEAL PIPELINE (KANBAN BOARD)
 
   1. Mandate Signed, 2. Listed/Marketing, 3. Offer Received, 4. OTP Signed,
 
-  5. Conditions Pending, 6. Conveyancer Instructed, 7. Compliance Certs,
+  2. Conditions Pending, 6. Conveyancer Instructed, 7. Compliance Certs,
 
-  8. Transfer Duty, 9. Rates & Levy Clearance, 10. Documents & Guarantees,
+  3. Transfer Duty, 9. Rates & Levy Clearance, 10. Documents & Guarantees,
 
-  11. Lodged, 12. Registered, 13. Commission Released
+  4. Lodged, 12. Registered, 13. Commission Released
 
 - Plus a "Cancelled/Lapsed" section at the bottom
 
@@ -392,27 +392,27 @@ Each calculator page has:
 
 a) BOND REPAYMENT CALCULATOR:
 
-  Inputs: Loan amount (slider + number input, R100k–R10M), Interest rate % (slider + input, 7-15%), Term years (slider + input, 5-30)
+Inputs: Loan amount (slider + number input, R100k–R10M), Interest rate % (slider + input, 7-15%), Term years (slider + input, 5-30)
 
-  Outputs: Monthly instalment (large ZAR number), Total interest over term, Total repayment, Amortisation schedule toggle (line chart showing principal vs interest over time)
+Outputs: Monthly instalment (large ZAR number), Total interest over term, Total repayment, Amortisation schedule toggle (line chart showing principal vs interest over time)
 
 b) TRANSFER COST CALCULATOR:
 
-  Inputs: Purchase price (slider + number input), Bond amount, "Seller is VAT vendor" toggle
+Inputs: Purchase price (slider + number input), Bond amount, "Seller is VAT vendor" toggle
 
-  Outputs: Transfer duty (with bracket breakdown table), Conveyancing fees estimate, Deeds office fees, Postage/petties, Total transfer costs, VAT note if VAT sale selected (showing "No transfer duty payable — sale is subject to VAT")
+Outputs: Transfer duty (with bracket breakdown table), Conveyancing fees estimate, Deeds office fees, Postage/petties, Total transfer costs, VAT note if VAT sale selected (showing "No transfer duty payable — sale is subject to VAT")
 
 c) AFFORDABILITY CALCULATOR:
 
-  Inputs: Gross monthly income, Total monthly expenses/debt, Interest rate %, Term years
+Inputs: Gross monthly income, Total monthly expenses/debt, Interest rate %, Term years
 
-  Outputs: Maximum monthly instalment, Maximum loan amount, Maximum purchase price, Debt-to-income ratio gauge (with 30% guideline marker)
+Outputs: Maximum monthly instalment, Maximum loan amount, Maximum purchase price, Debt-to-income ratio gauge (with 30% guideline marker)
 
 d) RENTAL YIELD CALCULATOR:
 
-  Inputs: Purchase price, Monthly rental income, Monthly costs (rates, levy, insurance, maintenance)
+Inputs: Purchase price, Monthly rental income, Monthly costs (rates, levy, insurance, maintenance)
 
-  Outputs: Gross yield %, Net yield %, Monthly cash flow, Annual cash flow, Simple payback period
+Outputs: Gross yield %, Net yield %, Monthly cash flow, Annual cash flow, Simple payback period
 
 PAGE 16: CONVEYANCER STATUS UPDATE PAGE (unauthenticated, no sidebar)
 

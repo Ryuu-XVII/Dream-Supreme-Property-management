@@ -8,9 +8,20 @@ import { zar, urgencyOf } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { DealOverviewTab } from "@/components/deal/overview";
@@ -19,9 +30,7 @@ import { DealDocumentsTab } from "@/components/deal/documents";
 import { DealCommissionTab } from "@/components/deal/commission";
 import { DealOffersTab } from "@/components/deal/offers";
 import { DealTimelineTab } from "@/components/deal/timeline";
-import {
-  ArrowLeft, ChevronRight, ChevronLeft, XCircle, CheckCircle2,
-} from "lucide-react";
+import { ArrowLeft, ChevronRight, ChevronLeft, XCircle, CheckCircle2 } from "lucide-react";
 import { useDealDetail } from "@/data/deals";
 
 export const Route = createFileRoute("/deals/$dealId")({
@@ -30,7 +39,7 @@ export const Route = createFileRoute("/deals/$dealId")({
 
 function DealDetailPage() {
   const { dealId } = Route.useParams();
-  
+
   const { data: initialDeal, isLoading, error } = useDealDetail(dealId);
   const [deal, setDeal] = useState<Deal | null>(null);
 
@@ -48,14 +57,24 @@ function DealDetailPage() {
   const [cancelReason, setCancelReason] = useState("");
 
   if (isLoading || !deal) {
-    return <AppShell><div className="p-8 text-center text-muted-foreground">Loading deal details...</div></AppShell>;
+    return (
+      <AppShell>
+        <div className="p-8 text-center text-muted-foreground">Loading deal details...</div>
+      </AppShell>
+    );
   }
 
   if (error) {
-    return <AppShell><div className="p-8 text-center text-destructive">Error loading deal: {(error as Error).message}</div></AppShell>;
+    return (
+      <AppShell>
+        <div className="p-8 text-center text-destructive">
+          Error loading deal: {(error as Error).message}
+        </div>
+      </AppShell>
+    );
   }
 
-  // Fallback to propertyById from mock if property isn't fully embedded. We embedded it in the query though, but UI expects propertyById. 
+  // Fallback to propertyById from mock if property isn't fully embedded. We embedded it in the query though, but UI expects propertyById.
   // Wait, propertyById throws an error if it doesn't find it. Let's just create a dummy property if it's not found in mock.
   let property;
   try {
@@ -163,7 +182,9 @@ function DealDetailPage() {
             </div>
             <p className="text-sm text-muted-foreground">
               {property?.address}, {property?.suburb}, {property?.city} —{" "}
-              <span className="font-medium text-foreground">{zar(deal.salePrice, { decimals: false })}</span>
+              <span className="font-medium text-foreground">
+                {zar(deal.salePrice, { decimals: false })}
+              </span>
             </p>
           </div>
 
@@ -203,8 +224,8 @@ function DealDetailPage() {
                         isCurrent
                           ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
                           : isPast
-                          ? "bg-primary/20 text-primary"
-                          : "bg-muted text-muted-foreground"
+                            ? "bg-primary/20 text-primary"
+                            : "bg-muted text-muted-foreground"
                       }`}
                     >
                       {isPast ? <CheckCircle2 className="size-4" /> : idx + 1}
@@ -214,8 +235,8 @@ function DealDetailPage() {
                         isCurrent
                           ? "font-semibold text-foreground"
                           : isPast
-                          ? "text-muted-foreground"
-                          : "text-muted-foreground/60"
+                            ? "text-muted-foreground"
+                            : "text-muted-foreground/60"
                       }`}
                     >
                       {s}
@@ -238,12 +259,8 @@ function DealDetailPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="grid w-full grid-cols-6 sm:w-auto">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="conditions">
-              Conditions ({deal.conditions.length})
-            </TabsTrigger>
-            <TabsTrigger value="documents">
-              Documents ({deal.documents.length})
-            </TabsTrigger>
+            <TabsTrigger value="conditions">Conditions ({deal.conditions.length})</TabsTrigger>
+            <TabsTrigger value="documents">Documents ({deal.documents.length})</TabsTrigger>
             <TabsTrigger value="commission">Commission</TabsTrigger>
             <TabsTrigger value="offers">Offers ({deal.offers.length})</TabsTrigger>
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
@@ -338,7 +355,8 @@ function DealDetailPage() {
           <DialogHeader>
             <DialogTitle>Cancel Deal</DialogTitle>
             <DialogDescription>
-              Mark deal <strong>{deal.ref}</strong> as Cancelled. This will stop condition reminders.
+              Mark deal <strong>{deal.ref}</strong> as Cancelled. This will stop condition
+              reminders.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">

@@ -16,7 +16,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { GlassCard } from "@/components/ui-kit";
 import { dateTimeFmt } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -26,9 +32,15 @@ export const Route = createFileRoute("/sign")({
   head: () => ({
     meta: [
       { title: "Sign Document | Dream Supreme Properties" },
-      { name: "description", content: "Review and electronically sign your Offer to Purchase document." },
+      {
+        name: "description",
+        content: "Review and electronically sign your Offer to Purchase document.",
+      },
       { property: "og:title", content: "Sign Document | Dream Supreme Properties" },
-      { property: "og:description", content: "Review and electronically sign your Offer to Purchase document." },
+      {
+        property: "og:description",
+        content: "Review and electronically sign your Offer to Purchase document.",
+      },
     ],
   }),
   component: SignPage,
@@ -83,7 +95,10 @@ function SignPage() {
       const t = e.touches[0];
       return { x: t.clientX - rect.left, y: t.clientY - rect.top };
     }
-    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
+    return {
+      x: (e as React.MouseEvent).clientX - rect.left,
+      y: (e as React.MouseEvent).clientY - rect.top,
+    };
   }
 
   function start(e: React.MouseEvent | React.TouchEvent) {
@@ -156,14 +171,22 @@ function SignPage() {
         <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:flex-wrap sm:justify-between">
           <div className="min-w-0">
             <h1 className="truncate text-xl font-semibold sm:text-2xl">Review & Sign Document</h1>
-            <p className="mt-1 text-sm text-muted-foreground">DSP-2026-0141 &middot; Offer to Purchase</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              DSP-2026-0141 &middot; Offer to Purchase
+            </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <span className="text-xs text-muted-foreground">Demo: category</span>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-[240px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[240px]">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {restrictedCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                {restrictedCategories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -175,9 +198,9 @@ function SignPage() {
             <div>
               <p className="font-semibold">Wet-ink signature required</p>
               <p className="mt-0.5 text-xs">
-                Under the Electronic Communications and Transactions Act, "{category}" is an excluded category and
-                cannot be signed electronically. This document requires a wet-ink signature. Please print, sign, and
-                upload a scanned copy.
+                Under the Electronic Communications and Transactions Act, "{category}" is an
+                excluded category and cannot be signed electronically. This document requires a
+                wet-ink signature. Please print, sign, and upload a scanned copy.
               </p>
             </div>
           </div>
@@ -217,7 +240,12 @@ function SignPage() {
                       onTouchEnd={end}
                     />
                   </div>
-                  <Button size="sm" variant="outline" className="mt-2 gap-1.5" onClick={clearCanvas}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-2 gap-1.5"
+                    onClick={clearCanvas}
+                  >
                     <Eraser className="size-3.5" /> Clear
                   </Button>
                 </TabsContent>
@@ -228,7 +256,10 @@ function SignPage() {
                     onChange={(e) => setTypedName(e.target.value)}
                   />
                   <div className="mt-3 flex h-24 items-center justify-center rounded-lg border border-border bg-muted/40 px-4">
-                    <p style={{ fontFamily: "cursive" }} className="truncate text-3xl text-foreground">
+                    <p
+                      style={{ fontFamily: "cursive" }}
+                      className="truncate text-3xl text-foreground"
+                    >
                       {typedName || "Your signature"}
                     </p>
                   </div>
@@ -237,28 +268,58 @@ function SignPage() {
 
               <div className="mt-5 space-y-3 border-t border-border pt-4">
                 <div>
-                  <Label htmlFor="email" className="text-xs">Email address</Label>
+                  <Label htmlFor="email" className="text-xs">
+                    Email address
+                  </Label>
                   <div className="mt-1 flex gap-2">
-                    <Input id="email" type="email" placeholder="you@example.co.za" value={email} onChange={(e) => setEmail(e.target.value)} />
-                    <Button variant="outline" onClick={sendOtp} className="shrink-0">Send OTP</Button>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="you@example.co.za"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                    <Button variant="outline" onClick={sendOtp} className="shrink-0">
+                      Send OTP
+                    </Button>
                   </div>
                 </div>
                 {otpSent && (
                   <div>
-                    <Label htmlFor="otp" className="text-xs">Enter 6-digit OTP</Label>
-                    <Input id="otp" inputMode="numeric" maxLength={6} placeholder="123456" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))} className="mt-1 font-mono tracking-widest" />
+                    <Label htmlFor="otp" className="text-xs">
+                      Enter 6-digit OTP
+                    </Label>
+                    <Input
+                      id="otp"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="123456"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                      className="mt-1 font-mono tracking-widest"
+                    />
                   </div>
                 )}
                 <label className="flex items-start gap-2 text-xs text-muted-foreground">
-                  <Checkbox checked={attested} onCheckedChange={(v) => setAttested(!!v)} className="mt-0.5" />
+                  <Checkbox
+                    checked={attested}
+                    onCheckedChange={(v) => setAttested(!!v)}
+                    className="mt-0.5"
+                  />
                   <span>
-                    I confirm that I have read and understood this document and intend this electronic signature to
-                    be my legally binding signature, in accordance with the ECT Act 25 of 2002.
+                    I confirm that I have read and understood this document and intend this
+                    electronic signature to be my legally binding signature, in accordance with the
+                    ECT Act 25 of 2002.
                   </span>
                 </label>
               </div>
 
-              <Button className="mt-4 w-full gap-2" size="lg" disabled={!canSign} onClick={handleSign}>
+              <Button
+                className="mt-4 w-full gap-2"
+                size="lg"
+                disabled={!canSign}
+                onClick={handleSign}
+              >
                 <ShieldCheck className="size-4" /> Sign Document
               </Button>
             </GlassCard>
@@ -273,16 +334,43 @@ function DocumentPreview({ page, setPage }: { page: number; setPage: (n: number)
   const totalPages = 4;
   return (
     <GlassCard className="flex flex-col">
-      <div className="mx-auto w-full max-w-md rounded-md border border-border bg-card p-8 shadow-sm" style={{ aspectRatio: "1 / 1.41" }}>
-        <p className="text-center text-[10px] uppercase tracking-widest text-muted-foreground">Dream Supreme Properties</p>
+      <div
+        className="mx-auto w-full max-w-md rounded-md border border-border bg-card p-8 shadow-sm"
+        style={{ aspectRatio: "1 / 1.41" }}
+      >
+        <p className="text-center text-[10px] uppercase tracking-widest text-muted-foreground">
+          Dream Supreme Properties
+        </p>
         <h2 className="mt-4 text-center font-display text-lg font-bold">Offer to Purchase</h2>
-        <p className="mt-1 text-center text-xs text-muted-foreground">Immovable Property — Sectional / Freehold</p>
+        <p className="mt-1 text-center text-xs text-muted-foreground">
+          Immovable Property — Sectional / Freehold
+        </p>
         <div className="mt-6 space-y-3 text-[11px] leading-relaxed text-foreground/80">
-          <p><span className="font-semibold">1. Parties.</span> The undersigned Purchaser hereby offers to purchase from the Seller the property known as 12 Aloe Ridge Close, Bryanston, Johannesburg, on the terms set out below.</p>
-          <p><span className="font-semibold">2. Purchase Price.</span> The purchase price shall be R 4,250,000.00 (Four Million Two Hundred and Fifty Thousand Rand) payable as set out in clause 3.</p>
-          <p><span className="font-semibold">3. Deposit.</span> A deposit of R 850,000.00 shall be paid into the trust account of the conveyancing attorneys within 7 (seven) days of acceptance.</p>
-          <p><span className="font-semibold">4. Occupation.</span> Occupation shall be given and taken on registration of transfer, alternatively as agreed in writing between the parties.</p>
-          <p><span className="font-semibold">5. Conditions.</span> This offer is subject to the Purchaser obtaining a mortgage bond in the amount of R 3,400,000.00 within 20 (twenty) business days.</p>
+          <p>
+            <span className="font-semibold">1. Parties.</span> The undersigned Purchaser hereby
+            offers to purchase from the Seller the property known as 12 Aloe Ridge Close, Bryanston,
+            Johannesburg, on the terms set out below.
+          </p>
+          <p>
+            <span className="font-semibold">2. Purchase Price.</span> The purchase price shall be R
+            4,250,000.00 (Four Million Two Hundred and Fifty Thousand Rand) payable as set out in
+            clause 3.
+          </p>
+          <p>
+            <span className="font-semibold">3. Deposit.</span> A deposit of R 850,000.00 shall be
+            paid into the trust account of the conveyancing attorneys within 7 (seven) days of
+            acceptance.
+          </p>
+          <p>
+            <span className="font-semibold">4. Occupation.</span> Occupation shall be given and
+            taken on registration of transfer, alternatively as agreed in writing between the
+            parties.
+          </p>
+          <p>
+            <span className="font-semibold">5. Conditions.</span> This offer is subject to the
+            Purchaser obtaining a mortgage bond in the amount of R 3,400,000.00 within 20 (twenty)
+            business days.
+          </p>
         </div>
         <div className="mt-8 grid grid-cols-2 gap-6 border-t border-dashed border-border pt-4 text-[10px] text-muted-foreground">
           <div>
@@ -296,11 +384,23 @@ function DocumentPreview({ page, setPage }: { page: number; setPage: (n: number)
         </div>
       </div>
       <div className="mt-4 flex items-center justify-center gap-3">
-        <Button size="icon" variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+        <Button
+          size="icon"
+          variant="outline"
+          disabled={page <= 1}
+          onClick={() => setPage(page - 1)}
+        >
           <ChevronLeft className="size-4" />
         </Button>
-        <span className="text-xs text-muted-foreground">Page {page} of {totalPages}</span>
-        <Button size="icon" variant="outline" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+        <span className="text-xs text-muted-foreground">
+          Page {page} of {totalPages}
+        </span>
+        <Button
+          size="icon"
+          variant="outline"
+          disabled={page >= totalPages}
+          onClick={() => setPage(page + 1)}
+        >
           <ChevronRight className="size-4" />
         </Button>
       </div>
@@ -324,13 +424,17 @@ function SuccessCard({
       <GlassCard className="mx-auto max-w-lg border-success/30 bg-success/5 text-center">
         <CheckCircle2 className="mx-auto size-12 text-success" />
         <h2 className="mt-3 font-display text-xl font-semibold">Document Signed</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Your electronic signature has been recorded and applied to the document.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Your electronic signature has been recorded and applied to the document.
+        </p>
 
         <div className="mx-auto mt-4 flex h-20 max-w-xs items-center justify-center rounded-lg border border-border bg-card">
           {signatureDataUrl ? (
             <img src={signatureDataUrl} alt="Your signature" className="h-full object-contain" />
           ) : (
-            <p style={{ fontFamily: "cursive" }} className="text-2xl">{typedName}</p>
+            <p style={{ fontFamily: "cursive" }} className="text-2xl">
+              {typedName}
+            </p>
           )}
         </div>
 
@@ -341,7 +445,9 @@ function SuccessCard({
           </div>
           <div className="flex justify-between gap-2">
             <dt className="text-muted-foreground">Document hash (SHA-256)</dt>
-            <dd className="money max-w-[220px] truncate font-medium" title={hash}>{hash}</dd>
+            <dd className="money max-w-[220px] truncate font-medium" title={hash}>
+              {hash}
+            </dd>
           </div>
         </dl>
       </GlassCard>

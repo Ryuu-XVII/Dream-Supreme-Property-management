@@ -20,8 +20,8 @@ function NotFoundComponent() {
         <h1 className="font-mono text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Deal not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The deal, page or record you're looking for doesn't exist, was archived, or the reference is
-          incorrect.
+          The deal, page or record you're looking for doesn't exist, was archived, or the reference
+          is incorrect.
         </p>
         <div className="mt-6 flex justify-center gap-2">
           <Link
@@ -49,7 +49,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">This page didn't load</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          This page didn't load
+        </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Something went wrong on our end. You can try refreshing or head back home.
         </p>
@@ -107,11 +109,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
-  return (
-    <>
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }
 
 import { AuthProvider, useAuth } from "@/lib/auth";
@@ -123,8 +121,8 @@ function AuthGuard({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!loading && !session) {
       const path = window.location.pathname;
-      if (path !== '/login' && path !== '/register') {
-        router.navigate({ to: '/login', replace: true });
+      if (path !== "/login" && path !== "/register") {
+        router.navigate({ to: "/login", replace: true });
       }
     }
   }, [session, loading, router]);

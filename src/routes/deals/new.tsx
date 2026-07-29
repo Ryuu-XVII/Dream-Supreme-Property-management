@@ -3,14 +3,38 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { GlassCard } from "@/components/ui-kit";
-import { STAGES, users, conveyancerFirms, deals, type Deal, type Property, type Party, type Condition, type DocumentRec, type Offer } from "@/data/state";
+import {
+  STAGES,
+  users,
+  conveyancerFirms,
+  deals,
+  type Deal,
+  type Property,
+  type Party,
+  type Condition,
+  type DocumentRec,
+  type Offer,
+} from "@/data/state";
 import { zar } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  ArrowLeft, ArrowRight, CheckCircle2, Home, User, FileText, Landmark, ShieldCheck,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Home,
+  User,
+  FileText,
+  Landmark,
+  ShieldCheck,
 } from "lucide-react";
 import { createDeal } from "@/data/deals";
 
@@ -18,7 +42,10 @@ export const Route = createFileRoute("/deals/new")({
   head: () => ({
     meta: [
       { title: "New Deal Wizard | Dream Supreme Properties" },
-      { name: "description", content: "Create a new property sales deal and capture initial suspensive conditions." },
+      {
+        name: "description",
+        content: "Create a new property sales deal and capture initial suspensive conditions.",
+      },
     ],
   }),
   component: NewDealPage,
@@ -78,7 +105,7 @@ function NewDealPage() {
     bondRequired: true,
     bondAmount: "2000000",
     bondDueDate: new Date(Date.now() + 21 * 86400000).toISOString().split("T")[0],
-    
+
     ficaRequired: true,
     ficaDueDate: new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0],
   });
@@ -122,7 +149,10 @@ function NewDealPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <Link to="/pipeline" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+            <Link
+              to="/pipeline"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
               <ArrowLeft className="size-3.5" /> Back to Pipeline
             </Link>
             <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">Create New Deal</h1>
@@ -151,8 +181,8 @@ function NewDealPage() {
                     isActive
                       ? "bg-primary text-primary-foreground shadow-md ring-4 ring-primary/20"
                       : isDone
-                      ? "bg-primary/20 text-primary"
-                      : "bg-muted text-muted-foreground"
+                        ? "bg-primary/20 text-primary"
+                        : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {isDone ? <CheckCircle2 className="size-4" /> : <Icon className="size-4" />}
@@ -175,8 +205,12 @@ function NewDealPage() {
           {step === 1 && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-display text-lg font-semibold">Step 1: Property & Mandate Details</h3>
-                <p className="text-xs text-muted-foreground">Enter property address and mandate specifics.</p>
+                <h3 className="font-display text-lg font-semibold">
+                  Step 1: Property & Mandate Details
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Enter property address and mandate specifics.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -205,8 +239,13 @@ function NewDealPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Property Type</Label>
-                  <Select value={formData.propertyType} onValueChange={(v) => updateForm("propertyType", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={formData.propertyType}
+                    onValueChange={(v) => updateForm("propertyType", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Freehold House">Freehold House</SelectItem>
                       <SelectItem value="Sectional Title">Sectional Title</SelectItem>
@@ -217,15 +256,27 @@ function NewDealPage() {
                 <div className="grid grid-cols-3 gap-2">
                   <div className="space-y-1">
                     <Label className="text-xs">Beds</Label>
-                    <Input type="number" value={formData.beds} onChange={(e) => updateForm("beds", +e.target.value)} />
+                    <Input
+                      type="number"
+                      value={formData.beds}
+                      onChange={(e) => updateForm("beds", +e.target.value)}
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Baths</Label>
-                    <Input type="number" value={formData.baths} onChange={(e) => updateForm("baths", +e.target.value)} />
+                    <Input
+                      type="number"
+                      value={formData.baths}
+                      onChange={(e) => updateForm("baths", +e.target.value)}
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Garages</Label>
-                    <Input type="number" value={formData.garages} onChange={(e) => updateForm("garages", +e.target.value)} />
+                    <Input
+                      type="number"
+                      value={formData.garages}
+                      onChange={(e) => updateForm("garages", +e.target.value)}
+                    />
                   </div>
                 </div>
 
@@ -235,8 +286,13 @@ function NewDealPage() {
 
                 <div className="space-y-1.5">
                   <Label>Mandate Type</Label>
-                  <Select value={formData.mandateType} onValueChange={(v) => updateForm("mandateType", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={formData.mandateType}
+                    onValueChange={(v) => updateForm("mandateType", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Sole">Sole Mandate</SelectItem>
                       <SelectItem value="Joint">Joint Mandate</SelectItem>
@@ -257,8 +313,13 @@ function NewDealPage() {
 
                 <div className="space-y-1.5">
                   <Label>Commission Rate (% or basis points)</Label>
-                  <Select value={formData.commissionBps} onValueChange={(v) => updateForm("commissionBps", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={formData.commissionBps}
+                    onValueChange={(v) => updateForm("commissionBps", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="500">5.0% (500 bps)</SelectItem>
                       <SelectItem value="550">5.5% (550 bps)</SelectItem>
@@ -285,12 +346,16 @@ function NewDealPage() {
             <div className="space-y-6">
               <div>
                 <h3 className="font-display text-lg font-semibold">Step 2: Transaction Parties</h3>
-                <p className="text-xs text-muted-foreground">Capture Seller and Purchaser contact details and FICA status.</p>
+                <p className="text-xs text-muted-foreground">
+                  Capture Seller and Purchaser contact details and FICA status.
+                </p>
               </div>
 
               {/* Seller */}
               <div className="rounded-lg border border-border p-4 space-y-4">
-                <h4 className="font-display text-sm font-semibold text-primary">Seller Information</h4>
+                <h4 className="font-display text-sm font-semibold text-primary">
+                  Seller Information
+                </h4>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label>Seller Full Name / Entity *</Label>
@@ -319,8 +384,13 @@ function NewDealPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Seller FICA Status</Label>
-                    <Select value={formData.sellerFica} onValueChange={(v) => updateForm("sellerFica", v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={formData.sellerFica}
+                      onValueChange={(v) => updateForm("sellerFica", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Complete">Complete (Verified)</SelectItem>
                         <SelectItem value="Partial">Pending Documents</SelectItem>
@@ -333,7 +403,9 @@ function NewDealPage() {
 
               {/* Purchaser */}
               <div className="rounded-lg border border-border p-4 space-y-4">
-                <h4 className="font-display text-sm font-semibold text-primary">Purchaser Information</h4>
+                <h4 className="font-display text-sm font-semibold text-primary">
+                  Purchaser Information
+                </h4>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label>Purchaser Full Name / Entity *</Label>
@@ -362,8 +434,13 @@ function NewDealPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Purchaser FICA Status</Label>
-                    <Select value={formData.buyerFica} onValueChange={(v) => updateForm("buyerFica", v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={formData.buyerFica}
+                      onValueChange={(v) => updateForm("buyerFica", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Complete">Complete (Verified)</SelectItem>
                         <SelectItem value="Partial">Pending Documents</SelectItem>
@@ -380,8 +457,12 @@ function NewDealPage() {
           {step === 3 && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-display text-lg font-semibold">Step 3: OTP & Financial Summary</h3>
-                <p className="text-xs text-muted-foreground">Capture agreed sale price and appointed conveyancer attorney.</p>
+                <h3 className="font-display text-lg font-semibold">
+                  Step 3: OTP & Financial Summary
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Capture agreed sale price and appointed conveyancer attorney.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -411,8 +492,13 @@ function NewDealPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Appointed Conveyancer Firm</Label>
-                  <Select value={formData.conveyancer} onValueChange={(v) => updateForm("conveyancer", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={formData.conveyancer}
+                    onValueChange={(v) => updateForm("conveyancer", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       {conveyancerFirms.map((c) => (
                         <SelectItem key={c.id} value={c.name}>
@@ -425,7 +511,9 @@ function NewDealPage() {
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>Lead Listing Practitioner</Label>
                   <Select value={formData.agentId} onValueChange={(v) => updateForm("agentId", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       {users.map((u) => (
                         <SelectItem key={u.id} value={u.id}>
@@ -443,9 +531,12 @@ function NewDealPage() {
           {step === 4 && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-display text-lg font-semibold">Step 4: Suspensive Conditions & Deadlines</h3>
+                <h3 className="font-display text-lg font-semibold">
+                  Step 4: Suspensive Conditions & Deadlines
+                </h3>
                 <p className="text-xs text-muted-foreground">
-                  Set critical deadlines for Bond Approval and FICA clearance. Automated alerts will track these.
+                  Set critical deadlines for Bond Approval and FICA clearance. Automated alerts will
+                  track these.
                 </p>
               </div>
 
@@ -504,38 +595,53 @@ function NewDealPage() {
             <div className="space-y-6">
               <div>
                 <h3 className="font-display text-lg font-semibold">Step 5: Review Deal Summary</h3>
-                <p className="text-xs text-muted-foreground">Verify deal attributes before saving into pipeline.</p>
+                <p className="text-xs text-muted-foreground">
+                  Verify deal attributes before saving into pipeline.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="rounded-lg border border-border p-3 space-y-1">
                   <span className="text-xs text-muted-foreground">Property</span>
                   <p className="text-sm font-semibold">{formData.address || "N/A"}</p>
-                  <p className="text-xs text-muted-foreground">{formData.suburb}, {formData.city}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formData.suburb}, {formData.city}
+                  </p>
                 </div>
 
                 <div className="rounded-lg border border-border p-3 space-y-1">
                   <span className="text-xs text-muted-foreground">Sale & Mandate Price</span>
-                  <p className="text-sm font-semibold text-primary">{zar(parseFloat(formData.salePrice) || 0, { decimals: false })}</p>
-                  <p className="text-xs text-muted-foreground">Listing: {zar(parseFloat(formData.listingPrice) || 0, { decimals: false })} ({formData.mandateType})</p>
+                  <p className="text-sm font-semibold text-primary">
+                    {zar(parseFloat(formData.salePrice) || 0, { decimals: false })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Listing: {zar(parseFloat(formData.listingPrice) || 0, { decimals: false })} (
+                    {formData.mandateType})
+                  </p>
                 </div>
 
                 <div className="rounded-lg border border-border p-3 space-y-1">
                   <span className="text-xs text-muted-foreground">Seller</span>
                   <p className="text-sm font-semibold">{formData.sellerName || "N/A"}</p>
-                  <p className="text-xs text-muted-foreground">{formData.sellerEmail || "No email"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formData.sellerEmail || "No email"}
+                  </p>
                 </div>
 
                 <div className="rounded-lg border border-border p-3 space-y-1">
                   <span className="text-xs text-muted-foreground">Purchaser</span>
                   <p className="text-sm font-semibold">{formData.buyerName || "N/A"}</p>
-                  <p className="text-xs text-muted-foreground">{formData.buyerEmail || "No email"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formData.buyerEmail || "No email"}
+                  </p>
                 </div>
 
                 <div className="rounded-lg border border-border p-3 space-y-1 sm:col-span-2">
                   <span className="text-xs text-muted-foreground">Conveyancer & Lead Agent</span>
                   <p className="text-sm font-semibold">{formData.conveyancer}</p>
-                  <p className="text-xs text-muted-foreground">Agent: {users.find((u) => u.id === formData.agentId)?.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Agent: {users.find((u) => u.id === formData.agentId)?.name}
+                  </p>
                 </div>
               </div>
             </div>
@@ -552,7 +658,10 @@ function NewDealPage() {
                 Next <ArrowRight className="ml-1 size-4" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button
+                onClick={handleSubmit}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
                 Create Deal & Initialize Pipeline
               </Button>
             )}

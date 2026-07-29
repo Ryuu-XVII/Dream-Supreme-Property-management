@@ -17,7 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { dateTimeFmt } from "@/lib/format";
 import { deals, type Party } from "@/data/state";
@@ -28,9 +35,15 @@ export const Route = createFileRoute("/compliance/fica")({
   head: () => ({
     meta: [
       { title: "FICA Register | Dream Supreme Properties" },
-      { name: "description", content: "FICA compliance and POPIA consent register for every party across all deals." },
+      {
+        name: "description",
+        content: "FICA compliance and POPIA consent register for every party across all deals.",
+      },
       { property: "og:title", content: "FICA Register | Dream Supreme Properties" },
-      { property: "og:description", content: "FICA compliance and POPIA consent register for every party across all deals." },
+      {
+        property: "og:description",
+        content: "FICA compliance and POPIA consent register for every party across all deals.",
+      },
     ],
   }),
 });
@@ -53,7 +66,10 @@ function FicaRegister() {
     [],
   );
 
-  const entityTypes = useMemo(() => Array.from(new Set(allRows.map((r) => r.party.entityType))), [allRows]);
+  const entityTypes = useMemo(
+    () => Array.from(new Set(allRows.map((r) => r.party.entityType))),
+    [allRows],
+  );
 
   const rows = useMemo(
     () => allRows.filter((r) => entityFilter === "all" || r.party.entityType === entityFilter),
@@ -104,7 +120,10 @@ function FicaRegister() {
           </div>
         ) : rows.length === 0 ? (
           <div className="p-8">
-            <EmptyState title="No parties found" message="Adjust the entity type filter to see FICA parties." />
+            <EmptyState
+              title="No parties found"
+              message="Adjust the entity type filter to see FICA parties."
+            />
           </div>
         ) : (
           <div className="overflow-x-auto scrollbar-thin">
@@ -158,11 +177,17 @@ function FicaRegister() {
                         </TableCell>
                         <TableCell>
                           {popiaFor(party) ? (
-                            <Badge variant="outline" className="gap-1 border-success/30 bg-success/10 text-success">
+                            <Badge
+                              variant="outline"
+                              className="gap-1 border-success/30 bg-success/10 text-success"
+                            >
                               <ShieldCheck className="size-3" /> Consented
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="gap-1 border-destructive/30 bg-destructive/10 text-destructive">
+                            <Badge
+                              variant="outline"
+                              className="gap-1 border-destructive/30 bg-destructive/10 text-destructive"
+                            >
                               <ShieldOff className="size-3" /> No consent
                             </Badge>
                           )}
@@ -179,11 +204,20 @@ function FicaRegister() {
                                   </p>
                                   <div className="space-y-2.5">
                                     {party.checklist.map((c, idx) => (
-                                      <div key={c.label} className="flex items-center justify-between gap-3">
+                                      <div
+                                        key={c.label}
+                                        className="flex items-center justify-between gap-3"
+                                      >
                                         <label className="flex min-w-0 items-center gap-2 text-sm">
                                           <Checkbox
                                             checked={checklist[idx]}
-                                            onCheckedChange={() => toggleChecklist(party.id, idx, party.checklist.map((x) => x.done))}
+                                            onCheckedChange={() =>
+                                              toggleChecklist(
+                                                party.id,
+                                                idx,
+                                                party.checklist.map((x) => x.done),
+                                              )
+                                            }
                                           />
                                           <span className="truncate">{c.label}</span>
                                         </label>
@@ -192,7 +226,9 @@ function FicaRegister() {
                                           variant="outline"
                                           className="h-7 shrink-0 gap-1"
                                           onClick={() =>
-                                            toast.success("Document uploaded", { description: `${c.label} · ${party.name}` })
+                                            toast.success("Document uploaded", {
+                                              description: `${c.label} · ${party.name}`,
+                                            })
                                           }
                                         >
                                           <UploadCloud className="size-3.5" /> Upload
@@ -207,21 +243,28 @@ function FicaRegister() {
                                   </p>
                                   <GlassCard className="space-y-3 p-4">
                                     <div className="flex items-center justify-between">
-                                      <span className="text-sm font-medium">Consent to process personal information</span>
+                                      <span className="text-sm font-medium">
+                                        Consent to process personal information
+                                      </span>
                                       <Switch
                                         checked={popiaFor(party)}
                                         onCheckedChange={(v) => {
                                           setPopiaState((prev) => ({ ...prev, [party.id]: v }));
-                                          toast.success(v ? "POPIA consent recorded" : "POPIA consent withdrawn", {
-                                            description: party.name,
-                                          });
+                                          toast.success(
+                                            v
+                                              ? "POPIA consent recorded"
+                                              : "POPIA consent withdrawn",
+                                            {
+                                              description: party.name,
+                                            },
+                                          );
                                         }}
                                       />
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                      Purpose: processing of identity verification, FICA compliance, and transaction
-                                      documentation for the sale of immovable property in accordance with POPIA
-                                      section 11.
+                                      Purpose: processing of identity verification, FICA compliance,
+                                      and transaction documentation for the sale of immovable
+                                      property in accordance with POPIA section 11.
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                       {party.popiaAt

@@ -5,11 +5,20 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
-  DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useApp } from "@/lib/app-state";
@@ -59,19 +68,30 @@ export function Header() {
         </kbd>
       </button>
 
-      <div className="hidden items-center gap-2 lg:flex">
-      </div>
+      <div className="hidden items-center gap-2 lg:flex"></div>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" aria-label="Theme">
-            {theme === "dark" ? <Moon className="size-5" /> : theme === "light" ? <Sun className="size-5" /> : <Monitor className="size-5" />}
+            {theme === "dark" ? (
+              <Moon className="size-5" />
+            ) : theme === "light" ? (
+              <Sun className="size-5" />
+            ) : (
+              <Monitor className="size-5" />
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={() => setTheme("light")}><Sun className="size-4" /> Light</DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setTheme("dark")}><Moon className="size-4" /> Dark</DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setTheme("system")}><Monitor className="size-4" /> System</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setTheme("light")}>
+            <Sun className="size-4" /> Light
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setTheme("dark")}>
+            <Moon className="size-4" /> Dark
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setTheme("system")}>
+            <Monitor className="size-4" /> System
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -87,10 +107,15 @@ export function Header() {
           </Button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-80 p-0">
-          <div className="border-b border-border px-4 py-3 font-display text-sm font-semibold">Notifications</div>
+          <div className="border-b border-border px-4 py-3 font-display text-sm font-semibold">
+            Notifications
+          </div>
           <div className="max-h-80 overflow-y-auto">
             {notifications.map((n) => (
-              <div key={n.id} className="flex gap-3 border-b border-border/60 px-4 py-3 last:border-0">
+              <div
+                key={n.id}
+                className="flex gap-3 border-b border-border/60 px-4 py-3 last:border-0"
+              >
                 <span
                   className={cn(
                     "mt-1.5 size-2 shrink-0 rounded-full",
@@ -115,7 +140,9 @@ export function Header() {
         <DropdownMenuTrigger asChild>
           <button className="flex items-center gap-2 rounded-full pl-1 pr-2 transition-colors hover:bg-accent">
             <Avatar className="size-8">
-              <AvatarFallback className="bg-primary text-xs text-primary-foreground">{initials(me.name)}</AvatarFallback>
+              <AvatarFallback className="bg-primary text-xs text-primary-foreground">
+                {initials(me.name)}
+              </AvatarFallback>
             </Avatar>
           </button>
         </DropdownMenuTrigger>
@@ -125,11 +152,21 @@ export function Header() {
             <p className="text-xs font-normal text-muted-foreground">{agency.name}</p>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild><Link to="/settings/agency">Agency settings</Link></DropdownMenuItem>
-          <DropdownMenuItem asChild><Link to="/commission/earnings">My earnings</Link></DropdownMenuItem>
-          <DropdownMenuItem asChild><Link to="/register">Agent Registration</Link></DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/settings/agency">Agency settings</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/commission/earnings">My earnings</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/register">Agent Registration</Link>
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild><Link to="/login"><LogOut className="size-4" /> Sign out</Link></DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/login">
+              <LogOut className="size-4" /> Sign out
+            </Link>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -148,8 +185,12 @@ export function Header() {
                 }}
               >
                 <span className="font-mono text-xs">{dl.ref}</span>
-                <span className="truncate text-muted-foreground">{propertyById(dl.propertyId).address}</span>
-                <Badge variant="outline" className="ml-auto money text-[10px]">{zar(dl.salePrice, { decimals: false })}</Badge>
+                <span className="truncate text-muted-foreground">
+                  {propertyById(dl.propertyId).address}
+                </span>
+                <Badge variant="outline" className="ml-auto money text-[10px]">
+                  {zar(dl.salePrice, { decimals: false })}
+                </Badge>
               </CommandItem>
             ))}
           </CommandGroup>
@@ -166,10 +207,15 @@ export function Header() {
                 <item.icon className="size-4" /> {item.label}
               </CommandItem>
             ))}
-            <CommandItem value="New deal" onSelect={() => { setOpen(false); navigate({ to: "/deals/new" }); }}>
+            <CommandItem
+              value="New deal"
+              onSelect={() => {
+                setOpen(false);
+                navigate({ to: "/deals/new" });
+              }}
+            >
               Create new deal
             </CommandItem>
-
           </CommandGroup>
         </CommandList>
       </CommandDialog>

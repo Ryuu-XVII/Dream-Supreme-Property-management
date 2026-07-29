@@ -74,7 +74,8 @@ export interface Condition {
   responsibleParty: "Purchaser" | "Seller" | "Agent" | "Conveyancer";
 }
 
-export type EntityType = "Natural Person" | "Company" | "Close Corporation" | "Trust" | "Deceased Estate";
+export type EntityType =
+  "Natural Person" | "Company" | "Close Corporation" | "Trust" | "Deceased Estate";
 
 export interface Party {
   id: string;

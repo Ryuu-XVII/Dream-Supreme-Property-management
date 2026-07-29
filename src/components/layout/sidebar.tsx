@@ -1,8 +1,19 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard, KanbanSquare, Timer, Coins, ShieldCheck, FolderOpen,
-  Calculator, Users2, BarChart3, Settings, ChevronLeft, Menu, X,
+  LayoutDashboard,
+  KanbanSquare,
+  Timer,
+  Coins,
+  ShieldCheck,
+  FolderOpen,
+  Calculator,
+  Users2,
+  BarChart3,
+  Settings,
+  ChevronLeft,
+  Menu,
+  X,
 } from "lucide-react";
 import { useApp } from "@/lib/app-state";
 import { cn } from "@/lib/utils";
@@ -26,7 +37,10 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
   return (
     <nav className="flex flex-col gap-1 px-3">
       {navItems.map((item) => {
-        const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to.split("/").slice(0, 2).join("/"));
+        const active =
+          item.to === "/"
+            ? pathname === "/"
+            : pathname.startsWith(item.to.split("/").slice(0, 2).join("/"));
         return (
           <Link
             key={item.label}
@@ -70,7 +84,9 @@ export function Sidebar() {
         </div>
         {!sidebarCollapsed && (
           <div className="min-w-0">
-            <p className="truncate font-display text-sm font-semibold text-sidebar-accent-foreground">Dream Supreme</p>
+            <p className="truncate font-display text-sm font-semibold text-sidebar-accent-foreground">
+              Dream Supreme
+            </p>
             <p className="truncate text-[11px] text-sidebar-foreground/60">Properties</p>
           </div>
         )}
@@ -82,7 +98,9 @@ export function Sidebar() {
         onClick={toggleSidebar}
         className="m-3 flex items-center justify-center gap-2 rounded-lg border border-sidebar-border py-2 text-xs text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/60"
       >
-        <ChevronLeft className={cn("size-4 transition-transform", sidebarCollapsed && "rotate-180")} />
+        <ChevronLeft
+          className={cn("size-4 transition-transform", sidebarCollapsed && "rotate-180")}
+        />
         {!sidebarCollapsed && "Collapse"}
       </button>
     </aside>
@@ -104,7 +122,9 @@ export function MobileNav() {
             className="fixed inset-0 z-50 bg-sidebar/95 backdrop-blur-sm md:hidden"
           >
             <div className="flex h-16 items-center justify-between px-5">
-              <span className="font-display font-semibold text-sidebar-accent-foreground">Menu</span>
+              <span className="font-display font-semibold text-sidebar-accent-foreground">
+                Menu
+              </span>
               <button onClick={() => setOpen(false)} className="text-sidebar-foreground">
                 <X className="size-5" />
               </button>
@@ -132,7 +152,10 @@ export function MobileNav() {
             </Link>
           );
         })}
-        <button onClick={() => setOpen(true)} className="flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium text-muted-foreground">
+        <button
+          onClick={() => setOpen(true)}
+          className="flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium text-muted-foreground"
+        >
           <Menu className="size-5" />
           More
         </button>

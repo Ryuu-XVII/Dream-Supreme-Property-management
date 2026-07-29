@@ -60,9 +60,15 @@ export const Route = createFileRoute("/countdown")({
   head: () => ({
     meta: [
       { title: "Countdown Board | Dream Supreme Properties" },
-      { name: "description", content: "Live countdown board tracking every suspensive condition across the agency." },
+      {
+        name: "description",
+        content: "Live countdown board tracking every suspensive condition across the agency.",
+      },
       { property: "og:title", content: "Countdown Board | Dream Supreme Properties" },
-      { property: "og:description", content: "Live countdown board tracking every suspensive condition across the agency." },
+      {
+        property: "og:description",
+        content: "Live countdown board tracking every suspensive condition across the agency.",
+      },
     ],
   }),
 });
@@ -105,7 +111,15 @@ function LiveSeconds() {
   );
 }
 
-function CountdownDisplay({ days, status, mostUrgent }: { days: number; status: LocalStatus; mostUrgent?: boolean }) {
+function CountdownDisplay({
+  days,
+  status,
+  mostUrgent,
+}: {
+  days: number;
+  status: LocalStatus;
+  mostUrgent?: boolean;
+}) {
   if (status !== "Open" && status !== "Extended") {
     return (
       <div className="flex items-center gap-2">
@@ -119,8 +133,12 @@ function CountdownDisplay({ days, status, mostUrgent }: { days: number; status: 
     <div className="flex flex-col">
       {lapsed ? (
         <div className="flex items-baseline gap-2">
-          <span className="money text-3xl font-bold leading-none text-destructive">{Math.abs(days)}</span>
-          <span className="text-xs font-semibold uppercase tracking-wide text-destructive">days overdue</span>
+          <span className="money text-3xl font-bold leading-none text-destructive">
+            {Math.abs(days)}
+          </span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-destructive">
+            days overdue
+          </span>
         </div>
       ) : (
         <div className="flex items-baseline gap-2">
@@ -132,12 +150,17 @@ function CountdownDisplay({ days, status, mostUrgent }: { days: number; status: 
           >
             {days}
           </span>
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">days remaining</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            days remaining
+          </span>
         </div>
       )}
       <div className="mt-1 flex items-center gap-2">
         {lapsed && (
-          <Badge variant="outline" className="border-destructive/30 bg-destructive/10 text-[10px] text-destructive">
+          <Badge
+            variant="outline"
+            className="border-destructive/30 bg-destructive/10 text-[10px] text-destructive"
+          >
             LAPSED
           </Badge>
         )}
@@ -163,12 +186,19 @@ function ExtendDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Extend condition deadline</DialogTitle>
-          <DialogDescription>Choose a new due date and capture a reason for the extension.</DialogDescription>
+          <DialogDescription>
+            Choose a new due date and capture a reason for the extension.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label htmlFor="extend-date">New due date</Label>
-            <Input id="extend-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            <Input
+              id="extend-date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="extend-reason">Reason for extension</Label>
@@ -207,7 +237,11 @@ function ActionButtons({
   onAction,
 }: {
   row: ConditionRow;
-  onAction: (id: string, status: LocalStatus, extra?: { dueDate?: string; reason?: string }) => void;
+  onAction: (
+    id: string,
+    status: LocalStatus,
+    extra?: { dueDate?: string; reason?: string },
+  ) => void;
 }) {
   const [extendOpen, setExtendOpen] = useState(false);
   return (
@@ -263,7 +297,11 @@ function ConditionCard({
   dueDate: string;
   days: number;
   mostUrgent?: boolean;
-  onAction: (id: string, status: LocalStatus, extra?: { dueDate?: string; reason?: string }) => void;
+  onAction: (
+    id: string,
+    status: LocalStatus,
+    extra?: { dueDate?: string; reason?: string },
+  ) => void;
   index: number;
 }) {
   const u = urgencyOf(days);
@@ -280,7 +318,9 @@ function ConditionCard({
       <GlassCard
         className={cn(
           "flex h-full flex-col gap-3",
-          active && (u === "lapsed" || u === "critical") && "pulse-danger ring-1 ring-destructive/40",
+          active &&
+            (u === "lapsed" || u === "critical") &&
+            "pulse-danger ring-1 ring-destructive/40",
           active && u === "warning" && "ring-1 ring-warning/40",
           active && u === "safe" && "ring-1 ring-success/20",
         )}
@@ -290,21 +330,30 @@ function ConditionCard({
             <span
               className={cn(
                 "grid size-9 shrink-0 place-items-center rounded-lg",
-                u === "lapsed" || u === "critical" ? "bg-destructive/10 text-destructive"
-                : u === "warning" ? "bg-warning/15 text-warning"
-                : "bg-success/10 text-success",
+                u === "lapsed" || u === "critical"
+                  ? "bg-destructive/10 text-destructive"
+                  : u === "warning"
+                    ? "bg-warning/15 text-warning"
+                    : "bg-success/10 text-success",
               )}
             >
               <Icon className="size-4.5" />
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{row.type}</p>
-              <Link to="/deals/$dealId" params={{ dealId: row.deal.id }} className="money truncate text-xs text-primary hover:underline">
+              <Link
+                to="/deals/$dealId"
+                params={{ dealId: row.deal.id }}
+                className="money truncate text-xs text-primary hover:underline"
+              >
                 {row.deal.ref}
               </Link>
             </div>
           </div>
-          <Badge variant="outline" className={cn("shrink-0 text-[10px]", urgencyClass[active ? u : "safe"])}>
+          <Badge
+            variant="outline"
+            className={cn("shrink-0 text-[10px]", urgencyClass[active ? u : "safe"])}
+          >
             {row.responsibleParty}
           </Badge>
         </div>
@@ -351,7 +400,11 @@ function ConditionRowView({
   dueDate: string;
   days: number;
   mostUrgent?: boolean;
-  onAction: (id: string, status: LocalStatus, extra?: { dueDate?: string; reason?: string }) => void;
+  onAction: (
+    id: string,
+    status: LocalStatus,
+    extra?: { dueDate?: string; reason?: string },
+  ) => void;
 }) {
   const u = urgencyOf(days);
   const active = status === "Open" || status === "Extended";
@@ -369,9 +422,11 @@ function ConditionRowView({
       <span
         className={cn(
           "grid size-9 shrink-0 place-items-center rounded-lg",
-          u === "lapsed" || u === "critical" ? "bg-destructive/10 text-destructive"
-          : u === "warning" ? "bg-warning/15 text-warning"
-          : "bg-success/10 text-success",
+          u === "lapsed" || u === "critical"
+            ? "bg-destructive/10 text-destructive"
+            : u === "warning"
+              ? "bg-warning/15 text-warning"
+              : "bg-success/10 text-success",
         )}
       >
         <Icon className="size-4.5" />
@@ -380,7 +435,11 @@ function ConditionRowView({
         <p className="truncate text-sm font-semibold">{row.type}</p>
         <p className="truncate text-xs text-muted-foreground">{row.description}</p>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-          <Link to="/deals/$dealId" params={{ dealId: row.deal.id }} className="money text-primary hover:underline">
+          <Link
+            to="/deals/$dealId"
+            params={{ dealId: row.deal.id }}
+            className="money text-primary hover:underline"
+          >
             {row.deal.ref}
           </Link>
           <span className="truncate text-muted-foreground">· {property?.address}</span>
@@ -415,7 +474,8 @@ function CountdownBoard() {
   const rows = useMemo(() => {
     return (openConditions as ConditionRow[]).map((c) => {
       const ov = overrides[c.id];
-      const status: LocalStatus = ov?.status ?? (c.status === "Failed" ? "Open" : (c.status as LocalStatus));
+      const status: LocalStatus =
+        ov?.status ?? (c.status === "Failed" ? "Open" : (c.status as LocalStatus));
       const dueDate = ov?.dueDate ?? c.dueDate;
       const days = daysUntil(dueDate);
       return { row: c, status, dueDate, days };
@@ -452,8 +512,15 @@ function CountdownBoard() {
 
   const mostUrgentId = sorted.find((r) => r.status === "Open" || r.status === "Extended")?.row.id;
 
-  function handleAction(id: string, status: LocalStatus, extra?: { dueDate?: string; reason?: string }) {
-    setOverrides((prev) => ({ ...prev, [id]: { status, dueDate: extra?.dueDate, reason: extra?.reason } }));
+  function handleAction(
+    id: string,
+    status: LocalStatus,
+    extra?: { dueDate?: string; reason?: string },
+  ) {
+    setOverrides((prev) => ({
+      ...prev,
+      [id]: { status, dueDate: extra?.dueDate, reason: extra?.reason },
+    }));
   }
 
   return (
@@ -484,9 +551,27 @@ function CountdownBoard() {
     >
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard label="Total conditions" value={stats.total} icon={Timer} delay={0} />
-        <KpiCard label="Overdue" value={stats.overdue} tone="danger" icon={AlertTriangle} delay={0.05} />
-        <KpiCard label="Due this week" value={stats.dueSoon} tone="warning" icon={Clock3} delay={0.1} />
-        <KpiCard label="On track" value={stats.onTrack} tone="success" icon={CheckCircle2} delay={0.15} />
+        <KpiCard
+          label="Overdue"
+          value={stats.overdue}
+          tone="danger"
+          icon={AlertTriangle}
+          delay={0.05}
+        />
+        <KpiCard
+          label="Due this week"
+          value={stats.dueSoon}
+          tone="warning"
+          icon={Clock3}
+          delay={0.1}
+        />
+        <KpiCard
+          label="On track"
+          value={stats.onTrack}
+          tone="success"
+          icon={CheckCircle2}
+          delay={0.15}
+        />
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
@@ -538,7 +623,10 @@ function CountdownBoard() {
             ))}
           </div>
         ) : sorted.length === 0 ? (
-          <EmptyState title="No matching conditions" message="Try adjusting your filters to see conditions." />
+          <EmptyState
+            title="No matching conditions"
+            message="Try adjusting your filters to see conditions."
+          />
         ) : view === "cards" ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <AnimatePresence>

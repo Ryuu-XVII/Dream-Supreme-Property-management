@@ -5,7 +5,14 @@ import { SliderInput } from "@/components/calculators/slider-input";
 import { GlassCard } from "@/components/ui-kit";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { transferDutyBrackets } from "@/data/state";
 
@@ -13,9 +20,17 @@ export const Route = createFileRoute("/calculators/transfer")({
   head: () => ({
     meta: [
       { title: "Transfer Cost Calculator | Dream Supreme Properties" },
-      { name: "description", content: "Estimate transfer duty, conveyancing fees and total transfer costs on a property purchase." },
+      {
+        name: "description",
+        content:
+          "Estimate transfer duty, conveyancing fees and total transfer costs on a property purchase.",
+      },
       { property: "og:title", content: "Transfer Cost Calculator | Dream Supreme Properties" },
-      { property: "og:description", content: "Estimate transfer duty, conveyancing fees and total transfer costs on a property purchase." },
+      {
+        property: "og:description",
+        content:
+          "Estimate transfer duty, conveyancing fees and total transfer costs on a property purchase.",
+      },
     ],
   }),
   component: TransferCalculatorPage,
@@ -29,7 +44,8 @@ function calcDuty(priceCents: number) {
   const bracket = transferDutyBrackets.find(
     (b) => priceCents > b.from && (b.to === null || priceCents <= b.to),
   );
-  if (!bracket || bracket.rate === 0) return { duty: 0, bracket: bracket ?? transferDutyBrackets[0] };
+  if (!bracket || bracket.rate === 0)
+    return { duty: 0, bracket: bracket ?? transferDutyBrackets[0] };
   const duty = bracket.base + ((priceCents - bracket.from) * bracket.rate) / 100;
   return { duty, bracket };
 }
@@ -75,13 +91,35 @@ function TransferCalculatorPage() {
     >
       <div className="grid gap-5 lg:grid-cols-2">
         <GlassCard className="space-y-6">
-          <h2 className="font-display text-sm font-semibold text-muted-foreground">Purchase details</h2>
-          <SliderInput label="Purchase price" value={price} onChange={setPrice} min={200_000} max={20_000_000} step={10_000} format="zar" />
-          <SliderInput label="Bond amount" value={bondAmount} onChange={setBondAmount} min={0} max={20_000_000} step={10_000} format="zar" />
+          <h2 className="font-display text-sm font-semibold text-muted-foreground">
+            Purchase details
+          </h2>
+          <SliderInput
+            label="Purchase price"
+            value={price}
+            onChange={setPrice}
+            min={200_000}
+            max={20_000_000}
+            step={10_000}
+            format="zar"
+          />
+          <SliderInput
+            label="Bond amount"
+            value={bondAmount}
+            onChange={setBondAmount}
+            min={0}
+            max={20_000_000}
+            step={10_000}
+            format="zar"
+          />
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 p-3">
             <div className="min-w-0">
-              <Label htmlFor="vat-toggle" className="text-sm">Seller is a VAT vendor</Label>
-              <p className="text-[11px] text-muted-foreground">Sale is subject to VAT instead of transfer duty</p>
+              <Label htmlFor="vat-toggle" className="text-sm">
+                Seller is a VAT vendor
+              </Label>
+              <p className="text-[11px] text-muted-foreground">
+                Sale is subject to VAT instead of transfer duty
+              </p>
             </div>
             <Switch id="vat-toggle" checked={vatVendor} onCheckedChange={setVatVendor} />
           </div>
@@ -94,8 +132,12 @@ function TransferCalculatorPage() {
 
         <div className="space-y-5">
           <GlassCard>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total transfer costs</p>
-            <p className="money mt-2 text-3xl font-bold text-primary sm:text-4xl">{zarFmt(total)}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Total transfer costs
+            </p>
+            <p className="money mt-2 text-3xl font-bold text-primary sm:text-4xl">
+              {zarFmt(total)}
+            </p>
             <div className="mt-5 space-y-2.5 border-t border-border/60 pt-4 text-sm">
               <Row label="Transfer duty" value={duty} />
               <Row label="Conveyancing fees (incl. VAT est.)" value={conveyancing} />
@@ -109,7 +151,9 @@ function TransferCalculatorPage() {
 
       <GlassCard className="mt-5 p-0">
         <div className="p-5 pb-0">
-          <h3 className="font-display text-sm font-semibold text-muted-foreground">Transfer duty bracket breakdown</h3>
+          <h3 className="font-display text-sm font-semibold text-muted-foreground">
+            Transfer duty bracket breakdown
+          </h3>
         </div>
         <div className="overflow-x-auto scrollbar-thin p-5">
           <Table>
@@ -127,7 +171,9 @@ function TransferCalculatorPage() {
                 return (
                   <TableRow key={i} className={cn(applied && "bg-primary/5")}>
                     <TableCell className="money">{zarFmt(b.from / 100)}</TableCell>
-                    <TableCell className="money">{b.to ? zarFmt(b.to / 100) : "and above"}</TableCell>
+                    <TableCell className="money">
+                      {b.to ? zarFmt(b.to / 100) : "and above"}
+                    </TableCell>
                     <TableCell className="money text-right">{b.rate}%</TableCell>
                     <TableCell className="text-right">
                       {applied ? (

@@ -6,18 +6,43 @@ import { userById, type Deal, type Condition, type ConditionStatus } from "@/dat
 import { dateFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Landmark, Home, Wallet, Building, SearchCheck, Zap, CheckCircle2, Clock, Ban, XOctagon,
+  Landmark,
+  Home,
+  Wallet,
+  Building,
+  SearchCheck,
+  Zap,
+  CheckCircle2,
+  Clock,
+  Ban,
+  XOctagon,
 } from "lucide-react";
 
 const typeIcons: Record<Condition["type"], React.ComponentType<{ className?: string }>> = {
@@ -50,7 +75,12 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
     setConditions((cs) =>
       cs.map((c) =>
         c.id === extendTarget.id
-          ? { ...c, status: "Extended", originalDueDate: c.originalDueDate ?? c.dueDate, dueDate: newDate }
+          ? {
+              ...c,
+              status: "Extended",
+              originalDueDate: c.originalDueDate ?? c.dueDate,
+              dueDate: newDate,
+            }
           : c,
       ),
     );
@@ -65,7 +95,9 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
       <GlassCard>
         <h3 className="mb-3 font-display text-base font-semibold">Suspensive conditions</h3>
         {conditions.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">No suspensive conditions attached to this deal.</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            No suspensive conditions attached to this deal.
+          </p>
         ) : (
           <div className="overflow-x-auto scrollbar-thin">
             <Table>
@@ -91,24 +123,59 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
                           <Icon className="size-4 text-primary" /> {c.type}
                         </span>
                       </TableCell>
-                      <TableCell className="max-w-[240px] truncate text-sm">{c.description}</TableCell>
+                      <TableCell className="max-w-[240px] truncate text-sm">
+                        {c.description}
+                      </TableCell>
                       <TableCell className="text-xs">{dateFmt(c.dueDate)}</TableCell>
-                      <TableCell><UrgencyBadge dueDate={c.dueDate} status={c.status} /></TableCell>
-                      <TableCell><Badge variant="outline">{c.status}</Badge></TableCell>
-                      <TableCell className="text-xs">{c.responsibleParty}<br /><span className="text-muted-foreground">{userById(c.responsibleUserId)?.name}</span></TableCell>
+                      <TableCell>
+                        <UrgencyBadge dueDate={c.dueDate} status={c.status} />
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{c.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {c.responsibleParty}
+                        <br />
+                        <span className="text-muted-foreground">
+                          {userById(c.responsibleUserId)?.name}
+                        </span>
+                      </TableCell>
                       <TableCell className="text-right">
                         {isOpen ? (
                           <div className="flex flex-wrap justify-end gap-1">
-                            <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-[11px]" onClick={() => setStatus(c.id, "Fulfilled")}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 gap-1 px-2 text-[11px]"
+                              onClick={() => setStatus(c.id, "Fulfilled")}
+                            >
                               <CheckCircle2 className="size-3" /> Fulfil
                             </Button>
-                            <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-[11px]" onClick={() => { setExtendTarget(c); setNewDate(c.dueDate); }}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 gap-1 px-2 text-[11px]"
+                              onClick={() => {
+                                setExtendTarget(c);
+                                setNewDate(c.dueDate);
+                              }}
+                            >
                               <Clock className="size-3" /> Extend
                             </Button>
-                            <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-[11px]" onClick={() => setStatus(c.id, "Waived")}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 gap-1 px-2 text-[11px]"
+                              onClick={() => setStatus(c.id, "Waived")}
+                            >
                               <Ban className="size-3" /> Waive
                             </Button>
-                            <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-[11px] text-destructive" onClick={() => setStatus(c.id, "Failed")}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 gap-1 px-2 text-[11px] text-destructive"
+                              onClick={() => setStatus(c.id, "Failed")}
+                            >
                               <XOctagon className="size-3" /> Fail
                             </Button>
                           </div>
@@ -130,18 +197,40 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <Label className="mb-1 block text-xs text-muted-foreground">Status</Label>
-            <Select value={bondStatus} onValueChange={(v) => { setBondStatus(v as Deal["bond"]["status"]); toast.success("Bond status updated"); }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select
+              value={bondStatus}
+              onValueChange={(v) => {
+                setBondStatus(v as Deal["bond"]["status"]);
+                toast.success("Bond status updated");
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {["Not applied", "Submitted", "Declined", "Approved in principle", "Formally granted"].map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                {[
+                  "Not applied",
+                  "Submitted",
+                  "Declined",
+                  "Approved in principle",
+                  "Formally granted",
+                ].map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <Detail label="Institution" value={deal.bond.institution} />
-          <Detail label="Applied" value={deal.bond.appliedAt ? dateFmt(deal.bond.appliedAt) : "—"} />
-          <Detail label="Decided" value={deal.bond.decidedAt ? dateFmt(deal.bond.decidedAt) : "—"} />
+          <Detail
+            label="Applied"
+            value={deal.bond.appliedAt ? dateFmt(deal.bond.appliedAt) : "—"}
+          />
+          <Detail
+            label="Decided"
+            value={deal.bond.decidedAt ? dateFmt(deal.bond.decidedAt) : "—"}
+          />
         </div>
       </GlassCard>
 
@@ -150,7 +239,8 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
           <DialogHeader>
             <DialogTitle>Extend condition</DialogTitle>
             <DialogDescription>
-              Original due date: {extendTarget ? dateFmt(extendTarget.originalDueDate ?? extendTarget.dueDate) : ""}
+              Original due date:{" "}
+              {extendTarget ? dateFmt(extendTarget.originalDueDate ?? extendTarget.dueDate) : ""}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -159,12 +249,20 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
               <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
             </div>
             <div>
-              <Label className="mb-1 block text-xs text-muted-foreground">Reason for extension (required)</Label>
-              <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Explain why this condition needs extending..." />
+              <Label className="mb-1 block text-xs text-muted-foreground">
+                Reason for extension (required)
+              </Label>
+              <Textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Explain why this condition needs extending..."
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setExtendTarget(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setExtendTarget(null)}>
+              Cancel
+            </Button>
             <Button onClick={submitExtension}>Confirm extension</Button>
           </DialogFooter>
         </DialogContent>

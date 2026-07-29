@@ -10,9 +10,15 @@ export const Route = createFileRoute("/reports/")({
   head: () => ({
     meta: [
       { title: "Reports | Dream Supreme Properties" },
-      { name: "description", content: "Pipeline, fall-through, commission and compliance reporting for the agency." },
+      {
+        name: "description",
+        content: "Pipeline, fall-through, commission and compliance reporting for the agency.",
+      },
       { property: "og:title", content: "Reports | Dream Supreme Properties" },
-      { property: "og:description", content: "Pipeline, fall-through, commission and compliance reporting for the agency." },
+      {
+        property: "og:description",
+        content: "Pipeline, fall-through, commission and compliance reporting for the agency.",
+      },
     ],
   }),
   component: ReportsHub,
@@ -21,13 +27,16 @@ export const Route = createFileRoute("/reports/")({
 const totalCancellations = fallThroughReasons.reduce((a, r) => a + r.count, 0);
 const activeDeals = deals.filter((d) => !d.cancelled).length;
 const lastMonth = monthlyCommission[monthlyCommission.length - 1] ?? { gross: 0 };
-const compliantUsers = users.filter((u) => u.ffc && new Date(u.ffc.expiry ?? 0) > new Date()).length;
+const compliantUsers = users.filter(
+  (u) => u.ffc && new Date(u.ffc.expiry ?? 0) > new Date(),
+).length;
 
 const reportCards = [
   {
     key: "pipeline",
     title: "Pipeline Report",
-    description: "Deals by stage across branches, average days-in-stage, and stage-to-stage conversion funnel.",
+    description:
+      "Deals by stage across branches, average days-in-stage, and stage-to-stage conversion funnel.",
     icon: GitBranch,
     stat: `${activeDeals} active deals`,
     tone: "bg-info/10 text-info",
@@ -35,7 +44,8 @@ const reportCards = [
   {
     key: "fall-through",
     title: "Fall-Through Report",
-    description: "Cancellation reasons breakdown and the monthly fall-through trend across the agency.",
+    description:
+      "Cancellation reasons breakdown and the monthly fall-through trend across the agency.",
     icon: AlertTriangle,
     stat: `${totalCancellations} cancellations YTD`,
     tone: "bg-destructive/10 text-destructive",
@@ -43,7 +53,8 @@ const reportCards = [
   {
     key: "commission",
     title: "Commission Report",
-    description: "Monthly earnings by agent, cumulative year-to-date commission, and total agency payouts.",
+    description:
+      "Monthly earnings by agent, cumulative year-to-date commission, and total agency payouts.",
     icon: Wallet,
     stat: `${zarCompact(lastMonth.gross)} gross last month`,
     tone: "bg-success/10 text-success",
@@ -60,15 +71,26 @@ const reportCards = [
 
 function ReportsHub() {
   return (
-    <AppShell title="Reports" description="Agency-wide performance and compliance reporting." crumbs={[{ label: "Reports" }]}>
+    <AppShell
+      title="Reports"
+      description="Agency-wide performance and compliance reporting."
+      crumbs={[{ label: "Reports" }]}
+    >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {reportCards.map((r, i) => (
-          <motion.div key={r.key} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06, duration: 0.3 }}>
+          <motion.div
+            key={r.key}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.06, duration: 0.3 }}
+          >
             <Link to="/reports/$report" params={{ report: r.key }} className="block h-full">
               <GlassCard className="flex h-full flex-col justify-between">
                 <div>
                   <div className="mb-4 flex items-center justify-between gap-3">
-                    <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${r.tone}`}>
+                    <span
+                      className={`grid size-10 shrink-0 place-items-center rounded-xl ${r.tone}`}
+                    >
                       <r.icon className="size-5" />
                     </span>
                     <ArrowRight className="size-4 text-muted-foreground" />

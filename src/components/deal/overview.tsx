@@ -20,8 +20,12 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
           <Badge variant="outline">{property?.type}</Badge>
         </div>
         <p className="text-sm font-medium">{property?.address}</p>
-        <p className="mb-4 text-sm text-muted-foreground">{property?.suburb}, {property?.city}</p>
-        {property?.schemeName && <p className="mb-4 text-xs text-muted-foreground">Scheme: {property.schemeName}</p>}
+        <p className="mb-4 text-sm text-muted-foreground">
+          {property?.suburb}, {property?.city}
+        </p>
+        {property?.schemeName && (
+          <p className="mb-4 text-xs text-muted-foreground">Scheme: {property.schemeName}</p>
+        )}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat icon={BedDouble} label="Beds" value={property?.beds} />
           <Stat icon={Bath} label="Baths" value={property?.baths} />
@@ -32,8 +36,14 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
           <p className="mt-3 text-xs text-muted-foreground">Erf size: {property.erfSize} m²</p>
         )}
         <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-3">
-          <Detail label="Sale price" value={<span className="money">{zar(deal.salePrice, { decimals: false })}</span>} />
-          <Detail label="Listing price" value={<span className="money">{zar(deal.listingPrice, { decimals: false })}</span>} />
+          <Detail
+            label="Sale price"
+            value={<span className="money">{zar(deal.salePrice, { decimals: false })}</span>}
+          />
+          <Detail
+            label="Listing price"
+            value={<span className="money">{zar(deal.listingPrice, { decimals: false })}</span>}
+          />
           <Detail label="Mandate type" value={deal.mandateType} />
           <Detail label="Mandate signed" value={dateFmt(deal.mandateSigned)} />
           <Detail label="Mandate expiry" value={dateFmt(deal.mandateExpiry)} />
@@ -56,12 +66,16 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
           {deal.parties.map((party) => (
             <div key={party.id} className="rounded-lg border border-border p-3">
               <div className="mb-1 flex items-center justify-between gap-2">
-                <Badge variant="outline" className="text-[10px]">{party.side}</Badge>
+                <Badge variant="outline" className="text-[10px]">
+                  {party.side}
+                </Badge>
                 <FicaBadge status={party.fica} />
               </div>
               <p className="truncate text-sm font-medium">{party.name}</p>
               <p className="text-xs text-muted-foreground">{party.entityType}</p>
-              <p className="mt-1 truncate text-xs text-muted-foreground">{party.email} · {party.mobile}</p>
+              <p className="mt-1 truncate text-xs text-muted-foreground">
+                {party.email} · {party.mobile}
+              </p>
             </div>
           ))}
         </div>
@@ -79,7 +93,9 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
                 <AgentAvatar user={user} showName size={7} />
                 <div className="flex shrink-0 items-center gap-2">
                   <span className="text-xs text-muted-foreground">{p.role}</span>
-                  <Badge variant="outline" className="font-mono text-[10px]">{p.splitPct}%</Badge>
+                  <Badge variant="outline" className="font-mono text-[10px]">
+                    {p.splitPct}%
+                  </Badge>
                   {p.external && <ExternalLink className="size-3 text-muted-foreground" />}
                 </div>
               </div>
@@ -91,7 +107,15 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
   );
 }
 
-function Stat({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value?: React.ReactNode }) {
+function Stat({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value?: React.ReactNode;
+}) {
   return (
     <div className="flex items-center gap-2 rounded-lg bg-muted/40 px-2.5 py-2">
       <Icon className="size-4 shrink-0 text-muted-foreground" />

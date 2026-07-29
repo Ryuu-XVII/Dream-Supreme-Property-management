@@ -15,25 +15,52 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
-  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Plus, Pencil, Archive, ShieldAlert, Users as UsersIcon } from "lucide-react";
 
 export const Route = createFileRoute("/settings/users")({
   head: () => ({
     meta: [
       { title: "User Management | Dream Supreme Properties" },
-      { name: "description", content: "Manage agency users, roles, branches, FFC status and access." },
+      {
+        name: "description",
+        content: "Manage agency users, roles, branches, FFC status and access.",
+      },
       { property: "og:title", content: "User Management | Dream Supreme Properties" },
-      { property: "og:description", content: "Manage agency users, roles, branches, FFC status and access." },
+      {
+        property: "og:description",
+        content: "Manage agency users, roles, branches, FFC status and access.",
+      },
     ],
   }),
   component: UsersPage,
@@ -53,24 +80,45 @@ interface Draft {
 }
 
 function emptyDraft(): Draft {
-  return { name: "", email: "", mobile: "", role: "Agent", branch: branches[0].name, ppra: "", candidate: false, supervisor: "" };
+  return {
+    name: "",
+    email: "",
+    mobile: "",
+    role: "Agent",
+    branch: branches[0].name,
+    ppra: "",
+    candidate: false,
+    supervisor: "",
+  };
 }
 
 function roleTone(role: Role) {
   switch (role) {
-    case "Principal": return "border-primary/30 bg-primary/10 text-primary";
-    case "Admin": return "border-info/30 bg-info/10 text-info";
-    case "Agent": return "border-success/30 bg-success/10 text-success";
-    case "Candidate": return "border-warning/40 bg-warning/15 text-warning";
+    case "Principal":
+      return "border-primary/30 bg-primary/10 text-primary";
+    case "Admin":
+      return "border-info/30 bg-info/10 text-info";
+    case "Agent":
+      return "border-success/30 bg-success/10 text-success";
+    case "Candidate":
+      return "border-warning/40 bg-warning/15 text-warning";
   }
 }
 
 function ffcStatus(u: User): { label: string; tone: string } {
   if (!u.ffc) return { label: "N/A", tone: "bg-muted text-muted-foreground" };
   const days = Math.round((new Date(u.ffc.expiry ?? "").getTime() - Date.now()) / 86400000);
-  if (days < 0) return { label: "Expired", tone: "border-destructive/30 bg-destructive/10 text-destructive" };
-  if (days <= 30) return { label: `Expires ${dateFmt(u.ffc.expiry!)}`, tone: "border-warning/40 bg-warning/15 text-warning" };
-  return { label: `Valid to ${dateFmt(u.ffc.expiry!)}`, tone: "border-success/30 bg-success/10 text-success" };
+  if (days < 0)
+    return { label: "Expired", tone: "border-destructive/30 bg-destructive/10 text-destructive" };
+  if (days <= 30)
+    return {
+      label: `Expires ${dateFmt(u.ffc.expiry!)}`,
+      tone: "border-warning/40 bg-warning/15 text-warning",
+    };
+  return {
+    label: `Valid to ${dateFmt(u.ffc.expiry!)}`,
+    tone: "border-success/30 bg-success/10 text-success",
+  };
 }
 
 function UsersPage() {
@@ -148,17 +196,28 @@ function UsersPage() {
 
   function confirmArchive() {
     if (!archiveTarget) return;
-    setUserList((prev) => prev.map((u) => (u.id === archiveTarget.id ? { ...u, active: !u.active } : u)));
-    toast.success(archiveTarget.active ? "User archived" : "User restored", { description: archiveTarget.name });
+    setUserList((prev) =>
+      prev.map((u) => (u.id === archiveTarget.id ? { ...u, active: !u.active } : u)),
+    );
+    toast.success(archiveTarget.active ? "User archived" : "User restored", {
+      description: archiveTarget.name,
+    });
     setArchiveTarget(null);
   }
 
   const potentialSupervisors = userList.filter((u) => u.role === "Agent" || u.role === "Principal");
 
   return (
-    <AppShell title="Settings" description="Manage users, roles, branch assignments and FFC compliance.">
+    <AppShell
+      title="Settings"
+      description="Manage users, roles, branch assignments and FFC compliance."
+    >
       <SettingsTabs />
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+      >
         <GlassCard>
           <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:justify-between">
             <div className="flex min-w-0 items-center gap-2">
@@ -170,7 +229,10 @@ function UsersPage() {
                 <Plus className="mr-1 size-4" /> Add User
               </Button>
             ) : (
-              <Badge variant="outline" className="shrink-0 gap-1 border-warning/40 bg-warning/15 text-warning">
+              <Badge
+                variant="outline"
+                className="shrink-0 gap-1 border-warning/40 bg-warning/15 text-warning"
+              >
                 <ShieldAlert className="size-3.5" /> Read-only
               </Badge>
             )}
@@ -202,14 +264,25 @@ function UsersPage() {
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">{u.email}</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={roleTone(u.role)}>{u.role}</Badge>
+                          <Badge variant="outline" className={roleTone(u.role)}>
+                            {u.role}
+                          </Badge>
                         </TableCell>
                         <TableCell>{u.branch}</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={ffc.tone}>{ffc.label}</Badge>
+                          <Badge variant="outline" className={ffc.tone}>
+                            {ffc.label}
+                          </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={u.active ? "border-success/30 bg-success/10 text-success" : "bg-muted text-muted-foreground"}>
+                          <Badge
+                            variant="outline"
+                            className={
+                              u.active
+                                ? "border-success/30 bg-success/10 text-success"
+                                : "bg-muted text-muted-foreground"
+                            }
+                          >
                             {u.active ? "Active" : "Archived"}
                           </Badge>
                         </TableCell>
@@ -241,16 +314,28 @@ function UsersPage() {
           <div className="space-y-3">
             <div>
               <Label>Full Name</Label>
-              <Input value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} className="mt-1" />
+              <Input
+                value={draft.name}
+                onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+                className="mt-1"
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Email</Label>
-                <Input value={draft.email} onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))} className="mt-1" />
+                <Input
+                  value={draft.email}
+                  onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
+                  className="mt-1"
+                />
               </div>
               <div>
                 <Label>Mobile</Label>
-                <Input value={draft.mobile} onChange={(e) => setDraft((d) => ({ ...d, mobile: e.target.value }))} className="mt-1" />
+                <Input
+                  value={draft.mobile}
+                  onChange={(e) => setDraft((d) => ({ ...d, mobile: e.target.value }))}
+                  className="mt-1"
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -258,23 +343,36 @@ function UsersPage() {
                 <Label>Role</Label>
                 <Select
                   value={draft.candidate ? "Candidate" : draft.role}
-                  onValueChange={(v) => setDraft((d) => ({ ...d, role: v as Role, candidate: v === "Candidate" }))}
+                  onValueChange={(v) =>
+                    setDraft((d) => ({ ...d, role: v as Role, candidate: v === "Candidate" }))
+                  }
                 >
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {ROLES.map((r) => (
-                      <SelectItem key={r} value={r}>{r}</SelectItem>
+                      <SelectItem key={r} value={r}>
+                        {r}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label>Branch</Label>
-                <Select value={draft.branch} onValueChange={(v) => setDraft((d) => ({ ...d, branch: v }))}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <Select
+                  value={draft.branch}
+                  onValueChange={(v) => setDraft((d) => ({ ...d, branch: v }))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {branches.map((b) => (
-                      <SelectItem key={b.id} value={b.name}>{b.name}</SelectItem>
+                      <SelectItem key={b.id} value={b.name}>
+                        {b.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -282,23 +380,36 @@ function UsersPage() {
             </div>
             <div>
               <Label>PPRA Reference</Label>
-              <Input value={draft.ppra} onChange={(e) => setDraft((d) => ({ ...d, ppra: e.target.value }))} className="mt-1 money" />
+              <Input
+                value={draft.ppra}
+                onChange={(e) => setDraft((d) => ({ ...d, ppra: e.target.value }))}
+                className="mt-1 money"
+              />
             </div>
             <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
               <Label className="mb-0">Candidate Practitioner</Label>
               <Switch
                 checked={draft.candidate}
-                onCheckedChange={(v) => setDraft((d) => ({ ...d, candidate: v, role: v ? "Candidate" : "Agent" }))}
+                onCheckedChange={(v) =>
+                  setDraft((d) => ({ ...d, candidate: v, role: v ? "Candidate" : "Agent" }))
+                }
               />
             </div>
             {draft.candidate && (
               <div>
                 <Label>Supervisor</Label>
-                <Select value={draft.supervisor} onValueChange={(v) => setDraft((d) => ({ ...d, supervisor: v }))}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Select supervisor" /></SelectTrigger>
+                <Select
+                  value={draft.supervisor}
+                  onValueChange={(v) => setDraft((d) => ({ ...d, supervisor: v }))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select supervisor" />
+                  </SelectTrigger>
                   <SelectContent>
                     {potentialSupervisors.map((u) => (
-                      <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -306,7 +417,9 @@ function UsersPage() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={save}>{editing ? "Save Changes" : "Add User"}</Button>
           </DialogFooter>
         </DialogContent>
@@ -315,7 +428,9 @@ function UsersPage() {
       <AlertDialog open={!!archiveTarget} onOpenChange={(open) => !open && setArchiveTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{archiveTarget?.active ? "Archive User" : "Restore User"}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {archiveTarget?.active ? "Archive User" : "Restore User"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {archiveTarget?.active
                 ? `${archiveTarget?.name} will be archived and lose portal access. This does not delete their historical records.`
