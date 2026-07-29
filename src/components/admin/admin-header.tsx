@@ -11,14 +11,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useApp } from "@/lib/app-state";
-import { users, agency } from "@/data/state";
+import { agency } from "@/data/state";
 import { initials } from "@/lib/format";
+import { useAuth } from "@/lib/auth";
 
 export function AdminHeader() {
   const navigate = useNavigate();
   const { theme, setTheme, role } = useApp();
+  const { account, signOut } = useAuth();
 
-  const me = users[0] ?? { name: "Admin User", role: role };
+  const me = { name: account?.fullName ?? "Admin User", role: role };
+
+  const handleSignOut = async () => {
+    await signOut();
+    await navigate({ to: "/login", replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-background/80 px-3 backdrop-blur-md sm:px-6">
@@ -70,14 +77,16 @@ export function AdminHeader() {
               <p className="text-xs font-normal text-muted-foreground">{agency.name}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/">Agent Portal</Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/login">
-                <LogOut className="size-4 mr-2" /> Sign out
-              </Link>
+            {role === "Principal" && (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link to="/">Agent Portal</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem onSelect={() => void handleSignOut()}>
+              <LogOut className="size-4 mr-2" /> Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
