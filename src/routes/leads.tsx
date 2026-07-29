@@ -323,6 +323,19 @@ function LeadsTable({ rows, onOpen, onQuickAssign, onQuickStatus }: {
                   </TableCell>
                 )}
                 {visibleCols.createdAt && <TableCell className="whitespace-nowrap text-muted-foreground">{dateFmt(lead.createdAt)}</TableCell>}
+                <TableCell onClick={(e) => e.stopPropagation()} className="text-right">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1 text-primary border-primary/30 hover:bg-primary/10"
+                    onClick={() => {
+                      toast.success(`Converting lead ${lead.name} to deal...`);
+                      onOpen(lead);
+                    }}
+                  >
+                    Convert
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

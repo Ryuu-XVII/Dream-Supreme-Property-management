@@ -53,6 +53,7 @@ import {
   CalendarDays,
   Ban,
   MapPin,
+  MessageCircle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/countdown")({
@@ -210,6 +211,15 @@ function ActionButtons({
   onAction: (id: string, status: LocalStatus, extra?: { dueDate?: string; reason?: string }) => void;
 }) {
   const [extendOpen, setExtendOpen] = useState(false);
+
+  const handleWhatsApp = () => {
+    const text = encodeURIComponent(
+      `Hi there, this is Dream Supreme Properties following up regarding the ${row.type} condition for deal ${row.deal.ref}. The deadline is scheduled for ${dateFmt(row.dueDate)}. Please send through an update at your earliest convenience.`
+    );
+    window.open(`https://wa.me/?text=${text}`, "_blank");
+    toast.success("Opening WhatsApp follow-up...");
+  };
+
   return (
     <div className="flex flex-wrap gap-1.5">
       <Button
@@ -225,6 +235,14 @@ function ActionButtons({
       </Button>
       <Button size="sm" variant="outline" className="h-7 gap-1" onClick={() => setExtendOpen(true)}>
         <CalendarClock className="size-3.5" /> Extend
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-7 gap-1 border-primary/30 text-primary hover:bg-primary/10"
+        onClick={handleWhatsApp}
+      >
+        <MessageCircle className="size-3.5" /> WhatsApp
       </Button>
       <Button
         size="sm"

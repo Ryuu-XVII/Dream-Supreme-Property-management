@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { StageBadge, StatusDot } from "@/components/badges";
@@ -66,58 +67,76 @@ function DealDetailPage() {
 
   const currentStageIdx = STAGES.findIndex((s) => s === deal.stage);
 
-  const handleAdvanceStage = () => {
+  const handleAdvanceStage = async () => {
     if (currentStageIdx >= STAGES.length - 1) return;
     const nextStage = STAGES[currentStageIdx + 1];
-    setDeal((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        stage: nextStage,
-        timeline: [
-          {
-            id: `h_${Date.now()}`,
-            at: new Date().toISOString(),
-            from: prev.stage,
-            to: nextStage,
-            actor: "Current User",
-            action: `Advanced stage to ${nextStage}`,
-            reason: stageReason || "Stage advanced",
-          },
-          ...prev.timeline,
-        ],
-      };
-    });
-    toast.success(`Deal advanced to ${nextStage}`);
-    setStageModal(null);
-    setStageReason("");
+    try {
+      toast.loading("Advancing stage...");
+      const { error } = await supabase.from("deal").update({ stage: nextStage, updated_at: new Date().toISOString() }).eq("id", dealId);
+      if (error) throw error;
+      setDeal((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          stage: nextStage,
+          timeline: [
+            {
+              id: `h_${Date.now()}`,
+              at: new Date().toISOString(),
+              from: prev.stage,
+              to: nextStage,
+              actor: "Current User",
+              action: `Advanced stage to ${nextStage}`,
+              reason: stageReason || "Stage advanced",
+            },
+            ...prev.timeline,
+          ],
+        };
+      });
+      toast.dismiss();
+      toast.success(`Deal advanced to ${nextStage}`);
+      setStageModal(null);
+      setStageReason("");
+    } catch (err: any) {
+      toast.dismiss();
+      toast.error(`Failed: ${err.message}`);
+    }
   };
 
-  const handleRevertStage = () => {
+  const handleRevertStage = async () => {
     if (currentStageIdx <= 0) return;
     const prevStage = STAGES[currentStageIdx - 1];
-    setDeal((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        stage: prevStage,
-        timeline: [
-          {
-            id: `h_${Date.now()}`,
-            at: new Date().toISOString(),
-            from: prev.stage,
-            to: prevStage,
-            actor: "Current User",
-            action: `Reverted stage to ${prevStage}`,
-            reason: stageReason || "Stage reverted",
-          },
-          ...prev.timeline,
-        ],
-      };
-    });
-    toast.info(`Deal reverted to ${prevStage}`);
-    setStageModal(null);
-    setStageReason("");
+    try {
+      toast.loading("Reverting stage...");
+      const { error } = await supabase.from("deal").update({ stage: prevStage, updated_at: new Date().toISOString() }).eq("id", dealId);
+      if (error) throw error;
+      setDeal((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          stage: prevStage,
+          timeline: [
+            {
+              id: `h_${Date.now()}`,
+              at: new Date().toISOString(),
+              from: prev.stage,
+              to: prevStage,
+              actor: "Current User",
+              action: `Reverted stage to ${prevStage}`,
+              reason: stageReason || "Stage reverted",
+            },
+            ...prev.timeline,
+          ],
+        };
+      });
+      toast.dismiss();
+      toast.success(`Deal reverted to ${prevStage}`);
+      setStageModal(null);
+      setStageReason("");
+    } catch (err: any) {
+      toast.dismiss();
+      toast.error(`Failed: ${err.message}`);
+    }
   };
 
   const handleCancelDeal = () => {

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Search, Sun, Moon, Monitor, UserCog, LogOut, ChevronDown } from "lucide-react";
+import { Bell, Search, Sun, Moon, Monitor, UserCog, LogOut, ChevronDown, PlusCircle, Calculator } from "lucide-react";
 import { useEffect, useState } from "react";
+import { QuickDealModal } from "@/components/deal/quick-deal-modal";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ const roles: Role[] = ["Principal", "Agent", "Candidate", "Admin"];
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [quickModalOpen, setQuickModalOpen] = useState(false);
   const navigate = useNavigate();
   const { theme, setTheme, role, setRole } = useApp();
   const unread = notifications.filter((n) => n.unread).length;
@@ -60,6 +62,12 @@ export function Header() {
       </button>
 
       <div className="hidden items-center gap-2 lg:flex">
+        <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => navigate({ to: "/commission/calculator" })}>
+          <Calculator className="size-3.5 text-primary" /> Calculator
+        </Button>
+        <Button size="sm" className="gap-1.5 text-xs font-semibold shadow-sm" onClick={() => setQuickModalOpen(true)}>
+          <PlusCircle className="size-3.5" /> + New Deal
+        </Button>
       </div>
 
       <DropdownMenu>
@@ -173,6 +181,12 @@ export function Header() {
           </CommandGroup>
         </CommandList>
       </CommandDialog>
+
+      <QuickDealModal
+        open={quickModalOpen}
+        onOpenChange={setQuickModalOpen}
+        onSuccess={(dealId) => navigate({ to: "/deals/$dealId", params: { dealId } })}
+      />
     </header>
   );
 }

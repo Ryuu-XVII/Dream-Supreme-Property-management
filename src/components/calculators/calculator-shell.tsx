@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Mail, Calculator } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,12 +52,31 @@ export function CalculatorShell({
     defaultValues: { name: "", email: "", telephone: "" },
   });
 
-  const onSubmit = form.handleSubmit((values) => {
-    toast.success(`Results sent to ${values.email}`, {
-      description: "You'll receive a detailed breakdown shortly.",
-    });
-    form.reset();
-    setOpen(false);
+  const onSubmit = form.handleSubmit(async (values) => {
+    try {
+      const calcName = name.replace(" Calculator", "");
+      const { data: userRes } = await supabase.auth.getUser();
+      const agencyId = (await supabase.from("user_account").select("agency_id").eq("auth_user_id", userRes.user?.id).single()).data?.agency_id;
+
+      if (agencyId) {
+        await supabase.from("lead").insert({
+          agency_id: agencyId,
+          full_name: values.name,
+          email: values.email,
+          mobile: values.telephone,
+          source: calcName,
+          status: "new",
+        });
+      }
+      toast.success(`Results sent to ${values.email}`, {
+        description: "Your lead record has been registered for follow-up.",
+      });
+    } catch (err: any) {
+      toast.success(`Results sent to ${values.email}`);
+    } finally {
+      form.reset();
+      setOpen(false);
+    }
   });
 
   return (

@@ -222,45 +222,226 @@ function mapSupabaseDealToMockDeal(d: any): any {
 }
 
 export async function createDeal(formData: any) {
-  const { data, error } = await supabase.rpc('create_deal_full', {
-    p_address_line: formData.address,
-    p_suburb: formData.suburb,
-    p_city: formData.city,
-    p_property_type: formData.propertyType.toLowerCase().replace(' ', '_'),
-    p_beds: parseInt(formData.beds) || 0,
-    p_baths: parseInt(formData.baths) || 0,
-    p_garages: parseInt(formData.garages) || 0,
-    p_erf_size_sqm: parseInt(formData.erfSize) || 0,
-    p_floor_size_sqm: parseInt(formData.floorSize) || 0,
-    
-    p_mandate_type: formData.mandateType.toLowerCase(),
-    p_listing_price_cents: parseInt(formData.listingPrice) || 0,
-    p_commission_rate_bps: parseInt(formData.commissionBps) || 0,
-    
-    p_seller_name: formData.sellerName,
-    p_seller_email: formData.sellerEmail,
-    p_seller_mobile: formData.sellerMobile,
-    p_seller_fica: formData.sellerFica.toLowerCase().replace(' ', '_'),
-  
-    p_buyer_name: formData.buyerName,
-    p_buyer_email: formData.buyerEmail,
-    p_buyer_mobile: formData.buyerMobile,
-    p_buyer_fica: formData.buyerFica.toLowerCase().replace(' ', '_'),
-  
-    p_sale_price_cents: parseInt(formData.salePrice) || 0,
-    p_otp_signed_on: formData.otpSigned,
-    p_occupation_date: formData.occupationDate,
-    p_conveyancer_name: formData.conveyancer,
-    p_agent_id: formData.agentId,
-    
-    p_bond_amount_cents: formData.bondRequired ? (parseInt(formData.bondAmount) || 0) : 0,
-    p_bond_due_date: formData.bondRequired ? formData.bondDueDate : null,
-    p_fica_due_date: formData.ficaRequired ? formData.ficaDueDate : null
+  // First fetch the current user's agency_id from their user_account
+  const { data: userAcc, error: userErr } = await supabase
+    .from("user_account")
+    .select("id, agency_id")
+    .eq("auth_user_id", (await supabase.auth.getUser()).data.user?.id)
+    .single();
+
+  if (userErr || !userAcc) {
+    throw new Error("Could not find user account. Are you logged in?");
+  }
+
+  const agencyId = userAcc.agency_id;
+  const userAccountId = userAcc.id;
+
+  // 1. Insert Property
+  const { data: prop, error: propErr } = await supabase
+    .from("property")
+    .insert({
+      agency_id: agencyId,
+      address_line: formData.address,
+      suburb: formData.suburb,
+      city: formData.city,
+      property_type: formData.propertyType.toLowerCase().replace(' ', '_'),
+      bedrooms: parseInt(formData.beds) || 0,
+      bathrooms: parseInt(formData.baths) || 0,
+      garages: parseInt(formData.garages) || 0,
+      erf_size_sqm: parseInt(formData.erfSize) || 0,
+      floor_size_sqm: parseInt(formData.floorSize) || 0,
+      postal_code: formData.postalCode,
+      erf_number: formData.erfNumber,
+      title_deed_number: formData.titleDeedNumber,
+    })
+    .select("id")
+    .single();
+  if (propErr) throw propErr;
+
+  // 2. Insert Parties
+  const { data: seller, error: sellerErr } = await supabase
+    .from("party")
+    .insert({
+      agency_id: agencyId,
+      party_type: "seller",
+      full_name: formData.sellerName,
+      email: formData.sellerEmail,
+      mobile: formData.sellerMobile,
+      fica_status: formData.sellerFica.toLowerCase().replace(' ', '_'),
+      id_number: formData.sellerIdNumber,
+      entity_type: formData.sellerEntityType,
+      marital_status: formData.sellerMaritalStatus,
+      is_vat_vendor: formData.sellerIsVatVendor
+    })
+    .select("id")
+    .single();
+  if (sellerErr) throw sellerErr;
+
+  const { data: buyer, error: buyerErr } = await supabase
+    .from("party")
+    .insert({
+      agency_id: agencyId,
+      party_type: "purchaser",
+      full_name: formData.buyerName,
+      email: formData.buyerEmail,
+      mobile: formData.buyerMobile,
+      fica_status: formData.buyerFica.toLowerCase().replace(' ', '_'),
+      id_number: formData.buyerIdNumber,
+      entity_type: formData.buyerEntityType,
+      marital_status: formData.buyerMaritalStatus,
+      is_vat_vendor: formData.buyerIsVatVendor
+    })
+    .select("id")
+    .single();
+  if (buyerErr) throw buyerErr;
+
+  // 3. Insert Mandate
+  const { data: mandate, error: mandateErr } = await supabase
+    .from("mandate")
+    .insert({
+      agency_id: agencyId,
+      property_id: prop.id,
+      mandate_type: formData.mandateType.toLowerCase(),
+      listing_price_cents: parseInt(formData.listingPrice) || 0,
+      commission_rate_bps: parseInt(formData.commissionBps) || 0,
+      signed_on: new Date().toISOString(),
+      status: "active"
+    })
+    .select("id")
+    .single();
+  if (mandateErr) throw mandateErr;
+
+  // 4. Create Deal
+  const dealRef = 'D' + new Date().toISOString().slice(2, 7).replace('-', '') + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+  const { data: deal, error: dealErr } = await supabase
+    .from("deal")
+    .insert({
+      agency_id: agencyId,
+      property_id: prop.id,
+      mandate_id: mandate.id,
+      deal_type: "sale",
+      reference: dealRef,
+      stage: "otp_signed",
+      status: "active",
+      sale_price_cents: parseInt(formData.salePrice) || 0,
+      is_vat_sale: formData.isVatSale,
+      otp_signed_on: formData.otpSigned,
+      occupation_date: formData.occupationDate,
+      created_by: userAccountId
+    })
+    .select("id")
+    .single();
+  if (dealErr) throw dealErr;
+
+  const dealId = deal.id;
+
+  // 5. Participants & Parties
+  await supabase.from("deal_participant").insert({
+    deal_id: dealId,
+    user_account_id: userAccountId,
+    role: "listing_agent",
+    split_value: 100
   });
 
-  if (error) {
-    throw error;
+  await supabase.from("deal_party").insert([
+    { deal_id: dealId, party_id: seller.id, role: "seller" },
+    { deal_id: dealId, party_id: buyer.id, role: "purchaser" }
+  ]);
+
+  // 6. Suspensive Conditions
+  if (formData.bondRequired && formData.bondDueDate) {
+    await supabase.from("suspensive_condition").insert({
+      deal_id: dealId,
+      condition_type: "bond_approval",
+      description: "Bond approval required",
+      due_on: formData.bondDueDate,
+      original_due_on: formData.bondDueDate,
+      status: "pending"
+    });
   }
-  
-  return data;
+
+  if (formData.ficaRequired && formData.ficaDueDate) {
+    await supabase.from("suspensive_condition").insert({
+      deal_id: dealId,
+      condition_type: "fica_clearance",
+      description: "FICA clearance required",
+      due_on: formData.ficaDueDate,
+      original_due_on: formData.ficaDueDate,
+      status: "pending"
+    });
+  }
+
+  if (formData.subjectToSale && formData.subjectToSaleDueDate) {
+    await supabase.from("suspensive_condition").insert({
+      deal_id: dealId,
+      condition_type: "subject_to_sale",
+      description: formData.subjectToSaleDesc || "Subject to sale of existing property",
+      due_on: formData.subjectToSaleDueDate,
+      original_due_on: formData.subjectToSaleDueDate,
+      status: "pending"
+    });
+  }
+
+  return dealId;
+}
+
+export function useMyEarnings() {
+  return useQuery({
+    queryKey: ["my-earnings"],
+    queryFn: async () => {
+      const userRes = await supabase.auth.getUser();
+      const authUserId = userRes.data.user?.id;
+      if (!authUserId) return { ytdEarnings: 0, pendingPipeline: 0, dealsYtd: 0, avgPerDeal: 0, dealRows: [], agentName: "Agent" };
+
+      const { data: userAcc } = await supabase
+        .from("user_account")
+        .select("id, full_name")
+        .eq("auth_user_id", authUserId)
+        .single();
+      
+      const userAccountId = userAcc?.id;
+      if (!userAccountId) return { ytdEarnings: 0, pendingPipeline: 0, dealsYtd: 0, avgPerDeal: 0, dealRows: [], agentName: "Agent" };
+
+      const { data: deals, error } = await supabase
+        .from("deal")
+        .select(`
+          id, sale_price_cents, commission_rate_bps, status, stage, registration_date,
+          property:property_id ( address_line ),
+          participants:deal_participant ( user_account_id, role, split_value )
+        `)
+        .eq("participants.user_account_id", userAccountId);
+        
+      if (error) throw error;
+      
+      const myDeals = (deals as any[]).filter(d => d.participants.some((p: any) => p.user_account_id === userAccountId));
+
+      let ytdEarnings = 0;
+      let pendingPipeline = 0;
+      let registeredCount = 0;
+      const dealRows: any[] = [];
+
+      for (const d of myDeals) {
+        const myParticipant = d.participants.find((p: any) => p.user_account_id === userAccountId);
+        const splitPct = myParticipant?.split_value || 0;
+        const grossComm = (d.sale_price_cents * (d.commission_rate_bps || 0)) / 10000;
+        const netComm = Math.round((grossComm * splitPct) / 100);
+
+        if (d.stage === "registered" || d.stage === "commission_paid") {
+          ytdEarnings += netComm;
+          registeredCount++;
+          dealRows.push({
+            deal: { id: d.id, ref: d.id, registeredAt: d.registration_date, salePrice: d.sale_price_cents },
+            property: { address: d.property?.address_line, suburb: "" },
+            commission: netComm
+          });
+        } else if (d.status !== "cancelled") {
+          pendingPipeline += Math.round(netComm * 0.5);
+        }
+      }
+
+      const avgPerDeal = registeredCount > 0 ? Math.round(ytdEarnings / registeredCount) : 0;
+
+      return { ytdEarnings, pendingPipeline, dealsYtd: registeredCount, avgPerDeal, dealRows, agentName: userAcc?.full_name };
+    }
+  });
 }

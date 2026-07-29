@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  ArrowLeft, ArrowRight, CheckCircle2, Home, User, FileText, Landmark, ShieldCheck,
+  ArrowLeft, ArrowRight, CheckCircle2, Home, User, FileText, Landmark, ShieldCheck, Upload,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { createDeal } from "@/data/deals";
 
 export const Route = createFileRoute("/deals/new")({
@@ -29,7 +30,8 @@ const STEPS = [
   { id: 2, name: "Parties (Seller & Buyer)", icon: User },
   { id: 3, name: "OTP & Conveyancer", icon: FileText },
   { id: 4, name: "Suspensive Conditions", icon: Landmark },
-  { id: 5, name: "Review & Create", icon: ShieldCheck },
+  { id: 5, name: "Documents", icon: Upload },
+  { id: 6, name: "Review & Create", icon: ShieldCheck },
 ];
 
 function NewDealPage() {
@@ -42,12 +44,15 @@ function NewDealPage() {
     address: "",
     suburb: "",
     city: "Johannesburg",
+    postalCode: "",
     propertyType: "Freehold House" as Property["type"],
     beds: 3,
     baths: 2,
     garages: 2,
     floorSize: 180,
     erfSize: 500,
+    erfNumber: "",
+    titleDeedNumber: "",
 
     // Mandate
     mandateType: "Sole" as Deal["mandateType"],
@@ -61,14 +66,23 @@ function NewDealPage() {
     sellerEmail: "",
     sellerMobile: "",
     sellerFica: "Complete" as Party["fica"],
+    sellerIdNumber: "",
+    sellerEntityType: "Natural Person" as Party["entityType"],
+    sellerMaritalStatus: "Single" as Party["maritalStatus"],
+    sellerIsVatVendor: false,
 
     buyerName: "",
     buyerEmail: "",
     buyerMobile: "",
     buyerFica: "Partial" as Party["fica"],
+    buyerIdNumber: "",
+    buyerEntityType: "Natural Person" as Party["entityType"],
+    buyerMaritalStatus: "Single" as Party["maritalStatus"],
+    buyerIsVatVendor: false,
 
     // Financials & Conveyancer
     salePrice: "2450000",
+    isVatSale: false,
     otpSigned: new Date().toISOString().split("T")[0],
     occupationDate: new Date(Date.now() + 60 * 86400000).toISOString().split("T")[0],
     conveyancer: conveyancerFirms[0]?.name || "Vogel & Associates Attorneys",
@@ -79,6 +93,10 @@ function NewDealPage() {
     bondAmount: "2000000",
     bondDueDate: new Date(Date.now() + 21 * 86400000).toISOString().split("T")[0],
     
+    subjectToSale: false,
+    subjectToSaleDesc: "",
+    subjectToSaleDueDate: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0],
+
     ficaRequired: true,
     ficaDueDate: new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0],
   });
@@ -201,6 +219,30 @@ function NewDealPage() {
                   <Input
                     value={formData.city}
                     onChange={(e) => updateForm("city", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Postal Code</Label>
+                  <Input
+                    placeholder="e.g. 2196"
+                    value={formData.postalCode}
+                    onChange={(e) => updateForm("postalCode", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Erf Number</Label>
+                  <Input
+                    placeholder="e.g. 1234/1"
+                    value={formData.erfNumber}
+                    onChange={(e) => updateForm("erfNumber", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Title Deed Number</Label>
+                  <Input
+                    placeholder="e.g. T12345/2020"
+                    value={formData.titleDeedNumber}
+                    onChange={(e) => updateForm("titleDeedNumber", e.target.value)}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -328,6 +370,48 @@ function NewDealPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-1.5">
+                    <Label>ID / Registration Number</Label>
+                    <Input
+                      placeholder="e.g. 8001015009087"
+                      value={formData.sellerIdNumber}
+                      onChange={(e) => updateForm("sellerIdNumber", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Entity Type</Label>
+                    <Select value={formData.sellerEntityType} onValueChange={(v) => updateForm("sellerEntityType", v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Natural Person">Natural Person</SelectItem>
+                        <SelectItem value="Company">Company</SelectItem>
+                        <SelectItem value="Close Corporation">Close Corporation</SelectItem>
+                        <SelectItem value="Trust">Trust</SelectItem>
+                        <SelectItem value="Deceased Estate">Deceased Estate</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Marital Status</Label>
+                    <Select value={formData.sellerMaritalStatus} onValueChange={(v) => updateForm("sellerMaritalStatus", v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Single">Single</SelectItem>
+                        <SelectItem value="Married in Community of Property">Married in COP</SelectItem>
+                        <SelectItem value="Married out of Community of Property">Married out of COP</SelectItem>
+                        <SelectItem value="Married by Foreign Law">Married by Foreign Law</SelectItem>
+                        <SelectItem value="Divorced">Divorced</SelectItem>
+                        <SelectItem value="Widowed">Widowed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center space-x-2 pt-2 sm:col-span-2">
+                    <Switch
+                      checked={formData.sellerIsVatVendor}
+                      onCheckedChange={(v) => updateForm("sellerIsVatVendor", v)}
+                    />
+                    <Label>Seller is a VAT Vendor</Label>
+                  </div>
                 </div>
               </div>
 
@@ -371,6 +455,48 @@ function NewDealPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-1.5">
+                    <Label>ID / Registration Number</Label>
+                    <Input
+                      placeholder="e.g. 8001015009087"
+                      value={formData.buyerIdNumber}
+                      onChange={(e) => updateForm("buyerIdNumber", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Entity Type</Label>
+                    <Select value={formData.buyerEntityType} onValueChange={(v) => updateForm("buyerEntityType", v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Natural Person">Natural Person</SelectItem>
+                        <SelectItem value="Company">Company</SelectItem>
+                        <SelectItem value="Close Corporation">Close Corporation</SelectItem>
+                        <SelectItem value="Trust">Trust</SelectItem>
+                        <SelectItem value="Deceased Estate">Deceased Estate</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Marital Status</Label>
+                    <Select value={formData.buyerMaritalStatus} onValueChange={(v) => updateForm("buyerMaritalStatus", v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Single">Single</SelectItem>
+                        <SelectItem value="Married in Community of Property">Married in COP</SelectItem>
+                        <SelectItem value="Married out of Community of Property">Married out of COP</SelectItem>
+                        <SelectItem value="Married by Foreign Law">Married by Foreign Law</SelectItem>
+                        <SelectItem value="Divorced">Divorced</SelectItem>
+                        <SelectItem value="Widowed">Widowed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center space-x-2 pt-2 sm:col-span-2">
+                    <Switch
+                      checked={formData.buyerIsVatVendor}
+                      onCheckedChange={(v) => updateForm("buyerIsVatVendor", v)}
+                    />
+                    <Label>Purchaser is a VAT Vendor</Label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -392,6 +518,13 @@ function NewDealPage() {
                     value={formData.salePrice}
                     onChange={(e) => updateForm("salePrice", e.target.value)}
                   />
+                </div>
+                <div className="flex items-center space-x-2 pt-6">
+                  <Switch
+                    checked={formData.isVatSale}
+                    onCheckedChange={(v) => updateForm("isVatSale", v)}
+                  />
+                  <Label>Sale is subject to VAT (Zero transfer duty)</Label>
                 </div>
                 <div className="space-y-1.5">
                   <Label>OTP Signed Date</Label>
@@ -496,14 +629,97 @@ function NewDealPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Subject to Sale Condition */}
+              <div className="rounded-lg border border-border p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-display text-sm font-semibold">
+                    <Home className="size-4 text-primary" /> Subject to Sale of Existing Property
+                  </div>
+                  <Switch
+                    checked={formData.subjectToSale}
+                    onCheckedChange={(v) => updateForm("subjectToSale", v)}
+                  />
+                </div>
+                {formData.subjectToSale && (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label>Description of Property</Label>
+                      <Input
+                        placeholder="e.g. 10 Main Road, Cape Town"
+                        value={formData.subjectToSaleDesc}
+                        onChange={(e) => updateForm("subjectToSaleDesc", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Condition Due Date</Label>
+                      <Input
+                        type="date"
+                        value={formData.subjectToSaleDueDate}
+                        onChange={(e) => updateForm("subjectToSaleDueDate", e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
-          {/* Step 5: Review */}
+          {/* Step 5: Document Uploads */}
           {step === 5 && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-display text-lg font-semibold">Step 5: Review Deal Summary</h3>
+                <h3 className="font-display text-lg font-semibold">Step 5: Baseline Document Uploads</h3>
+                <p className="text-xs text-muted-foreground">Upload the mandatory signed documents to initialize the deal.</p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="rounded-lg border border-border p-4 space-y-2 bg-card">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <FileText className="size-4 text-primary" /> Signed Mandate Document
+                  </div>
+                  <p className="text-xs text-muted-foreground">Required to start the deal process.</p>
+                  <Button variant="outline" size="sm" className="w-full"><Upload className="mr-2 size-4"/> Upload PDF</Button>
+                </div>
+                <div className="rounded-lg border border-border p-4 space-y-2 bg-card">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <FileText className="size-4 text-primary" /> Signed Offer to Purchase (OTP)
+                  </div>
+                  <p className="text-xs text-muted-foreground">Required to advance past Offer Received.</p>
+                  <Button variant="outline" size="sm" className="w-full"><Upload className="mr-2 size-4"/> Upload PDF</Button>
+                </div>
+                <div className="rounded-lg border border-border p-4 space-y-2 bg-card">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <ShieldCheck className="size-4 text-primary" /> FICA Documents
+                  </div>
+                  <p className="text-xs text-muted-foreground">Seller and Purchaser ID & Proof of Address.</p>
+                  <Button variant="outline" size="sm" className="w-full"><Upload className="mr-2 size-4"/> Upload PDF</Button>
+                </div>
+                <div className="rounded-lg border border-border p-4 space-y-2 bg-card">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <Home className="size-4 text-primary" /> Title Deed Copy & Municipal Account
+                  </div>
+                  <p className="text-xs text-muted-foreground">Required for conveyancer instructions.</p>
+                  <Button variant="outline" size="sm" className="w-full"><Upload className="mr-2 size-4"/> Upload PDF</Button>
+                </div>
+                {(formData.sellerEntityType !== "Natural Person" || formData.buyerEntityType !== "Natural Person") && (
+                  <div className="rounded-lg border border-border p-4 space-y-2 sm:col-span-2 bg-card">
+                    <div className="flex items-center gap-2 font-semibold">
+                      <FileText className="size-4 text-primary" /> Entity Registration / Resolution Documents
+                    </div>
+                    <p className="text-xs text-muted-foreground">Required since parties include non-natural entities.</p>
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto"><Upload className="mr-2 size-4"/> Upload PDF</Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Step 6: Review */}
+          {step === 6 && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-display text-lg font-semibold">Step 6: Review Deal Summary & Checklist</h3>
                 <p className="text-xs text-muted-foreground">Verify deal attributes before saving into pipeline.</p>
               </div>
 

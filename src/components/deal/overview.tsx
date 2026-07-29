@@ -31,6 +31,13 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
         {property && property.erfSize > 0 && (
           <p className="mt-3 text-xs text-muted-foreground">Erf size: {property.erfSize} m²</p>
         )}
+        {(property?.erfNumber || property?.titleDeedNumber) && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            {property?.erfNumber ? `Erf: ${property.erfNumber}` : ""}
+            {property?.erfNumber && property?.titleDeedNumber ? " · " : ""}
+            {property?.titleDeedNumber ? `Title Deed: ${property.titleDeedNumber}` : ""}
+          </p>
+        )}
         <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-3">
           <Detail label="Sale price" value={<span className="money">{zar(deal.salePrice, { decimals: false })}</span>} />
           <Detail label="Listing price" value={<span className="money">{zar(deal.listingPrice, { decimals: false })}</span>} />
@@ -60,7 +67,8 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
                 <FicaBadge status={party.fica} />
               </div>
               <p className="truncate text-sm font-medium">{party.name}</p>
-              <p className="text-xs text-muted-foreground">{party.entityType}</p>
+              <p className="text-xs text-muted-foreground">{party.entityType} {party.maritalStatus ? `· ${party.maritalStatus}` : ""}</p>
+              <p className="mt-1 text-xs text-muted-foreground">ID/Reg: {party.idNumber || "N/A"} {party.isVatVendor ? "· VAT Vendor" : ""}</p>
               <p className="mt-1 truncate text-xs text-muted-foreground">{party.email} · {party.mobile}</p>
             </div>
           ))}

@@ -11,19 +11,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { deals, propertyById, monthlyCommission, advances, userById, netPayable } from "@/data/state";
 import { dateFmt, zar } from "@/lib/format";
 
+import { useMyEarnings } from "@/data/deals";
+
 export const Route = createFileRoute("/commission/earnings")({
   head: () => ({
     meta: [
       { title: "Agent Earnings | Dream Supreme Properties" },
-      { name: "description", content: "Riaan van Niekerk's year-to-date commission earnings, deal breakdown, advances and tier progress." },
+      { name: "description", content: "Year-to-date commission earnings, deal breakdown, advances and tier progress." },
       { property: "og:title", content: "Agent Earnings | Dream Supreme Properties" },
-      { property: "og:description", content: "Riaan van Niekerk's year-to-date commission earnings, deal breakdown, advances and tier progress." },
+      { property: "og:description", content: "Year-to-date commission earnings, deal breakdown, advances and tier progress." },
     ],
   }),
   component: EarningsPage,
 });
-
-const AGENT_ID = "u2"; // Riaan van Niekerk
 
 const TIERS = [
   { threshold: 0, split: 45 },
@@ -33,41 +33,14 @@ const TIERS = [
 ];
 
 function EarningsPage() {
-  const loading = useFakeLoad(500);
-  const agent = userById(AGENT_ID);
+  const { data: earnings, isLoading } = useMyEarnings();
 
-  const myRegisteredDeals = useMemo(
-    () => deals.filter((d) => d.registeredAt && d.practitioners.some((p) => p.userId === AGENT_ID)),
-    [],
-  );
-
-  const myAdvances = useMemo(() => advances.filter((a) => a.userId === AGENT_ID), []);
-
-  const dealRows = useMemo(
-    () =>
-      myRegisteredDeals.map((dl) => {
-        const pr = dl.practitioners.find((p) => p.userId === AGENT_ID)!;
-        const commission = Math.round((netPayable(dl) * pr.splitPct) / 100);
-        return { deal: dl, property: propertyById(dl.propertyId), commission };
-      }),
-    [myRegisteredDeals],
-  );
-
-  const ytdEarnings = dealRows.reduce((s, r) => s + r.commission, 0);
-  const dealsYtd = dealRows.length;
-  const avgPerDeal = dealsYtd > 0 ? Math.round(ytdEarnings / dealsYtd) : 0;
-
-  const pendingPipeline = useMemo(
-    () =>
-      deals
-        .filter((d) => !d.registeredAt && !d.cancelled && d.practitioners.some((p) => p.userId === AGENT_ID))
-        .reduce((s, d) => {
-          const pr = d.practitioners.find((p) => p.userId === AGENT_ID)!;
-          const gross = Math.round((d.salePrice * d.commissionBps) / 10000);
-          return s + Math.round((gross * pr.splitPct) / 100 * 0.5);
-        }, 0),
-    [],
-  );
+  const ytdEarnings = earnings?.ytdEarnings || 0;
+  const pendingPipeline = earnings?.pendingPipeline || 0;
+  const dealsYtd = earnings?.dealsYtd || 0;
+  const avgPerDeal = earnings?.avgPerDeal || 0;
+  const dealRows = earnings?.dealRows || [];
+  const agentName = earnings?.agentName || "Agent";
 
   const currentTierIndex = TIERS.reduce((acc, t, i) => (ytdEarnings >= t.threshold ? i : acc), 0);
   const currentTier = TIERS[currentTierIndex];

@@ -13,6 +13,7 @@ export const navItems = [
   { label: "Pipeline", to: "/pipeline", icon: KanbanSquare },
   { label: "Countdown Board", to: "/countdown", icon: Timer },
   { label: "Commission", to: "/commission", icon: Coins },
+  { label: "Clients", to: "/clients", icon: Users2 },
   { label: "Compliance", to: "/compliance/ffc", icon: ShieldCheck },
   { label: "Documents", to: "/documents", icon: FolderOpen },
   { label: "Calculators", to: "/calculators/bond", icon: Calculator },
