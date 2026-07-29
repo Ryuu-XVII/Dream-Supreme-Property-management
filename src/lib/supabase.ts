@@ -1,7 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Read Supabase environment variables or fallback to defaults
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://pxupydhcrfiwggzdtzup.supabase.co";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "YOUR_SUPABASE_ANON_KEY";
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Copy .env.example to .env.local and configure the project.",
+  );
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

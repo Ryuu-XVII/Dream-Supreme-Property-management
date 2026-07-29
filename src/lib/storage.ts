@@ -1,52 +1,33 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { supabase } from "@/lib/supabase";
 
-const accountId = import.meta.env.VITE_R2_ACCOUNT_ID || "";
-const accessKeyId = import.meta.env.VITE_R2_ACCESS_KEY_ID || "";
-const secretAccessKey = import.meta.env.VITE_R2_SECRET_ACCESS_KEY || "";
-export const R2_BUCKET_NAME = import.meta.env.VITE_R2_BUCKET_NAME || "dream-supreme-storage";
-export const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL || "";
-
-export const r2Client = new S3Client({
-  region: "auto",
-  endpoint: accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined,
-  credentials: {
-    accessKeyId,
-    secretAccessKey,
-  },
-});
+const DOCUMENT_BUCKET = "mandate-documents";
 
 /**
- * Upload a file to Cloudflare R2 bucket.
- * returns the key of the uploaded object.
+ * Browser-safe storage adapter. The browser receives only a Supabase session;
+ * object-store credentials are never bundled into client JavaScript.
+ *
+ * The historic function name is retained to avoid breaking callers while the
+ * backing implementation uses the private Supabase bucket configured by the
+ * database migration. R2 can be introduced behind a server-side adapter later.
  */
 export async function uploadFileToR2(file: File | Blob, path: string): Promise<string> {
-  if (!accessKeyId || !secretAccessKey || !accountId) {
-    console.warn("Cloudflare R2 credentials missing in .env. Skipping actual upload.");
-    return `mock_r2_key_${Date.now()}_${path.split('/').pop()}`;
-  }
-
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = new Uint8Array(arrayBuffer);
-
-  const command = new PutObjectCommand({
-    Bucket: R2_BUCKET_NAME,
-    Key: path,
-    Body: buffer,
-    ContentType: file.type || "application/octet-stream",
+  const { data, error } = await supabase.storage.from(DOCUMENT_BUCKET).upload(path, file, {
+    upsert: false,
+    contentType: file.type || "application/octet-stream",
   });
-
-  await r2Client.send(command);
-  return path;
+  if (error) throw error;
+  return data.path;
 }
 
-/**
- * Returns a public URL or custom CDN URL for a file stored in Cloudflare R2.
- */
-export function getR2FileUrl(key: string | null | undefined): string {
+export async function getR2FileUrl(key: string | null | undefined): Promise<string> {
   if (!key) return "";
   if (key.startsWith("http://") || key.startsWith("https://")) return key;
-  if (R2_PUBLIC_URL) {
-    return `${R2_PUBLIC_URL.replace(/\/$/, "")}/${key}`;
-  }
-  return `https://${R2_BUCKET_NAME}.${accountId}.r2.cloudflarestorage.com/${key}`;
+  const { data, error } = await supabase.storage.from(DOCUMENT_BUCKET).createSignedUrl(key, 300);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+export async function removeStoredFile(key: string): Promise<void> {
+  const { error } = await supabase.storage.from(DOCUMENT_BUCKET).remove([key]);
+  if (error) throw error;
 }

@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { ComplianceTabs } from "@/components/compliance/compliance-tabs";
-import { GlassCard, KpiCard, TableSkeleton, useFakeLoad } from "@/components/ui-kit";
+import { GlassCard, KpiCard, TableSkeleton } from "@/components/ui-kit";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -16,20 +17,45 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { dateFmt, daysUntil } from "@/lib/format";
-import { users, agency } from "@/data/state";
-import { ShieldCheck, ShieldAlert, ShieldX, ShieldQuestion, Eye, UploadCloud, Award } from "lucide-react";
+import { agency } from "@/data/state";
+import { useDashboardData } from "@/data/operations";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
+import { getR2FileUrl, removeStoredFile, uploadFileToR2 } from "@/lib/storage";
+import {
+  ShieldCheck,
+  ShieldAlert,
+  ShieldX,
+  ShieldQuestion,
+  Eye,
+  UploadCloud,
+  Award,
+} from "lucide-react";
 
 export const Route = createFileRoute("/compliance/ffc")({
   component: FfcRegister,
   head: () => ({
     meta: [
       { title: "FFC Register | Dream Supreme Properties" },
-      { name: "description", content: "Fidelity Fund Certificate register and expiry tracking for all practitioners." },
+      {
+        name: "description",
+        content: "Fidelity Fund Certificate register and expiry tracking for all practitioners.",
+      },
       { property: "og:title", content: "FFC Register | Dream Supreme Properties" },
-      { property: "og:description", content: "Fidelity Fund Certificate register and expiry tracking for all practitioners." },
+      {
+        property: "og:description",
+        content: "Fidelity Fund Certificate register and expiry tracking for all practitioners.",
+      },
     ],
   }),
 });
@@ -45,12 +71,13 @@ function statusOf(expiry: string | null | undefined): { status: FfcStatus; days:
 }
 
 function StatusBadge({ status }: { status: FfcStatus }) {
-  const map: Record<FfcStatus, { cls: string; icon: React.ComponentType<{ className?: string }> }> = {
-    Valid: { cls: "border-success/30 bg-success/10 text-success", icon: ShieldCheck },
-    "Expiring Soon": { cls: "border-warning/40 bg-warning/15 text-warning", icon: ShieldAlert },
-    Expired: { cls: "border-destructive/30 bg-destructive/10 text-destructive", icon: ShieldX },
-    Missing: { cls: "border-border bg-muted text-muted-foreground", icon: ShieldQuestion },
-  };
+  const map: Record<FfcStatus, { cls: string; icon: React.ComponentType<{ className?: string }> }> =
+    {
+      Valid: { cls: "border-success/30 bg-success/10 text-success", icon: ShieldCheck },
+      "Expiring Soon": { cls: "border-warning/40 bg-warning/15 text-warning", icon: ShieldAlert },
+      Expired: { cls: "border-destructive/30 bg-destructive/10 text-destructive", icon: ShieldX },
+      Missing: { cls: "border-border bg-muted text-muted-foreground", icon: ShieldQuestion },
+    };
   const { cls, icon: Icon } = map[status];
   return (
     <Badge variant="outline" className={cn("gap-1", cls)}>
@@ -66,14 +93,16 @@ function CertificateDialog({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  user: (typeof users)[number];
+  user: any;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Fidelity Fund Certificate</DialogTitle>
-          <DialogDescription>Issued by the Property Practitioners Regulatory Authority (PPRA)</DialogDescription>
+          <DialogDescription>
+            Issued by the Property Practitioners Regulatory Authority (PPRA)
+          </DialogDescription>
         </DialogHeader>
         <div className="glass rounded-xl border-2 border-dashed border-primary/30 p-6 text-center">
           <Award className="mx-auto size-10 text-primary" />
@@ -102,7 +131,7 @@ function CertificateDialog({
             </div>
           </div>
           <p className="mt-6 text-[10px] text-muted-foreground">
-            This document is a mock representation for demonstration purposes only.
+            Certificate register metadata. Open the uploaded file for the authoritative document.
           </p>
         </div>
         <DialogFooter>
@@ -119,40 +148,67 @@ function UploadDialog({
   open,
   onOpenChange,
   user,
+  onSaved,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  user: (typeof users)[number];
+  user: any;
+  onSaved: () => void;
 }) {
+  const { account } = useAuth();
   const [number, setNumber] = useState(user.ffc?.number ?? "");
   const [issued, setIssued] = useState(user.ffc?.issued ?? "");
   const [expiry, setExpiry] = useState(user.ffc?.expiry ?? "");
+  const [file, setFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Upload FFC certificate</DialogTitle>
-          <DialogDescription>Update {user.name}'s Fidelity Fund Certificate record.</DialogDescription>
+          <DialogDescription>
+            Update {user.name}'s Fidelity Fund Certificate record.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label htmlFor="ffc-number">Certificate number</Label>
-            <Input id="ffc-number" className="font-mono" value={number} onChange={(e) => setNumber(e.target.value)} />
+            <Input
+              id="ffc-number"
+              className="font-mono"
+              value={number}
+              onChange={(e) => setNumber(e.target.value)}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="ffc-issued">Issued date</Label>
-              <Input id="ffc-issued" type="date" value={issued} onChange={(e) => setIssued(e.target.value)} />
+              <Input
+                id="ffc-issued"
+                type="date"
+                value={issued}
+                onChange={(e) => setIssued(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ffc-expiry">Expiry date</Label>
-              <Input id="ffc-expiry" type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+              <Input
+                id="ffc-expiry"
+                type="date"
+                value={expiry}
+                onChange={(e) => setExpiry(e.target.value)}
+              />
             </div>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="ffc-file">Certificate file</Label>
-            <Input id="ffc-file" type="file" accept=".pdf,.jpg,.png" />
+            <Input
+              id="ffc-file"
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={(event) => setFile(event.target.files?.[0] || null)}
+            />
           </div>
         </div>
         <DialogFooter>
@@ -160,12 +216,43 @@ function UploadDialog({
             Cancel
           </Button>
           <Button
-            onClick={() => {
-              onOpenChange(false);
-              toast.success("Certificate uploaded", { description: `${user.name} · ${number || "no number"}` });
+            disabled={saving}
+            onClick={async () => {
+              if (!account || !number.trim() || !issued || !expiry || !file) {
+                toast.error("Certificate number, dates, and file are required.");
+                return;
+              }
+              setSaving(true);
+              let storageKey = "";
+              try {
+                const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
+                storageKey = await uploadFileToR2(
+                  file,
+                  `${account.agencyId}/ffc/${user.id}/${Date.now()}-${safeName}`,
+                );
+                const certificateResult = await supabase.rpc("upsert_ffc_certificate", {
+                  p_user_account_id: user.id,
+                  p_certificate_number: number.trim(),
+                  p_issued_on: issued,
+                  p_expires_on: expiry,
+                  p_filename: file.name,
+                  p_storage_key: storageKey,
+                  p_mime_type: file.type,
+                  p_size_bytes: file.size,
+                });
+                if (certificateResult.error) throw certificateResult.error;
+                toast.success("Certificate uploaded", { description: `${user.name} · ${number}` });
+                onSaved();
+                onOpenChange(false);
+              } catch (error: any) {
+                if (storageKey) await removeStoredFile(storageKey).catch(() => undefined);
+                toast.error(error.message || "Certificate upload failed");
+              } finally {
+                setSaving(false);
+              }
             }}
           >
-            Save certificate
+            {saving ? "Saving…" : "Save certificate"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -174,9 +261,12 @@ function UploadDialog({
 }
 
 function FfcRegister() {
-  const loading = useFakeLoad(400);
-  const [viewUser, setViewUser] = useState<(typeof users)[number] | null>(null);
-  const [uploadUser, setUploadUser] = useState<(typeof users)[number] | null>(null);
+  const dashboard = useDashboardData();
+  const queryClient = useQueryClient();
+  const users = useMemo(() => dashboard.data?.users || [], [dashboard.data?.users]);
+  const loading = dashboard.isLoading;
+  const [viewUser, setViewUser] = useState<any | null>(null);
+  const [uploadUser, setUploadUser] = useState<any | null>(null);
 
   const rows = useMemo(
     () =>
@@ -184,7 +274,7 @@ function FfcRegister() {
         const { status, days } = statusOf(u.ffc?.expiry);
         return { user: u, status, days };
       }),
-    [],
+    [users],
   );
 
   const counts = useMemo(
@@ -207,9 +297,27 @@ function FfcRegister() {
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard label="Total practitioners" value={counts.total} icon={ShieldQuestion} />
-        <KpiCard label="Valid" value={counts.valid} tone="success" icon={ShieldCheck} delay={0.05} />
-        <KpiCard label="Expiring soon" value={counts.expiring} tone="warning" icon={ShieldAlert} delay={0.1} />
-        <KpiCard label="Expired / missing" value={counts.expired} tone="danger" icon={ShieldX} delay={0.15} />
+        <KpiCard
+          label="Valid"
+          value={counts.valid}
+          tone="success"
+          icon={ShieldCheck}
+          delay={0.05}
+        />
+        <KpiCard
+          label="Expiring soon"
+          value={counts.expiring}
+          tone="warning"
+          icon={ShieldAlert}
+          delay={0.1}
+        />
+        <KpiCard
+          label="Expired / missing"
+          value={counts.expired}
+          tone="danger"
+          icon={ShieldX}
+          delay={0.15}
+        />
       </div>
 
       <GlassCard className="mt-6 p-0">
@@ -254,10 +362,34 @@ function FfcRegister() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1.5">
-                        <Button size="sm" variant="outline" className="h-7 gap-1" onClick={() => setViewUser(user)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 gap-1"
+                          onClick={async () => {
+                            if (user.ffc?.storageKey) {
+                              try {
+                                window.open(
+                                  await getR2FileUrl(user.ffc.storageKey),
+                                  "_blank",
+                                  "noopener,noreferrer",
+                                );
+                              } catch (error: any) {
+                                toast.error(error.message || "Unable to open certificate");
+                              }
+                            } else {
+                              setViewUser(user);
+                            }
+                          }}
+                        >
                           <Eye className="size-3.5" /> View
                         </Button>
-                        <Button size="sm" variant="outline" className="h-7 gap-1" onClick={() => setUploadUser(user)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 gap-1"
+                          onClick={() => setUploadUser(user)}
+                        >
                           <UploadCloud className="size-3.5" /> Upload
                         </Button>
                       </div>
@@ -270,9 +402,20 @@ function FfcRegister() {
         )}
       </GlassCard>
 
-      {viewUser && <CertificateDialog open={!!viewUser} onOpenChange={(v) => !v && setViewUser(null)} user={viewUser} />}
+      {viewUser && (
+        <CertificateDialog
+          open={!!viewUser}
+          onOpenChange={(v) => !v && setViewUser(null)}
+          user={viewUser}
+        />
+      )}
       {uploadUser && (
-        <UploadDialog open={!!uploadUser} onOpenChange={(v) => !v && setUploadUser(null)} user={uploadUser} />
+        <UploadDialog
+          open={!!uploadUser}
+          onOpenChange={(v) => !v && setUploadUser(null)}
+          user={uploadUser}
+          onSaved={() => void queryClient.invalidateQueries({ queryKey: ["dashboard"] })}
+        />
       )}
     </AppShell>
   );

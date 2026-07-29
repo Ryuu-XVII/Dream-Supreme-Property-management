@@ -19,11 +19,7 @@ import { GlassCard, EmptyState, useFakeLoad, CardSkeleton } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Accordion,
   AccordionItem,
@@ -61,15 +57,31 @@ export const Route = createFileRoute("/documents")({
   head: () => ({
     meta: [
       { title: "Documents | Dream Supreme Properties" },
-      { name: "description", content: "Deal document library, version history and merge-field templates for Dream Supreme Properties." },
+      {
+        name: "description",
+        content:
+          "Deal document library, version history and merge-field templates for Dream Supreme Properties.",
+      },
       { property: "og:title", content: "Documents | Dream Supreme Properties" },
-      { property: "og:description", content: "Deal document library, version history and merge-field templates for Dream Supreme Properties." },
+      {
+        property: "og:description",
+        content:
+          "Deal document library, version history and merge-field templates for Dream Supreme Properties.",
+      },
     ],
   }),
   component: DocumentsPage,
 });
 
-const categories = ["Mandate", "OTP", "FICA", "Compliance Certificate", "Bond Grant", "Clearance", "Guarantee"];
+const categories = [
+  "Mandate",
+  "OTP",
+  "FICA",
+  "Compliance Certificate",
+  "Bond Grant",
+  "Clearance",
+  "Guarantee",
+];
 
 interface Template {
   id: string;
@@ -80,26 +92,109 @@ interface Template {
 }
 
 const templates: Template[] = [
-  { id: "t1", name: "Offer to Purchase — Residential", category: "OTP", fields: 22, updatedAt: "2026-01-14" },
-  { id: "t2", name: "Sole Mandate Agreement", category: "Mandate", fields: 14, updatedAt: "2025-12-02" },
-  { id: "t3", name: "FICA Declaration — Natural Person", category: "FICA", fields: 9, updatedAt: "2025-11-20" },
-  { id: "t4", name: "FICA Declaration — Company/CC/Trust", category: "FICA", fields: 12, updatedAt: "2025-11-20" },
-  { id: "t5", name: "Rates Clearance Request Letter", category: "Clearance", fields: 8, updatedAt: "2026-02-01" },
-  { id: "t6", name: "Guarantee Request to Bank", category: "Guarantee", fields: 10, updatedAt: "2026-01-28" },
-  { id: "t7", name: "Compliance Certificate Cover Letter", category: "Compliance Certificate", fields: 6, updatedAt: "2025-10-11" },
-  { id: "t8", name: "Commission Invoice / Statement", category: "Commission", fields: 11, updatedAt: "2026-02-10" },
+  {
+    id: "t1",
+    name: "Offer to Purchase — Residential",
+    category: "OTP",
+    fields: 22,
+    updatedAt: "2026-01-14",
+  },
+  {
+    id: "t2",
+    name: "Sole Mandate Agreement",
+    category: "Mandate",
+    fields: 14,
+    updatedAt: "2025-12-02",
+  },
+  {
+    id: "t3",
+    name: "FICA Declaration — Natural Person",
+    category: "FICA",
+    fields: 9,
+    updatedAt: "2025-11-20",
+  },
+  {
+    id: "t4",
+    name: "FICA Declaration — Company/CC/Trust",
+    category: "FICA",
+    fields: 12,
+    updatedAt: "2025-11-20",
+  },
+  {
+    id: "t5",
+    name: "Rates Clearance Request Letter",
+    category: "Clearance",
+    fields: 8,
+    updatedAt: "2026-02-01",
+  },
+  {
+    id: "t6",
+    name: "Guarantee Request to Bank",
+    category: "Guarantee",
+    fields: 10,
+    updatedAt: "2026-01-28",
+  },
+  {
+    id: "t7",
+    name: "Compliance Certificate Cover Letter",
+    category: "Compliance Certificate",
+    fields: 6,
+    updatedAt: "2025-10-11",
+  },
+  {
+    id: "t8",
+    name: "Commission Invoice / Statement",
+    category: "Commission",
+    fields: 11,
+    updatedAt: "2026-02-10",
+  },
 ];
 
 const mergeFieldGroups: { entity: string; fields: string[] }[] = [
-  { entity: "Deal", fields: ["deal.reference", "deal.stage", "deal.salePrice", "deal.commissionBps", "deal.mandateType", "deal.otpSigned"] },
-  { entity: "Property", fields: ["property.address", "property.suburb", "property.erfSize", "property.type", "property.schemeName"] },
-  { entity: "Party", fields: ["party.name", "party.idNumber", "party.entityType", "party.email", "party.mobile"] },
-  { entity: "Agency", fields: ["agency.name", "agency.registration", "agency.vatNumber", "agency.address", "agency.ppra"] },
+  {
+    entity: "Deal",
+    fields: [
+      "deal.reference",
+      "deal.stage",
+      "deal.salePrice",
+      "deal.commissionBps",
+      "deal.mandateType",
+      "deal.otpSigned",
+    ],
+  },
+  {
+    entity: "Property",
+    fields: [
+      "property.address",
+      "property.suburb",
+      "property.erfSize",
+      "property.type",
+      "property.schemeName",
+    ],
+  },
+  {
+    entity: "Party",
+    fields: ["party.name", "party.idNumber", "party.entityType", "party.email", "party.mobile"],
+  },
+  {
+    entity: "Agency",
+    fields: [
+      "agency.name",
+      "agency.registration",
+      "agency.vatNumber",
+      "agency.address",
+      "agency.ppra",
+    ],
+  },
 ];
 
 function DocumentsPage() {
   return (
-    <AppShell title="Documents" description="Deal document library and merge-field templates" crumbs={[{ label: "Documents" }]}>
+    <AppShell
+      title="Documents"
+      description="Deal document library and merge-field templates"
+      crumbs={[{ label: "Documents" }]}
+    >
       <Tabs defaultValue="library">
         <TabsList>
           <TabsTrigger value="library">Library</TabsTrigger>
@@ -126,7 +221,10 @@ function LibraryTab() {
   const dealsByBranch = useMemo(() => {
     const map = new Map<string, Deal[]>();
     for (const br of branches) {
-      map.set(br.name, deals.filter((d) => d.branch === br.name));
+      map.set(
+        br.name,
+        deals.filter((d) => d.branch === br.name),
+      );
     }
     return map;
   }, []);
@@ -167,17 +265,20 @@ function LibraryTab() {
                 <div className="min-w-0">
                   <p className="money truncate text-sm font-semibold">{selectedDeal.ref}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {propertyById(selectedDeal.propertyId).address}, {propertyById(selectedDeal.propertyId).suburb}
+                    {propertyById(selectedDeal.propertyId).address},{" "}
+                    {propertyById(selectedDeal.propertyId).suburb}
                   </p>
                 </div>
-                <Badge variant="outline" className="shrink-0">{selectedDeal.documents.length} documents</Badge>
+                <Badge variant="outline" className="shrink-0">
+                  {selectedDeal.documents.length} documents
+                </Badge>
               </div>
             </GlassCard>
 
             <UploadZone category={category} setCategory={setCategory} />
 
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {selectedDeal.documents.map((doc, i) => (
+              {selectedDeal.documents.map((doc: any, i: number) => (
                 <motion.div
                   key={doc.id}
                   initial={{ opacity: 0, y: 8 }}
@@ -190,15 +291,23 @@ function LibraryTab() {
                         <FileText className="size-4" />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium" title={doc.name}>{doc.name}</p>
+                        <p className="truncate text-sm font-medium" title={doc.name}>
+                          {doc.name}
+                        </p>
                         <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                          <Badge variant="outline" className="text-[10px]">{doc.category}</Badge>
-                          <Badge variant="outline" className="font-mono text-[10px]">v{doc.version}</Badge>
+                          <Badge variant="outline" className="text-[10px]">
+                            {doc.category}
+                          </Badge>
+                          <Badge variant="outline" className="font-mono text-[10px]">
+                            v{doc.version}
+                          </Badge>
                         </div>
                       </div>
                     </div>
                     <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-                      <p>{doc.sizeKb} KB &middot; uploaded by {doc.uploadedBy}</p>
+                      <p>
+                        {doc.sizeKb} KB &middot; uploaded by {doc.uploadedBy}
+                      </p>
                       <p>{dateFmt(doc.uploadedAt)}</p>
                     </div>
                     <div className="mt-auto pt-2">
@@ -224,7 +333,10 @@ function LibraryTab() {
                 {Object.entries(groupByCategory(selectedDeal.documents)).map(([cat, docs]) => (
                   <AccordionItem key={cat} value={cat}>
                     <AccordionTrigger className="text-sm">
-                      {cat} <span className="ml-2 text-xs text-muted-foreground">({docs.length} version{docs.length > 1 ? "s" : ""})</span>
+                      {cat}{" "}
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        ({docs.length} version{docs.length > 1 ? "s" : ""})
+                      </span>
                     </AccordionTrigger>
                     <AccordionContent>
                       <ul className="space-y-2">
@@ -232,17 +344,30 @@ function LibraryTab() {
                           .slice()
                           .sort((a, b) => a.version - b.version)
                           .map((doc) => (
-                            <li key={doc.id} className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2 text-xs">
+                            <li
+                              key={doc.id}
+                              className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2 text-xs"
+                            >
                               <div className="min-w-0">
-                                <p className="truncate font-medium">v{doc.version} &middot; {doc.name}</p>
+                                <p className="truncate font-medium">
+                                  v{doc.version} &middot; {doc.name}
+                                </p>
                                 <p className="text-muted-foreground">
                                   {dateFmt(doc.uploadedAt)} by {doc.uploadedBy}
                                   {doc.supersedes && (
-                                    <> &middot; supersedes <span className="font-mono">{doc.supersedes}</span></>
+                                    <>
+                                      {" "}
+                                      &middot; supersedes{" "}
+                                      <span className="font-mono">{doc.supersedes}</span>
+                                    </>
                                   )}
                                 </p>
                               </div>
-                              <Button size="sm" variant="ghost" onClick={() => toast.success(`Downloading v${doc.version}`)}>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => toast.success(`Downloading v${doc.version}`)}
+                              >
                                 <Download className="size-3.5" />
                               </Button>
                             </li>
@@ -255,7 +380,11 @@ function LibraryTab() {
             </GlassCard>
           </>
         ) : (
-          <EmptyState title="Select a deal" message="Choose a deal from the agency tree to view its documents." icon={Folder} />
+          <EmptyState
+            title="Select a deal"
+            message="Choose a deal from the agency tree to view its documents."
+            icon={Folder}
+          />
         )}
       </div>
     </div>
@@ -299,10 +428,18 @@ function TreeAgency({
               onOpenChange={(v) => setOpenBranches((prev) => ({ ...prev, [branch]: v }))}
             >
               <CollapsibleTrigger className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-sm hover:bg-accent">
-                <ChevronRight className={cn("size-3.5 transition-transform", open && "rotate-90")} />
-                {open ? <FolderOpen className="size-3.5 text-warning" /> : <Folder className="size-3.5 text-warning" />}
+                <ChevronRight
+                  className={cn("size-3.5 transition-transform", open && "rotate-90")}
+                />
+                {open ? (
+                  <FolderOpen className="size-3.5 text-warning" />
+                ) : (
+                  <Folder className="size-3.5 text-warning" />
+                )}
                 {branch}
-                <span className="ml-auto text-[10px] text-muted-foreground">{branchDeals.length}</span>
+                <span className="ml-auto text-[10px] text-muted-foreground">
+                  {branchDeals.length}
+                </span>
               </CollapsibleTrigger>
               <CollapsibleContent className="ml-3 border-l border-border pl-2">
                 {branchDeals.map((deal) => (
@@ -327,7 +464,13 @@ function TreeAgency({
   );
 }
 
-function UploadZone({ category, setCategory }: { category: string; setCategory: (c: string) => void }) {
+function UploadZone({
+  category,
+  setCategory,
+}: {
+  category: string;
+  setCategory: (c: string) => void;
+}) {
   const [dragging, setDragging] = useState(false);
   return (
     <GlassCard>
@@ -358,11 +501,17 @@ function UploadZone({ category, setCategory }: { category: string; setCategory: 
             </SelectTrigger>
             <SelectContent>
               {categories.map((c) => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Button size="sm" variant="outline" onClick={() => toast.success(`File uploaded as ${category}`)}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => toast.success(`File uploaded as ${category}`)}
+          >
             <Upload className="mr-1.5 size-3.5" /> Upload
           </Button>
         </div>
@@ -408,9 +557,13 @@ function TemplatesTab() {
                 {templates.map((t) => (
                   <TableRow key={t.id}>
                     <TableCell className="font-medium">{t.name}</TableCell>
-                    <TableCell><Badge variant="outline">{t.category}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{t.category}</Badge>
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{t.fields}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{dateFmt(t.updatedAt)}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {dateFmt(t.updatedAt)}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -424,10 +577,15 @@ function TemplatesTab() {
         <div className="space-y-4">
           {mergeFieldGroups.map((g) => (
             <div key={g.entity}>
-              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{g.entity}</p>
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {g.entity}
+              </p>
               <div className="flex flex-wrap gap-1.5">
                 {g.fields.map((f) => (
-                  <span key={f} className="money rounded-md border border-border bg-muted px-1.5 py-0.5 text-[11px]">
+                  <span
+                    key={f}
+                    className="money rounded-md border border-border bg-muted px-1.5 py-0.5 text-[11px]"
+                  >
                     {`{{${f}}}`}
                   </span>
                 ))}
@@ -442,7 +600,13 @@ function TemplatesTab() {
   );
 }
 
-function GenerateDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+function GenerateDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
   const [templateId, setTemplateId] = useState<string>(templates[0].id);
   const [dealId, setDealId] = useState<string>(deals[0]?.id ?? "");
 
@@ -450,49 +614,86 @@ function GenerateDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
   const deal = dealById(dealId) ?? deals[0];
   const property = deal ? propertyById(deal.propertyId) : undefined;
 
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Generate Document</DialogTitle>
-          <DialogDescription>Pick a template and a deal to merge field values into a new document.</DialogDescription>
+          <DialogDescription>
+            Pick a template and a deal to merge field values into a new document.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-xs font-medium text-muted-foreground">Template</label>
             <Select value={templateId} onValueChange={setTemplateId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {templates.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                {templates.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-muted-foreground">Deal</label>
             <Select value={dealId} onValueChange={setDealId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {deals.map((d) => <SelectItem key={d.id} value={d.id}>{d.ref}</SelectItem>)}
+                {deals.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>
+                    {d.ref}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
         </div>
 
         <div className="rounded-lg border border-border bg-muted/40 p-3">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Preview: {template.name}</p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Preview: {template.name}
+          </p>
           <dl className="space-y-1 text-xs">
-            <div className="flex justify-between gap-2"><dt className="money text-muted-foreground">{"{{deal.reference}}"}</dt><dd className="font-medium">{deal.ref}</dd></div>
-            <div className="flex justify-between gap-2"><dt className="money text-muted-foreground">{"{{deal.salePrice}}"}</dt><dd className="font-medium">{zar(deal.salePrice)}</dd></div>
-            <div className="flex justify-between gap-2"><dt className="money text-muted-foreground">{"{{property.address}}"}</dt><dd className="truncate font-medium">{property.address}</dd></div>
-            <div className="flex justify-between gap-2"><dt className="money text-muted-foreground">{"{{property.suburb}}"}</dt><dd className="font-medium">{property.suburb}</dd></div>
-            <div className="flex justify-between gap-2"><dt className="money text-muted-foreground">{"{{deal.mandateType}}"}</dt><dd className="font-medium">{deal.mandateType}</dd></div>
+            <div className="flex justify-between gap-2">
+              <dt className="money text-muted-foreground">{"{{deal.reference}}"}</dt>
+              <dd className="font-medium">{deal.ref}</dd>
+            </div>
+            <div className="flex justify-between gap-2">
+              <dt className="money text-muted-foreground">{"{{deal.salePrice}}"}</dt>
+              <dd className="font-medium">{zar(deal.salePrice)}</dd>
+            </div>
+            <div className="flex justify-between gap-2">
+              <dt className="money text-muted-foreground">{"{{property.address}}"}</dt>
+              <dd className="truncate font-medium">{property.address}</dd>
+            </div>
+            <div className="flex justify-between gap-2">
+              <dt className="money text-muted-foreground">{"{{property.suburb}}"}</dt>
+              <dd className="font-medium">{property.suburb}</dd>
+            </div>
+            <div className="flex justify-between gap-2">
+              <dt className="money text-muted-foreground">{"{{deal.mandateType}}"}</dt>
+              <dd className="font-medium">{deal.mandateType}</dd>
+            </div>
           </dl>
         </div>
 
         <DialogFooter className="gap-2 sm:gap-2">
-          <Button variant="outline" onClick={() => toast.success(`${template.name} generated as DOCX`)}>Download DOCX</Button>
-          <Button onClick={() => toast.success(`${template.name} generated as PDF`)}>Download PDF</Button>
+          <Button
+            variant="outline"
+            onClick={() => toast.success(`${template.name} generated as DOCX`)}
+          >
+            Download DOCX
+          </Button>
+          <Button onClick={() => toast.success(`${template.name} generated as PDF`)}>
+            Download PDF
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

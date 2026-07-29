@@ -9,12 +9,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { QuickDealModal } from "@/components/deal/quick-deal-modal";
 import {
-  Users, UserCheck, ShieldCheck, Plus, Search, Mail, Phone, FileText, CheckCircle2, AlertCircle
+  Users,
+  UserCheck,
+  ShieldCheck,
+  Plus,
+  Search,
+  Mail,
+  Phone,
+  FileText,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import { dateFmt } from "@/lib/format";
 
@@ -22,7 +50,10 @@ export const Route = createFileRoute("/clients")({
   head: () => ({
     meta: [
       { title: "Client CRM Directory | Dream Supreme Properties" },
-      { name: "description", content: "Manage sellers, buyers, tenants and landlords, FICA status, and POPIA consent." },
+      {
+        name: "description",
+        content: "Manage sellers, buyers, tenants and landlords, FICA status, and POPIA consent.",
+      },
     ],
   }),
   component: ClientsPage,
@@ -117,39 +148,62 @@ function ClientsPage() {
     popiaConsent: true,
   });
 
-  const { data: remoteClients, isLoading, refetch } = useQuery({
+  const {
+    data: remoteClients,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["clients-crm"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("party")
-        .select("id, full_name, party_type, email, mobile, id_or_reg_number, fica_status, popia_consent_at, created_at")
+        .select(
+          "id, full_name, party_type, email, mobile, id_or_reg_number, fica_status, popia_consent_at, created_at",
+        )
         .order("created_at", { ascending: false });
 
-      if (error || !data || data.length === 0) return seedClients;
+      if (error) throw error;
 
       return data.map((p: any): ClientParty => ({
         id: p.id,
         name: p.full_name,
-        type: p.party_type === "seller" ? "Seller" : p.party_type === "purchaser" ? "Purchaser" : p.party_type === "tenant" ? "Tenant" : "Landlord",
+        type:
+          p.party_type === "seller"
+            ? "Seller"
+            : p.party_type === "purchaser"
+              ? "Purchaser"
+              : p.party_type === "tenant"
+                ? "Tenant"
+                : "Landlord",
         email: p.email || "—",
         mobile: p.mobile || "—",
         idNumber: p.id_or_reg_number || "—",
-        ficaStatus: p.fica_status === "complete" ? "Complete" : p.fica_status === "partial" ? "Partial" : "Missing",
+        ficaStatus:
+          p.fica_status === "complete"
+            ? "Complete"
+            : p.fica_status === "partial"
+              ? "Partial"
+              : "Missing",
         popiaConsent: !!p.popia_consent_at,
         createdAt: p.created_at,
       }));
     },
   });
 
-  const clientsList = remoteClients || seedClients;
+  const clientsList = useMemo(() => remoteClients || [], [remoteClients]);
 
   const filteredClients = useMemo(() => {
     return clientsList.filter((c) => {
-      if (search && !c.name.toLowerCase().includes(search.toLowerCase()) && !c.email.toLowerCase().includes(search.toLowerCase())) {
+      if (
+        search &&
+        !c.name.toLowerCase().includes(search.toLowerCase()) &&
+        !c.email.toLowerCase().includes(search.toLowerCase())
+      ) {
         return false;
       }
       if (typeFilter !== "all" && c.type.toLowerCase() !== typeFilter.toLowerCase()) return false;
-      if (ficaFilter !== "all" && c.ficaStatus.toLowerCase() !== ficaFilter.toLowerCase()) return false;
+      if (ficaFilter !== "all" && c.ficaStatus.toLowerCase() !== ficaFilter.toLowerCase())
+        return false;
       return true;
     });
   }, [clientsList, search, typeFilter, ficaFilter]);
@@ -159,19 +213,28 @@ function ClientsPage() {
     try {
       toast.loading("Adding client contact...", { id: "add-client" });
       const userRes = await supabase.auth.getUser();
-      const userAcc = await supabase.from("user_account").select("agency_id").eq("auth_user_id", userRes.data.user?.id).single();
+      const userAcc = await supabase
+        .from("user_account")
+        .select("agency_id")
+        .eq("auth_user_id", userRes.data.user?.id)
+        .single();
 
       if (userAcc.data?.agency_id) {
-        await supabase.from("party").insert({
+        const { error } = await supabase.from("party").insert({
           agency_id: userAcc.data.agency_id,
           full_name: newForm.name,
           party_type: newForm.type.toLowerCase(),
+          entity_type: "natural_person",
           email: newForm.email,
           mobile: newForm.mobile,
           id_or_reg_number: newForm.idNumber,
-          fica_status: newForm.ficaStatus.toLowerCase(),
+          fica_status:
+            newForm.ficaStatus === "Missing" ? "not_started" : newForm.ficaStatus.toLowerCase(),
           popia_consent_at: newForm.popiaConsent ? new Date().toISOString() : null,
         });
+        if (error) throw error;
+      } else {
+        throw new Error("Your agency account could not be resolved.");
       }
 
       toast.success("Client added successfully!", { id: "add-client" });
@@ -201,7 +264,9 @@ function ClientsPage() {
           </div>
 
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[140px]"><SelectValue placeholder="All types" /></SelectTrigger>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All types" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="seller">Sellers</SelectItem>
@@ -212,7 +277,9 @@ function ClientsPage() {
           </Select>
 
           <Select value={ficaFilter} onValueChange={setFicaFilter}>
-            <SelectTrigger className="w-[140px]"><SelectValue placeholder="FICA status" /></SelectTrigger>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="FICA status" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All FICA</SelectItem>
               <SelectItem value="complete">Complete</SelectItem>
@@ -231,7 +298,10 @@ function ClientsPage() {
         {isLoading ? (
           <TableSkeleton rows={5} cols={5} />
         ) : filteredClients.length === 0 ? (
-          <EmptyState title="No clients found" message="No client contacts match your active search filters." />
+          <EmptyState
+            title="No clients found"
+            message="No client contacts match your active search filters."
+          />
         ) : (
           <div className="overflow-x-auto scrollbar-thin">
             <Table>
@@ -269,8 +339,8 @@ function ClientsPage() {
                           client.ficaStatus === "Complete"
                             ? "bg-success/15 text-success border-success/30"
                             : client.ficaStatus === "Partial"
-                            ? "bg-warning/15 text-warning border-warning/30"
-                            : "bg-destructive/15 text-destructive border-destructive/30"
+                              ? "bg-warning/15 text-warning border-warning/30"
+                              : "bg-destructive/15 text-destructive border-destructive/30"
                         }
                       >
                         {client.ficaStatus}
@@ -326,8 +396,13 @@ function ClientsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">Role</Label>
-                <Select value={newForm.type} onValueChange={(v) => setNewForm({ ...newForm, type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={newForm.type}
+                  onValueChange={(v) => setNewForm({ ...newForm, type: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Seller">Seller</SelectItem>
                     <SelectItem value="Purchaser">Purchaser</SelectItem>
@@ -338,8 +413,13 @@ function ClientsPage() {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">FICA Status</Label>
-                <Select value={newForm.ficaStatus} onValueChange={(v) => setNewForm({ ...newForm, ficaStatus: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={newForm.ficaStatus}
+                  onValueChange={(v) => setNewForm({ ...newForm, ficaStatus: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Complete">Complete</SelectItem>
                     <SelectItem value="Partial">Partial</SelectItem>
@@ -364,7 +444,9 @@ function ClientsPage() {
               />
             </div>
             <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" onClick={() => setAddModalOpen(false)}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => setAddModalOpen(false)}>
+                Cancel
+              </Button>
               <Button type="submit">Save Contact</Button>
             </DialogFooter>
           </form>
@@ -372,10 +454,7 @@ function ClientsPage() {
       </Dialog>
 
       {/* Quick Deal Modal when clicking "Create Deal" */}
-      <QuickDealModal
-        open={dealModalOpen}
-        onOpenChange={setDealModalOpen}
-      />
+      <QuickDealModal open={dealModalOpen} onOpenChange={setDealModalOpen} />
     </AppShell>
   );
 }

@@ -1,37 +1,38 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { motion } from "framer-motion";
 import { Activity, AlertTriangle, Banknote, Calendar, ShieldAlert } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
-import { GlassCard, KpiCard, CardSkeleton, EmptyState, useFakeLoad } from "@/components/ui-kit";
+import { GlassCard, KpiCard, CardSkeleton, EmptyState } from "@/components/ui-kit";
 import { UrgencyBadge, StatusDot } from "@/components/badges";
+import { agency, STAGES } from "@/data/state";
+import { useDashboardData } from "@/data/operations";
 import {
-  agency,
-  auditEvents,
-  deals,
-  forecast,
-  openConditions,
-  STAGES,
-  users,
-} from "@/data/state";
-import { dateFmt, dateTimeFmt, daysUntil, relative, urgencyOf, zar, zarCompact } from "@/lib/format";
+  dateFmt,
+  dateTimeFmt,
+  daysUntil,
+  relative,
+  urgencyOf,
+  zar,
+  zarCompact,
+} from "@/lib/format";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Dashboard | Dream Supreme Properties" },
-      { name: "description", content: "Agency-wide overview of pipeline, conditions, FFC compliance and commission for Dream Supreme Properties." },
+      {
+        name: "description",
+        content:
+          "Agency-wide overview of pipeline, conditions, FFC compliance and commission for Dream Supreme Properties.",
+      },
       { property: "og:title", content: "Dashboard | Dream Supreme Properties" },
-      { property: "og:description", content: "Agency-wide overview of pipeline, conditions, FFC compliance and commission for Dream Supreme Properties." },
+      {
+        property: "og:description",
+        content:
+          "Agency-wide overview of pipeline, conditions, FFC compliance and commission for Dream Supreme Properties.",
+      },
     ],
   }),
   component: Index,
@@ -48,22 +49,47 @@ const shortStage: Record<string, string> = {
   "Transfer Duty": "Duty",
   "Rates & Levy Clearance": "Clearance",
   "Documents & Guarantees": "Docs",
-  "Lodged": "Lodged",
-  "Registered": "Registered",
+  Lodged: "Lodged",
+  Registered: "Registered",
   "Commission Released": "Paid",
 };
 
 function Index() {
-  const loading = useFakeLoad(600);
-  const today = new Date();
+  const { data, isLoading: loading } = useDashboardData();
+  const deals = useMemo(() => data?.deals ?? [], [data?.deals]);
+  const openConditions = useMemo(() => data?.openConditions ?? [], [data?.openConditions]);
+  const users = useMemo(() => data?.users ?? [], [data?.users]);
+  const auditEvents = useMemo(() => data?.auditEvents ?? [], [data?.auditEvents]);
+  const today = useMemo(() => new Date(), []);
+  const forecast = useMemo(() => {
+    const months = Array.from({ length: 6 }, (_, index) => {
+      const date = new Date(today.getFullYear(), today.getMonth() + index, 1);
+      return { month: date.toLocaleString("en-ZA", { month: "short" }), projected: 0 };
+    });
+    deals.forEach((deal) => {
+      const target = deal.registeredAt ? new Date(deal.registeredAt) : new Date(deal.stageSince);
+      const offset =
+        (target.getFullYear() - today.getFullYear()) * 12 + target.getMonth() - today.getMonth();
+      if (offset >= 0 && offset < months.length) {
+        months[offset].projected += Math.round((deal.salePrice * deal.commissionBps) / 10000);
+      }
+    });
+    return months;
+  }, [deals, today]);
 
   const activeDeals = useMemo(
-    () => deals.filter((d) => d.stage !== "Registered" && d.stage !== "Commission Released" && !d.cancelled),
-    [],
+    () =>
+      deals.filter(
+        (d) => d.stage !== "Registered" && d.stage !== "Commission Released" && !d.cancelled,
+      ),
+    [deals],
   );
   const pipelineValue = useMemo(
-    () => deals.filter((d) => d.stage !== "Registered" && !d.cancelled).reduce((s, d) => s + d.salePrice, 0),
-    [],
+    () =>
+      deals
+        .filter((d) => d.stage !== "Registered" && !d.cancelled)
+        .reduce((s, d) => s + d.salePrice, 0),
+    [deals],
   );
   const registeringThisMonth = useMemo(
     () =>
@@ -72,15 +98,18 @@ function Index() {
         const r = new Date(d.registeredAt);
         return r.getMonth() === today.getMonth() && r.getFullYear() === today.getFullYear();
       }).length,
-    [],
+    [deals, today],
   );
-  const overdueConditions = useMemo(() => openConditions.filter((c) => daysUntil(c.dueDate) < 0).length, []);
+  const overdueConditions = useMemo(
+    () => openConditions.filter((c) => daysUntil(c.dueDate) < 0).length,
+    [openConditions],
+  );
   const commissionMTD = useMemo(
     () =>
       deals
         .filter((d) => d.registeredAt && new Date(d.registeredAt).getMonth() === today.getMonth())
         .reduce((s, d) => s + Math.round((d.salePrice * d.commissionBps) / 10000), 0),
-    [],
+    [deals, today],
   );
 
   const stageCounts = useMemo(
@@ -89,15 +118,13 @@ function Index() {
         stage: shortStage[s] ?? s,
         count: deals.filter((d) => d.stage === s && !d.cancelled).length,
       })),
-    [],
+    [deals],
   );
 
   const urgentConditions = useMemo(
     () =>
-      [...openConditions]
-        .sort((a, b) => daysUntil(a.dueDate) - daysUntil(b.dueDate))
-        .slice(0, 5),
-    [],
+      [...openConditions].sort((a, b) => daysUntil(a.dueDate) - daysUntil(b.dueDate)).slice(0, 5),
+    [openConditions],
   );
 
   const ffcAlerts = useMemo(
@@ -107,25 +134,41 @@ function Index() {
         if (!u.ffc.expiry) return false;
         return daysUntil(u.ffc.expiry) <= 30;
       }),
-    [],
+    [users],
   );
 
-  const recentEvents = useMemo(() => [...auditEvents].slice(0, 10), []);
+  const recentEvents = useMemo(() => [...auditEvents].slice(0, 10), [auditEvents]);
 
   return (
-    <AppShell
-      title="Dashboard"
-      description={`${agency.name} · ${dateFmt(today)}`}
-    >
+    <AppShell title="Dashboard" description={`${agency.name} · ${dateFmt(today)}`}>
       <div className="space-y-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {loading ? (
             Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)
           ) : (
             <>
-              <KpiCard label="Active Deals" value={activeDeals.length} trend={8} sub="vs. last month" icon={Activity} delay={0} />
-              <KpiCard label="Pipeline Value" value={zarCompact(pipelineValue)} sub="Non-registered deals" icon={Banknote} delay={0.05} />
-              <KpiCard label="Registering This Month" value={registeringThisMonth} sub="Lodged & pending" icon={Calendar} delay={0.1} />
+              <KpiCard
+                label="Active Deals"
+                value={activeDeals.length}
+                trend={8}
+                sub="vs. last month"
+                icon={Activity}
+                delay={0}
+              />
+              <KpiCard
+                label="Pipeline Value"
+                value={zarCompact(pipelineValue)}
+                sub="Non-registered deals"
+                icon={Banknote}
+                delay={0.05}
+              />
+              <KpiCard
+                label="Registering This Month"
+                value={registeringThisMonth}
+                sub="Lodged & pending"
+                icon={Calendar}
+                delay={0.1}
+              />
               <KpiCard
                 label="Overdue Conditions"
                 value={overdueConditions}
@@ -134,7 +177,14 @@ function Index() {
                 icon={AlertTriangle}
                 delay={0.15}
               />
-              <KpiCard label="Commission MTD" value={zarCompact(commissionMTD)} trend={12} sub="Gross, registered deals" icon={Banknote} delay={0.2} />
+              <KpiCard
+                label="Commission MTD"
+                value={zarCompact(commissionMTD)}
+                trend={12}
+                sub="Gross, registered deals"
+                icon={Banknote}
+                delay={0.2}
+              />
             </>
           )}
         </div>
@@ -150,10 +200,22 @@ function Index() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={stageCounts} margin={{ left: -20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                    <XAxis dataKey="stage" tick={{ fontSize: 10 }} interval={0} angle={-35} textAnchor="end" height={60} />
+                    <XAxis
+                      dataKey="stage"
+                      tick={{ fontSize: 10 }}
+                      interval={0}
+                      angle={-35}
+                      textAnchor="end"
+                      height={60}
+                    />
                     <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                     <Tooltip
-                      contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
+                      contentStyle={{
+                        background: "var(--card)",
+                        border: "1px solid var(--border)",
+                        borderRadius: 8,
+                        fontSize: 12,
+                      }}
                     />
                     <Bar dataKey="count" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -173,10 +235,19 @@ function Index() {
                   <BarChart data={forecast} margin={{ left: -20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                     <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                    <YAxis tickFormatter={(v) => zarCompact(v)} tick={{ fontSize: 10 }} width={56} />
+                    <YAxis
+                      tickFormatter={(v) => zarCompact(v)}
+                      tick={{ fontSize: 10 }}
+                      width={56}
+                    />
                     <Tooltip
                       formatter={(v: number) => zar(v)}
-                      contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
+                      contentStyle={{
+                        background: "var(--card)",
+                        border: "1px solid var(--border)",
+                        borderRadius: 8,
+                        fontSize: 12,
+                      }}
                     />
                     <Bar dataKey="projected" fill="var(--color-chart-2)" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -197,7 +268,10 @@ function Index() {
                 ))}
               </div>
             ) : urgentConditions.length === 0 ? (
-              <EmptyState title="No open conditions" message="Every suspensive condition is resolved." />
+              <EmptyState
+                title="No open conditions"
+                message="Every suspensive condition is resolved."
+              />
             ) : (
               <div className="mt-4 space-y-1">
                 {urgentConditions.map((c, i) => (
@@ -232,13 +306,25 @@ function Index() {
                 ))}
               </div>
             ) : ffcAlerts.length === 0 ? (
-              <EmptyState title="All FFCs valid" message="No agents have expiring or missing certificates." />
+              <EmptyState
+                title="All FFCs valid"
+                message="No agents have expiring or missing certificates."
+              />
             ) : (
               <div className="mt-4 space-y-2">
                 {ffcAlerts.map((u) => {
-                  const status = !u.ffc ? "Missing" : !u.ffc.expiry ? "Unknown" : daysUntil(u.ffc.expiry) < 0 ? "Expired" : `Expires in ${daysUntil(u.ffc.expiry)}d`;
+                  const status = !u.ffc
+                    ? "Missing"
+                    : !u.ffc.expiry
+                      ? "Unknown"
+                      : daysUntil(u.ffc.expiry) < 0
+                        ? "Expired"
+                        : `Expires in ${daysUntil(u.ffc.expiry)}d`;
                   return (
-                    <div key={u.id} className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-border/60 px-3 py-2">
+                    <div
+                      key={u.id}
+                      className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-border/60 px-3 py-2"
+                    >
                       <span className="min-w-0 truncate text-sm">{u.name}</span>
                       <span
                         className={

@@ -9,9 +9,20 @@ import { zar, urgencyOf } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { DealOverviewTab } from "@/components/deal/overview";
@@ -20,10 +31,9 @@ import { DealDocumentsTab } from "@/components/deal/documents";
 import { DealCommissionTab } from "@/components/deal/commission";
 import { DealOffersTab } from "@/components/deal/offers";
 import { DealTimelineTab } from "@/components/deal/timeline";
-import {
-  ArrowLeft, ChevronRight, ChevronLeft, XCircle, CheckCircle2,
-} from "lucide-react";
+import { ArrowLeft, ChevronRight, ChevronLeft, XCircle, CheckCircle2, Link2 } from "lucide-react";
 import { useDealDetail } from "@/data/deals";
+import { stageToDb } from "@/lib/domain";
 
 export const Route = createFileRoute("/deals/$dealId")({
   component: DealDetailPage,
@@ -31,7 +41,7 @@ export const Route = createFileRoute("/deals/$dealId")({
 
 function DealDetailPage() {
   const { dealId } = Route.useParams();
-  
+
   const { data: initialDeal, isLoading, error } = useDealDetail(dealId);
   const [deal, setDeal] = useState<Deal | null>(null);
 
@@ -48,22 +58,27 @@ function DealDetailPage() {
   const [stageReason, setStageReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
 
-  if (isLoading || !deal) {
-    return <AppShell><div className="p-8 text-center text-muted-foreground">Loading deal details...</div></AppShell>;
-  }
-
   if (error) {
-    return <AppShell><div className="p-8 text-center text-destructive">Error loading deal: {(error as Error).message}</div></AppShell>;
+    return (
+      <AppShell>
+        <div className="p-8 text-center text-destructive">
+          Error loading deal: {(error as Error).message}
+        </div>
+      </AppShell>
+    );
   }
 
-  // Fallback to propertyById from mock if property isn't fully embedded. We embedded it in the query though, but UI expects propertyById. 
-  // Wait, propertyById throws an error if it doesn't find it. Let's just create a dummy property if it's not found in mock.
-  let property;
-  try {
-    property = propertyById(deal.propertyId);
-  } catch {
-    property = { address: "Address not available", suburb: "", city: "" }; // Mock fallback
+  if (isLoading || !deal) {
+    return (
+      <AppShell>
+        <div className="p-8 text-center text-muted-foreground">Loading deal details...</div>
+      </AppShell>
+    );
   }
+
+  const property = (deal as Deal & { property?: { address: string; suburb: string; city: string } })
+    .property ??
+    propertyById(deal.propertyId) ?? { address: "Address not available", suburb: "", city: "" };
 
   const currentStageIdx = STAGES.findIndex((s) => s === deal.stage);
 
@@ -72,7 +87,12 @@ function DealDetailPage() {
     const nextStage = STAGES[currentStageIdx + 1];
     try {
       toast.loading("Advancing stage...");
-      const { error } = await supabase.from("deal").update({ stage: nextStage, updated_at: new Date().toISOString() }).eq("id", dealId);
+      const { error } = await supabase.rpc("transition_deal", {
+        p_deal_id: dealId,
+        p_to_stage: stageToDb[nextStage],
+        p_reason: stageReason || null,
+        p_override: false,
+      });
       if (error) throw error;
       setDeal((prev) => {
         if (!prev) return prev;
@@ -108,7 +128,16 @@ function DealDetailPage() {
     const prevStage = STAGES[currentStageIdx - 1];
     try {
       toast.loading("Reverting stage...");
-      const { error } = await supabase.from("deal").update({ stage: prevStage, updated_at: new Date().toISOString() }).eq("id", dealId);
+      if (!stageReason.trim()) {
+        toast.error("A reason is required when reverting a stage.");
+        return;
+      }
+      const { error } = await supabase.rpc("transition_deal", {
+        p_deal_id: dealId,
+        p_to_stage: stageToDb[prevStage],
+        p_reason: stageReason,
+        p_override: false,
+      });
       if (error) throw error;
       setDeal((prev) => {
         if (!prev) return prev;
@@ -139,12 +168,29 @@ function DealDetailPage() {
     }
   };
 
-  const handleCancelDeal = () => {
+  const handleCancelDeal = async () => {
+    if (!cancelReason) {
+      toast.error("Select a cancellation reason.");
+      return;
+    }
+    if (cancelReason === "other" && !stageReason.trim()) {
+      toast.error("Enter notes when selecting Other.");
+      return;
+    }
+    const { error } = await supabase.rpc("cancel_deal", {
+      p_deal_id: dealId,
+      p_reason: cancelReason,
+      p_notes: stageReason || null,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setDeal((prev) => {
       if (!prev) return prev;
       return {
         ...prev,
-        cancelled: { reason: cancelReason || "Other", at: new Date().toISOString().split("T")[0] },
+        cancelled: { reason: cancelReason, at: new Date().toISOString().split("T")[0] },
         timeline: [
           {
             id: `h_${Date.now()}`,
@@ -160,6 +206,26 @@ function DealDetailPage() {
     toast.error("Deal has been marked as Cancelled");
     setStageModal(null);
     setCancelReason("");
+    setStageReason("");
+  };
+
+  const copyConveyancerLink = async () => {
+    const email = (deal as Deal & { conveyancerEmail?: string }).conveyancerEmail;
+    if (!email) {
+      toast.error("Add an email address to the appointed conveyancer firm first.");
+      return;
+    }
+    const { data: token, error } = await supabase.rpc("create_status_request", {
+      p_deal_id: dealId,
+      p_recipient_email: email,
+      p_expires_in_hours: 72,
+    });
+    if (error) return toast.error(error.message);
+    const link = `${window.location.origin}/conveyancer?token=${encodeURIComponent(token)}`;
+    await navigator.clipboard.writeText(link);
+    toast.success("Single-use conveyancer link copied", {
+      description: `Send it to ${email}; it expires in 72 hours.`,
+    });
   };
 
   return (
@@ -182,7 +248,9 @@ function DealDetailPage() {
             </div>
             <p className="text-sm text-muted-foreground">
               {property?.address}, {property?.suburb}, {property?.city} —{" "}
-              <span className="font-medium text-foreground">{zar(deal.salePrice, { decimals: false })}</span>
+              <span className="font-medium text-foreground">
+                {zar(deal.salePrice, { decimals: false })}
+              </span>
             </p>
           </div>
 
@@ -190,6 +258,9 @@ function DealDetailPage() {
           <div className="flex flex-wrap items-center gap-2">
             {!deal.cancelled && (
               <>
+                <Button variant="outline" size="sm" onClick={copyConveyancerLink}>
+                  <Link2 className="mr-1 size-3.5" /> Conveyancer link
+                </Button>
                 {currentStageIdx > 0 && (
                   <Button variant="outline" size="sm" onClick={() => setStageModal("revert")}>
                     <ChevronLeft className="mr-1 size-4" /> Revert Stage
@@ -222,8 +293,8 @@ function DealDetailPage() {
                         isCurrent
                           ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
                           : isPast
-                          ? "bg-primary/20 text-primary"
-                          : "bg-muted text-muted-foreground"
+                            ? "bg-primary/20 text-primary"
+                            : "bg-muted text-muted-foreground"
                       }`}
                     >
                       {isPast ? <CheckCircle2 className="size-4" /> : idx + 1}
@@ -233,8 +304,8 @@ function DealDetailPage() {
                         isCurrent
                           ? "font-semibold text-foreground"
                           : isPast
-                          ? "text-muted-foreground"
-                          : "text-muted-foreground/60"
+                            ? "text-muted-foreground"
+                            : "text-muted-foreground/60"
                       }`}
                     >
                       {s}
@@ -257,12 +328,8 @@ function DealDetailPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="grid w-full grid-cols-6 sm:w-auto">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="conditions">
-              Conditions ({deal.conditions.length})
-            </TabsTrigger>
-            <TabsTrigger value="documents">
-              Documents ({deal.documents.length})
-            </TabsTrigger>
+            <TabsTrigger value="conditions">Conditions ({deal.conditions.length})</TabsTrigger>
+            <TabsTrigger value="documents">Documents ({deal.documents.length})</TabsTrigger>
             <TabsTrigger value="commission">Commission</TabsTrigger>
             <TabsTrigger value="offers">Offers ({deal.offers.length})</TabsTrigger>
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
@@ -357,7 +424,8 @@ function DealDetailPage() {
           <DialogHeader>
             <DialogTitle>Cancel Deal</DialogTitle>
             <DialogDescription>
-              Mark deal <strong>{deal.ref}</strong> as Cancelled. This will stop condition reminders.
+              Mark deal <strong>{deal.ref}</strong> as Cancelled. This will stop condition
+              reminders.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
@@ -367,16 +435,33 @@ function DealDetailPage() {
                 <SelectValue placeholder="Select reason..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Bond Declined">Bond Declined</SelectItem>
-                <SelectItem value="Purchaser Withdrew">Purchaser Withdrew</SelectItem>
-                <SelectItem value="Seller Withdrew">Seller Withdrew</SelectItem>
-                <SelectItem value="Defects Discovered">Defects Discovered</SelectItem>
-                <SelectItem value="Expired Suspensive Condition">
-                  Expired Suspensive Condition
+                <SelectItem value="bond_declined">Bond declined</SelectItem>
+                <SelectItem value="bond_not_applied_in_time">Bond not applied in time</SelectItem>
+                <SelectItem value="sale_of_purchasers_property_failed">
+                  Sale of purchaser property failed
                 </SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
+                <SelectItem value="purchaser_withdrew">Purchaser withdrew</SelectItem>
+                <SelectItem value="seller_withdrew">Seller withdrew</SelectItem>
+                <SelectItem value="property_defect">Property defect discovered</SelectItem>
+                <SelectItem value="compliance_certificate_failure">
+                  Compliance certificate failure
+                </SelectItem>
+                <SelectItem value="price_renegotiation_failed">
+                  Price renegotiation failed
+                </SelectItem>
+                <SelectItem value="title_or_boundary_defect">Title or boundary defect</SelectItem>
+                <SelectItem value="municipal_or_clearance_obstruction">
+                  Municipal or clearance obstruction
+                </SelectItem>
+                <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
+            <Label>Notes {cancelReason === "other" ? "(required)" : "(optional)"}</Label>
+            <Textarea
+              placeholder="Add cancellation context for the audit trail"
+              value={stageReason}
+              onChange={(event) => setStageReason(event.target.value)}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setStageModal(null)}>

@@ -1,20 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { CalculatorShell } from "@/components/calculators/calculator-shell";
 import { SliderInput } from "@/components/calculators/slider-input";
 import { GlassCard } from "@/components/ui-kit";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const Route = createFileRoute("/calculators/bond")({
   head: () => ({
     meta: [
       { title: "Bond Repayment Calculator | Dream Supreme Properties" },
-      { name: "description", content: "Estimate your monthly bond instalment, total interest and repayment amount." },
+      {
+        name: "description",
+        content: "Estimate your monthly bond instalment, total interest and repayment amount.",
+      },
       { property: "og:title", content: "Bond Repayment Calculator | Dream Supreme Properties" },
-      { property: "og:description", content: "Estimate your monthly bond instalment, total interest and repayment amount." },
+      {
+        property: "og:description",
+        content: "Estimate your monthly bond instalment, total interest and repayment amount.",
+      },
     ],
   }),
   component: BondCalculatorPage,
@@ -27,7 +49,9 @@ function amortise(loanAmount: number, rate: number, years: number) {
   const monthlyRate = rate / 100 / 12;
   const n = years * 12;
   const instalment =
-    monthlyRate === 0 ? loanAmount / n : (loanAmount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -n));
+    monthlyRate === 0
+      ? loanAmount / n
+      : (loanAmount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -n));
 
   let balance = loanAmount;
   const yearly: { year: number; balance: number; cumPrincipal: number; cumInterest: number }[] = [];
@@ -68,15 +92,43 @@ function BondCalculatorPage() {
       <div className="grid gap-5 lg:grid-cols-2">
         <GlassCard className="space-y-6">
           <h2 className="font-display text-sm font-semibold text-muted-foreground">Loan details</h2>
-          <SliderInput label="Loan amount" value={loanAmount} onChange={setLoanAmount} min={100_000} max={10_000_000} step={10_000} format="zar" />
-          <SliderInput label="Interest rate" value={rate} onChange={setRate} min={7} max={15} step={0.05} format="pct" />
-          <SliderInput label="Loan term" value={term} onChange={setTerm} min={5} max={30} step={1} format="years" />
+          <SliderInput
+            label="Loan amount"
+            value={loanAmount}
+            onChange={setLoanAmount}
+            min={100_000}
+            max={10_000_000}
+            step={10_000}
+            format="zar"
+          />
+          <SliderInput
+            label="Interest rate"
+            value={rate}
+            onChange={setRate}
+            min={7}
+            max={15}
+            step={0.05}
+            format="pct"
+          />
+          <SliderInput
+            label="Loan term"
+            value={term}
+            onChange={setTerm}
+            min={5}
+            max={30}
+            step={1}
+            format="years"
+          />
         </GlassCard>
 
         <div className="space-y-5">
           <GlassCard>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Monthly instalment</p>
-            <p className="money mt-2 text-3xl font-bold text-primary sm:text-4xl">{zarFmt(instalment)}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Monthly instalment
+            </p>
+            <p className="money mt-2 text-3xl font-bold text-primary sm:text-4xl">
+              {zarFmt(instalment)}
+            </p>
             <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border/60 pt-4">
               <div>
                 <p className="text-xs text-muted-foreground">Total interest</p>
@@ -91,8 +143,14 @@ function BondCalculatorPage() {
 
           <GlassCard>
             <div className="flex items-center justify-between gap-3">
-              <Label htmlFor="schedule-toggle" className="text-sm">Show amortisation schedule</Label>
-              <Switch id="schedule-toggle" checked={showSchedule} onCheckedChange={setShowSchedule} />
+              <Label htmlFor="schedule-toggle" className="text-sm">
+                Show amortisation schedule
+              </Label>
+              <Switch
+                id="schedule-toggle"
+                checked={showSchedule}
+                onCheckedChange={setShowSchedule}
+              />
             </div>
           </GlassCard>
         </div>
@@ -108,16 +166,45 @@ function BondCalculatorPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={yearly} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="year" tickFormatter={(v) => `Yr ${v}`} fontSize={11} stroke="var(--muted-foreground)" />
-                  <YAxis tickFormatter={(v) => zarFmt(v)} fontSize={11} width={80} stroke="var(--muted-foreground)" />
+                  <XAxis
+                    dataKey="year"
+                    tickFormatter={(v) => `Yr ${v}`}
+                    fontSize={11}
+                    stroke="var(--muted-foreground)"
+                  />
+                  <YAxis
+                    tickFormatter={(v) => zarFmt(v)}
+                    fontSize={11}
+                    width={80}
+                    stroke="var(--muted-foreground)"
+                  />
                   <Tooltip
                     formatter={(v: number) => zarFmt(v)}
                     labelFormatter={(l) => `Year ${l}`}
-                    contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
+                    contentStyle={{
+                      background: "var(--popover)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 8,
+                      fontSize: 12,
+                    }}
                   />
                   <Legend />
-                  <Area type="monotone" dataKey="cumPrincipal" name="Cumulative principal" stroke="var(--color-chart-1)" fill="var(--color-chart-1)" fillOpacity={0.25} />
-                  <Area type="monotone" dataKey="cumInterest" name="Cumulative interest" stroke="var(--color-chart-2)" fill="var(--color-chart-2)" fillOpacity={0.25} />
+                  <Area
+                    type="monotone"
+                    dataKey="cumPrincipal"
+                    name="Cumulative principal"
+                    stroke="var(--color-chart-1)"
+                    fill="var(--color-chart-1)"
+                    fillOpacity={0.25}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="cumInterest"
+                    name="Cumulative interest"
+                    stroke="var(--color-chart-2)"
+                    fill="var(--color-chart-2)"
+                    fillOpacity={0.25}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

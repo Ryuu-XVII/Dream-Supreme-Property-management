@@ -8,16 +8,28 @@ import { zar, dateFmt, urgencyOf, type Urgency } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LayoutGrid, List, SlidersHorizontal, ArrowUpDown, XCircle } from "lucide-react";
 import { motion } from "framer-motion";
@@ -28,7 +40,10 @@ export const Route = createFileRoute("/pipeline")({
   head: () => ({
     meta: [
       { title: "Deal Pipeline | Dream Supreme Properties" },
-      { name: "description", content: "Kanban and table view of all active deals through every transaction stage." },
+      {
+        name: "description",
+        content: "Kanban and table view of all active deals through every transaction stage.",
+      },
     ],
   }),
   component: PipelinePage,
@@ -38,7 +53,9 @@ const MIN_PRICE = 0;
 const MAX_PRICE = 100_000_000_00; // R100m in cents
 
 function mostUrgentTone(deal: PipelineDeal): Urgency {
-  const open = deal.conditions.filter((c: any) => c.status === "pending" || c.status === "extended");
+  const open = deal.conditions.filter(
+    (c: any) => c.status === "pending" || c.status === "extended",
+  );
   if (open.length === 0) return "safe";
   const rank: Record<Urgency, number> = { lapsed: 0, critical: 1, warning: 2, safe: 3 };
   return open.reduce<Urgency>((acc, c: any) => {
@@ -84,7 +101,13 @@ function useFilteredDeals(deals: PipelineDeal[] | undefined, filters: Filters) {
   }, [deals, filters]);
 }
 
-function FilterBar({ filters, setFilters }: { filters: Filters; setFilters: (f: Filters) => void }) {
+function FilterBar({
+  filters,
+  setFilters,
+}: {
+  filters: Filters;
+  setFilters: (f: Filters) => void;
+}) {
   const { data: agents = [] } = useAgents();
   const { data: branches = [] } = useBranches();
 
@@ -97,31 +120,47 @@ function FilterBar({ filters, setFilters }: { filters: Filters; setFilters: (f: 
         <div className="min-w-0">
           <label className="mb-1 block text-xs text-muted-foreground">Agent</label>
           <Select value={filters.agent} onValueChange={(v) => setFilters({ ...filters, agent: v })}>
-            <SelectTrigger><SelectValue placeholder="All agents" /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue placeholder="All agents" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All agents</SelectItem>
               {agents.map((u) => (
-                <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>
+                <SelectItem key={u.id} value={u.id}>
+                  {u.full_name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="min-w-0">
           <label className="mb-1 block text-xs text-muted-foreground">Branch</label>
-          <Select value={filters.branch} onValueChange={(v) => setFilters({ ...filters, branch: v })}>
-            <SelectTrigger><SelectValue placeholder="All branches" /></SelectTrigger>
+          <Select
+            value={filters.branch}
+            onValueChange={(v) => setFilters({ ...filters, branch: v })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All branches" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All branches</SelectItem>
               {branches.map((b) => (
-                <SelectItem key={b.id} value={b.name}>{b.name}</SelectItem>
+                <SelectItem key={b.id} value={b.name}>
+                  {b.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="min-w-0">
           <label className="mb-1 block text-xs text-muted-foreground">Status</label>
-          <Select value={filters.status} onValueChange={(v) => setFilters({ ...filters, status: v })}>
-            <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+          <Select
+            value={filters.status}
+            onValueChange={(v) => setFilters({ ...filters, status: v })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="active">Active</SelectItem>
@@ -132,14 +171,24 @@ function FilterBar({ filters, setFilters }: { filters: Filters; setFilters: (f: 
         <div className="min-w-0">
           <label className="mb-1 block text-xs text-muted-foreground">Stage-since date range</label>
           <div className="flex items-center gap-2">
-            <Input type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} />
+            <Input
+              type="date"
+              value={filters.from}
+              onChange={(e) => setFilters({ ...filters, from: e.target.value })}
+            />
             <span className="text-xs text-muted-foreground">to</span>
-            <Input type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} />
+            <Input
+              type="date"
+              value={filters.to}
+              onChange={(e) => setFilters({ ...filters, to: e.target.value })}
+            />
           </div>
         </div>
         <div className="sm:col-span-2 lg:col-span-2">
           <label className="mb-1 block text-xs text-muted-foreground">
-            Sale price range: <span className="money">{zar(filters.priceMin, { decimals: false })}</span> — <span className="money">{zar(filters.priceMax, { decimals: false })}</span>
+            Sale price range:{" "}
+            <span className="money">{zar(filters.priceMin, { decimals: false })}</span> —{" "}
+            <span className="money">{zar(filters.priceMax, { decimals: false })}</span>
           </label>
           <Slider
             min={MIN_PRICE}
@@ -151,7 +200,12 @@ function FilterBar({ filters, setFilters }: { filters: Filters; setFilters: (f: 
           />
         </div>
         <div className="flex items-end lg:col-span-2 lg:justify-end">
-          <Button variant="outline" size="sm" onClick={() => setFilters(defaultFilters)} className="gap-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setFilters(defaultFilters)}
+            className="gap-1.5"
+          >
             <XCircle className="size-3.5" /> Reset filters
           </Button>
         </div>
@@ -174,14 +228,20 @@ function DealCard({ deal }: { deal: PipelineDeal }) {
         <span className="truncate font-mono text-[11px] text-muted-foreground">{deal.ref}</span>
         <StatusDot tone={tone} />
       </div>
-      <p className="mb-2 truncate text-sm font-medium" title={deal.property.address}>{deal.property.address}</p>
+      <p className="mb-2 truncate text-sm font-medium" title={deal.property.address}>
+        {deal.property.address}
+      </p>
       <p className="money mb-2 text-sm font-semibold">{zar(deal.salePrice, { decimals: false })}</p>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <AgentAvatar user={{ name: deal.agent.name, colour: "#1f7a52" } as any} size={6} />
-          <span className="text-[10px] text-muted-foreground truncate max-w-[60px]">{deal.agent.name}</span>
+          <span className="text-[10px] text-muted-foreground truncate max-w-[60px]">
+            {deal.agent.name}
+          </span>
         </div>
-        <Badge variant="outline" className="shrink-0 text-[10px]">{deal.daysInStage}d in stage</Badge>
+        <Badge variant="outline" className="shrink-0 text-[10px]">
+          {deal.daysInStage}d in stage
+        </Badge>
       </div>
     </motion.div>
   );
@@ -191,18 +251,26 @@ function KanbanBoard({ filtered }: { filtered: PipelineDeal[] }) {
   const navigate = useNavigate();
   const active = filtered.filter((d) => !d.cancelled);
   const cancelled = filtered.filter((d) => d.cancelled);
-  
+
   // Note: STAGES from mock uses specific names, Supabase enum is slightly different format.
   // Will map properly later if needed, but for now we assume deal.stage matches the UI STAGES or we'll just format it.
-  const byStage = (stage: string) => active.filter((d) => {
-    // Map supabase enum to STAGES
-    const mappedStage = d.stage.replace(/_/g, ' ').toLowerCase();
-    const uiStage = stage.toLowerCase();
-    return mappedStage === uiStage || mappedStage.includes(uiStage) || uiStage.includes(mappedStage);
-  });
+  const byStage = (stage: string) =>
+    active.filter((d) => {
+      // Map supabase enum to STAGES
+      const mappedStage = d.stage.replace(/_/g, " ").toLowerCase();
+      const uiStage = stage.toLowerCase();
+      return (
+        mappedStage === uiStage || mappedStage.includes(uiStage) || uiStage.includes(mappedStage)
+      );
+    });
 
   if (filtered.length === 0) {
-    return <EmptyState title="No deals match your filters" message="Try widening your filters or resetting them to see more deals." />;
+    return (
+      <EmptyState
+        title="No deals match your filters"
+        message="Try widening your filters or resetting them to see more deals."
+      />
+    );
   }
 
   return (
@@ -213,12 +281,18 @@ function KanbanBoard({ filtered }: { filtered: PipelineDeal[] }) {
           return (
             <div key={stage} className="w-[280px] shrink-0">
               <div className="mb-2 flex items-center justify-between gap-2 px-1">
-                <h3 className="truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground">{stage}</h3>
-                <Badge variant="outline" className="shrink-0 text-[10px]">{stageDeals.length}</Badge>
+                <h3 className="truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {stage}
+                </h3>
+                <Badge variant="outline" className="shrink-0 text-[10px]">
+                  {stageDeals.length}
+                </Badge>
               </div>
               <div className="flex min-h-24 flex-col gap-2 rounded-xl bg-muted/40 p-2">
                 {stageDeals.length === 0 ? (
-                  <p className="px-2 py-6 text-center text-[11px] text-muted-foreground">No deals</p>
+                  <p className="px-2 py-6 text-center text-[11px] text-muted-foreground">
+                    No deals
+                  </p>
                 ) : (
                   stageDeals.map((deal) => <DealCard key={deal.id} deal={deal} />)
                 )}
@@ -242,11 +316,20 @@ function KanbanBoard({ filtered }: { filtered: PipelineDeal[] }) {
                   className="lift cursor-pointer rounded-lg border border-destructive/30 bg-destructive/5 p-3"
                 >
                   <div className="mb-1 flex items-center justify-between gap-2">
-                    <span className="truncate font-mono text-[11px] text-muted-foreground">{deal.ref}</span>
-                    <Badge variant="outline" className="border-destructive/30 bg-destructive/10 text-destructive">Cancelled</Badge>
+                    <span className="truncate font-mono text-[11px] text-muted-foreground">
+                      {deal.ref}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="border-destructive/30 bg-destructive/10 text-destructive"
+                    >
+                      Cancelled
+                    </Badge>
                   </div>
                   <p className="truncate text-sm font-medium">{deal.property.address}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{deal.cancelled?.reason} · {deal.cancelled && dateFmt(deal.cancelled.at)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {deal.cancelled?.reason} · {deal.cancelled && dateFmt(deal.cancelled.at)}
+                  </p>
                 </div>
               );
             })}
@@ -274,7 +357,12 @@ function TableView({ filtered }: { filtered: PipelineDeal[] }) {
   const [pageSize, setPageSize] = useState(25);
   const [page, setPage] = useState(0);
   const [visibleCols, setVisibleCols] = useState<Record<SortKey, boolean>>({
-    ref: true, address: true, stage: true, price: true, agent: true, days: true,
+    ref: true,
+    address: true,
+    stage: true,
+    price: true,
+    agent: true,
+    days: true,
   });
 
   const sorted = useMemo(() => {
@@ -282,12 +370,24 @@ function TableView({ filtered }: { filtered: PipelineDeal[] }) {
     withMeta.sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
-        case "ref": cmp = a.ref.localeCompare(b.ref); break;
-        case "address": cmp = a.property.address.localeCompare(b.property.address); break;
-        case "stage": cmp = a.stage.localeCompare(b.stage); break;
-        case "price": cmp = a.salePrice - b.salePrice; break;
-        case "agent": cmp = a.agent.name.localeCompare(b.agent.name); break;
-        case "days": cmp = a.daysInStage - b.daysInStage; break;
+        case "ref":
+          cmp = a.ref.localeCompare(b.ref);
+          break;
+        case "address":
+          cmp = a.property.address.localeCompare(b.property.address);
+          break;
+        case "stage":
+          cmp = a.stage.localeCompare(b.stage);
+          break;
+        case "price":
+          cmp = a.salePrice - b.salePrice;
+          break;
+        case "agent":
+          cmp = a.agent.name.localeCompare(b.agent.name);
+          break;
+        case "days":
+          cmp = a.daysInStage - b.daysInStage;
+          break;
       }
       return cmp * sortDir;
     });
@@ -299,11 +399,19 @@ function TableView({ filtered }: { filtered: PipelineDeal[] }) {
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === 1 ? -1 : 1));
-    else { setSortKey(key); setSortDir(1); }
+    else {
+      setSortKey(key);
+      setSortDir(1);
+    }
   };
 
   if (filtered.length === 0) {
-    return <EmptyState title="No deals match your filters" message="Try widening your filters or resetting them to see more deals." />;
+    return (
+      <EmptyState
+        title="No deals match your filters"
+        message="Try widening your filters or resetting them to see more deals."
+      />
+    );
   }
 
   return (
@@ -313,7 +421,9 @@ function TableView({ filtered }: { filtered: PipelineDeal[] }) {
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">Columns</Button>
+              <Button variant="outline" size="sm">
+                Columns
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {ALL_COLS.map((c) => (
@@ -327,8 +437,16 @@ function TableView({ filtered }: { filtered: PipelineDeal[] }) {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(0); }}>
-            <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+          <Select
+            value={String(pageSize)}
+            onValueChange={(v) => {
+              setPageSize(Number(v));
+              setPage(0);
+            }}
+          >
+            <SelectTrigger className="w-28">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="25">25 / page</SelectItem>
               <SelectItem value="50">50 / page</SelectItem>
@@ -343,7 +461,10 @@ function TableView({ filtered }: { filtered: PipelineDeal[] }) {
             <TableRow>
               {ALL_COLS.filter((c) => visibleCols[c.key]).map((c) => (
                 <TableHead key={c.key}>
-                  <button className="flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort(c.key)}>
+                  <button
+                    className="flex items-center gap-1 hover:text-foreground"
+                    onClick={() => toggleSort(c.key)}
+                  >
                     {c.label} <ArrowUpDown className="size-3" />
                   </button>
                 </TableHead>
@@ -352,11 +473,25 @@ function TableView({ filtered }: { filtered: PipelineDeal[] }) {
           </TableHeader>
           <TableBody>
             {pageRows.map((deal) => (
-              <TableRow key={deal.id} className="cursor-pointer" onClick={() => navigate({ to: "/deals/$dealId", params: { dealId: deal.id } })}>
+              <TableRow
+                key={deal.id}
+                className="cursor-pointer"
+                onClick={() => navigate({ to: "/deals/$dealId", params: { dealId: deal.id } })}
+              >
                 {visibleCols.ref && <TableCell className="font-mono text-xs">{deal.ref}</TableCell>}
-                {visibleCols.address && <TableCell className="max-w-[220px] truncate">{deal.property.address}</TableCell>}
-                {visibleCols.stage && <TableCell><StageBadge stage={deal.stage as Stage} /></TableCell>}
-                {visibleCols.price && <TableCell className="money">{zar(deal.salePrice, { decimals: false })}</TableCell>}
+                {visibleCols.address && (
+                  <TableCell className="max-w-[220px] truncate">{deal.property.address}</TableCell>
+                )}
+                {visibleCols.stage && (
+                  <TableCell>
+                    <StageBadge stage={deal.stage as Stage} />
+                  </TableCell>
+                )}
+                {visibleCols.price && (
+                  <TableCell className="money">
+                    {zar(deal.salePrice, { decimals: false })}
+                  </TableCell>
+                )}
                 {visibleCols.agent && <TableCell className="truncate">{deal.agent.name}</TableCell>}
                 {visibleCols.days && <TableCell>{deal.daysInStage}d</TableCell>}
               </TableRow>
@@ -365,10 +500,26 @@ function TableView({ filtered }: { filtered: PipelineDeal[] }) {
         </Table>
       </div>
       <div className="mt-4 flex items-center justify-between gap-3">
-        <p className="text-xs text-muted-foreground">Page {page + 1} of {totalPages}</p>
+        <p className="text-xs text-muted-foreground">
+          Page {page + 1} of {totalPages}
+        </p>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-          <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>Next</Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 0}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </Button>
         </div>
       </div>
     </GlassCard>
@@ -378,7 +529,7 @@ function TableView({ filtered }: { filtered: PipelineDeal[] }) {
 function PipelinePage() {
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [view, setView] = useState<"kanban" | "table">("kanban");
-  
+
   const { data: deals, isLoading } = usePipelineDeals();
   const filtered = useFilteredDeals(deals, filters);
 
@@ -387,7 +538,11 @@ function PipelinePage() {
       title="Deal Pipeline"
       description="Track every deal from mandate to registration."
       actions={
-        <ToggleGroup type="single" value={view} onValueChange={(v) => v && setView(v as "kanban" | "table")}>
+        <ToggleGroup
+          type="single"
+          value={view}
+          onValueChange={(v) => v && setView(v as "kanban" | "table")}
+        >
           <ToggleGroupItem value="kanban" aria-label="Kanban view" className="gap-1.5">
             <LayoutGrid className="size-4" /> Kanban
           </ToggleGroupItem>

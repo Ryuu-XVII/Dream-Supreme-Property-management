@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
-import { GlassCard, KpiCard, EmptyState, CardSkeleton, useFakeLoad } from "@/components/ui-kit";
+import { GlassCard, KpiCard, EmptyState, CardSkeleton } from "@/components/ui-kit";
 import { AgentAvatar } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,14 +28,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { dateFmt, daysUntil, urgencyOf, urgencyClass, type Urgency } from "@/lib/format";
 import {
-  openConditions,
   userById,
   propertyById,
-  users,
   type Condition,
   type ConditionType,
   type Deal,
 } from "@/data/state";
+import { useCountdownData } from "@/data/operations";
+import { supabase } from "@/lib/supabase";
 import {
   LayoutGrid,
   Rows3,
@@ -61,9 +61,15 @@ export const Route = createFileRoute("/countdown")({
   head: () => ({
     meta: [
       { title: "Countdown Board | Dream Supreme Properties" },
-      { name: "description", content: "Live countdown board tracking every suspensive condition across the agency." },
+      {
+        name: "description",
+        content: "Live countdown board tracking every suspensive condition across the agency.",
+      },
       { property: "og:title", content: "Countdown Board | Dream Supreme Properties" },
-      { property: "og:description", content: "Live countdown board tracking every suspensive condition across the agency." },
+      {
+        property: "og:description",
+        content: "Live countdown board tracking every suspensive condition across the agency.",
+      },
     ],
   }),
 });
@@ -106,7 +112,15 @@ function LiveSeconds() {
   );
 }
 
-function CountdownDisplay({ days, status, mostUrgent }: { days: number; status: LocalStatus; mostUrgent?: boolean }) {
+function CountdownDisplay({
+  days,
+  status,
+  mostUrgent,
+}: {
+  days: number;
+  status: LocalStatus;
+  mostUrgent?: boolean;
+}) {
   if (status !== "Open" && status !== "Extended") {
     return (
       <div className="flex items-center gap-2">
@@ -120,8 +134,12 @@ function CountdownDisplay({ days, status, mostUrgent }: { days: number; status: 
     <div className="flex flex-col">
       {lapsed ? (
         <div className="flex items-baseline gap-2">
-          <span className="money text-3xl font-bold leading-none text-destructive">{Math.abs(days)}</span>
-          <span className="text-xs font-semibold uppercase tracking-wide text-destructive">days overdue</span>
+          <span className="money text-3xl font-bold leading-none text-destructive">
+            {Math.abs(days)}
+          </span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-destructive">
+            days overdue
+          </span>
         </div>
       ) : (
         <div className="flex items-baseline gap-2">
@@ -133,12 +151,17 @@ function CountdownDisplay({ days, status, mostUrgent }: { days: number; status: 
           >
             {days}
           </span>
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">days remaining</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            days remaining
+          </span>
         </div>
       )}
       <div className="mt-1 flex items-center gap-2">
         {lapsed && (
-          <Badge variant="outline" className="border-destructive/30 bg-destructive/10 text-[10px] text-destructive">
+          <Badge
+            variant="outline"
+            className="border-destructive/30 bg-destructive/10 text-[10px] text-destructive"
+          >
             LAPSED
           </Badge>
         )}
@@ -164,12 +187,19 @@ function ExtendDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Extend condition deadline</DialogTitle>
-          <DialogDescription>Choose a new due date and capture a reason for the extension.</DialogDescription>
+          <DialogDescription>
+            Choose a new due date and capture a reason for the extension.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label htmlFor="extend-date">New due date</Label>
-            <Input id="extend-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            <Input
+              id="extend-date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="extend-reason">Reason for extension</Label>
@@ -208,13 +238,17 @@ function ActionButtons({
   onAction,
 }: {
   row: ConditionRow;
-  onAction: (id: string, status: LocalStatus, extra?: { dueDate?: string; reason?: string }) => void;
+  onAction: (
+    id: string,
+    status: LocalStatus,
+    extra?: { dueDate?: string; reason?: string },
+  ) => void;
 }) {
   const [extendOpen, setExtendOpen] = useState(false);
 
   const handleWhatsApp = () => {
     const text = encodeURIComponent(
-      `Hi there, this is Dream Supreme Properties following up regarding the ${row.type} condition for deal ${row.deal.ref}. The deadline is scheduled for ${dateFmt(row.dueDate)}. Please send through an update at your earliest convenience.`
+      `Hi there, this is Dream Supreme Properties following up regarding the ${row.type} condition for deal ${row.deal.ref}. The deadline is scheduled for ${dateFmt(row.dueDate)}. Please send through an update at your earliest convenience.`,
     );
     window.open(`https://wa.me/?text=${text}`, "_blank");
     toast.success("Opening WhatsApp follow-up...");
@@ -281,14 +315,18 @@ function ConditionCard({
   dueDate: string;
   days: number;
   mostUrgent?: boolean;
-  onAction: (id: string, status: LocalStatus, extra?: { dueDate?: string; reason?: string }) => void;
+  onAction: (
+    id: string,
+    status: LocalStatus,
+    extra?: { dueDate?: string; reason?: string },
+  ) => void;
   index: number;
 }) {
   const u = urgencyOf(days);
   const active = status === "Open" || status === "Extended";
   const Icon = typeIcon[row.type];
-  const agent = userById(row.responsibleUserId);
-  const property = propertyById(row.deal?.propertyId);
+  const agent = userById(row.responsibleUserId) ?? (row as any).agent;
+  const property = propertyById(row.deal?.propertyId) ?? (row.deal as any).property;
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -298,7 +336,9 @@ function ConditionCard({
       <GlassCard
         className={cn(
           "flex h-full flex-col gap-3",
-          active && (u === "lapsed" || u === "critical") && "pulse-danger ring-1 ring-destructive/40",
+          active &&
+            (u === "lapsed" || u === "critical") &&
+            "pulse-danger ring-1 ring-destructive/40",
           active && u === "warning" && "ring-1 ring-warning/40",
           active && u === "safe" && "ring-1 ring-success/20",
         )}
@@ -308,21 +348,30 @@ function ConditionCard({
             <span
               className={cn(
                 "grid size-9 shrink-0 place-items-center rounded-lg",
-                u === "lapsed" || u === "critical" ? "bg-destructive/10 text-destructive"
-                : u === "warning" ? "bg-warning/15 text-warning"
-                : "bg-success/10 text-success",
+                u === "lapsed" || u === "critical"
+                  ? "bg-destructive/10 text-destructive"
+                  : u === "warning"
+                    ? "bg-warning/15 text-warning"
+                    : "bg-success/10 text-success",
               )}
             >
               <Icon className="size-4.5" />
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{row.type}</p>
-              <Link to="/deals/$dealId" params={{ dealId: row.deal.id }} className="money truncate text-xs text-primary hover:underline">
+              <Link
+                to="/deals/$dealId"
+                params={{ dealId: row.deal.id }}
+                className="money truncate text-xs text-primary hover:underline"
+              >
                 {row.deal.ref}
               </Link>
             </div>
           </div>
-          <Badge variant="outline" className={cn("shrink-0 text-[10px]", urgencyClass[active ? u : "safe"])}>
+          <Badge
+            variant="outline"
+            className={cn("shrink-0 text-[10px]", urgencyClass[active ? u : "safe"])}
+          >
             {row.responsibleParty}
           </Badge>
         </div>
@@ -369,13 +418,17 @@ function ConditionRowView({
   dueDate: string;
   days: number;
   mostUrgent?: boolean;
-  onAction: (id: string, status: LocalStatus, extra?: { dueDate?: string; reason?: string }) => void;
+  onAction: (
+    id: string,
+    status: LocalStatus,
+    extra?: { dueDate?: string; reason?: string },
+  ) => void;
 }) {
   const u = urgencyOf(days);
   const active = status === "Open" || status === "Extended";
   const Icon = typeIcon[row.type];
-  const agent = userById(row.responsibleUserId);
-  const property = propertyById(row.deal?.propertyId);
+  const agent = userById(row.responsibleUserId) ?? (row as any).agent;
+  const property = propertyById(row.deal?.propertyId) ?? (row.deal as any).property;
   return (
     <div
       className={cn(
@@ -387,9 +440,11 @@ function ConditionRowView({
       <span
         className={cn(
           "grid size-9 shrink-0 place-items-center rounded-lg",
-          u === "lapsed" || u === "critical" ? "bg-destructive/10 text-destructive"
-          : u === "warning" ? "bg-warning/15 text-warning"
-          : "bg-success/10 text-success",
+          u === "lapsed" || u === "critical"
+            ? "bg-destructive/10 text-destructive"
+            : u === "warning"
+              ? "bg-warning/15 text-warning"
+              : "bg-success/10 text-success",
         )}
       >
         <Icon className="size-4.5" />
@@ -398,7 +453,11 @@ function ConditionRowView({
         <p className="truncate text-sm font-semibold">{row.type}</p>
         <p className="truncate text-xs text-muted-foreground">{row.description}</p>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-          <Link to="/deals/$dealId" params={{ dealId: row.deal.id }} className="money text-primary hover:underline">
+          <Link
+            to="/deals/$dealId"
+            params={{ dealId: row.deal.id }}
+            className="money text-primary hover:underline"
+          >
             {row.deal.ref}
           </Link>
           <span className="truncate text-muted-foreground">· {property?.address}</span>
@@ -417,28 +476,34 @@ function ConditionRowView({
 }
 
 function CountdownBoard() {
-  const loading = useFakeLoad(500);
+  const { data, isLoading: loading } = useCountdownData();
+  const openConditions = useMemo(() => data?.conditions ?? [], [data?.conditions]);
+  const users = useMemo(() => data?.users ?? [], [data?.users]);
   const [view, setView] = useState<"cards" | "rows">("cards");
   const [agentFilter, setAgentFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [overrides, setOverrides] = useState<Record<string, LocalOverride>>({});
 
-  const conditionTypes = useMemo(() => Array.from(new Set(openConditions.map((c) => c.type))), []);
+  const conditionTypes = useMemo(
+    () => Array.from(new Set(openConditions.map((c) => c.type))),
+    [openConditions],
+  );
   const responsibleAgents = useMemo(() => {
     const ids = new Set(openConditions.map((c) => c.responsibleUserId));
     return users.filter((u) => ids.has(u.id));
-  }, []);
+  }, [openConditions, users]);
 
   const rows = useMemo(() => {
     return (openConditions as ConditionRow[]).map((c) => {
       const ov = overrides[c.id];
-      const status: LocalStatus = ov?.status ?? (c.status === "Failed" ? "Open" : (c.status as LocalStatus));
+      const status: LocalStatus =
+        ov?.status ?? (c.status === "Failed" ? "Open" : (c.status as LocalStatus));
       const dueDate = ov?.dueDate ?? c.dueDate;
       const days = daysUntil(dueDate);
       return { row: c, status, dueDate, days };
     });
-  }, [overrides]);
+  }, [openConditions, overrides]);
 
   const filtered = useMemo(() => {
     return rows.filter(({ row, status }) => {
@@ -470,8 +535,31 @@ function CountdownBoard() {
 
   const mostUrgentId = sorted.find((r) => r.status === "Open" || r.status === "Extended")?.row.id;
 
-  function handleAction(id: string, status: LocalStatus, extra?: { dueDate?: string; reason?: string }) {
-    setOverrides((prev) => ({ ...prev, [id]: { status, dueDate: extra?.dueDate, reason: extra?.reason } }));
+  async function handleAction(
+    id: string,
+    status: LocalStatus,
+    extra?: { dueDate?: string; reason?: string },
+  ) {
+    const statusMap: Record<LocalStatus, string> = {
+      Open: "pending",
+      Fulfilled: "fulfilled",
+      Extended: "extended",
+      Waived: "waived",
+    };
+    const { error } = await supabase.rpc("set_condition_status", {
+      p_condition_id: id,
+      p_status: statusMap[status],
+      p_new_due_on: extra?.dueDate ?? null,
+      p_reason: extra?.reason ?? null,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setOverrides((prev) => ({
+      ...prev,
+      [id]: { status, dueDate: extra?.dueDate, reason: extra?.reason },
+    }));
   }
 
   return (
@@ -502,9 +590,27 @@ function CountdownBoard() {
     >
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard label="Total conditions" value={stats.total} icon={Timer} delay={0} />
-        <KpiCard label="Overdue" value={stats.overdue} tone="danger" icon={AlertTriangle} delay={0.05} />
-        <KpiCard label="Due this week" value={stats.dueSoon} tone="warning" icon={Clock3} delay={0.1} />
-        <KpiCard label="On track" value={stats.onTrack} tone="success" icon={CheckCircle2} delay={0.15} />
+        <KpiCard
+          label="Overdue"
+          value={stats.overdue}
+          tone="danger"
+          icon={AlertTriangle}
+          delay={0.05}
+        />
+        <KpiCard
+          label="Due this week"
+          value={stats.dueSoon}
+          tone="warning"
+          icon={Clock3}
+          delay={0.1}
+        />
+        <KpiCard
+          label="On track"
+          value={stats.onTrack}
+          tone="success"
+          icon={CheckCircle2}
+          delay={0.15}
+        />
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
@@ -556,7 +662,10 @@ function CountdownBoard() {
             ))}
           </div>
         ) : sorted.length === 0 ? (
-          <EmptyState title="No matching conditions" message="Try adjusting your filters to see conditions." />
+          <EmptyState
+            title="No matching conditions"
+            message="Try adjusting your filters to see conditions."
+          />
         ) : view === "cards" ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <AnimatePresence>

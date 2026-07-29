@@ -9,9 +9,17 @@ export const Route = createFileRoute("/calculators/affordability")({
   head: () => ({
     meta: [
       { title: "Bond Affordability Calculator | Dream Supreme Properties" },
-      { name: "description", content: "Work out the maximum loan and purchase price you can afford based on your income." },
+      {
+        name: "description",
+        content:
+          "Work out the maximum loan and purchase price you can afford based on your income.",
+      },
       { property: "og:title", content: "Bond Affordability Calculator | Dream Supreme Properties" },
-      { property: "og:description", content: "Work out the maximum loan and purchase price you can afford based on your income." },
+      {
+        property: "og:description",
+        content:
+          "Work out the maximum loan and purchase price you can afford based on your income.",
+      },
     ],
   }),
   component: AffordabilityCalculatorPage,
@@ -42,7 +50,13 @@ function AffordabilityCalculatorPage() {
   }, [income, expenses, rate, term]);
 
   const gaugeValue = Math.min(dti, 60);
-  const gaugeData = [{ name: "DTI", value: gaugeValue, fill: dti > GUIDELINE ? "var(--destructive)" : "var(--color-chart-2)" }];
+  const gaugeData = [
+    {
+      name: "DTI",
+      value: gaugeValue,
+      fill: dti > GUIDELINE ? "var(--destructive)" : "var(--color-chart-2)",
+    },
+  ];
 
   return (
     <CalculatorShell
@@ -52,17 +66,55 @@ function AffordabilityCalculatorPage() {
     >
       <div className="grid gap-5 lg:grid-cols-2">
         <GlassCard className="space-y-6">
-          <h2 className="font-display text-sm font-semibold text-muted-foreground">Income & commitments</h2>
-          <SliderInput label="Gross monthly income" value={income} onChange={setIncome} min={10_000} max={500_000} step={500} format="zar" />
-          <SliderInput label="Total monthly expenses / debt" value={expenses} onChange={setExpenses} min={0} max={200_000} step={500} format="zar" />
-          <SliderInput label="Interest rate" value={rate} onChange={setRate} min={7} max={15} step={0.05} format="pct" />
-          <SliderInput label="Loan term" value={term} onChange={setTerm} min={5} max={30} step={1} format="years" />
+          <h2 className="font-display text-sm font-semibold text-muted-foreground">
+            Income & commitments
+          </h2>
+          <SliderInput
+            label="Gross monthly income"
+            value={income}
+            onChange={setIncome}
+            min={10_000}
+            max={500_000}
+            step={500}
+            format="zar"
+          />
+          <SliderInput
+            label="Total monthly expenses / debt"
+            value={expenses}
+            onChange={setExpenses}
+            min={0}
+            max={200_000}
+            step={500}
+            format="zar"
+          />
+          <SliderInput
+            label="Interest rate"
+            value={rate}
+            onChange={setRate}
+            min={7}
+            max={15}
+            step={0.05}
+            format="pct"
+          />
+          <SliderInput
+            label="Loan term"
+            value={term}
+            onChange={setTerm}
+            min={5}
+            max={30}
+            step={1}
+            format="years"
+          />
         </GlassCard>
 
         <div className="space-y-5">
           <GlassCard>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Maximum monthly instalment</p>
-            <p className="money mt-2 text-3xl font-bold text-primary sm:text-4xl">{zarFmt(maxInstalment)}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Maximum monthly instalment
+            </p>
+            <p className="money mt-2 text-3xl font-bold text-primary sm:text-4xl">
+              {zarFmt(maxInstalment)}
+            </p>
             <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border/60 pt-4">
               <div>
                 <p className="text-xs text-muted-foreground">Maximum loan amount</p>
@@ -77,8 +129,16 @@ function AffordabilityCalculatorPage() {
 
           <GlassCard>
             <div className="flex items-center justify-between">
-              <h3 className="font-display text-sm font-semibold text-muted-foreground">Debt-to-income ratio</h3>
-              <span className={dti > GUIDELINE ? "text-xs font-medium text-destructive" : "text-xs font-medium text-success"}>
+              <h3 className="font-display text-sm font-semibold text-muted-foreground">
+                Debt-to-income ratio
+              </h3>
+              <span
+                className={
+                  dti > GUIDELINE
+                    ? "text-xs font-medium text-destructive"
+                    : "text-xs font-medium text-success"
+                }
+              >
                 {dti.toFixed(1)}% {dti > GUIDELINE ? "· above guideline" : "· within guideline"}
               </span>
             </div>
@@ -104,7 +164,8 @@ function AffordabilityCalculatorPage() {
               </div>
             </div>
             <p className="text-center text-[11px] text-muted-foreground">
-              Guideline marker: banks typically cap total debt obligations at {GUIDELINE}% of gross income.
+              Guideline marker: banks typically cap total debt obligations at {GUIDELINE}% of gross
+              income.
             </p>
           </GlassCard>
         </div>

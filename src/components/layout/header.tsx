@@ -1,32 +1,64 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Search, Sun, Moon, Monitor, UserCog, LogOut, ChevronDown, PlusCircle, Calculator } from "lucide-react";
+import { Bell, Search, Sun, Moon, Monitor, LogOut, PlusCircle, Calculator } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { QuickDealModal } from "@/components/deal/quick-deal-modal";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
-  DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useApp } from "@/lib/app-state";
-import { deals, notifications, users, agency, type Role } from "@/data/state";
+import { useAuth } from "@/lib/auth";
+import { deals, agency } from "@/data/state";
+import { supabase } from "@/lib/supabase";
 import { initials, zar, relative, dateFmt } from "@/lib/format";
 import { propertyById } from "@/data/state";
 import { navItems } from "./sidebar";
 import { cn } from "@/lib/utils";
 
-const roles: Role[] = ["Principal", "Agent", "Candidate", "Admin"];
-
 export function Header() {
   const [open, setOpen] = useState(false);
   const [quickModalOpen, setQuickModalOpen] = useState(false);
   const navigate = useNavigate();
-  const { theme, setTheme, role, setRole } = useApp();
+  const { theme, setTheme, role } = useApp();
+  const { account, signOut } = useAuth();
+  const notificationQuery = useQuery({
+    queryKey: ["notifications", account?.id],
+    enabled: !!account,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("notification")
+        .select("id, subject, body, created_at, read_at")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data || []).map((notification) => ({
+        id: notification.id,
+        title: notification.subject,
+        body: notification.body,
+        at: notification.created_at,
+        unread: !notification.read_at,
+        tone: notification.subject.toLowerCase().includes("overdue") ? "danger" : "info",
+      }));
+    },
+  });
+  const notifications = notificationQuery.data ?? [];
   const unread = notifications.filter((n) => n.unread).length;
 
   useEffect(() => {
@@ -40,7 +72,12 @@ export function Header() {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  const me = users[0] ?? { name: "Agent User", role: role };
+  const me = { name: account?.fullName ?? "Agent User", role };
+
+  const handleSignOut = async () => {
+    await signOut();
+    await navigate({ to: "/login", replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-background/80 px-3 backdrop-blur-md sm:px-6">
@@ -62,10 +99,19 @@ export function Header() {
       </button>
 
       <div className="hidden items-center gap-2 lg:flex">
-        <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => navigate({ to: "/commission/calculator" })}>
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5 text-xs"
+          onClick={() => navigate({ to: "/commission/calculator" })}
+        >
           <Calculator className="size-3.5 text-primary" /> Calculator
         </Button>
-        <Button size="sm" className="gap-1.5 text-xs font-semibold shadow-sm" onClick={() => setQuickModalOpen(true)}>
+        <Button
+          size="sm"
+          className="gap-1.5 text-xs font-semibold shadow-sm"
+          onClick={() => setQuickModalOpen(true)}
+        >
           <PlusCircle className="size-3.5" /> + New Deal
         </Button>
       </div>
@@ -73,17 +119,38 @@ export function Header() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" aria-label="Theme">
-            {theme === "dark" ? <Moon className="size-5" /> : theme === "light" ? <Sun className="size-5" /> : <Monitor className="size-5" />}
+            {theme === "dark" ? (
+              <Moon className="size-5" />
+            ) : theme === "light" ? (
+              <Sun className="size-5" />
+            ) : (
+              <Monitor className="size-5" />
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={() => setTheme("light")}><Sun className="size-4" /> Light</DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setTheme("dark")}><Moon className="size-4" /> Dark</DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setTheme("system")}><Monitor className="size-4" /> System</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setTheme("light")}>
+            <Sun className="size-4" /> Light
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setTheme("dark")}>
+            <Moon className="size-4" /> Dark
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setTheme("system")}>
+            <Monitor className="size-4" /> System
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Popover>
+      <Popover
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen || unread === 0) return;
+          void supabase
+            .from("notification")
+            .update({ read_at: new Date().toISOString() })
+            .is("read_at", null)
+            .then(() => notificationQuery.refetch());
+        }}
+      >
         <PopoverTrigger asChild>
           <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
             <Bell className="size-5" />
@@ -95,10 +162,15 @@ export function Header() {
           </Button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-80 p-0">
-          <div className="border-b border-border px-4 py-3 font-display text-sm font-semibold">Notifications</div>
+          <div className="border-b border-border px-4 py-3 font-display text-sm font-semibold">
+            Notifications
+          </div>
           <div className="max-h-80 overflow-y-auto">
             {notifications.map((n) => (
-              <div key={n.id} className="flex gap-3 border-b border-border/60 px-4 py-3 last:border-0">
+              <div
+                key={n.id}
+                className="flex gap-3 border-b border-border/60 px-4 py-3 last:border-0"
+              >
                 <span
                   className={cn(
                     "mt-1.5 size-2 shrink-0 rounded-full",
@@ -123,7 +195,9 @@ export function Header() {
         <DropdownMenuTrigger asChild>
           <button className="flex items-center gap-2 rounded-full pl-1 pr-2 transition-colors hover:bg-accent">
             <Avatar className="size-8">
-              <AvatarFallback className="bg-primary text-xs text-primary-foreground">{initials(me.name)}</AvatarFallback>
+              <AvatarFallback className="bg-primary text-xs text-primary-foreground">
+                {initials(me.name)}
+              </AvatarFallback>
             </Avatar>
           </button>
         </DropdownMenuTrigger>
@@ -133,11 +207,16 @@ export function Header() {
             <p className="text-xs font-normal text-muted-foreground">{agency.name}</p>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild><Link to="/settings/agency">Agency settings</Link></DropdownMenuItem>
-          <DropdownMenuItem asChild><Link to="/commission/earnings">My earnings</Link></DropdownMenuItem>
-          <DropdownMenuItem asChild><Link to="/register">Agent Registration</Link></DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/settings/agency">Agency settings</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/commission/earnings">My earnings</Link>
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild><Link to="/login"><LogOut className="size-4" /> Sign out</Link></DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => void handleSignOut()}>
+            <LogOut className="size-4" /> Sign out
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -156,8 +235,12 @@ export function Header() {
                 }}
               >
                 <span className="font-mono text-xs">{dl.ref}</span>
-                <span className="truncate text-muted-foreground">{propertyById(dl.propertyId).address}</span>
-                <Badge variant="outline" className="ml-auto money text-[10px]">{zar(dl.salePrice, { decimals: false })}</Badge>
+                <span className="truncate text-muted-foreground">
+                  {propertyById(dl.propertyId).address}
+                </span>
+                <Badge variant="outline" className="ml-auto money text-[10px]">
+                  {zar(dl.salePrice, { decimals: false })}
+                </Badge>
               </CommandItem>
             ))}
           </CommandGroup>
@@ -174,10 +257,15 @@ export function Header() {
                 <item.icon className="size-4" /> {item.label}
               </CommandItem>
             ))}
-            <CommandItem value="New deal" onSelect={() => { setOpen(false); navigate({ to: "/deals/new" }); }}>
+            <CommandItem
+              value="New deal"
+              onSelect={() => {
+                setOpen(false);
+                navigate({ to: "/deals/new" });
+              }}
+            >
               Create new deal
             </CommandItem>
-
           </CommandGroup>
         </CommandList>
       </CommandDialog>

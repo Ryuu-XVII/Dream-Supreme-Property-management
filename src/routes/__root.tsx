@@ -20,8 +20,8 @@ function NotFoundComponent() {
         <h1 className="font-mono text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Deal not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The deal, page or record you're looking for doesn't exist, was archived, or the reference is
-          incorrect.
+          The deal, page or record you're looking for doesn't exist, was archived, or the reference
+          is incorrect.
         </p>
         <div className="mt-6 flex justify-center gap-2">
           <Link
@@ -49,7 +49,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">This page didn't load</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          This page didn't load
+        </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Something went wrong on our end. You can try refreshing or head back home.
         </p>
@@ -107,27 +109,67 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
-  return (
-    <>
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }
 
 import { AuthProvider, useAuth } from "@/lib/auth";
 
 function AuthGuard({ children }: { children: ReactNode }) {
-  const { session, loading } = useAuth();
+  const { session, account, loading, signOut } = useAuth();
   const router = useRouter();
+
+  const isPublicPath = (path: string) =>
+    path === "/login" ||
+    path === "/register" ||
+    path === "/sitemap.xml" ||
+    path.startsWith("/calculators/") ||
+    path.startsWith("/sign") ||
+    path.startsWith("/conveyancer");
 
   useEffect(() => {
     if (!loading && !session) {
       const path = window.location.pathname;
-      if (path !== '/login' && path !== '/register') {
-        router.navigate({ to: '/login', replace: true });
+      if (!isPublicPath(path)) {
+        router.navigate({ to: "/login", replace: true });
       }
     }
   }, [session, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        Loading secure session…
+      </div>
+    );
+  }
+
+  const publicPath = isPublicPath(window.location.pathname);
+  if (!session && !publicPath) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        Redirecting to sign in…
+      </div>
+    );
+  }
+  if (session && !publicPath && (!account || account.status !== "active")) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="max-w-md text-center">
+          <h1 className="text-xl font-semibold">Account access unavailable</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Your login is valid, but there is no active Dream Supreme company account attached to
+            it. Ask a principal or administrator to verify your invitation or account status.
+          </p>
+          <button
+            className="mt-5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            onClick={() => void signOut()}
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return <>{children}</>;
 }

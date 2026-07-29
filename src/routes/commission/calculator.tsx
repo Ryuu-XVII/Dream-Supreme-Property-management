@@ -13,14 +13,26 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { zar } from "@/lib/format";
 import {
-  Calculator, DollarSign, Percent, Copy, Check, Info, ArrowRight, RefreshCw, FileText
+  Calculator,
+  DollarSign,
+  Percent,
+  Copy,
+  Check,
+  Info,
+  ArrowRight,
+  RefreshCw,
+  FileText,
 } from "lucide-react";
 
 export const Route = createFileRoute("/commission/calculator")({
   head: () => ({
     meta: [
       { title: "Commission Calculator | Dream Supreme Properties" },
-      { name: "description", content: "Instant itemized commission breakdown, VAT resolution, franchise fees, and agent net payout calculator." },
+      {
+        name: "description",
+        content:
+          "Instant itemized commission breakdown, VAT resolution, franchise fees, and agent net payout calculator.",
+      },
     ],
   }),
   component: CommissionCalculatorPage,
@@ -97,7 +109,6 @@ function CommissionCalculatorPage() {
     referralFeePct,
     officeSharePct,
     agentASplitPct,
-    agentBSplitPct,
     hasCoAgent,
     advanceDeduction,
   ]);
@@ -142,7 +153,10 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
               <h3 className="font-display font-semibold text-base flex items-center gap-2">
                 <Calculator className="size-4 text-primary" /> Deal Financial Inputs
               </h3>
-              <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
+              <Badge
+                variant="outline"
+                className="text-xs bg-primary/10 text-primary border-primary/20"
+              >
                 SA Practice Rules
               </Badge>
             </div>
@@ -211,7 +225,9 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
                 <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-card/40">
                   <div className="space-y-0.5">
                     <Label className="text-xs font-semibold">Rate Includes VAT</Label>
-                    <p className="text-[11px] text-muted-foreground">{commRate}% is VAT-Inclusive</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {commRate}% is VAT-Inclusive
+                    </p>
                   </div>
                   <Switch
                     checked={isVatInclusive}
@@ -253,7 +269,9 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label className="text-xs font-semibold">Co-Mandate / Second Agent Split</Label>
-                    <p className="text-[11px] text-muted-foreground">Split agent pool between 2 practitioners</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Split agent pool between 2 practitioners
+                    </p>
                   </div>
                   <Switch checked={hasCoAgent} onCheckedChange={setHasCoAgent} />
                 </div>
@@ -316,7 +334,11 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
                   Net Agent Payable
                 </span>
                 <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={copySummary}>
-                  {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}
+                  {copied ? (
+                    <Check className="size-3.5 text-success" />
+                  ) : (
+                    <Copy className="size-3.5" />
+                  )}
                   {copied ? "Copied" : "Copy Summary"}
                 </Button>
               </div>
@@ -376,11 +398,15 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
                   <>
                     <div className="flex justify-between py-1 border-b border-border/50">
                       <span>Primary Agent ({agentASplitPct}%)</span>
-                      <span className="font-semibold text-primary">{zar(calc.agentAPayoutCents)}</span>
+                      <span className="font-semibold text-primary">
+                        {zar(calc.agentAPayoutCents)}
+                      </span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-border/50">
                       <span>Secondary Agent ({agentBSplitPct}%)</span>
-                      <span className="font-semibold text-muted-foreground">{zar(calc.agentBPayoutCents)}</span>
+                      <span className="font-semibold text-muted-foreground">
+                        {zar(calc.agentBPayoutCents)}
+                      </span>
                     </div>
                   </>
                 )}

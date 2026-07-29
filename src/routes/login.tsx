@@ -16,9 +16,15 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Sign in | Dream Supreme Properties" },
-      { name: "description", content: "Sign in to the Dream Supreme Properties agency management platform." },
+      {
+        name: "description",
+        content: "Sign in to the Dream Supreme Properties agency management platform.",
+      },
       { property: "og:title", content: "Sign in | Dream Supreme Properties" },
-      { property: "og:description", content: "Sign in to the Dream Supreme Properties agency management platform." },
+      {
+        property: "og:description",
+        content: "Sign in to the Dream Supreme Properties agency management platform.",
+      },
     ],
   }),
   component: LoginPage,
@@ -51,6 +57,32 @@ function LoginPage() {
     if (error) {
       toast.error(error.message);
     } else {
+      const pendingRaw = localStorage.getItem("dsp-pending-invitation");
+      if (pendingRaw) {
+        try {
+          const pending = JSON.parse(pendingRaw) as {
+            token: string;
+            fullName: string;
+            mobile: string;
+          };
+          const { error: acceptError } = await supabase.rpc("accept_user_invitation", {
+            p_token: pending.token,
+            p_full_name: pending.fullName,
+            p_mobile: pending.mobile,
+            p_avatar_key: null,
+          });
+          if (acceptError) throw acceptError;
+          localStorage.removeItem("dsp-pending-invitation");
+        } catch (invitationError) {
+          await supabase.auth.signOut();
+          toast.error(
+            invitationError instanceof Error
+              ? invitationError.message
+              : "Your company invitation could not be accepted.",
+          );
+          return;
+        }
+      }
       toast.success("Signed in successfully");
       navigate({ to: "/" });
     }
@@ -90,7 +122,13 @@ function LoginPage() {
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input id="email" type="email" placeholder="you@dreamsupreme.co.za" className="pl-9" {...form.register("email")} />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@dreamsupreme.co.za"
+                    className="pl-9"
+                    {...form.register("email")}
+                  />
                 </div>
                 {form.formState.errors.email && (
                   <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
@@ -100,17 +138,33 @@ function LoginPage() {
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" className="pl-9 pr-10" {...form.register("password")} />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className="pl-9 pr-10"
+                    {...form.register("password")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
                     {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </button>
                 </div>
                 {form.formState.errors.password && (
-                  <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.password.message}
+                  </p>
                 )}
               </div>
               <div className="flex items-center justify-end">
-                <button type="button" className="text-xs text-primary hover:underline" onClick={() => toast.info("Password reset link sent (demo)")}>
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline"
+                  onClick={() => toast.info("Password reset link sent (demo)")}
+                >
                   Forgot password?
                 </button>
               </div>
@@ -118,12 +172,9 @@ function LoginPage() {
                 {loading ? "Signing in..." : "Continue"}
               </Button>
 
-              <div className="text-center text-xs text-muted-foreground pt-2">
-                Don't have an account?{" "}
-                <a href="/register" className="text-primary font-medium hover:underline">
-                  Register as an Agent
-                </a>
-              </div>
+              <p className="pt-2 text-center text-xs text-muted-foreground">
+                New team members register through an invitation from the principal or administrator.
+              </p>
             </motion.form>
           </div>
         </div>

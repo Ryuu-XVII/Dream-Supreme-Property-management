@@ -1,10 +1,23 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createDeal } from "@/data/deals";
 import { Home, User, DollarSign, PlusCircle } from "lucide-react";
@@ -82,7 +95,10 @@ export function QuickDealModal({ open, onOpenChange, onSuccess }: QuickDealModal
         buyerName: entryType === "mandate" ? "Unassigned Purchaser" : form.buyerName,
       });
 
-      toast.success(entryType === "deal" ? "Deal created successfully!" : "Mandate logged successfully!", { id: "quick-deal" });
+      toast.success(
+        entryType === "deal" ? "Deal created successfully!" : "Mandate logged successfully!",
+        { id: "quick-deal" },
+      );
       onOpenChange(false);
       if (onSuccess) onSuccess(dealId);
     } catch (err: any) {
@@ -169,7 +185,9 @@ export function QuickDealModal({ open, onOpenChange, onSuccess }: QuickDealModal
               <div className="space-y-1">
                 <Label className="text-xs font-semibold">Mandate Type</Label>
                 <Select value={form.mandateType} onValueChange={(v) => update("mandateType", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Sole">Sole Mandate</SelectItem>
                     <SelectItem value="Joint">Joint Mandate</SelectItem>

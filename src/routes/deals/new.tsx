@@ -1,25 +1,55 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { GlassCard } from "@/components/ui-kit";
-import { STAGES, users, conveyancerFirms, deals, type Deal, type Property, type Party, type Condition, type DocumentRec, type Offer } from "@/data/state";
+import {
+  STAGES,
+  deals,
+  type Deal,
+  type Property,
+  type Party,
+  type Condition,
+  type DocumentRec,
+  type Offer,
+} from "@/data/state";
 import { zar } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  ArrowLeft, ArrowRight, CheckCircle2, Home, User, FileText, Landmark, ShieldCheck, Upload,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Home,
+  User,
+  FileText,
+  Landmark,
+  ShieldCheck,
+  Upload,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { createDeal } from "@/data/deals";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
+import { uploadFileToR2 } from "@/lib/storage";
 
 export const Route = createFileRoute("/deals/new")({
   head: () => ({
     meta: [
       { title: "New Deal Wizard | Dream Supreme Properties" },
-      { name: "description", content: "Create a new property sales deal and capture initial suspensive conditions." },
+      {
+        name: "description",
+        content: "Create a new property sales deal and capture initial suspensive conditions.",
+      },
     ],
   }),
   component: NewDealPage,
@@ -34,9 +64,71 @@ const STEPS = [
   { id: 6, name: "Review & Create", icon: ShieldCheck },
 ];
 
+function FilePicker({
+  category,
+  files,
+  setFiles,
+}: {
+  category: string;
+  files: Record<string, File | null>;
+  setFiles: React.Dispatch<React.SetStateAction<Record<string, File | null>>>;
+}) {
+  return (
+    <label className="flex w-full cursor-pointer items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent">
+      <Upload className="mr-2 size-4" />
+      <span className="truncate">{files[category]?.name || "Choose PDF or image"}</span>
+      <input
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png,.docx"
+        className="sr-only"
+        onChange={(event) =>
+          setFiles((current) => ({
+            ...current,
+            [category]: event.target.files?.[0] || null,
+          }))
+        }
+      />
+    </label>
+  );
+}
+
 function NewDealPage() {
+  const { account } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [baselineFiles, setBaselineFiles] = useState<Record<string, File | null>>({
+    mandate: null,
+    otp: null,
+    fica_id: null,
+    title_deed: null,
+  });
+  const { data: referenceData } = useQuery({
+    queryKey: ["deal-form-reference-data"],
+    queryFn: async () => {
+      const [usersResult, conveyancersResult] = await Promise.all([
+        supabase
+          .from("user_account")
+          .select("id, full_name, role, branch:branch_id(name)")
+          .eq("status", "active")
+          .in("role", ["principal", "agent", "candidate"])
+          .order("full_name"),
+        supabase.from("conveyancer_firm").select("id, name").order("name"),
+      ]);
+      if (usersResult.error) throw usersResult.error;
+      if (conveyancersResult.error) throw conveyancersResult.error;
+      return {
+        users: (usersResult.data || []).map((user: any) => ({
+          id: user.id,
+          name: user.full_name,
+          role: user.role,
+          branch: user.branch?.name || "Unassigned",
+        })),
+        conveyancerFirms: conveyancersResult.data || [],
+      };
+    },
+  });
+  const users = referenceData?.users || [];
+  const conveyancerFirms = referenceData?.conveyancerFirms || [];
 
   // Form State
   const [formData, setFormData] = useState({
@@ -85,14 +177,14 @@ function NewDealPage() {
     isVatSale: false,
     otpSigned: new Date().toISOString().split("T")[0],
     occupationDate: new Date(Date.now() + 60 * 86400000).toISOString().split("T")[0],
-    conveyancer: conveyancerFirms[0]?.name || "Vogel & Associates Attorneys",
-    agentId: users[0]?.id || "u1",
+    conveyancer: "",
+    agentId: "",
 
     // Conditions
     bondRequired: true,
     bondAmount: "2000000",
     bondDueDate: new Date(Date.now() + 21 * 86400000).toISOString().split("T")[0],
-    
+
     subjectToSale: false,
     subjectToSaleDesc: "",
     subjectToSaleDueDate: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0],
@@ -125,8 +217,43 @@ function NewDealPage() {
 
   const handleSubmit = async () => {
     try {
+      if (!account) throw new Error("Your agency account is unavailable.");
+      if (!baselineFiles.mandate || !baselineFiles.otp) {
+        throw new Error("The signed mandate and signed OTP files are required.");
+      }
       toast.loading("Creating deal...", { id: "create-deal" });
-      const dealId = await createDeal(formData);
+      const dealId = await createDeal({
+        ...formData,
+        agentId: formData.agentId || users[0]?.id,
+      });
+      try {
+        for (const [category, file] of Object.entries(baselineFiles)) {
+          if (!file) continue;
+          const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
+          const storageKey = await uploadFileToR2(
+            file,
+            `${account.agencyId}/deals/${dealId}/${Date.now()}-${safeName}`,
+          );
+          const { error } = await supabase.from("document").insert({
+            agency_id: account.agencyId,
+            deal_id: dealId,
+            category,
+            filename: file.name,
+            storage_key: storageKey,
+            mime_type: file.type,
+            size_bytes: file.size,
+            uploaded_by: account.id,
+          });
+          if (error) throw error;
+        }
+      } catch (uploadError: any) {
+        toast.warning("Deal created, but a document upload failed", {
+          id: "create-deal",
+          description: uploadError.message,
+        });
+        navigate({ to: "/deals/$dealId", params: { dealId } });
+        return;
+      }
       toast.success("Deal created successfully!", { id: "create-deal" });
       navigate({ to: "/deals/$dealId", params: { dealId } });
     } catch (err: any) {
@@ -140,7 +267,10 @@ function NewDealPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <Link to="/pipeline" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+            <Link
+              to="/pipeline"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
               <ArrowLeft className="size-3.5" /> Back to Pipeline
             </Link>
             <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">Create New Deal</h1>
@@ -169,8 +299,8 @@ function NewDealPage() {
                     isActive
                       ? "bg-primary text-primary-foreground shadow-md ring-4 ring-primary/20"
                       : isDone
-                      ? "bg-primary/20 text-primary"
-                      : "bg-muted text-muted-foreground"
+                        ? "bg-primary/20 text-primary"
+                        : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {isDone ? <CheckCircle2 className="size-4" /> : <Icon className="size-4" />}
@@ -193,8 +323,12 @@ function NewDealPage() {
           {step === 1 && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-display text-lg font-semibold">Step 1: Property & Mandate Details</h3>
-                <p className="text-xs text-muted-foreground">Enter property address and mandate specifics.</p>
+                <h3 className="font-display text-lg font-semibold">
+                  Step 1: Property & Mandate Details
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Enter property address and mandate specifics.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -247,8 +381,13 @@ function NewDealPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Property Type</Label>
-                  <Select value={formData.propertyType} onValueChange={(v) => updateForm("propertyType", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={formData.propertyType}
+                    onValueChange={(v) => updateForm("propertyType", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Freehold House">Freehold House</SelectItem>
                       <SelectItem value="Sectional Title">Sectional Title</SelectItem>
@@ -259,15 +398,27 @@ function NewDealPage() {
                 <div className="grid grid-cols-3 gap-2">
                   <div className="space-y-1">
                     <Label className="text-xs">Beds</Label>
-                    <Input type="number" value={formData.beds} onChange={(e) => updateForm("beds", +e.target.value)} />
+                    <Input
+                      type="number"
+                      value={formData.beds}
+                      onChange={(e) => updateForm("beds", +e.target.value)}
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Baths</Label>
-                    <Input type="number" value={formData.baths} onChange={(e) => updateForm("baths", +e.target.value)} />
+                    <Input
+                      type="number"
+                      value={formData.baths}
+                      onChange={(e) => updateForm("baths", +e.target.value)}
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Garages</Label>
-                    <Input type="number" value={formData.garages} onChange={(e) => updateForm("garages", +e.target.value)} />
+                    <Input
+                      type="number"
+                      value={formData.garages}
+                      onChange={(e) => updateForm("garages", +e.target.value)}
+                    />
                   </div>
                 </div>
 
@@ -277,8 +428,13 @@ function NewDealPage() {
 
                 <div className="space-y-1.5">
                   <Label>Mandate Type</Label>
-                  <Select value={formData.mandateType} onValueChange={(v) => updateForm("mandateType", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={formData.mandateType}
+                    onValueChange={(v) => updateForm("mandateType", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Sole">Sole Mandate</SelectItem>
                       <SelectItem value="Joint">Joint Mandate</SelectItem>
@@ -299,8 +455,13 @@ function NewDealPage() {
 
                 <div className="space-y-1.5">
                   <Label>Commission Rate (% or basis points)</Label>
-                  <Select value={formData.commissionBps} onValueChange={(v) => updateForm("commissionBps", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={formData.commissionBps}
+                    onValueChange={(v) => updateForm("commissionBps", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="500">5.0% (500 bps)</SelectItem>
                       <SelectItem value="550">5.5% (550 bps)</SelectItem>
@@ -327,12 +488,16 @@ function NewDealPage() {
             <div className="space-y-6">
               <div>
                 <h3 className="font-display text-lg font-semibold">Step 2: Transaction Parties</h3>
-                <p className="text-xs text-muted-foreground">Capture Seller and Purchaser contact details and FICA status.</p>
+                <p className="text-xs text-muted-foreground">
+                  Capture Seller and Purchaser contact details and FICA status.
+                </p>
               </div>
 
               {/* Seller */}
               <div className="rounded-lg border border-border p-4 space-y-4">
-                <h4 className="font-display text-sm font-semibold text-primary">Seller Information</h4>
+                <h4 className="font-display text-sm font-semibold text-primary">
+                  Seller Information
+                </h4>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label>Seller Full Name / Entity *</Label>
@@ -361,8 +526,13 @@ function NewDealPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Seller FICA Status</Label>
-                    <Select value={formData.sellerFica} onValueChange={(v) => updateForm("sellerFica", v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={formData.sellerFica}
+                      onValueChange={(v) => updateForm("sellerFica", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Complete">Complete (Verified)</SelectItem>
                         <SelectItem value="Partial">Pending Documents</SelectItem>
@@ -380,8 +550,13 @@ function NewDealPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Entity Type</Label>
-                    <Select value={formData.sellerEntityType} onValueChange={(v) => updateForm("sellerEntityType", v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={formData.sellerEntityType}
+                      onValueChange={(v) => updateForm("sellerEntityType", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Natural Person">Natural Person</SelectItem>
                         <SelectItem value="Company">Company</SelectItem>
@@ -393,13 +568,24 @@ function NewDealPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Marital Status</Label>
-                    <Select value={formData.sellerMaritalStatus} onValueChange={(v) => updateForm("sellerMaritalStatus", v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={formData.sellerMaritalStatus}
+                      onValueChange={(v) => updateForm("sellerMaritalStatus", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Single">Single</SelectItem>
-                        <SelectItem value="Married in Community of Property">Married in COP</SelectItem>
-                        <SelectItem value="Married out of Community of Property">Married out of COP</SelectItem>
-                        <SelectItem value="Married by Foreign Law">Married by Foreign Law</SelectItem>
+                        <SelectItem value="Married in Community of Property">
+                          Married in COP
+                        </SelectItem>
+                        <SelectItem value="Married out of Community of Property">
+                          Married out of COP
+                        </SelectItem>
+                        <SelectItem value="Married by Foreign Law">
+                          Married by Foreign Law
+                        </SelectItem>
                         <SelectItem value="Divorced">Divorced</SelectItem>
                         <SelectItem value="Widowed">Widowed</SelectItem>
                       </SelectContent>
@@ -417,7 +603,9 @@ function NewDealPage() {
 
               {/* Purchaser */}
               <div className="rounded-lg border border-border p-4 space-y-4">
-                <h4 className="font-display text-sm font-semibold text-primary">Purchaser Information</h4>
+                <h4 className="font-display text-sm font-semibold text-primary">
+                  Purchaser Information
+                </h4>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label>Purchaser Full Name / Entity *</Label>
@@ -446,8 +634,13 @@ function NewDealPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Purchaser FICA Status</Label>
-                    <Select value={formData.buyerFica} onValueChange={(v) => updateForm("buyerFica", v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={formData.buyerFica}
+                      onValueChange={(v) => updateForm("buyerFica", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Complete">Complete (Verified)</SelectItem>
                         <SelectItem value="Partial">Pending Documents</SelectItem>
@@ -465,8 +658,13 @@ function NewDealPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Entity Type</Label>
-                    <Select value={formData.buyerEntityType} onValueChange={(v) => updateForm("buyerEntityType", v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={formData.buyerEntityType}
+                      onValueChange={(v) => updateForm("buyerEntityType", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Natural Person">Natural Person</SelectItem>
                         <SelectItem value="Company">Company</SelectItem>
@@ -478,13 +676,24 @@ function NewDealPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Marital Status</Label>
-                    <Select value={formData.buyerMaritalStatus} onValueChange={(v) => updateForm("buyerMaritalStatus", v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={formData.buyerMaritalStatus}
+                      onValueChange={(v) => updateForm("buyerMaritalStatus", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Single">Single</SelectItem>
-                        <SelectItem value="Married in Community of Property">Married in COP</SelectItem>
-                        <SelectItem value="Married out of Community of Property">Married out of COP</SelectItem>
-                        <SelectItem value="Married by Foreign Law">Married by Foreign Law</SelectItem>
+                        <SelectItem value="Married in Community of Property">
+                          Married in COP
+                        </SelectItem>
+                        <SelectItem value="Married out of Community of Property">
+                          Married out of COP
+                        </SelectItem>
+                        <SelectItem value="Married by Foreign Law">
+                          Married by Foreign Law
+                        </SelectItem>
                         <SelectItem value="Divorced">Divorced</SelectItem>
                         <SelectItem value="Widowed">Widowed</SelectItem>
                       </SelectContent>
@@ -506,8 +715,12 @@ function NewDealPage() {
           {step === 3 && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-display text-lg font-semibold">Step 3: OTP & Financial Summary</h3>
-                <p className="text-xs text-muted-foreground">Capture agreed sale price and appointed conveyancer attorney.</p>
+                <h3 className="font-display text-lg font-semibold">
+                  Step 3: OTP & Financial Summary
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Capture agreed sale price and appointed conveyancer attorney.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -544,8 +757,13 @@ function NewDealPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Appointed Conveyancer Firm</Label>
-                  <Select value={formData.conveyancer} onValueChange={(v) => updateForm("conveyancer", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={formData.conveyancer}
+                    onValueChange={(v) => updateForm("conveyancer", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       {conveyancerFirms.map((c) => (
                         <SelectItem key={c.id} value={c.name}>
@@ -558,7 +776,9 @@ function NewDealPage() {
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>Lead Listing Practitioner</Label>
                   <Select value={formData.agentId} onValueChange={(v) => updateForm("agentId", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       {users.map((u) => (
                         <SelectItem key={u.id} value={u.id}>
@@ -576,9 +796,12 @@ function NewDealPage() {
           {step === 4 && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-display text-lg font-semibold">Step 4: Suspensive Conditions & Deadlines</h3>
+                <h3 className="font-display text-lg font-semibold">
+                  Step 4: Suspensive Conditions & Deadlines
+                </h3>
                 <p className="text-xs text-muted-foreground">
-                  Set critical deadlines for Bond Approval and FICA clearance. Automated alerts will track these.
+                  Set critical deadlines for Bond Approval and FICA clearance. Automated alerts will
+                  track these.
                 </p>
               </div>
 
@@ -669,8 +892,12 @@ function NewDealPage() {
           {step === 5 && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-display text-lg font-semibold">Step 5: Baseline Document Uploads</h3>
-                <p className="text-xs text-muted-foreground">Upload the mandatory signed documents to initialize the deal.</p>
+                <h3 className="font-display text-lg font-semibold">
+                  Step 5: Baseline Document Uploads
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Upload the mandatory signed documents to initialize the deal.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -678,37 +905,63 @@ function NewDealPage() {
                   <div className="flex items-center gap-2 font-semibold">
                     <FileText className="size-4 text-primary" /> Signed Mandate Document
                   </div>
-                  <p className="text-xs text-muted-foreground">Required to start the deal process.</p>
-                  <Button variant="outline" size="sm" className="w-full"><Upload className="mr-2 size-4"/> Upload PDF</Button>
+                  <p className="text-xs text-muted-foreground">
+                    Required to start the deal process.
+                  </p>
+                  <FilePicker
+                    category="mandate"
+                    files={baselineFiles}
+                    setFiles={setBaselineFiles}
+                  />
                 </div>
                 <div className="rounded-lg border border-border p-4 space-y-2 bg-card">
                   <div className="flex items-center gap-2 font-semibold">
                     <FileText className="size-4 text-primary" /> Signed Offer to Purchase (OTP)
                   </div>
-                  <p className="text-xs text-muted-foreground">Required to advance past Offer Received.</p>
-                  <Button variant="outline" size="sm" className="w-full"><Upload className="mr-2 size-4"/> Upload PDF</Button>
+                  <p className="text-xs text-muted-foreground">
+                    Required to advance past Offer Received.
+                  </p>
+                  <FilePicker category="otp" files={baselineFiles} setFiles={setBaselineFiles} />
                 </div>
                 <div className="rounded-lg border border-border p-4 space-y-2 bg-card">
                   <div className="flex items-center gap-2 font-semibold">
                     <ShieldCheck className="size-4 text-primary" /> FICA Documents
                   </div>
-                  <p className="text-xs text-muted-foreground">Seller and Purchaser ID & Proof of Address.</p>
-                  <Button variant="outline" size="sm" className="w-full"><Upload className="mr-2 size-4"/> Upload PDF</Button>
+                  <p className="text-xs text-muted-foreground">
+                    Seller and Purchaser ID & Proof of Address.
+                  </p>
+                  <FilePicker
+                    category="fica_id"
+                    files={baselineFiles}
+                    setFiles={setBaselineFiles}
+                  />
                 </div>
                 <div className="rounded-lg border border-border p-4 space-y-2 bg-card">
                   <div className="flex items-center gap-2 font-semibold">
                     <Home className="size-4 text-primary" /> Title Deed Copy & Municipal Account
                   </div>
-                  <p className="text-xs text-muted-foreground">Required for conveyancer instructions.</p>
-                  <Button variant="outline" size="sm" className="w-full"><Upload className="mr-2 size-4"/> Upload PDF</Button>
+                  <p className="text-xs text-muted-foreground">
+                    Required for conveyancer instructions.
+                  </p>
+                  <FilePicker
+                    category="title_deed"
+                    files={baselineFiles}
+                    setFiles={setBaselineFiles}
+                  />
                 </div>
-                {(formData.sellerEntityType !== "Natural Person" || formData.buyerEntityType !== "Natural Person") && (
+                {(formData.sellerEntityType !== "Natural Person" ||
+                  formData.buyerEntityType !== "Natural Person") && (
                   <div className="rounded-lg border border-border p-4 space-y-2 sm:col-span-2 bg-card">
                     <div className="flex items-center gap-2 font-semibold">
-                      <FileText className="size-4 text-primary" /> Entity Registration / Resolution Documents
+                      <FileText className="size-4 text-primary" /> Entity Registration / Resolution
+                      Documents
                     </div>
-                    <p className="text-xs text-muted-foreground">Required since parties include non-natural entities.</p>
-                    <Button variant="outline" size="sm" className="w-full sm:w-auto"><Upload className="mr-2 size-4"/> Upload PDF</Button>
+                    <p className="text-xs text-muted-foreground">
+                      Required since parties include non-natural entities.
+                    </p>
+                    <p className="text-xs text-warning">
+                      Add entity resolutions from the deal Documents tab after creation.
+                    </p>
                   </div>
                 )}
               </div>
@@ -719,39 +972,56 @@ function NewDealPage() {
           {step === 6 && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-display text-lg font-semibold">Step 6: Review Deal Summary & Checklist</h3>
-                <p className="text-xs text-muted-foreground">Verify deal attributes before saving into pipeline.</p>
+                <h3 className="font-display text-lg font-semibold">
+                  Step 6: Review Deal Summary & Checklist
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Verify deal attributes before saving into pipeline.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="rounded-lg border border-border p-3 space-y-1">
                   <span className="text-xs text-muted-foreground">Property</span>
                   <p className="text-sm font-semibold">{formData.address || "N/A"}</p>
-                  <p className="text-xs text-muted-foreground">{formData.suburb}, {formData.city}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formData.suburb}, {formData.city}
+                  </p>
                 </div>
 
                 <div className="rounded-lg border border-border p-3 space-y-1">
                   <span className="text-xs text-muted-foreground">Sale & Mandate Price</span>
-                  <p className="text-sm font-semibold text-primary">{zar(parseFloat(formData.salePrice) || 0, { decimals: false })}</p>
-                  <p className="text-xs text-muted-foreground">Listing: {zar(parseFloat(formData.listingPrice) || 0, { decimals: false })} ({formData.mandateType})</p>
+                  <p className="text-sm font-semibold text-primary">
+                    {zar(parseFloat(formData.salePrice) || 0, { decimals: false })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Listing: {zar(parseFloat(formData.listingPrice) || 0, { decimals: false })} (
+                    {formData.mandateType})
+                  </p>
                 </div>
 
                 <div className="rounded-lg border border-border p-3 space-y-1">
                   <span className="text-xs text-muted-foreground">Seller</span>
                   <p className="text-sm font-semibold">{formData.sellerName || "N/A"}</p>
-                  <p className="text-xs text-muted-foreground">{formData.sellerEmail || "No email"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formData.sellerEmail || "No email"}
+                  </p>
                 </div>
 
                 <div className="rounded-lg border border-border p-3 space-y-1">
                   <span className="text-xs text-muted-foreground">Purchaser</span>
                   <p className="text-sm font-semibold">{formData.buyerName || "N/A"}</p>
-                  <p className="text-xs text-muted-foreground">{formData.buyerEmail || "No email"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formData.buyerEmail || "No email"}
+                  </p>
                 </div>
 
                 <div className="rounded-lg border border-border p-3 space-y-1 sm:col-span-2">
                   <span className="text-xs text-muted-foreground">Conveyancer & Lead Agent</span>
                   <p className="text-sm font-semibold">{formData.conveyancer}</p>
-                  <p className="text-xs text-muted-foreground">Agent: {users.find((u) => u.id === formData.agentId)?.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Agent: {users.find((u) => u.id === formData.agentId)?.name || "Current user"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -768,7 +1038,10 @@ function NewDealPage() {
                 Next <ArrowRight className="ml-1 size-4" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button
+                onClick={handleSubmit}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
                 Create Deal & Initialize Pipeline
               </Button>
             )}

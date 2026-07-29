@@ -77,7 +77,8 @@ export interface Condition {
   responsibleParty: "Purchaser" | "Seller" | "Agent" | "Conveyancer";
 }
 
-export type EntityType = "Natural Person" | "Company" | "Close Corporation" | "Trust" | "Deceased Estate";
+export type EntityType =
+  "Natural Person" | "Company" | "Close Corporation" | "Trust" | "Deceased Estate";
 
 export interface Party {
   id: string;
@@ -85,7 +86,13 @@ export interface Party {
   name: string;
   side: "Seller" | "Purchaser";
   entityType: EntityType;
-  maritalStatus?: "Single" | "Married in Community of Property" | "Married out of Community of Property" | "Married by Foreign Law" | "Divorced" | "Widowed";
+  maritalStatus?:
+    | "Single"
+    | "Married in Community of Property"
+    | "Married out of Community of Property"
+    | "Married by Foreign Law"
+    | "Divorced"
+    | "Widowed";
   isVatVendor?: boolean;
   email: string;
   mobile: string;
