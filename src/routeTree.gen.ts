@@ -23,6 +23,7 @@ import { Route as CommissionIndexRouteImport } from './routes/commission/index'
 import { Route as SettingsUsersRouteImport } from './routes/settings/users'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings/notifications'
 import { Route as SettingsAgencyRouteImport } from './routes/settings/agency'
+import { Route as ReportsReportRouteImport } from './routes/reports/$report'
 import { Route as ComplianceFicaRouteImport } from './routes/compliance/fica'
 import { Route as ComplianceFfcRouteImport } from './routes/compliance/ffc'
 import { Route as ComplianceAuditRouteImport } from './routes/compliance/audit'
@@ -102,6 +103,11 @@ const SettingsAgencyRoute = SettingsAgencyRouteImport.update({
   path: '/settings/agency',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsReportRoute = ReportsReportRouteImport.update({
+  id: '/reports/$report',
+  path: '/reports/$report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ComplianceFicaRoute = ComplianceFicaRouteImport.update({
   id: '/compliance/fica',
   path: '/compliance/fica',
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/compliance/audit': typeof ComplianceAuditRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
   '/compliance/fica': typeof ComplianceFicaRoute
+  '/reports/$report': typeof ReportsReportRoute
   '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/users': typeof SettingsUsersRoute
@@ -187,6 +194,7 @@ export interface FileRoutesByTo {
   '/compliance/audit': typeof ComplianceAuditRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
   '/compliance/fica': typeof ComplianceFicaRoute
+  '/reports/$report': typeof ReportsReportRoute
   '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/users': typeof SettingsUsersRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/compliance/audit': typeof ComplianceAuditRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
   '/compliance/fica': typeof ComplianceFicaRoute
+  '/reports/$report': typeof ReportsReportRoute
   '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/users': typeof SettingsUsersRoute
@@ -238,6 +247,7 @@ export interface FileRouteTypes {
     | '/compliance/audit'
     | '/compliance/ffc'
     | '/compliance/fica'
+    | '/reports/$report'
     | '/settings/agency'
     | '/settings/notifications'
     | '/settings/users'
@@ -262,6 +272,7 @@ export interface FileRouteTypes {
     | '/compliance/audit'
     | '/compliance/ffc'
     | '/compliance/fica'
+    | '/reports/$report'
     | '/settings/agency'
     | '/settings/notifications'
     | '/settings/users'
@@ -286,6 +297,7 @@ export interface FileRouteTypes {
     | '/compliance/audit'
     | '/compliance/ffc'
     | '/compliance/fica'
+    | '/reports/$report'
     | '/settings/agency'
     | '/settings/notifications'
     | '/settings/users'
@@ -311,6 +323,7 @@ export interface RootRouteChildren {
   ComplianceAuditRoute: typeof ComplianceAuditRoute
   ComplianceFfcRoute: typeof ComplianceFfcRoute
   ComplianceFicaRoute: typeof ComplianceFicaRoute
+  ReportsReportRoute: typeof ReportsReportRoute
   SettingsAgencyRoute: typeof SettingsAgencyRoute
   SettingsNotificationsRoute: typeof SettingsNotificationsRoute
   SettingsUsersRoute: typeof SettingsUsersRoute
@@ -418,6 +431,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsAgencyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports/$report': {
+      id: '/reports/$report'
+      path: '/reports/$report'
+      fullPath: '/reports/$report'
+      preLoaderRoute: typeof ReportsReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/compliance/fica': {
       id: '/compliance/fica'
       path: '/compliance/fica'
@@ -495,6 +515,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComplianceAuditRoute: ComplianceAuditRoute,
   ComplianceFfcRoute: ComplianceFfcRoute,
   ComplianceFicaRoute: ComplianceFicaRoute,
+  ReportsReportRoute: ReportsReportRoute,
   SettingsAgencyRoute: SettingsAgencyRoute,
   SettingsNotificationsRoute: SettingsNotificationsRoute,
   SettingsUsersRoute: SettingsUsersRoute,
