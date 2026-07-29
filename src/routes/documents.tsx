@@ -447,8 +447,9 @@ function GenerateDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
   const [dealId, setDealId] = useState<string>(deals[0].id);
 
   const template = templates.find((t) => t.id === templateId)!;
-  const deal = dealById(dealId);
+  const deal = dealById(dealId) ?? deals[0];
   const property = propertyById(deal.propertyId);
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
