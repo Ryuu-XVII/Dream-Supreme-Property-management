@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as ConveyancerRouteImport } from './routes/conveyancer'
 import { Route as CountdownRouteImport } from './routes/countdown'
 import { Route as DocumentsRouteImport } from './routes/documents'
@@ -24,6 +25,7 @@ import { Route as CalculatorsBondRouteImport } from './routes/calculators/bond'
 import { Route as CalculatorsTransferRouteImport } from './routes/calculators/transfer'
 import { Route as CalculatorsYieldRouteImport } from './routes/calculators/yield'
 import { Route as CommissionIndexRouteImport } from './routes/commission/index'
+import { Route as CommissionCalculatorRouteImport } from './routes/commission/calculator'
 import { Route as CommissionEarningsRouteImport } from './routes/commission/earnings'
 import { Route as CommissionReconciliationRouteImport } from './routes/commission/reconciliation'
 import { Route as ComplianceAuditRouteImport } from './routes/compliance/audit'
@@ -42,6 +44,11 @@ import { Route as SetupImportRouteImport } from './routes/setup/import'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientsRoute = ClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConveyancerRoute = ConveyancerRouteImport.update({
@@ -113,6 +120,11 @@ const CalculatorsYieldRoute = CalculatorsYieldRouteImport.update({
 const CommissionIndexRoute = CommissionIndexRouteImport.update({
   id: '/commission/',
   path: '/commission/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommissionCalculatorRoute = CommissionCalculatorRouteImport.update({
+  id: '/commission/calculator',
+  path: '/commission/calculator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommissionEarningsRoute = CommissionEarningsRouteImport.update({
@@ -189,6 +201,7 @@ const SetupImportRoute = SetupImportRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/clients': typeof ClientsRoute
   '/conveyancer': typeof ConveyancerRoute
   '/countdown': typeof CountdownRoute
   '/documents': typeof DocumentsRoute
@@ -202,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
   '/calculators/yield': typeof CalculatorsYieldRoute
+  '/commission/calculator': typeof CommissionCalculatorRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
   '/compliance/audit': typeof ComplianceAuditRoute
@@ -220,6 +234,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/clients': typeof ClientsRoute
   '/conveyancer': typeof ConveyancerRoute
   '/countdown': typeof CountdownRoute
   '/documents': typeof DocumentsRoute
@@ -233,6 +248,7 @@ export interface FileRoutesByTo {
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
   '/calculators/yield': typeof CalculatorsYieldRoute
+  '/commission/calculator': typeof CommissionCalculatorRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
   '/compliance/audit': typeof ComplianceAuditRoute
@@ -252,6 +268,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/clients': typeof ClientsRoute
   '/conveyancer': typeof ConveyancerRoute
   '/countdown': typeof CountdownRoute
   '/documents': typeof DocumentsRoute
@@ -265,6 +282,7 @@ export interface FileRoutesById {
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
   '/calculators/yield': typeof CalculatorsYieldRoute
+  '/commission/calculator': typeof CommissionCalculatorRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
   '/compliance/audit': typeof ComplianceAuditRoute
@@ -285,6 +303,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/clients'
     | '/conveyancer'
     | '/countdown'
     | '/documents'
@@ -298,6 +317,7 @@ export interface FileRouteTypes {
     | '/calculators/bond'
     | '/calculators/transfer'
     | '/calculators/yield'
+    | '/commission/calculator'
     | '/commission/earnings'
     | '/commission/reconciliation'
     | '/compliance/audit'
@@ -316,6 +336,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/clients'
     | '/conveyancer'
     | '/countdown'
     | '/documents'
@@ -329,6 +350,7 @@ export interface FileRouteTypes {
     | '/calculators/bond'
     | '/calculators/transfer'
     | '/calculators/yield'
+    | '/commission/calculator'
     | '/commission/earnings'
     | '/commission/reconciliation'
     | '/compliance/audit'
@@ -347,6 +369,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/clients'
     | '/conveyancer'
     | '/countdown'
     | '/documents'
@@ -360,6 +383,7 @@ export interface FileRouteTypes {
     | '/calculators/bond'
     | '/calculators/transfer'
     | '/calculators/yield'
+    | '/commission/calculator'
     | '/commission/earnings'
     | '/commission/reconciliation'
     | '/compliance/audit'
@@ -379,6 +403,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ClientsRoute: typeof ClientsRoute
   ConveyancerRoute: typeof ConveyancerRoute
   CountdownRoute: typeof CountdownRoute
   DocumentsRoute: typeof DocumentsRoute
@@ -392,6 +417,7 @@ export interface RootRouteChildren {
   CalculatorsBondRoute: typeof CalculatorsBondRoute
   CalculatorsTransferRoute: typeof CalculatorsTransferRoute
   CalculatorsYieldRoute: typeof CalculatorsYieldRoute
+  CommissionCalculatorRoute: typeof CommissionCalculatorRoute
   CommissionEarningsRoute: typeof CommissionEarningsRoute
   CommissionReconciliationRoute: typeof CommissionReconciliationRoute
   ComplianceAuditRoute: typeof ComplianceAuditRoute
@@ -416,6 +442,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clients': {
+      id: '/clients'
+      path: '/clients'
+      fullPath: '/clients'
+      preLoaderRoute: typeof ClientsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/conveyancer': {
@@ -514,6 +547,13 @@ declare module '@tanstack/react-router' {
       path: '/commission'
       fullPath: '/commission/'
       preLoaderRoute: typeof CommissionIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/commission/calculator': {
+      id: '/commission/calculator'
+      path: '/commission/calculator'
+      fullPath: '/commission/calculator'
+      preLoaderRoute: typeof CommissionCalculatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/commission/earnings': {
@@ -619,6 +659,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ClientsRoute: ClientsRoute,
   ConveyancerRoute: ConveyancerRoute,
   CountdownRoute: CountdownRoute,
   DocumentsRoute: DocumentsRoute,
@@ -632,6 +673,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalculatorsBondRoute: CalculatorsBondRoute,
   CalculatorsTransferRoute: CalculatorsTransferRoute,
   CalculatorsYieldRoute: CalculatorsYieldRoute,
+  CommissionCalculatorRoute: CommissionCalculatorRoute,
   CommissionEarningsRoute: CommissionEarningsRoute,
   CommissionReconciliationRoute: CommissionReconciliationRoute,
   ComplianceAuditRoute: ComplianceAuditRoute,

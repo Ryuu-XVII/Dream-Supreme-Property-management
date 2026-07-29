@@ -1,6 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Search, Sun, Moon, Monitor, UserCog, LogOut, ChevronDown } from "lucide-react";
+import { Bell, Search, Sun, Moon, Monitor, LogOut, PlusCircle, Calculator } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { QuickDealModal } from "@/components/deal/quick-deal-modal";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,18 +24,41 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useApp } from "@/lib/app-state";
-import { deals, notifications, users, agency, type Role } from "@/data/state";
+import { useAuth } from "@/lib/auth";
+import { deals, agency } from "@/data/state";
+import { supabase } from "@/lib/supabase";
 import { initials, zar, relative, dateFmt } from "@/lib/format";
 import { propertyById } from "@/data/state";
 import { navItems } from "./sidebar";
 import { cn } from "@/lib/utils";
 
-const roles: Role[] = ["Principal", "Agent", "Candidate", "Admin"];
-
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [quickModalOpen, setQuickModalOpen] = useState(false);
   const navigate = useNavigate();
-  const { theme, setTheme, role, setRole } = useApp();
+  const { theme, setTheme, role } = useApp();
+  const { account, signOut } = useAuth();
+  const notificationQuery = useQuery({
+    queryKey: ["notifications", account?.id],
+    enabled: !!account,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("notification")
+        .select("id, subject, body, created_at, read_at")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data || []).map((notification) => ({
+        id: notification.id,
+        title: notification.subject,
+        body: notification.body,
+        at: notification.created_at,
+        unread: !notification.read_at,
+        tone: notification.subject.toLowerCase().includes("overdue") ? "danger" : "info",
+      }));
+    },
+  });
+  const notifications = notificationQuery.data ?? [];
   const unread = notifications.filter((n) => n.unread).length;
 
   useEffect(() => {
@@ -47,7 +72,12 @@ export function Header() {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  const me = users[0] ?? { name: "Agent User", role: role };
+  const me = { name: account?.fullName ?? "Agent User", role };
+
+  const handleSignOut = async () => {
+    await signOut();
+    await navigate({ to: "/login", replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-background/80 px-3 backdrop-blur-md sm:px-6">
@@ -68,7 +98,23 @@ export function Header() {
         </kbd>
       </button>
 
-      <div className="hidden items-center gap-2 lg:flex"></div>
+      <div className="hidden items-center gap-2 lg:flex">
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5 text-xs"
+          onClick={() => navigate({ to: "/commission/calculator" })}
+        >
+          <Calculator className="size-3.5 text-primary" /> Calculator
+        </Button>
+        <Button
+          size="sm"
+          className="gap-1.5 text-xs font-semibold shadow-sm"
+          onClick={() => setQuickModalOpen(true)}
+        >
+          <PlusCircle className="size-3.5" /> + New Deal
+        </Button>
+      </div>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -95,7 +141,16 @@ export function Header() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Popover>
+      <Popover
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen || unread === 0) return;
+          void supabase
+            .from("notification")
+            .update({ read_at: new Date().toISOString() })
+            .is("read_at", null)
+            .then(() => notificationQuery.refetch());
+        }}
+      >
         <PopoverTrigger asChild>
           <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
             <Bell className="size-5" />
@@ -158,14 +213,9 @@ export function Header() {
           <DropdownMenuItem asChild>
             <Link to="/commission/earnings">My earnings</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link to="/register">Agent Registration</Link>
-          </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link to="/login">
-              <LogOut className="size-4" /> Sign out
-            </Link>
+          <DropdownMenuItem onSelect={() => void handleSignOut()}>
+            <LogOut className="size-4" /> Sign out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -219,6 +269,12 @@ export function Header() {
           </CommandGroup>
         </CommandList>
       </CommandDialog>
+
+      <QuickDealModal
+        open={quickModalOpen}
+        onOpenChange={setQuickModalOpen}
+        onSuccess={(dealId) => navigate({ to: "/deals/$dealId", params: { dealId } })}
+      />
     </header>
   );
 }

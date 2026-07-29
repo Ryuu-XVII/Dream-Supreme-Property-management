@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { StageBadge, StatusDot } from "@/components/badges";
@@ -30,8 +31,9 @@ import { DealDocumentsTab } from "@/components/deal/documents";
 import { DealCommissionTab } from "@/components/deal/commission";
 import { DealOffersTab } from "@/components/deal/offers";
 import { DealTimelineTab } from "@/components/deal/timeline";
-import { ArrowLeft, ChevronRight, ChevronLeft, XCircle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ChevronRight, ChevronLeft, XCircle, CheckCircle2, Link2 } from "lucide-react";
 import { useDealDetail } from "@/data/deals";
+import { stageToDb } from "@/lib/domain";
 
 export const Route = createFileRoute("/deals/$dealId")({
   component: DealDetailPage,
@@ -56,14 +58,6 @@ function DealDetailPage() {
   const [stageReason, setStageReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
 
-  if (isLoading || !deal) {
-    return (
-      <AppShell>
-        <div className="p-8 text-center text-muted-foreground">Loading deal details...</div>
-      </AppShell>
-    );
-  }
-
   if (error) {
     return (
       <AppShell>
@@ -74,77 +68,129 @@ function DealDetailPage() {
     );
   }
 
-  // Fallback to propertyById from mock if property isn't fully embedded. We embedded it in the query though, but UI expects propertyById.
-  // Wait, propertyById throws an error if it doesn't find it. Let's just create a dummy property if it's not found in mock.
-  let property;
-  try {
-    property = propertyById(deal.propertyId);
-  } catch {
-    property = { address: "Address not available", suburb: "", city: "" }; // Mock fallback
+  if (isLoading || !deal) {
+    return (
+      <AppShell>
+        <div className="p-8 text-center text-muted-foreground">Loading deal details...</div>
+      </AppShell>
+    );
   }
+
+  const property = (deal as Deal & { property?: { address: string; suburb: string; city: string } })
+    .property ??
+    propertyById(deal.propertyId) ?? { address: "Address not available", suburb: "", city: "" };
 
   const currentStageIdx = STAGES.findIndex((s) => s === deal.stage);
 
-  const handleAdvanceStage = () => {
+  const handleAdvanceStage = async () => {
     if (currentStageIdx >= STAGES.length - 1) return;
     const nextStage = STAGES[currentStageIdx + 1];
-    setDeal((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        stage: nextStage,
-        timeline: [
-          {
-            id: `h_${Date.now()}`,
-            at: new Date().toISOString(),
-            from: prev.stage,
-            to: nextStage,
-            actor: "Current User",
-            action: `Advanced stage to ${nextStage}`,
-            reason: stageReason || "Stage advanced",
-          },
-          ...prev.timeline,
-        ],
-      };
-    });
-    toast.success(`Deal advanced to ${nextStage}`);
-    setStageModal(null);
-    setStageReason("");
+    try {
+      toast.loading("Advancing stage...");
+      const { error } = await supabase.rpc("transition_deal", {
+        p_deal_id: dealId,
+        p_to_stage: stageToDb[nextStage],
+        p_reason: stageReason || null,
+        p_override: false,
+      });
+      if (error) throw error;
+      setDeal((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          stage: nextStage,
+          timeline: [
+            {
+              id: `h_${Date.now()}`,
+              at: new Date().toISOString(),
+              from: prev.stage,
+              to: nextStage,
+              actor: "Current User",
+              action: `Advanced stage to ${nextStage}`,
+              reason: stageReason || "Stage advanced",
+            },
+            ...prev.timeline,
+          ],
+        };
+      });
+      toast.dismiss();
+      toast.success(`Deal advanced to ${nextStage}`);
+      setStageModal(null);
+      setStageReason("");
+    } catch (err: any) {
+      toast.dismiss();
+      toast.error(`Failed: ${err.message}`);
+    }
   };
 
-  const handleRevertStage = () => {
+  const handleRevertStage = async () => {
     if (currentStageIdx <= 0) return;
     const prevStage = STAGES[currentStageIdx - 1];
-    setDeal((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        stage: prevStage,
-        timeline: [
-          {
-            id: `h_${Date.now()}`,
-            at: new Date().toISOString(),
-            from: prev.stage,
-            to: prevStage,
-            actor: "Current User",
-            action: `Reverted stage to ${prevStage}`,
-            reason: stageReason || "Stage reverted",
-          },
-          ...prev.timeline,
-        ],
-      };
-    });
-    toast.info(`Deal reverted to ${prevStage}`);
-    setStageModal(null);
-    setStageReason("");
+    try {
+      toast.loading("Reverting stage...");
+      if (!stageReason.trim()) {
+        toast.error("A reason is required when reverting a stage.");
+        return;
+      }
+      const { error } = await supabase.rpc("transition_deal", {
+        p_deal_id: dealId,
+        p_to_stage: stageToDb[prevStage],
+        p_reason: stageReason,
+        p_override: false,
+      });
+      if (error) throw error;
+      setDeal((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          stage: prevStage,
+          timeline: [
+            {
+              id: `h_${Date.now()}`,
+              at: new Date().toISOString(),
+              from: prev.stage,
+              to: prevStage,
+              actor: "Current User",
+              action: `Reverted stage to ${prevStage}`,
+              reason: stageReason || "Stage reverted",
+            },
+            ...prev.timeline,
+          ],
+        };
+      });
+      toast.dismiss();
+      toast.success(`Deal reverted to ${prevStage}`);
+      setStageModal(null);
+      setStageReason("");
+    } catch (err: any) {
+      toast.dismiss();
+      toast.error(`Failed: ${err.message}`);
+    }
   };
 
-  const handleCancelDeal = () => {
+  const handleCancelDeal = async () => {
+    if (!cancelReason) {
+      toast.error("Select a cancellation reason.");
+      return;
+    }
+    if (cancelReason === "other" && !stageReason.trim()) {
+      toast.error("Enter notes when selecting Other.");
+      return;
+    }
+    const { error } = await supabase.rpc("cancel_deal", {
+      p_deal_id: dealId,
+      p_reason: cancelReason,
+      p_notes: stageReason || null,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setDeal((prev) => {
       if (!prev) return prev;
       return {
         ...prev,
-        cancelled: { reason: cancelReason || "Other", at: new Date().toISOString().split("T")[0] },
+        cancelled: { reason: cancelReason, at: new Date().toISOString().split("T")[0] },
         timeline: [
           {
             id: `h_${Date.now()}`,
@@ -160,6 +206,26 @@ function DealDetailPage() {
     toast.error("Deal has been marked as Cancelled");
     setStageModal(null);
     setCancelReason("");
+    setStageReason("");
+  };
+
+  const copyConveyancerLink = async () => {
+    const email = (deal as Deal & { conveyancerEmail?: string }).conveyancerEmail;
+    if (!email) {
+      toast.error("Add an email address to the appointed conveyancer firm first.");
+      return;
+    }
+    const { data: token, error } = await supabase.rpc("create_status_request", {
+      p_deal_id: dealId,
+      p_recipient_email: email,
+      p_expires_in_hours: 72,
+    });
+    if (error) return toast.error(error.message);
+    const link = `${window.location.origin}/conveyancer?token=${encodeURIComponent(token)}`;
+    await navigator.clipboard.writeText(link);
+    toast.success("Single-use conveyancer link copied", {
+      description: `Send it to ${email}; it expires in 72 hours.`,
+    });
   };
 
   return (
@@ -192,6 +258,9 @@ function DealDetailPage() {
           <div className="flex flex-wrap items-center gap-2">
             {!deal.cancelled && (
               <>
+                <Button variant="outline" size="sm" onClick={copyConveyancerLink}>
+                  <Link2 className="mr-1 size-3.5" /> Conveyancer link
+                </Button>
                 {currentStageIdx > 0 && (
                   <Button variant="outline" size="sm" onClick={() => setStageModal("revert")}>
                     <ChevronLeft className="mr-1 size-4" /> Revert Stage
@@ -366,16 +435,33 @@ function DealDetailPage() {
                 <SelectValue placeholder="Select reason..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Bond Declined">Bond Declined</SelectItem>
-                <SelectItem value="Purchaser Withdrew">Purchaser Withdrew</SelectItem>
-                <SelectItem value="Seller Withdrew">Seller Withdrew</SelectItem>
-                <SelectItem value="Defects Discovered">Defects Discovered</SelectItem>
-                <SelectItem value="Expired Suspensive Condition">
-                  Expired Suspensive Condition
+                <SelectItem value="bond_declined">Bond declined</SelectItem>
+                <SelectItem value="bond_not_applied_in_time">Bond not applied in time</SelectItem>
+                <SelectItem value="sale_of_purchasers_property_failed">
+                  Sale of purchaser property failed
                 </SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
+                <SelectItem value="purchaser_withdrew">Purchaser withdrew</SelectItem>
+                <SelectItem value="seller_withdrew">Seller withdrew</SelectItem>
+                <SelectItem value="property_defect">Property defect discovered</SelectItem>
+                <SelectItem value="compliance_certificate_failure">
+                  Compliance certificate failure
+                </SelectItem>
+                <SelectItem value="price_renegotiation_failed">
+                  Price renegotiation failed
+                </SelectItem>
+                <SelectItem value="title_or_boundary_defect">Title or boundary defect</SelectItem>
+                <SelectItem value="municipal_or_clearance_obstruction">
+                  Municipal or clearance obstruction
+                </SelectItem>
+                <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
+            <Label>Notes {cancelReason === "other" ? "(required)" : "(optional)"}</Label>
+            <Textarea
+              placeholder="Add cancellation context for the audit trail"
+              value={stageReason}
+              onChange={(event) => setStageReason(event.target.value)}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setStageModal(null)}>

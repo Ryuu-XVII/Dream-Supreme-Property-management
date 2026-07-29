@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { transferDutyBrackets } from "@/data/state";
+import { calculateTransferDutyCents } from "@/lib/domain";
 
 export const Route = createFileRoute("/calculators/transfer")({
   head: () => ({
@@ -41,13 +42,7 @@ const zarFmt = (n: number) =>
 
 // brackets are stored in cents
 function calcDuty(priceCents: number) {
-  const bracket = transferDutyBrackets.find(
-    (b) => priceCents > b.from && (b.to === null || priceCents <= b.to),
-  );
-  if (!bracket || bracket.rate === 0)
-    return { duty: 0, bracket: bracket ?? transferDutyBrackets[0] };
-  const duty = bracket.base + ((priceCents - bracket.from) * bracket.rate) / 100;
-  return { duty, bracket };
+  return calculateTransferDutyCents(priceCents, transferDutyBrackets);
 }
 
 function conveyancingFee(priceRands: number) {

@@ -30,7 +30,7 @@ BEGIN
 
     -- Insert the new user account
     INSERT INTO public.user_account (
-        id,
+        auth_user_id,
         agency_id,
         email,
         full_name,
@@ -42,7 +42,7 @@ BEGIN
         v_agency_id,
         p_email,
         p_full_name,
-        'agent',
+        'agent'::public.user_role,
         p_mobile,
         p_avatar_key
     );

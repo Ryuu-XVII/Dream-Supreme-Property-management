@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -8,6 +9,7 @@ import { GlassCard, EmptyState } from "@/components/ui-kit";
 import { AgentAvatar, FicaBadge } from "@/components/badges";
 import { users as initialUsers, branches, type Role, type User } from "@/data/state";
 import { useCan } from "@/lib/app-state";
+import { supabase } from "@/lib/supabase";
 import { dateFmt } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,7 +87,7 @@ function emptyDraft(): Draft {
     email: "",
     mobile: "",
     role: "Agent",
-    branch: branches[0].name,
+    branch: branches[0]?.name ?? "",
     ppra: "",
     candidate: false,
     supervisor: "",
@@ -128,6 +130,55 @@ function UsersPage() {
   const [editing, setEditing] = useState<User | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft());
   const [archiveTarget, setArchiveTarget] = useState<User | null>(null);
+  const userQuery = useQuery({
+    queryKey: ["agency-users"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_account")
+        .select(
+          "id, full_name, email, mobile, role, status, ppra_reference, ffc:ffc_certificate(certificate_number, issued_on, expires_on)",
+        )
+        .order("full_name");
+      if (error) throw error;
+      return (data || []).map((item: any): User => ({
+        id: item.id,
+        name: item.full_name,
+        email: item.email,
+        mobile: item.mobile || "",
+        role:
+          item.role === "principal"
+            ? "Principal"
+            : item.role === "admin"
+              ? "Admin"
+              : item.role === "candidate"
+                ? "Candidate"
+                : "Agent",
+        seniority:
+          item.role === "principal"
+            ? "Principal"
+            : item.role === "admin"
+              ? "Admin"
+              : item.role === "candidate"
+                ? "Candidate"
+                : "Mid-level",
+        branch: "Unassigned",
+        ppra: item.ppra_reference || "—",
+        ffc: item.ffc?.[0]
+          ? {
+              number: item.ffc[0].certificate_number,
+              issued: item.ffc[0].issued_on,
+              expiry: item.ffc[0].expires_on,
+            }
+          : null,
+        active: item.status === "active",
+        colour: "#1f7a52",
+      }));
+    },
+  });
+
+  useEffect(() => {
+    if (userQuery.data) setUserList(userQuery.data);
+  }, [userQuery.data]);
 
   function startAdd() {
     setEditing(null);
@@ -149,13 +200,33 @@ function UsersPage() {
     setDialogOpen(true);
   }
 
-  function save() {
+  async function save() {
     if (!draft.name.trim() || !draft.email.trim()) {
       toast.error("Full name and email are required.");
       return;
     }
     const role: Role = draft.candidate ? "Candidate" : draft.role;
+    const roleMap: Record<Role, string> = {
+      Principal: "principal",
+      Agent: "agent",
+      Candidate: "candidate",
+      Admin: "admin",
+    };
     if (editing) {
+      const { error } = await supabase
+        .from("user_account")
+        .update({
+          full_name: draft.name,
+          email: draft.email,
+          mobile: draft.mobile,
+          role: roleMap[role],
+          ppra_reference: draft.ppra,
+        })
+        .eq("id", editing.id);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
       setUserList((prev) =>
         prev.map((u) =>
           u.id === editing.id
@@ -173,29 +244,35 @@ function UsersPage() {
         ),
       );
       toast.success("User updated", { description: draft.name });
+      void userQuery.refetch();
     } else {
-      const newUser: User = {
-        id: `u${Date.now()}`,
-        name: draft.name,
-        email: draft.email,
-        mobile: draft.mobile,
-        role,
-        seniority: role === "Candidate" ? "Candidate" : "Mid-level",
-        branch: draft.branch,
-        ppra: draft.ppra || "—",
-        ffc: null,
-        supervisor: draft.candidate ? draft.supervisor : undefined,
-        active: true,
-        colour: "#5a6b8f",
-      };
-      setUserList((prev) => [...prev, newUser]);
-      toast.success("User added", { description: draft.name });
+      const { data: token, error } = await supabase.rpc("create_user_invitation", {
+        p_email: draft.email,
+        p_role: roleMap[role],
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      const invitationUrl = `${window.location.origin}/register?token=${token}`;
+      await navigator.clipboard.writeText(invitationUrl);
+      toast.success("Invitation link copied", {
+        description: `Send it to ${draft.email}. The invitation expires in seven days.`,
+      });
     }
     setDialogOpen(false);
   }
 
-  function confirmArchive() {
+  async function confirmArchive() {
     if (!archiveTarget) return;
+    const { error } = await supabase
+      .from("user_account")
+      .update({ status: archiveTarget.active ? "archived" : "active" })
+      .eq("id", archiveTarget.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setUserList((prev) =>
       prev.map((u) => (u.id === archiveTarget.id ? { ...u, active: !u.active } : u)),
     );

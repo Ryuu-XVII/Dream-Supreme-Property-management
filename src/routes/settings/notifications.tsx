@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/app-shell";
@@ -20,6 +21,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ChevronDown, Bell } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/settings/notifications")({
   head: () => ({
@@ -106,6 +109,7 @@ function RecipientPicker({
 }
 
 function NotificationsPage() {
+  const { account } = useAuth();
   const [prefs, setPrefs] = useState<Pref[]>(
     notificationTypes.map((type) => ({
       type,
@@ -114,12 +118,53 @@ function NotificationsPage() {
       recipients: defaultRecipients(type),
     })),
   );
+  const preferenceQuery = useQuery({
+    queryKey: ["notification-preferences", account?.agencyId],
+    enabled: !!account,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("notification_preference").select("*");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  useEffect(() => {
+    if (!preferenceQuery.data?.length) return;
+    const stored = new Map(preferenceQuery.data.map((row: any) => [row.event_type, row]));
+    setPrefs((current) =>
+      current.map((preference) => {
+        const row: any = stored.get(preference.type);
+        if (!row) return preference;
+        return {
+          ...preference,
+          email: row.email_enabled,
+          inApp: row.in_app_enabled,
+          recipients: row.recipient_roles.map(
+            (role: string) => `${role.charAt(0).toUpperCase()}${role.slice(1)}` as Recipient,
+          ),
+        };
+      }),
+    );
+  }, [preferenceQuery.data]);
 
   function update(type: string, patch: Partial<Pref>) {
     setPrefs((prev) => prev.map((p) => (p.type === type ? { ...p, ...patch } : p)));
   }
 
-  function save() {
+  async function save() {
+    if (!account) return;
+    const { error } = await supabase.from("notification_preference").upsert(
+      prefs.map((preference) => ({
+        agency_id: account.agencyId,
+        event_type: preference.type,
+        email_enabled: preference.email,
+        in_app_enabled: preference.inApp,
+        recipient_roles: preference.recipients.map((recipient) => recipient.toLowerCase()),
+        updated_at: new Date().toISOString(),
+      })),
+      { onConflict: "agency_id,event_type" },
+    );
+    if (error) return toast.error(error.message);
     toast.success("Notification preferences saved", {
       description: `${prefs.length} notification types updated.`,
     });

@@ -25,12 +25,15 @@ export interface Property {
   address: string;
   suburb: string;
   city: string;
+  postalCode?: string;
   type: "Freehold House" | "Sectional Title" | "Estate House";
   beds: number;
   baths: number;
   garages: number;
   erfSize: number;
   floorSize: number;
+  erfNumber?: string;
+  titleDeedNumber?: string;
   schemeName?: string;
 }
 
@@ -83,6 +86,14 @@ export interface Party {
   name: string;
   side: "Seller" | "Purchaser";
   entityType: EntityType;
+  maritalStatus?:
+    | "Single"
+    | "Married in Community of Property"
+    | "Married out of Community of Property"
+    | "Married by Foreign Law"
+    | "Divorced"
+    | "Widowed";
+  isVatVendor?: boolean;
   email: string;
   mobile: string;
   idNumber: string;
@@ -155,6 +166,7 @@ export interface Deal {
     appliedAt?: string;
     decidedAt?: string;
   };
+  isVatSale?: boolean;
   conveyancer: string;
   practitioners: Practitioner[];
   parties: Party[];

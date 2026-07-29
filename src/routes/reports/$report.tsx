@@ -152,11 +152,7 @@ function ReportChrome({
             variant="outline"
             size="sm"
             className="gap-1.5"
-            onClick={() =>
-              toast.success("PDF export queued", {
-                description: "Your report will be emailed shortly.",
-              })
-            }
+            onClick={() => toast.error("PDF generation requires the production report worker.")}
           >
             <FileText className="size-3.5" /> Export PDF
           </Button>
@@ -704,7 +700,7 @@ function ComplianceReport() {
   const ficaByPartyType = useMemo(() => {
     const map = new Map<string, { total: number; complete: number }>();
     deals.forEach((d) => {
-      d.parties.forEach((p) => {
+      d.parties.forEach((p: any) => {
         const entry = map.get(p.entityType) ?? { total: 0, complete: 0 };
         entry.total++;
         if (p.fica === "Complete") entry.complete++;

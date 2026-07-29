@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Mail, Calculator } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,10 +52,26 @@ export function CalculatorShell({
     defaultValues: { name: "", email: "", telephone: "" },
   });
 
-  const onSubmit = form.handleSubmit((values) => {
-    toast.success(`Results sent to ${values.email}`, {
-      description: "You'll receive a detailed breakdown shortly.",
-    });
+  const onSubmit = form.handleSubmit(async (values) => {
+    try {
+      const calcName = name.replace(" Calculator", "");
+      const agencySlug = import.meta.env.VITE_PUBLIC_AGENCY_SLUG || "dream-supreme-properties";
+      const { error } = await supabase.rpc("submit_public_lead", {
+        p_agency_slug: agencySlug,
+        p_source: calcName,
+        p_full_name: values.name,
+        p_email: values.email,
+        p_mobile: values.telephone,
+        p_payload: { calculator: calcName, path: currentPath },
+      });
+      if (error) throw error;
+      toast.success("Your request has been received", {
+        description: `An agent will follow up with ${values.email}.`,
+      });
+    } catch (err: any) {
+      toast.error(err.message || "We could not save your request. Please try again.");
+      return;
+    }
     form.reset();
     setOpen(false);
   });

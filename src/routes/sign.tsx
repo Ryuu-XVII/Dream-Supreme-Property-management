@@ -53,16 +53,9 @@ const restrictedCategories = [
   "Will / Testamentary Document",
 ];
 
-function fakeHash() {
-  const chars = "0123456789abcdef";
-  let s = "";
-  for (let i = 0; i < 64; i++) s += chars[Math.floor(Math.random() * chars.length)];
-  return s;
-}
-
 function SignPage() {
   const [category, setCategory] = useState<string>("Offer to Purchase Agreement");
-  const restricted = category === "Alienation of Land Agreement";
+  const restricted = restrictedCategories.includes(category);
 
   const [tab, setTab] = useState("draw");
   const [typedName, setTypedName] = useState("");
@@ -74,7 +67,7 @@ function SignPage() {
   const [signed, setSigned] = useState(false);
   const [page, setPage] = useState(1);
   const [signedAt, setSignedAt] = useState<string>("");
-  const [hash] = useState(fakeHash);
+  const [hash] = useState("");
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
@@ -136,18 +129,27 @@ function SignPage() {
 
   const hasSignature = tab === "draw" ? hasDrawing : typedName.trim().length > 1;
   const otpValid = /^\d{6}$/.test(otp);
-  const canSign = !restricted && hasSignature && otpSent && otpValid && attested;
+  // Fail closed until OTP delivery, one-time tokens, artefact hashing, and
+  // immutable signature persistence exist on the server.
+  const signingServiceConfigured = false;
+  const canSign =
+    signingServiceConfigured && !restricted && hasSignature && otpSent && otpValid && attested;
 
   function sendOtp() {
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       toast.error("Enter a valid email address");
       return;
     }
-    setOtpSent(true);
-    toast.success(`OTP sent to ${email}`);
+    toast.error("Electronic signing is not yet enabled", {
+      description: "Use a wet-ink signature and upload the scanned document.",
+    });
   }
 
   function handleSign() {
+    if (!signingServiceConfigured) {
+      toast.error("Signing is unavailable until secure OTP delivery is configured.");
+      return;
+    }
     setSignedAt(new Date().toISOString());
     setSigned(true);
     toast.success("Document signed successfully");
@@ -201,6 +203,19 @@ function SignPage() {
                 Under the Electronic Communications and Transactions Act, "{category}" is an
                 excluded category and cannot be signed electronically. This document requires a
                 wet-ink signature. Please print, sign, and upload a scanned copy.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!restricted && !signingServiceConfigured && (
+          <div className="mb-5 flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/15 px-4 py-3 text-sm">
+            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
+            <div>
+              <p className="font-semibold">Electronic signing is not configured</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                This page will not simulate an OTP or signature. Use the wet-ink upload workflow
+                until secure server-side OTP delivery is deployed.
               </p>
             </div>
           </div>
@@ -320,7 +335,8 @@ function SignPage() {
                 disabled={!canSign}
                 onClick={handleSign}
               >
-                <ShieldCheck className="size-4" /> Sign Document
+                <ShieldCheck className="size-4" />{" "}
+                {signingServiceConfigured ? "Sign Document" : "Signing unavailable"}
               </Button>
             </GlassCard>
           </div>

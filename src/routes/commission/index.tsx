@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Copy, Archive, Pencil, Plus, ArrowUp, ArrowDown, Trash2, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { CommissionTabs } from "@/components/commission/commission-tabs";
-import { GlassCard, EmptyState, TableSkeleton, useFakeLoad } from "@/components/ui-kit";
+import { GlassCard, EmptyState, TableSkeleton } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -43,6 +44,7 @@ import {
   type DeductionLine,
 } from "@/data/state";
 import { dateFmt, zar } from "@/lib/format";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/commission/")({
   head: () => ({
@@ -179,10 +181,59 @@ function computePreview(rs: RuleSet) {
 }
 
 function CommissionRulesPage() {
-  const loading = useFakeLoad(500);
+  const queryClient = useQueryClient();
+  const ruleQuery = useQuery({
+    queryKey: ["commission-rule-sets"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("commission_rule_set")
+        .select("*, deductions:commission_rule_line(*)")
+        .order("effective_from", { ascending: false });
+      if (error) throw error;
+      const typeNames: Record<string, DeductionLine["type"]> = {
+        franchise_fee: "Franchise Fee",
+        referral_fee: "Referral Fee",
+        marketing_recovery: "Marketing Recovery",
+        comandate_share: "Co-mandate Share",
+        desk_fee: "Desk Fee",
+        office_share: "Desk Fee",
+      };
+      return (data || []).map((row: any): RuleSet => ({
+        id: row.id,
+        name: row.name,
+        effectiveFrom: row.effective_from,
+        effectiveTo: row.effective_to || undefined,
+        isDefault: row.is_default,
+        vatInclusive: row.vat_treatment === "inclusive",
+        defaultBps: row.default_commission_rate_bps,
+        rounding:
+          row.rounding_mode === "half_up"
+            ? "Nearest cent"
+            : row.rounding_mode === "bankers"
+              ? "Nearest rand"
+              : "Round down",
+        officeSharePct: row.office_share_bps / 100,
+        deductions: (row.deductions || [])
+          .sort((a: any, b: any) => a.sequence - b.sequence)
+          .map((line: any) => ({
+            id: line.id,
+            type: typeNames[line.line_type] || "Desk Fee",
+            basis: line.calculation_basis === "fixed" ? "Fixed" : "Percentage",
+            bps: line.rate_bps,
+            fixed: line.fixed_amount_cents,
+            payee: line.payee_type || "",
+          })),
+      }));
+    },
+  });
+  const loading = ruleQuery.isLoading;
   const [ruleSets, setRuleSets] = useState<RuleSet[]>(seedRuleSets);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<RuleSet | null>(null);
+
+  useEffect(() => {
+    if (ruleQuery.data) setRuleSets(ruleQuery.data);
+  }, [ruleQuery.data]);
 
   const openEdit = (rs: RuleSet) => {
     setEditing({ ...rs, deductions: rs.deductions.map((d) => ({ ...d })) });
@@ -216,17 +267,38 @@ function CommissionRulesPage() {
     toast.success(`Pre-filled editor from "${t.name}" template`);
   };
 
-  const saveEditing = () => {
+  const saveEditing = async () => {
     if (!editing) return;
-    setRuleSets((prev) => {
-      const exists = prev.some((r) => r.id === editing.id);
-      const next = exists
-        ? prev.map((r) => (r.id === editing.id ? editing : r))
-        : [editing, ...prev];
-      return editing.isDefault
-        ? next.map((r) => (r.id === editing.id ? r : { ...r, isDefault: false }))
-        : next;
+    const lineTypes: Record<DeductionLine["type"], string> = {
+      "Franchise Fee": "franchise_fee",
+      "Referral Fee": "referral_fee",
+      "Marketing Recovery": "marketing_recovery",
+      "Co-mandate Share": "comandate_share",
+      "Desk Fee": "desk_fee",
+    };
+    const roundingMode =
+      editing.rounding === "Nearest cent"
+        ? "half_up"
+        : editing.rounding === "Nearest rand"
+          ? "bankers"
+          : "half_down";
+    const { error } = await supabase.rpc("save_commission_rule_set", {
+      p_payload: {
+        ...editing,
+        roundingMode,
+        deductions: editing.deductions.map((line, index) => ({
+          sequence: index,
+          lineType: lineTypes[line.type],
+          basis: line.basis.toLowerCase(),
+          rateBps: line.bps || 0,
+          fixedCents: line.fixed || 0,
+          payee: line.payee,
+          description: line.type,
+        })),
+      },
     });
+    if (error) return toast.error(error.message);
+    await queryClient.invalidateQueries({ queryKey: ["commission-rule-sets"] });
     toast.success(`Rule set "${editing.name}" saved`);
     setEditorOpen(false);
   };
@@ -239,12 +311,18 @@ function CommissionRulesPage() {
       isDefault: false,
       deductions: rs.deductions.map((d) => ({ ...d, id: `${d.id}-c${Date.now()}` })),
     };
-    setRuleSets((prev) => [copy, ...prev]);
-    toast.success(`Duplicated "${rs.name}"`);
+    setEditing(copy);
+    setEditorOpen(true);
+    toast.info(`Review and save the copy of "${rs.name}"`);
   };
 
-  const archive = (rs: RuleSet) => {
-    setRuleSets((prev) => prev.filter((r) => r.id !== rs.id));
+  const archive = async (rs: RuleSet) => {
+    const { error } = await supabase
+      .from("commission_rule_set")
+      .update({ effective_to: new Date().toISOString().slice(0, 10), is_default: false })
+      .eq("id", rs.id);
+    if (error) return toast.error(error.message);
+    await queryClient.invalidateQueries({ queryKey: ["commission-rule-sets"] });
     toast.success(`Archived "${rs.name}"`);
   };
 

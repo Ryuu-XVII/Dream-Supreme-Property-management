@@ -118,15 +118,39 @@ function AuthGuard({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
   const router = useRouter();
 
+  const isPublicPath = (path: string) =>
+    path === "/login" ||
+    path === "/register" ||
+    path === "/sitemap.xml" ||
+    path.startsWith("/calculators/") ||
+    path.startsWith("/sign") ||
+    path.startsWith("/conveyancer");
+
   useEffect(() => {
     if (!loading && !session) {
       const path = window.location.pathname;
-      if (path !== "/login" && path !== "/register") {
+      if (!isPublicPath(path)) {
         router.navigate({ to: "/login", replace: true });
       }
     }
   }, [session, loading, router]);
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        Loading secure session…
+      </div>
+    );
+  }
+
+  const publicPath = isPublicPath(window.location.pathname);
+  if (!session && !publicPath) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        Redirecting to sign in…
+      </div>
+    );
+  }
   return <>{children}</>;
 }
 

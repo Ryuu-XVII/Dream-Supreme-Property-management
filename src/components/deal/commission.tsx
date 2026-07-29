@@ -1,8 +1,14 @@
-import { GlassCard } from "@/components/ui-kit";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Calculator, ShieldAlert } from "lucide-react";
+import { GlassCard, EmptyState } from "@/components/ui-kit";
 import { AgentAvatar } from "@/components/badges";
-import { userById, commissionWaterfall, type Deal } from "@/data/state";
-import { zar, dateFmt } from "@/lib/format";
+import type { Deal } from "@/types";
+import { zar } from "@/lib/format";
+import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -12,134 +18,153 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, ShieldAlert } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export function DealCommissionTab({ deal }: { deal: Deal }) {
-  const steps = commissionWaterfall(deal);
-  const totalSplit = deal.practitioners.reduce((sum, p) => sum + p.splitPct, 0);
-  const netPayable = steps[steps.length - 1]?.amount ?? 0;
+  const [calculating, setCalculating] = useState(false);
+  const calculation = useQuery({
+    queryKey: ["deal-commission", deal.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("commission_calculation")
+        .select(
+          `
+          id, status, calculated_at, gross_cents, vat_cents, net_cents,
+          distributable_pool_cents, office_share_cents, agent_pool_cents,
+          allocations:commission_allocation(
+            id, allocation_type, external_payee_name, gross_allocation_cents,
+            desk_fee_cents, advance_recovery_cents, net_payable_cents,
+            user:user_account_id(id, full_name)
+          )
+        `,
+        )
+        .eq("deal_id", deal.id)
+        .order("calculated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+  });
 
-  const expiredFFC = deal.practitioners
-    .map((p) => userById(p.userId))
-    .filter((u) => u && (!u.ffc || (u.ffc.expiry && new Date(u.ffc.expiry) < new Date())));
+  const runCalculation = async () => {
+    setCalculating(true);
+    const { error } = await supabase.rpc("calculate_deal_commission", {
+      p_deal_id: deal.id,
+      p_rule_set_id: null,
+    });
+    setCalculating(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Commission calculation saved with a full input snapshot.");
+    await calculation.refetch();
+  };
+
+  const value = calculation.data;
+  const steps = value
+    ? [
+        ["Gross commission", value.gross_cents],
+        ["VAT", -value.vat_cents],
+        ["VAT-exclusive commission", value.net_cents],
+        ["Distributable pool", value.distributable_pool_cents],
+        ["Office share", -value.office_share_cents],
+        ["Agent pool", value.agent_pool_cents],
+      ]
+    : [];
 
   return (
     <div className="space-y-5">
-      {expiredFFC.length > 0 && (
-        <Alert className="border-destructive/30 bg-destructive/10 text-destructive">
-          <ShieldAlert className="size-4" />
-          <AlertTitle>Fidelity Fund Certificate issue</AlertTitle>
-          <AlertDescription>
-            {expiredFFC.map((u) => u.name).join(", ")} — FFC is expired or missing. Commission
-            payout should be withheld until resolved.
-          </AlertDescription>
-        </Alert>
-      )}
+      <div className="flex justify-end">
+        <Button onClick={() => void runCalculation()} disabled={calculating} className="gap-2">
+          <Calculator className="size-4" />
+          {calculating ? "Calculating…" : value ? "Recalculate" : "Calculate commission"}
+        </Button>
+      </div>
 
-      {totalSplit !== 100 && (
-        <Alert className="border-warning/40 bg-warning/15 text-warning-foreground">
-          <AlertTriangle className="size-4" />
-          <AlertTitle>Reconciliation error</AlertTitle>
-          <AlertDescription>
-            Practitioner splits total {totalSplit}%, not 100%. Please correct the allocation before
-            releasing commission.
-          </AlertDescription>
-        </Alert>
-      )}
+      <Alert>
+        <ShieldAlert className="size-4" />
+        <AlertTitle>Compliance enforced</AlertTitle>
+        <AlertDescription>
+          Calculation is blocked unless practitioner splits total 100% and every internal
+          practitioner has a valid FFC.
+        </AlertDescription>
+      </Alert>
 
-      <GlassCard>
-        <h3 className="mb-4 font-display text-base font-semibold">Commission waterfall</h3>
-        <div className="space-y-1.5">
-          {steps.map((step, i) => (
-            <div
-              key={i}
-              className={cn(
-                "flex items-center justify-between gap-3 rounded-lg px-3 py-2.5",
-                step.kind === "subtotal" && "bg-muted/60 font-medium",
-                step.kind === "final" && "bg-primary/10 font-semibold",
-              )}
-            >
-              <div className="min-w-0">
-                <p className="truncate text-sm">{step.label}</p>
-                <p className="truncate font-mono text-[11px] text-muted-foreground">
-                  {step.formula}
-                </p>
-              </div>
-              <span
-                className={cn(
-                  "money shrink-0 text-sm",
-                  step.amount < 0 && "text-destructive",
-                  step.kind === "final" && "text-base text-primary",
-                )}
-              >
-                {step.amount < 0 ? "− " : ""}
-                {zar(Math.abs(step.amount), { decimals: false })}
-              </span>
+      {!value && !calculation.isLoading ? (
+        <EmptyState
+          title="No saved calculation"
+          message="Run the commission calculation to create an auditable statement."
+        />
+      ) : (
+        <>
+          <GlassCard>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h3 className="font-display text-base font-semibold">Commission waterfall</h3>
+              {value && <Badge variant="outline">{value.status}</Badge>}
             </div>
-          ))}
-        </div>
-      </GlassCard>
+            <div className="space-y-2">
+              {steps.map(([label, amount]) => (
+                <div
+                  key={String(label)}
+                  className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2.5"
+                >
+                  <span className="text-sm">{label}</span>
+                  <span className={Number(amount) < 0 ? "money text-destructive" : "money"}>
+                    {zar(Math.abs(Number(amount)))}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
 
-      <GlassCard>
-        <h3 className="mb-3 font-display text-base font-semibold">Practitioner allocation</h3>
-        <div className="overflow-x-auto scrollbar-thin">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Practitioner</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Split</TableHead>
-                <TableHead>FFC</TableHead>
-                <TableHead className="text-right">Payable</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {deal.practitioners.map((p) => {
-                const user = userById(p.userId);
-                const expired =
-                  !user.ffc || (user.ffc.expiry && new Date(user.ffc.expiry) < new Date());
-                return (
-                  <TableRow key={p.userId}>
-                    <TableCell>
-                      <AgentAvatar user={user} showName />
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {p.role}
-                      {p.external && (
-                        <Badge variant="outline" className="ml-2 text-[10px]">
-                          External
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">{p.splitPct}%</TableCell>
-                    <TableCell>
-                      {expired ? (
-                        <Badge
-                          variant="outline"
-                          className="border-destructive/30 bg-destructive/10 text-destructive"
-                        >
-                          Expired/Missing
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className="border-success/30 bg-success/10 text-success"
-                        >
-                          Valid
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="money text-right">
-                      {zar(Math.round((netPayable * p.splitPct) / 100), { decimals: false })}
-                    </TableCell>
+          <GlassCard>
+            <h3 className="mb-3 font-display text-base font-semibold">Practitioner allocations</h3>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Practitioner</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead className="text-right">Gross allocation</TableHead>
+                    <TableHead className="text-right">Advance recovery</TableHead>
+                    <TableHead className="text-right">Net payable</TableHead>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      </GlassCard>
+                </TableHeader>
+                <TableBody>
+                  {(value?.allocations || []).map((allocation: any) => {
+                    const user = {
+                      id: allocation.user?.id || allocation.id,
+                      name:
+                        allocation.user?.full_name ||
+                        allocation.external_payee_name ||
+                        "External payee",
+                      colour: "#1f7a52",
+                    };
+                    return (
+                      <TableRow key={allocation.id}>
+                        <TableCell>
+                          <AgentAvatar user={user as any} showName />
+                        </TableCell>
+                        <TableCell>{allocation.allocation_type}</TableCell>
+                        <TableCell className="money text-right">
+                          {zar(allocation.gross_allocation_cents)}
+                        </TableCell>
+                        <TableCell className="money text-right text-destructive">
+                          {zar(allocation.advance_recovery_cents)}
+                        </TableCell>
+                        <TableCell className="money text-right font-semibold">
+                          {zar(allocation.net_payable_cents)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </GlassCard>
+        </>
+      )}
     </div>
   );
 }

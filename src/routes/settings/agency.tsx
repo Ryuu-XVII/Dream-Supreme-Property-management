@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -64,6 +65,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Pencil, Archive, Building2, Scale, Percent, Landmark } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/settings/agency")({
   head: () => ({
@@ -118,6 +121,7 @@ interface Bracket {
 }
 
 function AgencyProfilePage() {
+  const { account } = useAuth();
   const [logo, setLogo] = useState<string | null>(null);
   const [branchList, setBranchList] = useState<Branch[]>(
     initialBranches.map((b) => ({ ...b, archived: false })),
@@ -126,7 +130,34 @@ function AgencyProfilePage() {
   const [brackets, setBrackets] = useState<Bracket[]>(
     initialBrackets.map((b, i) => ({ id: `br${i}`, from: b.from, to: b.to, rate: b.rate })),
   );
-  const [effectiveDate, setEffectiveDate] = useState("2026-03-01");
+  const [effectiveDate, setEffectiveDate] = useState("2026-04-01");
+  const settingsQuery = useQuery({
+    queryKey: ["agency-settings", account?.agencyId],
+    enabled: !!account,
+    queryFn: async () => {
+      const [agencyResult, branchesResult, firmsResult, dutyResult] = await Promise.all([
+        supabase.from("agency").select("*").eq("id", account!.agencyId).single(),
+        supabase.from("branch").select("*").order("name"),
+        supabase.from("conveyancer_firm").select("*").order("name"),
+        supabase
+          .from("config_transfer_duty")
+          .select("effective_from, brackets_json")
+          .order("effective_from", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+      if (agencyResult.error) throw agencyResult.error;
+      if (branchesResult.error) throw branchesResult.error;
+      if (firmsResult.error) throw firmsResult.error;
+      if (dutyResult.error) throw dutyResult.error;
+      return {
+        agency: agencyResult.data,
+        branches: branchesResult.data || [],
+        firms: firmsResult.data || [],
+        duty: dutyResult.data,
+      };
+    },
+  });
 
   const form = useForm<AgencyForm>({
     resolver: zodResolver(agencySchema),
@@ -140,7 +171,66 @@ function AgencyProfilePage() {
     },
   });
 
-  function onSubmit(values: AgencyForm) {
+  useEffect(() => {
+    if (!settingsQuery.data) return;
+    const data = settingsQuery.data;
+    form.reset({
+      name: data.agency.name || "",
+      registration: data.agency.registration_number || "",
+      ppra: data.agency.ppra_reference || "",
+      vatNumber: data.agency.vat_number || "",
+      vatVendor: !!data.agency.is_vat_vendor,
+      address: data.agency.address || "",
+    });
+    setLogo(data.agency.logo_key || null);
+    setBranchList(
+      data.branches.map((branch: any) => ({
+        id: branch.id,
+        name: branch.name,
+        address: branch.address || "",
+        archived: !!branch.archived_at,
+      })),
+    );
+    setFirmList(
+      data.firms.map((firm: any) => ({
+        id: firm.id,
+        name: firm.name,
+        contact: firm.contact_name || "",
+        email: firm.email || "",
+        tel: firm.telephone || "",
+        preferred: !!firm.is_preferred,
+      })),
+    );
+    if (data.duty) {
+      setEffectiveDate(data.duty.effective_from);
+      setBrackets(
+        (data.duty.brackets_json || []).map((bracket: any, index: number) => ({
+          id: `db-${index}`,
+          from: bracket.from,
+          to: bracket.to,
+          rate: bracket.rate,
+        })),
+      );
+    }
+  }, [form, settingsQuery.data]);
+
+  async function onSubmit(values: AgencyForm) {
+    if (!account) return;
+    const { error } = await supabase
+      .from("agency")
+      .update({
+        name: values.name,
+        registration_number: values.registration,
+        ppra_reference: values.ppra,
+        vat_number: values.vatNumber,
+        is_vat_vendor: values.vatVendor,
+        address: values.address,
+      })
+      .eq("id", account.agencyId);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Agency profile updated", { description: `${values.name} details saved.` });
   }
 
@@ -150,6 +240,7 @@ function AgencyProfilePage() {
     const reader = new FileReader();
     reader.onload = () => setLogo(reader.result as string);
     reader.readAsDataURL(file);
+    toast.info("Logo preview only; upload support is not enabled for agency branding yet.");
   }
 
   return (
@@ -299,6 +390,7 @@ function BranchSection({
   branchList: Branch[];
   setBranchList: React.Dispatch<React.SetStateAction<Branch[]>>;
 }) {
+  const { account } = useAuth();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Branch | null>(null);
   const [name, setName] = useState("");
@@ -316,21 +408,38 @@ function BranchSection({
     setAddress(b.address);
     setOpen(true);
   }
-  function save() {
+  async function save() {
     if (!name.trim() || !address.trim()) {
       toast.error("Branch name and address are required.");
       return;
     }
+    if (!account) return;
     if (editing) {
+      const { error } = await supabase
+        .from("branch")
+        .update({ name: name.trim(), address: address.trim() })
+        .eq("id", editing.id);
+      if (error) return toast.error(error.message);
       setBranchList((prev) => prev.map((b) => (b.id === editing.id ? { ...b, name, address } : b)));
       toast.success("Branch updated", { description: name });
     } else {
-      setBranchList((prev) => [...prev, { id: `b${Date.now()}`, name, address }]);
+      const { data, error } = await supabase
+        .from("branch")
+        .insert({ agency_id: account.agencyId, name: name.trim(), address: address.trim() })
+        .select("id")
+        .single();
+      if (error) return toast.error(error.message);
+      setBranchList((prev) => [...prev, { id: data.id, name, address }]);
       toast.success("Branch added", { description: name });
     }
     setOpen(false);
   }
-  function toggleArchive(b: Branch) {
+  async function toggleArchive(b: Branch) {
+    const { error } = await supabase
+      .from("branch")
+      .update({ archived_at: b.archived ? null : new Date().toISOString() })
+      .eq("id", b.id);
+    if (error) return toast.error(error.message);
     setBranchList((prev) => prev.map((x) => (x.id === b.id ? { ...x, archived: !x.archived } : x)));
     toast.success(b.archived ? "Branch restored" : "Branch archived", { description: b.name });
   }
@@ -426,6 +535,7 @@ function ConveyancerSection({
   firmList: Firm[];
   setFirmList: React.Dispatch<React.SetStateAction<Firm[]>>;
 }) {
+  const { account } = useAuth();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Firm | null>(null);
   const [draft, setDraft] = useState({
@@ -452,16 +562,32 @@ function ConveyancerSection({
     });
     setOpen(true);
   }
-  function save() {
+  async function save() {
     if (!draft.name.trim() || !draft.email.trim()) {
       toast.error("Firm name and email are required.");
       return;
     }
+    if (!account) return;
+    const values = {
+      name: draft.name.trim(),
+      contact_name: draft.contact.trim() || null,
+      email: draft.email.trim(),
+      telephone: draft.tel.trim() || null,
+      is_preferred: draft.preferred,
+    };
     if (editing) {
+      const { error } = await supabase.from("conveyancer_firm").update(values).eq("id", editing.id);
+      if (error) return toast.error(error.message);
       setFirmList((prev) => prev.map((f) => (f.id === editing.id ? { ...f, ...draft } : f)));
       toast.success("Conveyancer firm updated", { description: draft.name });
     } else {
-      setFirmList((prev) => [...prev, { id: `cf${Date.now()}`, ...draft }]);
+      const { data, error } = await supabase
+        .from("conveyancer_firm")
+        .insert({ agency_id: account.agencyId, ...values })
+        .select("id")
+        .single();
+      if (error) return toast.error(error.message);
+      setFirmList((prev) => [...prev, { id: data.id, ...draft }]);
       toast.success("Conveyancer firm added", { description: draft.name });
     }
     setOpen(false);
@@ -597,7 +723,23 @@ function TransferDutySection({
   function removeBracket(id: string) {
     setBrackets((prev) => prev.filter((b) => b.id !== id));
   }
-  function saveBrackets() {
+  async function saveBrackets() {
+    const sorted = [...brackets].sort((a, b) => a.from - b.from);
+    let base = 0;
+    const bracketsJson = sorted.map((bracket, index) => {
+      if (index > 0) {
+        const previous = sorted[index - 1];
+        if (previous.to != null) {
+          base += Math.round(((previous.to - previous.from) * previous.rate) / 100);
+        }
+      }
+      return { from: bracket.from, to: bracket.to, rate: bracket.rate, base };
+    });
+    const { error } = await supabase.from("config_transfer_duty").insert({
+      effective_from: effectiveDate,
+      brackets_json: bracketsJson,
+    });
+    if (error) return toast.error(error.message);
     toast.success("Transfer duty brackets saved", {
       description: `Effective ${dateFmt(effectiveDate)}`,
     });

@@ -57,6 +57,32 @@ function LoginPage() {
     if (error) {
       toast.error(error.message);
     } else {
+      const pendingRaw = localStorage.getItem("dsp-pending-invitation");
+      if (pendingRaw) {
+        try {
+          const pending = JSON.parse(pendingRaw) as {
+            token: string;
+            fullName: string;
+            mobile: string;
+          };
+          const { error: acceptError } = await supabase.rpc("accept_user_invitation", {
+            p_token: pending.token,
+            p_full_name: pending.fullName,
+            p_mobile: pending.mobile,
+            p_avatar_key: null,
+          });
+          if (acceptError) throw acceptError;
+          localStorage.removeItem("dsp-pending-invitation");
+        } catch (invitationError) {
+          await supabase.auth.signOut();
+          toast.error(
+            invitationError instanceof Error
+              ? invitationError.message
+              : "Your company invitation could not be accepted.",
+          );
+          return;
+        }
+      }
       toast.success("Signed in successfully");
       navigate({ to: "/" });
     }
@@ -146,12 +172,9 @@ function LoginPage() {
                 {loading ? "Signing in..." : "Continue"}
               </Button>
 
-              <div className="text-center text-xs text-muted-foreground pt-2">
-                Don't have an account?{" "}
-                <a href="/register" className="text-primary font-medium hover:underline">
-                  Register as an Agent
-                </a>
-              </div>
+              <p className="pt-2 text-center text-xs text-muted-foreground">
+                New team members register through an invitation from the principal or administrator.
+              </p>
             </motion.form>
           </div>
         </div>

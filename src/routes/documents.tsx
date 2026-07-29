@@ -278,7 +278,7 @@ function LibraryTab() {
             <UploadZone category={category} setCategory={setCategory} />
 
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {selectedDeal.documents.map((doc, i) => (
+              {selectedDeal.documents.map((doc: any, i: number) => (
                 <motion.div
                   key={doc.id}
                   initial={{ opacity: 0, y: 8 }}

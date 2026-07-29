@@ -123,7 +123,7 @@ function ReconciliationPage() {
     for (const dl of registeredDeals) {
       const gross = grossCommission(dl);
       const net = netPayable(dl);
-      const desk = rules.deductions.find((x) => x.type === "Desk Fee")?.fixed ?? 0;
+      const desk = rules.deductions.find((x: any) => x.type === "Desk Fee")?.fixed ?? 0;
       for (const pr of dl.practitioners) {
         const share = Math.round((net * pr.splitPct) / 100);
         const deskShare = Math.round((desk * pr.splitPct) / 100);
@@ -158,7 +158,7 @@ function ReconciliationPage() {
       return (
         s +
         Math.round(
-          (net * (rules.deductions.find((x) => x.type === "Franchise Fee")?.bps ?? 0)) / 10000,
+          (net * (rules.deductions.find((x: any) => x.type === "Franchise Fee")?.bps ?? 0)) / 10000,
         )
       );
     }, 0);
@@ -167,7 +167,7 @@ function ReconciliationPage() {
         grossCommission(dl) -
         Math.round(grossCommission(dl) - grossCommission(dl) / (1 + VAT_RATE));
       const franchiseAmt = Math.round(
-        (net * (rules.deductions.find((x) => x.type === "Franchise Fee")?.bps ?? 0)) / 10000,
+        (net * (rules.deductions.find((x: any) => x.type === "Franchise Fee")?.bps ?? 0)) / 10000,
       );
       const pool = net - franchiseAmt;
       return s + Math.round((pool * rules.officeSharePct) / 100);
@@ -177,15 +177,16 @@ function ReconciliationPage() {
   }, [registeredDeals, practitionerRows, rules]);
 
   const approveRun = () => {
-    setStatusByPeriod((prev) => ({ ...prev, [key]: "Approved" }));
-    toast.success(`Commission run for ${MONTHS[period.month]} ${period.year} approved`);
+    toast.error("Approval is unavailable on this legacy reconciliation view", {
+      description: "Confirm each persisted deal calculation from the deal Commission tab.",
+    });
   };
 
   const exportCsv = () => {
     const header = "Reference,Property,Sale Price,Gross Commission,Net Commission,Agents\n";
     const rows = registeredDeals.map((dl) => {
       const prop = propertyById(dl.propertyId);
-      const agents = dl.practitioners.map((p) => userById(p.userId).name).join(" | ");
+      const agents = dl.practitioners.map((p: any) => userById(p.userId).name).join(" | ");
       return [
         dl.ref,
         `"${prop.address}, ${prop.suburb}"`,
@@ -207,7 +208,7 @@ function ReconciliationPage() {
   };
 
   const exportPdf = () => {
-    toast.success("PDF export queued — will be emailed shortly");
+    toast.error("PDF generation requires the production report worker.");
   };
 
   const statusTone =
@@ -316,7 +317,7 @@ function ReconciliationPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex -space-x-1.5">
-                          {dl.practitioners.map((p) => (
+                          {dl.practitioners.map((p: any) => (
                             <AgentAvatar key={p.userId} user={userById(p.userId)} />
                           ))}
                         </div>

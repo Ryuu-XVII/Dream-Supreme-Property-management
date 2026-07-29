@@ -25,6 +25,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabase";
 import {
   Select,
   SelectContent,
@@ -61,15 +62,63 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
   const [reason, setReason] = useState("");
   const [bondStatus, setBondStatus] = useState(deal.bond.status);
 
-  const setStatus = (id: string, status: ConditionStatus) => {
+  const updateBondStatus = async (value: Deal["bond"]["status"]) => {
+    const statusMap: Record<Deal["bond"]["status"], string> = {
+      "Not applied": "not_applied",
+      Submitted: "submitted",
+      Declined: "declined",
+      "Approved in principle": "approved_in_principle",
+      "Formally granted": "formally_granted",
+    };
+    const { error } = await supabase.rpc("set_bond_status", {
+      p_deal_id: deal.id,
+      p_status: statusMap[value],
+      p_institution: deal.bond.institution === "—" ? null : deal.bond.institution,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setBondStatus(value);
+    toast.success("Bond status updated");
+  };
+
+  const setStatus = async (id: string, status: ConditionStatus) => {
+    const statusMap: Record<ConditionStatus, string> = {
+      Open: "pending",
+      Fulfilled: "fulfilled",
+      Extended: "extended",
+      Waived: "waived",
+      Failed: "failed",
+    };
+    const { error } = await supabase.rpc("set_condition_status", {
+      p_condition_id: id,
+      p_status: statusMap[status],
+      p_new_due_on: null,
+      p_reason: null,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setConditions((cs) => cs.map((c) => (c.id === id ? { ...c, status } : c)));
     toast.success(`Condition marked as ${status}`);
   };
 
-  const submitExtension = () => {
+  const submitExtension = async () => {
     if (!extendTarget) return;
     if (!newDate || !reason.trim()) {
       toast.error("Please provide a new date and a reason for the extension.");
+      return;
+    }
+    const { error } = await supabase.rpc("set_condition_status", {
+      p_condition_id: extendTarget.id,
+      p_status: "extended",
+      p_new_due_on: newDate,
+      p_reason: reason,
+    });
+    if (error) {
+      toast.error(error.message);
       return;
     }
     setConditions((cs) =>
@@ -199,10 +248,7 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
             <Label className="mb-1 block text-xs text-muted-foreground">Status</Label>
             <Select
               value={bondStatus}
-              onValueChange={(v) => {
-                setBondStatus(v as Deal["bond"]["status"]);
-                toast.success("Bond status updated");
-              }}
+              onValueChange={(v) => void updateBondStatus(v as Deal["bond"]["status"])}
             >
               <SelectTrigger>
                 <SelectValue />

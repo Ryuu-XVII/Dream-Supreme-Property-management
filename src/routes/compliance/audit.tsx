@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { ComplianceTabs } from "@/components/compliance/compliance-tabs";
-import { GlassCard, TableSkeleton, useFakeLoad, EmptyState } from "@/components/ui-kit";
+import { GlassCard, TableSkeleton, EmptyState } from "@/components/ui-kit";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,8 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { dateTimeFmt } from "@/lib/format";
-import { auditEvents, users, type AuditEvent } from "@/data/state";
+import type { AuditEvent } from "@/data/state";
+import { useAuditData } from "@/data/operations";
 import {
   Search,
   Download,
@@ -176,7 +177,13 @@ function toCsvValue(v: unknown) {
 }
 
 function AuditLog() {
-  const loading = useFakeLoad(400);
+  const auditQuery = useAuditData();
+  const auditEvents = useMemo(
+    () => (auditQuery.data?.events || []) as AuditEvent[],
+    [auditQuery.data?.events],
+  );
+  const users = useMemo(() => auditQuery.data?.users || [], [auditQuery.data?.users]);
+  const loading = auditQuery.isLoading;
   const [search, setSearch] = useState("");
   const [userFilter, setUserFilter] = useState("all");
   const [entityFilter, setEntityFilter] = useState("all");
@@ -187,8 +194,14 @@ function AuditLog() {
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const entityTypes = useMemo(() => Array.from(new Set(auditEvents.map((e) => e.entityType))), []);
-  const actions = useMemo(() => Array.from(new Set(auditEvents.map((e) => e.action))), []);
+  const entityTypes = useMemo(
+    () => Array.from(new Set(auditEvents.map((e) => e.entityType))),
+    [auditEvents],
+  );
+  const actions = useMemo(
+    () => Array.from(new Set(auditEvents.map((e) => e.action))),
+    [auditEvents],
+  );
 
   const filtered = useMemo(() => {
     return auditEvents.filter((e) => {
@@ -205,7 +218,7 @@ function AuditLog() {
       }
       return true;
     });
-  }, [userFilter, entityFilter, actionFilter, from, to, search]);
+  }, [auditEvents, userFilter, entityFilter, actionFilter, from, to, search]);
 
   const size = Number(pageSize);
   const totalPages = Math.max(1, Math.ceil(filtered.length / size));

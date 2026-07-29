@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Role } from "@/types";
+import { useAuth } from "@/lib/auth";
 
 type Theme = "light" | "dark" | "system";
 
@@ -16,6 +17,7 @@ interface AppState {
 const Ctx = createContext<AppState | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const { account } = useAuth();
   const [theme, setThemeState] = useState<Theme>("system");
   const [resolved, setResolved] = useState<"light" | "dark">("light");
   const [role, setRoleState] = useState<Role>("Principal");
@@ -24,10 +26,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const t = (localStorage.getItem("dsp-theme") as Theme) || "system";
     setThemeState(t);
-    const r = localStorage.getItem("dsp-role") as Role | null;
-    if (r) setRoleState(r);
     setCollapsed(localStorage.getItem("dsp-sidebar") === "1");
   }, []);
+
+  useEffect(() => {
+    if (!account) return;
+    const roleMap: Record<typeof account.role, Role> = {
+      principal: "Principal",
+      agent: "Agent",
+      candidate: "Candidate",
+      admin: "Admin",
+    };
+    setRoleState(roleMap[account.role]);
+  }, [account]);
 
   useEffect(() => {
     const mql = window.matchMedia("(prefers-color-scheme: dark)");
@@ -46,8 +57,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("dsp-theme", t);
   };
   const setRole = (r: Role) => {
-    setRoleState(r);
-    localStorage.setItem("dsp-role", r);
+    // Kept for API compatibility with existing components. The authenticated
+    // database profile remains the source of truth for authorization.
+    if (!account) setRoleState(r);
   };
   const toggleSidebar = () =>
     setCollapsed((c) => {

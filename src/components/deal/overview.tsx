@@ -1,14 +1,14 @@
 import { GlassCard } from "@/components/ui-kit";
 import { AgentAvatar, FicaBadge } from "@/components/badges";
-import { userById, propertyById, grossCommission } from "@/data/state";
+import { userById } from "@/data/state";
 import { type Deal } from "@/types";
 import { zar, pct, dateFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Home, Ruler, BedDouble, Bath, Car, Building2, ExternalLink } from "lucide-react";
 
 export function DealOverviewTab({ deal }: { deal: Deal }) {
-  const property = propertyById(deal.propertyId);
-  const gross = grossCommission(deal);
+  const property = (deal as Deal & { property?: ReturnType<typeof propertyShape> }).property;
+  const gross = Math.round((deal.salePrice * deal.commissionBps) / 10000);
 
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -34,6 +34,13 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
         </div>
         {property && property.erfSize > 0 && (
           <p className="mt-3 text-xs text-muted-foreground">Erf size: {property.erfSize} m²</p>
+        )}
+        {(property?.erfNumber || property?.titleDeedNumber) && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            {property?.erfNumber ? `Erf: ${property.erfNumber}` : ""}
+            {property?.erfNumber && property?.titleDeedNumber ? " · " : ""}
+            {property?.titleDeedNumber ? `Title Deed: ${property.titleDeedNumber}` : ""}
+          </p>
         )}
         <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-3">
           <Detail
@@ -72,7 +79,12 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
                 <FicaBadge status={party.fica} />
               </div>
               <p className="truncate text-sm font-medium">{party.name}</p>
-              <p className="text-xs text-muted-foreground">{party.entityType}</p>
+              <p className="text-xs text-muted-foreground">
+                {party.entityType} {party.maritalStatus ? `· ${party.maritalStatus}` : ""}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                ID/Reg: {party.idNumber || "N/A"} {party.isVatVendor ? "· VAT Vendor" : ""}
+              </p>
               <p className="mt-1 truncate text-xs text-muted-foreground">
                 {party.email} · {party.mobile}
               </p>
@@ -87,10 +99,15 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
         </h3>
         <div className="space-y-3">
           {deal.practitioners.map((p) => {
-            const user = userById(p.userId);
+            const remote = p as typeof p & { name?: string };
+            const user = userById(p.userId) ?? {
+              id: p.userId,
+              name: remote.name || "Practitioner",
+              colour: "#1f7a52",
+            };
             return (
               <div key={p.userId} className="flex items-center justify-between gap-2">
-                <AgentAvatar user={user} showName size={7} />
+                <AgentAvatar user={user as any} showName size={7} />
                 <div className="flex shrink-0 items-center gap-2">
                   <span className="text-xs text-muted-foreground">{p.role}</span>
                   <Badge variant="outline" className="font-mono text-[10px]">
@@ -105,6 +122,23 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
       </GlassCard>
     </div>
   );
+}
+
+function propertyShape() {
+  return {
+    address: "",
+    suburb: "",
+    city: "",
+    type: "",
+    beds: 0,
+    baths: 0,
+    garages: 0,
+    floorSize: 0,
+    erfSize: 0,
+    schemeName: undefined as string | undefined,
+    erfNumber: undefined as string | undefined,
+    titleDeedNumber: undefined as string | undefined,
+  };
 }
 
 function Stat({

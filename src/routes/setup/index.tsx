@@ -91,12 +91,8 @@ function SetupPage() {
   };
 
   const handleFinish = () => {
-    toast.success("Agency setup saved successfully! Welcome to Mandate.");
-    if (form.initialImportChoice === "csv") {
-      navigate({ to: "/setup/import" });
-    } else {
-      navigate({ to: "/" });
-    }
+    toast.info("Use Settings to save agency configuration.");
+    navigate({ to: "/settings/agency" });
   };
 
   return (
