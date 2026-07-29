@@ -1,9 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { STAGES, type Stage } from "@/data/mock";
+import { STAGES, type Stage, type User } from "@/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { initials, daysUntil, urgencyOf, type Urgency } from "@/lib/format";
-import type { User } from "@/data/mock";
 
 export function StageBadge({ stage, large }: { stage: Stage; large?: boolean }) {
   const idx = STAGES.indexOf(stage);

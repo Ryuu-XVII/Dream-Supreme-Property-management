@@ -1,6 +1,7 @@
 import { GlassCard } from "@/components/ui-kit";
 import { AgentAvatar, FicaBadge } from "@/components/badges";
-import { userById, propertyById, grossCommission, type Deal } from "@/data/mock";
+import { userById, propertyById, grossCommission } from "@/data/mock";
+import { type Deal } from "@/types";
 import { zar, pct, dateFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Home, Ruler, BedDouble, Bath, Car, Building2, ExternalLink } from "lucide-react";

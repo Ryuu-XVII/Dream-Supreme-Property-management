@@ -3,14 +3,14 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { ArrowLeft, KeyRound, Lock, Mail } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { agency } from "@/data/mock";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -32,35 +32,27 @@ type CredentialsForm = z.infer<typeof credentialsSchema>;
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState<"credentials" | "totp">("credentials");
-  const [otp, setOtp] = useState("");
-  const [verifying, setVerifying] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const form = useForm<CredentialsForm>({
     resolver: zodResolver(credentialsSchema),
     defaultValues: { email: "", password: "" },
   });
 
-  const onSubmitCredentials = form.handleSubmit(() => {
-    setStep("totp");
-  });
+  const onSubmit = async (data: CredentialsForm) => {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
+    setLoading(false);
 
-  const onVerifyOtp = () => {
-    if (otp.length !== 6) {
-      toast.error("Enter the full 6-digit code");
-      return;
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Signed in successfully");
+      navigate({ to: "/" });
     }
-    setVerifying(true);
-    setTimeout(() => {
-      setVerifying(false);
-      if (otp === "123456") {
-        toast.success("Signed in successfully");
-        navigate({ to: "/" });
-      } else {
-        toast.error("Incorrect authentication code");
-        setOtp("");
-      }
-    }, 500);
   };
 
   return (
@@ -86,94 +78,49 @@ function LoginPage() {
           </div>
 
           <div className="overflow-hidden">
-            <AnimatePresence mode="wait" initial={false}>
-              {step === "credentials" ? (
-                <motion.form
-                  key="credentials"
-                  initial={{ opacity: 0, x: -24 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -24 }}
-                  transition={{ duration: 0.25 }}
-                  onSubmit={onSubmitCredentials}
-                  className="space-y-4"
-                >
-                  <div className="space-y-1.5">
-                    <Label htmlFor="email">Email</Label>
-                    <div className="relative">
-                      <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input id="email" type="email" placeholder="you@dreamsupreme.co.za" className="pl-9" {...form.register("email")} />
-                    </div>
-                    {form.formState.errors.email && (
-                      <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
-                    )}
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="password">Password</Label>
-                    <div className="relative">
-                      <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input id="password" type="password" placeholder="••••••••" className="pl-9" {...form.register("password")} />
-                    </div>
-                    {form.formState.errors.password && (
-                      <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-end">
-                    <button type="button" className="text-xs text-primary hover:underline" onClick={() => toast.info("Password reset link sent (demo)")}>
-                      Forgot password?
-                    </button>
-                  </div>
-                  <Button type="submit" className="w-full">
-                    Continue
-                  </Button>
-                </motion.form>
-              ) : (
-                <motion.div
-                  key="totp"
-                  initial={{ opacity: 0, x: 24 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 24 }}
-                  transition={{ duration: 0.25 }}
-                  className="space-y-5"
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep("credentials");
-                      setOtp("");
-                    }}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    <ArrowLeft className="size-3.5" />
-                    Back
-                  </button>
-                  <div className="flex flex-col items-center gap-2 text-center">
-                    <span className="grid size-10 place-items-center rounded-full bg-primary/10 text-primary">
-                      <KeyRound className="size-5" />
-                    </span>
-                    <h2 className="font-display text-base font-semibold">Two-factor authentication</h2>
-                    <p className="max-w-xs text-xs text-muted-foreground">
-                      Enter the 6-digit code from your authenticator app to finish signing in.
-                    </p>
-                  </div>
-                  <div className="flex justify-center">
-                    <InputOTP maxLength={6} value={otp} onChange={setOtp}>
-                      <InputOTPGroup>
-                        <InputOTPSlot index={0} />
-                        <InputOTPSlot index={1} />
-                        <InputOTPSlot index={2} />
-                        <InputOTPSlot index={3} />
-                        <InputOTPSlot index={4} />
-                        <InputOTPSlot index={5} />
-                      </InputOTPGroup>
-                    </InputOTP>
-                  </div>
-                  <Button className="w-full" onClick={onVerifyOtp} disabled={verifying}>
-                    {verifying ? "Verifying…" : "Verify & sign in"}
-                  </Button>
-                  <p className="text-center text-[11px] text-muted-foreground">Demo code: 123456</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <motion.form
+              initial={{ opacity: 0, x: -24 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.25 }}
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4"
+            >
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input id="email" type="email" placeholder="you@dreamsupreme.co.za" className="pl-9" {...form.register("email")} />
+                </div>
+                {form.formState.errors.email && (
+                  <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input id="password" type="password" placeholder="••••••••" className="pl-9" {...form.register("password")} />
+                </div>
+                {form.formState.errors.password && (
+                  <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
+                )}
+              </div>
+              <div className="flex items-center justify-end">
+                <button type="button" className="text-xs text-primary hover:underline" onClick={() => toast.info("Password reset link sent (demo)")}>
+                  Forgot password?
+                </button>
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Signing in..." : "Continue"}
+              </Button>
+
+              <div className="text-center text-xs text-muted-foreground pt-2">
+                Don't have an account?{" "}
+                <a href="/register" className="text-primary font-medium hover:underline">
+                  Register as an Agent
+                </a>
+              </div>
+            </motion.form>
           </div>
         </div>
       </motion.div>

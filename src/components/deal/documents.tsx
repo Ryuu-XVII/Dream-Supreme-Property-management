@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { GlassCard } from "@/components/ui-kit";
-import { propertyById, type Deal } from "@/data/mock";
+import { type Deal, type DocumentRec } from "@/types";
+import { uploadFileToR2, getR2FileUrl } from "@/lib/storage";
 import { dateFmt } from "@/lib/format";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -25,8 +26,7 @@ const SECTIONAL_EXTRAS = [
 ];
 
 export function DealDocumentsTab({ deal }: { deal: Deal }) {
-  const property = propertyById(deal.propertyId);
-  const checklist = property?.type === "Sectional Title" ? [...BASE_CHECKLIST, ...SECTIONAL_EXTRAS] : BASE_CHECKLIST;
+  const checklist = BASE_CHECKLIST;
   const [checked, setChecked] = useState<Record<string, boolean>>(
     Object.fromEntries(checklist.map((item, i) => [item, i < 3])),
   );

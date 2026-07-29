@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { Role } from "@/data/mock";
+import type { Role } from "@/types";
 
 type Theme = "light" | "dark" | "system";
 

@@ -142,7 +142,7 @@ export function Header() {
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild><Link to="/settings/agency">Agency settings</Link></DropdownMenuItem>
           <DropdownMenuItem asChild><Link to="/commission/earnings">My earnings</Link></DropdownMenuItem>
-          <DropdownMenuItem asChild><Link to="/onboarding">Onboarding wizard</Link></DropdownMenuItem>
+          <DropdownMenuItem asChild><Link to="/register">Agent Registration</Link></DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild><Link to="/login"><LogOut className="size-4" /> Sign out</Link></DropdownMenuItem>
         </DropdownMenuContent>
@@ -159,7 +159,7 @@ export function Header() {
                 value={`${dl.ref} ${propertyById(dl.propertyId).address}`}
                 onSelect={() => {
                   setOpen(false);
-                  navigate({ to: "/deals/$id", params: { id: dl.id } });
+                  navigate({ to: "/deals/$dealId", params: { dealId: dl.id } });
                 }}
               >
                 <span className="font-mono text-xs">{dl.ref}</span>
@@ -184,9 +184,7 @@ export function Header() {
             <CommandItem value="New deal" onSelect={() => { setOpen(false); navigate({ to: "/deals/new" }); }}>
               Create new deal
             </CommandItem>
-            <CommandItem value="CSV import" onSelect={() => { setOpen(false); navigate({ to: "/import" }); }}>
-              CSV import
-            </CommandItem>
+
           </CommandGroup>
         </CommandList>
       </CommandDialog>

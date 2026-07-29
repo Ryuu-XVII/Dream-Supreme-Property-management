@@ -299,7 +299,7 @@ function ConditionCard({
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{row.type}</p>
-              <Link to="/deals/$id" params={{ id: row.deal.id }} className="money truncate text-xs text-primary hover:underline">
+              <Link to="/deals/$dealId" params={{ dealId: row.deal.id }} className="money truncate text-xs text-primary hover:underline">
                 {row.deal.ref}
               </Link>
             </div>
@@ -380,7 +380,7 @@ function ConditionRowView({
         <p className="truncate text-sm font-semibold">{row.type}</p>
         <p className="truncate text-xs text-muted-foreground">{row.description}</p>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-          <Link to="/deals/$id" params={{ id: row.deal.id }} className="money text-primary hover:underline">
+          <Link to="/deals/$dealId" params={{ dealId: row.deal.id }} className="money text-primary hover:underline">
             {row.deal.ref}
           </Link>
           <span className="truncate text-muted-foreground">· {property?.address}</span>

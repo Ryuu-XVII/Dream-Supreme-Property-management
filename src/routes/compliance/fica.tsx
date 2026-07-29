@@ -141,8 +141,8 @@ function FicaRegister() {
                         <TableCell className="font-medium">{party.name}</TableCell>
                         <TableCell>
                           <Link
-                            to="/deals/$id"
-                            params={{ id: dealId }}
+                            to="/deals/$dealId"
+                            params={{ dealId: dealId }}
                             className="money text-primary hover:underline"
                             onClick={(e) => e.stopPropagation()}
                           >

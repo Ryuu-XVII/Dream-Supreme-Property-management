@@ -203,8 +203,8 @@ function Index() {
                 {urgentConditions.map((c, i) => (
                   <Link
                     key={c.id}
-                    to="/deals/$id"
-                    params={{ id: c.deal.id }}
+                    to="/deals/$dealId"
+                    params={{ dealId: c.deal.id }}
                     className="flex min-w-0 items-center gap-3 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-muted"
                   >
                     <StatusDot tone={urgencyOf(daysUntil(c.dueDate))} />
