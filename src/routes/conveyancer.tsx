@@ -25,7 +25,7 @@ export const Route = createFileRoute("/conveyancer")({
 
 type ViewState = "loading" | "form" | "success" | "expired";
 
-const deal = dealById((deals.find((d) => d.stage === "Documents & Guarantees") ?? deals[0]).id)!;
+const deal = deals.find((d) => d.stage === "Documents & Guarantees") ?? deals[0];
 const property = propertyById(deal.propertyId);
 const currentIdx = STAGES.indexOf(deal.stage);
 const nextStage = STAGES[Math.min(currentIdx + 1, STAGES.length - 1)];
