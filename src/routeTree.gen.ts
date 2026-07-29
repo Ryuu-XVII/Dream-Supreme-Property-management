@@ -15,6 +15,8 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as CountdownRouteImport } from './routes/countdown'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ComplianceFfcRouteImport } from './routes/compliance/ffc'
+import { Route as CalculatorsBondRouteImport } from './routes/calculators/bond'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -46,6 +48,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ComplianceFfcRoute = ComplianceFfcRouteImport.update({
+  id: '/compliance/ffc',
+  path: '/compliance/ffc',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalculatorsBondRoute = CalculatorsBondRouteImport.update({
+  id: '/calculators/bond',
+  path: '/calculators/bond',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +66,8 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/calculators/bond': typeof CalculatorsBondRoute
+  '/compliance/ffc': typeof ComplianceFfcRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +76,8 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/calculators/bond': typeof CalculatorsBondRoute
+  '/compliance/ffc': typeof ComplianceFfcRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +87,8 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/calculators/bond': typeof CalculatorsBondRoute
+  '/compliance/ffc': typeof ComplianceFfcRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +99,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/pipeline'
     | '/sitemap.xml'
+    | '/calculators/bond'
+    | '/compliance/ffc'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +109,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/pipeline'
     | '/sitemap.xml'
+    | '/calculators/bond'
+    | '/compliance/ffc'
   id:
     | '__root__'
     | '/'
@@ -97,6 +119,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/pipeline'
     | '/sitemap.xml'
+    | '/calculators/bond'
+    | '/compliance/ffc'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +130,8 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PipelineRoute: typeof PipelineRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  CalculatorsBondRoute: typeof CalculatorsBondRoute
+  ComplianceFfcRoute: typeof ComplianceFfcRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,6 +178,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/compliance/ffc': {
+      id: '/compliance/ffc'
+      path: '/compliance/ffc'
+      fullPath: '/compliance/ffc'
+      preLoaderRoute: typeof ComplianceFfcRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calculators/bond': {
+      id: '/calculators/bond'
+      path: '/calculators/bond'
+      fullPath: '/calculators/bond'
+      preLoaderRoute: typeof CalculatorsBondRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -162,6 +202,8 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PipelineRoute: PipelineRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  CalculatorsBondRoute: CalculatorsBondRoute,
+  ComplianceFfcRoute: ComplianceFfcRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
