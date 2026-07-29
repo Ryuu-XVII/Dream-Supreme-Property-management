@@ -20,6 +20,7 @@ import { Route as ComplianceFicaRouteImport } from './routes/compliance/fica'
 import { Route as ComplianceFfcRouteImport } from './routes/compliance/ffc'
 import { Route as CalculatorsTransferRouteImport } from './routes/calculators/transfer'
 import { Route as CalculatorsBondRouteImport } from './routes/calculators/bond'
+import { Route as CalculatorsAffordabilityRouteImport } from './routes/calculators/affordability'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -76,6 +77,12 @@ const CalculatorsBondRoute = CalculatorsBondRouteImport.update({
   path: '/calculators/bond',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CalculatorsAffordabilityRoute =
+  CalculatorsAffordabilityRouteImport.update({
+    id: '/calculators/affordability',
+    path: '/calculators/affordability',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/calculators/affordability': typeof CalculatorsAffordabilityRoute
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
@@ -98,6 +106,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/calculators/affordability': typeof CalculatorsAffordabilityRoute
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
@@ -112,6 +121,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/calculators/affordability': typeof CalculatorsAffordabilityRoute
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pipeline'
     | '/sitemap.xml'
+    | '/calculators/affordability'
     | '/calculators/bond'
     | '/calculators/transfer'
     | '/compliance/ffc'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pipeline'
     | '/sitemap.xml'
+    | '/calculators/affordability'
     | '/calculators/bond'
     | '/calculators/transfer'
     | '/compliance/ffc'
@@ -153,6 +165,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pipeline'
     | '/sitemap.xml'
+    | '/calculators/affordability'
     | '/calculators/bond'
     | '/calculators/transfer'
     | '/compliance/ffc'
@@ -167,6 +180,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PipelineRoute: typeof PipelineRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  CalculatorsAffordabilityRoute: typeof CalculatorsAffordabilityRoute
   CalculatorsBondRoute: typeof CalculatorsBondRoute
   CalculatorsTransferRoute: typeof CalculatorsTransferRoute
   ComplianceFfcRoute: typeof ComplianceFfcRoute
@@ -252,6 +266,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CalculatorsBondRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/calculators/affordability': {
+      id: '/calculators/affordability'
+      path: '/calculators/affordability'
+      fullPath: '/calculators/affordability'
+      preLoaderRoute: typeof CalculatorsAffordabilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -263,6 +284,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PipelineRoute: PipelineRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  CalculatorsAffordabilityRoute: CalculatorsAffordabilityRoute,
   CalculatorsBondRoute: CalculatorsBondRoute,
   CalculatorsTransferRoute: CalculatorsTransferRoute,
   ComplianceFfcRoute: ComplianceFfcRoute,
