@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as ConveyancerRouteImport } from './routes/conveyancer'
 import { Route as CountdownRouteImport } from './routes/countdown'
@@ -20,6 +21,13 @@ import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SignRouteImport } from './routes/sign'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminAuditRouteImport } from './routes/admin/audit'
+import { Route as AdminDealsRouteImport } from './routes/admin/deals'
+import { Route as AdminFinancialsRouteImport } from './routes/admin/financials'
+import { Route as AdminPropertiesRouteImport } from './routes/admin/properties'
+import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as CalculatorsAffordabilityRouteImport } from './routes/calculators/affordability'
 import { Route as CalculatorsBondRouteImport } from './routes/calculators/bond'
 import { Route as CalculatorsTransferRouteImport } from './routes/calculators/transfer'
@@ -44,6 +52,11 @@ import { Route as SetupImportRouteImport } from './routes/setup/import'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientsRoute = ClientsRouteImport.update({
@@ -95,6 +108,41 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDealsRoute = AdminDealsRouteImport.update({
+  id: '/deals',
+  path: '/deals',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFinancialsRoute = AdminFinancialsRouteImport.update({
+  id: '/financials',
+  path: '/financials',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPropertiesRoute = AdminPropertiesRouteImport.update({
+  id: '/properties',
+  path: '/properties',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
 } as any)
 const CalculatorsAffordabilityRoute =
   CalculatorsAffordabilityRouteImport.update({
@@ -201,6 +249,7 @@ const SetupImportRoute = SetupImportRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/clients': typeof ClientsRoute
   '/conveyancer': typeof ConveyancerRoute
   '/countdown': typeof CountdownRoute
@@ -211,6 +260,12 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/deals': typeof AdminDealsRoute
+  '/admin/financials': typeof AdminFinancialsRoute
+  '/admin/properties': typeof AdminPropertiesRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/calculators/affordability': typeof CalculatorsAffordabilityRoute
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
@@ -228,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/users': typeof SettingsUsersRoute
   '/setup/import': typeof SetupImportRoute
+  '/admin/': typeof AdminIndexRoute
   '/commission/': typeof CommissionIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/setup/': typeof SetupIndexRoute
@@ -244,6 +300,12 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/deals': typeof AdminDealsRoute
+  '/admin/financials': typeof AdminFinancialsRoute
+  '/admin/properties': typeof AdminPropertiesRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/calculators/affordability': typeof CalculatorsAffordabilityRoute
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
@@ -261,6 +323,7 @@ export interface FileRoutesByTo {
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/users': typeof SettingsUsersRoute
   '/setup/import': typeof SetupImportRoute
+  '/admin': typeof AdminIndexRoute
   '/commission': typeof CommissionIndexRoute
   '/reports': typeof ReportsIndexRoute
   '/setup': typeof SetupIndexRoute
@@ -268,6 +331,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/clients': typeof ClientsRoute
   '/conveyancer': typeof ConveyancerRoute
   '/countdown': typeof CountdownRoute
@@ -278,6 +342,12 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/deals': typeof AdminDealsRoute
+  '/admin/financials': typeof AdminFinancialsRoute
+  '/admin/properties': typeof AdminPropertiesRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/calculators/affordability': typeof CalculatorsAffordabilityRoute
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
@@ -295,6 +365,7 @@ export interface FileRoutesById {
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/users': typeof SettingsUsersRoute
   '/setup/import': typeof SetupImportRoute
+  '/admin/': typeof AdminIndexRoute
   '/commission/': typeof CommissionIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/setup/': typeof SetupIndexRoute
@@ -303,6 +374,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/clients'
     | '/conveyancer'
     | '/countdown'
@@ -313,6 +385,12 @@ export interface FileRouteTypes {
     | '/register'
     | '/sign'
     | '/sitemap.xml'
+    | '/admin/audit'
+    | '/admin/deals'
+    | '/admin/financials'
+    | '/admin/properties'
+    | '/admin/settings'
+    | '/admin/users'
     | '/calculators/affordability'
     | '/calculators/bond'
     | '/calculators/transfer'
@@ -330,6 +408,7 @@ export interface FileRouteTypes {
     | '/settings/notifications'
     | '/settings/users'
     | '/setup/import'
+    | '/admin/'
     | '/commission/'
     | '/reports/'
     | '/setup/'
@@ -346,6 +425,12 @@ export interface FileRouteTypes {
     | '/register'
     | '/sign'
     | '/sitemap.xml'
+    | '/admin/audit'
+    | '/admin/deals'
+    | '/admin/financials'
+    | '/admin/properties'
+    | '/admin/settings'
+    | '/admin/users'
     | '/calculators/affordability'
     | '/calculators/bond'
     | '/calculators/transfer'
@@ -363,12 +448,14 @@ export interface FileRouteTypes {
     | '/settings/notifications'
     | '/settings/users'
     | '/setup/import'
+    | '/admin'
     | '/commission'
     | '/reports'
     | '/setup'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/clients'
     | '/conveyancer'
     | '/countdown'
@@ -379,6 +466,12 @@ export interface FileRouteTypes {
     | '/register'
     | '/sign'
     | '/sitemap.xml'
+    | '/admin/audit'
+    | '/admin/deals'
+    | '/admin/financials'
+    | '/admin/properties'
+    | '/admin/settings'
+    | '/admin/users'
     | '/calculators/affordability'
     | '/calculators/bond'
     | '/calculators/transfer'
@@ -396,6 +489,7 @@ export interface FileRouteTypes {
     | '/settings/notifications'
     | '/settings/users'
     | '/setup/import'
+    | '/admin/'
     | '/commission/'
     | '/reports/'
     | '/setup/'
@@ -403,6 +497,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   ClientsRoute: typeof ClientsRoute
   ConveyancerRoute: typeof ConveyancerRoute
   CountdownRoute: typeof CountdownRoute
@@ -442,6 +537,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clients': {
@@ -513,6 +615,55 @@ declare module '@tanstack/react-router' {
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/deals': {
+      id: '/admin/deals'
+      path: '/deals'
+      fullPath: '/admin/deals'
+      preLoaderRoute: typeof AdminDealsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/financials': {
+      id: '/admin/financials'
+      path: '/financials'
+      fullPath: '/admin/financials'
+      preLoaderRoute: typeof AdminFinancialsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/properties': {
+      id: '/admin/properties'
+      path: '/properties'
+      fullPath: '/admin/properties'
+      preLoaderRoute: typeof AdminPropertiesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/calculators/affordability': {
       id: '/calculators/affordability'
@@ -657,8 +808,31 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminAuditRoute: typeof AdminAuditRoute
+  AdminDealsRoute: typeof AdminDealsRoute
+  AdminFinancialsRoute: typeof AdminFinancialsRoute
+  AdminPropertiesRoute: typeof AdminPropertiesRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAuditRoute: AdminAuditRoute,
+  AdminDealsRoute: AdminDealsRoute,
+  AdminFinancialsRoute: AdminFinancialsRoute,
+  AdminPropertiesRoute: AdminPropertiesRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   ClientsRoute: ClientsRoute,
   ConveyancerRoute: ConveyancerRoute,
   CountdownRoute: CountdownRoute,
