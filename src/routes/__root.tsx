@@ -115,7 +115,7 @@ function RootShell({ children }: { children: ReactNode }) {
 import { AuthProvider, useAuth } from "@/lib/auth";
 
 function AuthGuard({ children }: { children: ReactNode }) {
-  const { session, account, loading, signOut } = useAuth();
+  const { session, loading } = useAuth();
   const router = useRouter();
 
   const isPublicPath = (path: string) =>
@@ -151,28 +151,6 @@ function AuthGuard({ children }: { children: ReactNode }) {
       </div>
     );
   }
-  // Bypass account active check for now
-  // if (session && !publicPath && (!account || account.status !== "active")) {
-  if (false) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="max-w-md text-center">
-          <h1 className="text-xl font-semibold">Account access unavailable</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Your login is valid, but there is no active Dream Supreme company account attached to
-            it. Ask a principal or administrator to verify your invitation or account status.
-          </p>
-          <button
-            className="mt-5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-            onClick={() => void signOut()}
-          >
-            Sign out
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return <>{children}</>;
 }
 
