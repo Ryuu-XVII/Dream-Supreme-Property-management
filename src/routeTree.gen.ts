@@ -28,6 +28,7 @@ import { Route as ComplianceFicaRouteImport } from './routes/compliance/fica'
 import { Route as ComplianceFfcRouteImport } from './routes/compliance/ffc'
 import { Route as ComplianceAuditRouteImport } from './routes/compliance/audit'
 import { Route as CommissionReconciliationRouteImport } from './routes/commission/reconciliation'
+import { Route as CommissionEarningsRouteImport } from './routes/commission/earnings'
 import { Route as CalculatorsYieldRouteImport } from './routes/calculators/yield'
 import { Route as CalculatorsTransferRouteImport } from './routes/calculators/transfer'
 import { Route as CalculatorsBondRouteImport } from './routes/calculators/bond'
@@ -129,6 +130,11 @@ const CommissionReconciliationRoute =
     path: '/commission/reconciliation',
     getParentRoute: () => rootRouteImport,
   } as any)
+const CommissionEarningsRoute = CommissionEarningsRouteImport.update({
+  id: '/commission/earnings',
+  path: '/commission/earnings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CalculatorsYieldRoute = CalculatorsYieldRouteImport.update({
   id: '/calculators/yield',
   path: '/calculators/yield',
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
   '/calculators/yield': typeof CalculatorsYieldRoute
+  '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
   '/compliance/audit': typeof ComplianceAuditRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByTo {
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
   '/calculators/yield': typeof CalculatorsYieldRoute
+  '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
   '/compliance/audit': typeof ComplianceAuditRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
@@ -216,6 +224,7 @@ export interface FileRoutesById {
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
   '/calculators/yield': typeof CalculatorsYieldRoute
+  '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
   '/compliance/audit': typeof ComplianceAuditRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
@@ -243,6 +252,7 @@ export interface FileRouteTypes {
     | '/calculators/bond'
     | '/calculators/transfer'
     | '/calculators/yield'
+    | '/commission/earnings'
     | '/commission/reconciliation'
     | '/compliance/audit'
     | '/compliance/ffc'
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | '/calculators/bond'
     | '/calculators/transfer'
     | '/calculators/yield'
+    | '/commission/earnings'
     | '/commission/reconciliation'
     | '/compliance/audit'
     | '/compliance/ffc'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/calculators/bond'
     | '/calculators/transfer'
     | '/calculators/yield'
+    | '/commission/earnings'
     | '/commission/reconciliation'
     | '/compliance/audit'
     | '/compliance/ffc'
@@ -319,6 +331,7 @@ export interface RootRouteChildren {
   CalculatorsBondRoute: typeof CalculatorsBondRoute
   CalculatorsTransferRoute: typeof CalculatorsTransferRoute
   CalculatorsYieldRoute: typeof CalculatorsYieldRoute
+  CommissionEarningsRoute: typeof CommissionEarningsRoute
   CommissionReconciliationRoute: typeof CommissionReconciliationRoute
   ComplianceAuditRoute: typeof ComplianceAuditRoute
   ComplianceFfcRoute: typeof ComplianceFfcRoute
@@ -466,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommissionReconciliationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/commission/earnings': {
+      id: '/commission/earnings'
+      path: '/commission/earnings'
+      fullPath: '/commission/earnings'
+      preLoaderRoute: typeof CommissionEarningsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/calculators/yield': {
       id: '/calculators/yield'
       path: '/calculators/yield'
@@ -511,6 +531,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalculatorsBondRoute: CalculatorsBondRoute,
   CalculatorsTransferRoute: CalculatorsTransferRoute,
   CalculatorsYieldRoute: CalculatorsYieldRoute,
+  CommissionEarningsRoute: CommissionEarningsRoute,
   CommissionReconciliationRoute: CommissionReconciliationRoute,
   ComplianceAuditRoute: ComplianceAuditRoute,
   ComplianceFfcRoute: ComplianceFfcRoute,
@@ -525,13 +546,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
