@@ -208,10 +208,16 @@ export function Header() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
+            <Link to="/admin">Admin Dashboard</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
             <Link to="/settings/agency">Agency settings</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link to="/commission/earnings">My earnings</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/register">Agent Registration</Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => void handleSignOut()}>
