@@ -281,7 +281,7 @@ function ClientsPage() {
             />
           </div>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-35">
               <SelectValue placeholder="All roles" />
             </SelectTrigger>
             <SelectContent>
@@ -294,7 +294,7 @@ function ClientsPage() {
             </SelectContent>
           </Select>
           <Select value={ficaFilter} onValueChange={setFicaFilter}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-37.5">
               <SelectValue placeholder="FICA status" />
             </SelectTrigger>
             <SelectContent>
