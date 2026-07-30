@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Download, FileText, CheckCircle2 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { CommissionTabs } from "@/components/commission/commission-tabs";
-import { GlassCard, EmptyState, TableSkeleton, useFakeLoad } from "@/components/ui-kit";
+import { GlassCard, EmptyState, TableSkeleton } from "@/components/ui-kit";
 import { AgentAvatar } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,15 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  deals,
-  propertyById,
-  userById,
-  grossCommission,
-  netPayable,
-  ruleSets,
-  VAT_RATE,
-} from "@/data/state";
+import { supabase } from "@/lib/supabase";
 import { useCan } from "@/lib/app-state";
 import { dateFmt, zar } from "@/lib/format";
 
@@ -52,11 +45,6 @@ export const Route = createFileRoute("/commission/reconciliation")({
         property: "og:title",
         content: "Monthly Commission Reconciliation | Dream Supreme Properties",
       },
-      {
-        property: "og:description",
-        content:
-          "Reconcile registered deals, practitioner payouts and clawbacks for each commission run.",
-      },
     ],
   }),
   component: ReconciliationPage,
@@ -67,35 +55,82 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 type RunStatus = "Not Started" | "Draft" | "Approved";
 
 function ReconciliationPage() {
-  const loading = useFakeLoad(500);
   const can = useCan("commission.approve");
   const now = new Date();
   const [period, setPeriod] = useState({ month: now.getMonth(), year: now.getFullYear() });
-  const [statusByPeriod, setStatusByPeriod] = useState<Record<string, RunStatus>>({});
 
-  const key = `${period.year}-${period.month}`;
-  // derive a deterministic "default" status from data: current month with registered deals = Draft, else Not Started
-  const registeredDeals = useMemo(
-    () =>
-      deals.filter((d) => {
-        if (!d.registeredAt) return false;
-        const rd = new Date(d.registeredAt);
-        return rd.getMonth() === period.month && rd.getFullYear() === period.year;
-      }),
-    [period],
-  );
-  const cancelledDeals = useMemo(
-    () =>
-      deals.filter((d) => {
-        if (!d.cancelled) return false;
-        const cd = new Date(d.cancelled.at);
-        return cd.getMonth() === period.month && cd.getFullYear() === period.year;
-      }),
-    [period],
-  );
+  const startDate = new Date(period.year, period.month, 1, 0, 0, 0).toISOString();
+  const endDate = new Date(period.year, period.month + 1, 1, 0, 0, 0).toISOString();
 
-  const status: RunStatus =
-    statusByPeriod[key] ?? (registeredDeals.length > 0 ? "Draft" : "Not Started");
+  const { data: calculations, isLoading } = useQuery({
+    queryKey: ["commission-reconciliation", startDate, endDate],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("commission_calculation")
+        .select(
+          `
+          id,
+          calculated_at,
+          status,
+          gross_cents,
+          vat_cents,
+          net_cents,
+          office_share_cents,
+          agent_pool_cents,
+          input_snapshot_json,
+          deal:deal_id (
+            id,
+            reference,
+            sale_price_cents,
+            status,
+            cancellation_reason,
+            cancelled_on,
+            property:property_id (
+              address_line,
+              suburb
+            )
+          ),
+          allocations:commission_allocation (
+            id,
+            user_account_id,
+            external_payee_name,
+            gross_allocation_cents,
+            desk_fee_cents,
+            advance_recovery_cents,
+            net_payable_cents,
+            user:user_account_id (
+              id,
+              full_name,
+              avatar_key
+            )
+          ),
+          clawbacks:commission_clawback (
+            id,
+            user_account_id,
+            amount_cents,
+            reason
+          )
+        `,
+        )
+        .gte("calculated_at", startDate)
+        .lt("calculated_at", endDate)
+        .order("calculated_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const registeredDeals = useMemo(() => {
+    if (!calculations) return [];
+    return calculations.filter((c) => c.status === "confirmed");
+  }, [calculations]);
+
+  const cancelledDeals = useMemo(() => {
+    if (!calculations) return [];
+    return calculations.filter((c) => c.status === "reversed");
+  }, [calculations]);
+
+  const status: RunStatus = registeredDeals.length > 0 ? "Draft" : "Not Started";
 
   const shiftPeriod = (delta: number) => {
     setPeriod((p) => {
@@ -113,86 +148,101 @@ function ReconciliationPage() {
     });
   };
 
-  const rules = ruleSets[0];
-
   const practitionerRows = useMemo(() => {
     const map = new Map<
       string,
-      { gross: number; desk: number; advance: number; clawback: number; net: number }
+      { user: any; gross: number; desk: number; advance: number; clawback: number; net: number }
     >();
-    for (const dl of registeredDeals) {
-      const gross = grossCommission(dl);
-      const net = netPayable(dl);
-      const desk = rules.deductions.find((x: any) => x.type === "Desk Fee")?.fixed ?? 0;
-      for (const pr of dl.practitioners) {
-        const share = Math.round((net * pr.splitPct) / 100);
-        const deskShare = Math.round((desk * pr.splitPct) / 100);
-        const advance = pr.userId === "u2" ? 150000 : 0;
-        const entry = map.get(pr.userId) ?? { gross: 0, desk: 0, advance: 0, clawback: 0, net: 0 };
-        entry.gross += Math.round((gross * pr.splitPct) / 100);
-        entry.desk += deskShare;
-        entry.advance += advance;
-        entry.net += share - deskShare - advance;
-        map.set(pr.userId, entry);
+
+    for (const c of registeredDeals) {
+      for (const a of c.allocations) {
+        if (!a.user) continue;
+        const entry = map.get(a.user.id) ?? {
+          user: a.user,
+          gross: 0,
+          desk: 0,
+          advance: 0,
+          clawback: 0,
+          net: 0,
+        };
+        entry.gross += a.gross_allocation_cents;
+        entry.desk += a.desk_fee_cents;
+        entry.advance += a.advance_recovery_cents;
+        entry.net += a.net_payable_cents;
+        map.set(a.user.id, entry);
       }
     }
-    for (const dl of cancelledDeals) {
-      for (const pr of dl.practitioners) {
-        const entry = map.get(pr.userId) ?? { gross: 0, desk: 0, advance: 0, clawback: 0, net: 0 };
-        const clawback = Math.round(((grossCommission(dl) * pr.splitPct) / 100) * 0.5);
-        entry.clawback += clawback;
-        entry.net -= clawback;
-        map.set(pr.userId, entry);
+
+    for (const c of cancelledDeals) {
+      for (const cb of c.clawbacks) {
+        if (!cb.user_account_id) continue;
+        const entry = map.get(cb.user_account_id) ?? {
+          user: { id: cb.user_account_id, full_name: "Agent" },
+          gross: 0,
+          desk: 0,
+          advance: 0,
+          clawback: 0,
+          net: 0,
+        };
+        entry.clawback += cb.amount_cents;
+        entry.net -= cb.amount_cents;
+        map.set(cb.user_account_id, entry);
       }
     }
-    return Array.from(map.entries()).map(([userId, v]) => ({ user: userById(userId), ...v }));
-  }, [registeredDeals, cancelledDeals, rules]);
+
+    return Array.from(map.values());
+  }, [registeredDeals, cancelledDeals]);
 
   const totals = useMemo(() => {
-    const totalCommission = registeredDeals.reduce((s, dl) => s + grossCommission(dl), 0);
-    const vat = Math.round(totalCommission - totalCommission / (1 + VAT_RATE));
-    const franchise = registeredDeals.reduce((s, dl) => {
-      const net =
-        grossCommission(dl) -
-        Math.round(grossCommission(dl) - grossCommission(dl) / (1 + VAT_RATE));
-      return (
-        s +
-        Math.round(
-          (net * (rules.deductions.find((x: any) => x.type === "Franchise Fee")?.bps ?? 0)) / 10000,
-        )
-      );
-    }, 0);
-    const officeShare = registeredDeals.reduce((s, dl) => {
-      const net =
-        grossCommission(dl) -
-        Math.round(grossCommission(dl) - grossCommission(dl) / (1 + VAT_RATE));
-      const franchiseAmt = Math.round(
-        (net * (rules.deductions.find((x: any) => x.type === "Franchise Fee")?.bps ?? 0)) / 10000,
-      );
-      const pool = net - franchiseAmt;
-      return s + Math.round((pool * rules.officeSharePct) / 100);
-    }, 0);
-    const agentPayouts = practitionerRows.reduce((s, r) => s + r.net, 0);
+    let totalCommission = 0;
+    let vat = 0;
+    let franchise = 0;
+    let officeShare = 0;
+    let agentPayouts = 0;
+
+    for (const c of registeredDeals) {
+      totalCommission += c.gross_cents;
+      vat += c.vat_cents;
+      officeShare += c.office_share_cents;
+      agentPayouts += c.agent_pool_cents;
+
+      const snap = c.input_snapshot_json as any;
+      if (snap?.rule_lines) {
+        // Find franchise fee
+        for (const line of snap.rule_lines) {
+          if (line.line_type === "franchise_fee") {
+            const amt =
+              line.calculation_basis === "fixed"
+                ? line.fixed_amount_cents
+                : Math.round((c.net_cents * line.rate_bps) / 10000);
+            franchise += amt;
+          }
+        }
+      }
+    }
+
     return { totalCommission, vat, franchise, officeShare, agentPayouts };
-  }, [registeredDeals, practitionerRows, rules]);
+  }, [registeredDeals]);
 
   const approveRun = () => {
-    toast.error("Approval is unavailable on this legacy reconciliation view", {
+    toast.error("Approval is unavailable on this view", {
       description: "Confirm each persisted deal calculation from the deal Commission tab.",
     });
   };
 
   const exportCsv = () => {
     const header = "Reference,Property,Sale Price,Gross Commission,Net Commission,Agents\n";
-    const rows = registeredDeals.map((dl) => {
-      const prop = propertyById(dl.propertyId);
-      const agents = dl.practitioners.map((p: any) => userById(p.userId).name).join(" | ");
+    const rows = registeredDeals.map((c) => {
+      const prop = c.deal?.property;
+      const agents = c.allocations
+        .map((a: any) => a.user?.full_name || a.external_payee_name)
+        .join(" | ");
       return [
-        dl.ref,
-        `"${prop.address}, ${prop.suburb}"`,
-        (dl.salePrice / 100).toFixed(2),
-        (grossCommission(dl) / 100).toFixed(2),
-        (netPayable(dl) / 100).toFixed(2),
+        c.deal?.reference,
+        `"${prop?.address_line || ""}, ${prop?.suburb || ""}"`,
+        ((c.deal?.sale_price_cents || 0) / 100).toFixed(2),
+        (c.gross_cents / 100).toFixed(2),
+        (c.net_cents / 100).toFixed(2),
         `"${agents}"`,
       ].join(",");
     });
@@ -231,7 +281,7 @@ function ReconciliationPage() {
           <Button variant="outline" size="icon" onClick={() => shiftPeriod(-1)}>
             <ChevronLeft className="size-4" />
           </Button>
-          <span className="font-display min-w-35 text-center text-lg font-semibold">
+          <span className="font-display min-w-[140px] text-center text-lg font-semibold">
             {MONTHS[period.month]} {period.year}
           </span>
           <Button variant="outline" size="icon" onClick={() => shiftPeriod(1)}>
@@ -277,7 +327,7 @@ function ReconciliationPage() {
 
       <GlassCard className="mb-6">
         <h2 className="mb-4 font-display text-lg font-semibold">Registered Deals</h2>
-        {loading ? (
+        {isLoading ? (
           <TableSkeleton rows={4} cols={6} />
         ) : registeredDeals.length === 0 ? (
           <EmptyState
@@ -298,28 +348,39 @@ function ReconciliationPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {registeredDeals.map((dl) => {
-                  const prop = propertyById(dl.propertyId);
+                {registeredDeals.map((c) => {
+                  const prop = c.deal?.property;
                   return (
-                    <TableRow key={dl.id}>
-                      <TableCell className="money whitespace-nowrap">{dl.ref}</TableCell>
-                      <TableCell className="min-w-0 max-w-55 truncate">
-                        {prop.address}, {prop.suburb}
+                    <TableRow key={c.id}>
+                      <TableCell className="money whitespace-nowrap">{c.deal?.reference}</TableCell>
+                      <TableCell className="min-w-0 max-w-[220px] truncate">
+                        {prop?.address_line}, {prop?.suburb}
                       </TableCell>
                       <TableCell className="money text-right whitespace-nowrap">
-                        {zar(dl.salePrice)}
+                        {zar(c.deal?.sale_price_cents || 0)}
                       </TableCell>
                       <TableCell className="money text-right whitespace-nowrap">
-                        {zar(grossCommission(dl))}
+                        {zar(c.gross_cents)}
                       </TableCell>
                       <TableCell className="money text-right whitespace-nowrap">
-                        {zar(netPayable(dl))}
+                        {zar(c.net_cents)}
                       </TableCell>
                       <TableCell>
                         <div className="flex -space-x-1.5">
-                          {dl.practitioners.map((p: any) => (
-                            <AgentAvatar key={p.userId} user={userById(p.userId)} />
-                          ))}
+                          {c.allocations.map((a: any) =>
+                            a.user ? (
+                              <AgentAvatar
+                                key={a.id}
+                                user={{
+                                  id: a.user.id,
+                                  name: a.user.full_name,
+                                  avatarUrl: a.user.avatar_key
+                                    ? `https://example.com/${a.user.avatar_key}`
+                                    : undefined,
+                                }}
+                              />
+                            ) : null,
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -343,7 +404,17 @@ function ReconciliationPage() {
             {practitionerRows.map((r) => (
               <div key={r.user.id} className="rounded-xl border border-border p-4">
                 <div className="mb-3 flex items-center gap-2">
-                  <AgentAvatar user={r.user} showName size={8} />
+                  <AgentAvatar
+                    user={{
+                      id: r.user.id,
+                      name: r.user.full_name,
+                      avatarUrl: r.user.avatar_key
+                        ? `https://example.com/${r.user.avatar_key}`
+                        : undefined,
+                    }}
+                    showName
+                    size={8}
+                  />
                 </div>
                 <dl className="space-y-1.5 text-sm">
                   <div className="flex justify-between">
@@ -394,16 +465,18 @@ function ReconciliationPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cancelledDeals.map((dl) => {
-                  const prop = propertyById(dl.propertyId);
-                  const amt = Math.round(grossCommission(dl) * 0.5);
+                {cancelledDeals.map((c) => {
+                  const prop = c.deal?.property;
+                  const amt = c.clawbacks.reduce((sum, cb) => sum + cb.amount_cents, 0);
                   return (
-                    <TableRow key={dl.id}>
-                      <TableCell className="money whitespace-nowrap">{dl.ref}</TableCell>
-                      <TableCell className="min-w-0 max-w-50 truncate">{prop.address}</TableCell>
-                      <TableCell>{dl.cancelled?.reason}</TableCell>
+                    <TableRow key={c.id}>
+                      <TableCell className="money whitespace-nowrap">{c.deal?.reference}</TableCell>
+                      <TableCell className="min-w-0 max-w-[200px] truncate">
+                        {prop?.address_line}
+                      </TableCell>
+                      <TableCell>{c.deal?.cancellation_reason}</TableCell>
                       <TableCell className="whitespace-nowrap">
-                        {dl.cancelled ? dateFmt(dl.cancelled.at) : "—"}
+                        {c.deal?.cancelled_on ? dateFmt(c.deal.cancelled_on) : "—"}
                       </TableCell>
                       <TableCell className="money text-right whitespace-nowrap text-destructive">
                         − {zar(amt)}
