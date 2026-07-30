@@ -45,6 +45,9 @@ import {
 import type { EntityType } from "@/types";
 
 export const Route = createFileRoute("/deals/new")({
+  validateSearch: (search: Record<string, unknown>): { mandateId?: string } => ({
+    mandateId: search.mandateId as string | undefined,
+  }),
   head: () => ({
     meta: [
       { title: "New Deal Wizard | Dream Supreme Properties" },
