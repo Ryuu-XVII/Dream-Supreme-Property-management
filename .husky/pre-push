@@ -6,25 +6,41 @@ echo "============================================================"
 echo "Running TypeScript compiler, ESLint, and Unit Tests..."
 echo ""
 
-# Run the project check script
-npm run check
-
-# Capture the exit code of the check
-CHECK_STATUS=$?
-
-if [ $CHECK_STATUS -ne 0 ]; then
-  echo ""
-  echo "============================================================"
-  echo "🚨 PUSH FAILED: BROKEN CODE DETECTED 🚨"
-  echo "============================================================"
-  echo "You cannot push this code to the repository because it has"
-  echo "failed either the TypeScript, ESLint, or Unit Test checks."
-  echo ""
-  echo "Please fix the errors shown above and try pushing again."
-  echo "============================================================"
-  echo ""
+echo "1/4: Typechecking codebase (tsc)..."
+if ! npm run typecheck; then
+  echo "❌ TypeScript compiler found errors!"
+  echo "💡 PLAIN TERMS: You have some type mismatches or syntax errors. Check the lines mentioned above."
   exit 1
 fi
+echo "✅ Typecheck passed!"
+echo ""
+
+echo "2/4: Linting codebase (eslint)..."
+if ! npm run lint; then
+  echo "❌ ESLint found code style or quality issues!"
+  echo "💡 PLAIN TERMS: You have formatting or styling issues. You can often fix this by running 'npm run format' or checking the lines mentioned."
+  exit 1
+fi
+echo "✅ Lint passed!"
+echo ""
+
+echo "3/4: Running Unit Tests (vitest)..."
+if ! npm run test; then
+  echo "❌ Unit tests failed!"
+  echo "💡 PLAIN TERMS: Some of your automated tests didn't pass. Read the test output above to see which ones failed."
+  exit 1
+fi
+echo "✅ Tests passed!"
+echo ""
+
+echo "4/4: Verifying Production Build (vite)..."
+if ! npm run build; then
+  echo "❌ Production build failed!"
+  echo "💡 PLAIN TERMS: The application couldn't be bundled for production. Check the errors above."
+  exit 1
+fi
+echo "✅ Build passed!"
+echo ""
 
 echo "✅ All safety checks passed! Pushing to repository..."
 exit 0
