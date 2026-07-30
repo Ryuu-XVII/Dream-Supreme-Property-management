@@ -1,0 +1,30 @@
+#!/bin/sh
+
+echo "============================================================"
+echo "🛡️ RUNNING PRE-PUSH SAFETY CHECKS 🛡️"
+echo "============================================================"
+echo "Running TypeScript compiler, ESLint, and Unit Tests..."
+echo ""
+
+# Run the project check script
+npm run check
+
+# Capture the exit code of the check
+CHECK_STATUS=$?
+
+if [ $CHECK_STATUS -ne 0 ]; then
+  echo ""
+  echo "============================================================"
+  echo "🚨 PUSH FAILED: BROKEN CODE DETECTED 🚨"
+  echo "============================================================"
+  echo "You cannot push this code to the repository because it has"
+  echo "failed either the TypeScript, ESLint, or Unit Test checks."
+  echo ""
+  echo "Please fix the errors shown above and try pushing again."
+  echo "============================================================"
+  echo ""
+  exit 1
+fi
+
+echo "✅ All safety checks passed! Pushing to repository..."
+exit 0
