@@ -1,10 +1,16 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
+import { Suspense, lazy } from "react";
 import { Sidebar, MobileNav } from "./sidebar";
 import { Header } from "./header";
 import { ChevronRight } from "lucide-react";
-import { CalculatorModal } from "@/components/calculators/calculator-modal";
+
+const CalculatorModal = lazy(() =>
+  import("@/components/calculators/calculator-modal").then((m) => ({
+    default: m.CalculatorModal,
+  })),
+);
 
 export interface Crumb {
   label: string;
@@ -67,7 +73,9 @@ export function AppShell({
         </main>
       </div>
       <MobileNav />
-      <CalculatorModal />
+      <Suspense fallback={null}>
+        <CalculatorModal />
+      </Suspense>
     </div>
   );
 }
