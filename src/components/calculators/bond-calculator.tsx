@@ -1,47 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { CalculatorShell } from "@/components/calculators/calculator-shell";
-import { SliderInput } from "@/components/calculators/slider-input";
-import { GlassCard } from "@/components/ui-kit";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-export const Route = createFileRoute("/calculators/bond")({
-  head: () => ({
-    meta: [
-      { title: "Bond Repayment Calculator | Dream Supreme Properties" },
-      {
-        name: "description",
-        content: "Estimate your monthly bond instalment, total interest and repayment amount.",
-      },
-      { property: "og:title", content: "Bond Repayment Calculator | Dream Supreme Properties" },
-      {
-        property: "og:description",
-        content: "Estimate your monthly bond instalment, total interest and repayment amount.",
-      },
-    ],
-  }),
-  component: BondCalculatorPage,
-});
-
 const zarFmt = (n: number) =>
   `R ${n.toLocaleString("en-ZA", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
@@ -72,7 +28,31 @@ function amortise(loanAmount: number, rate: number, years: number) {
   return { instalment, totalRepayment, totalInterest, yearly };
 }
 
-function BondCalculatorPage() {
+import { useMemo, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { SliderInput } from "@/components/calculators/slider-input";
+import { GlassCard } from "@/components/ui-kit";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+export function BondCalculator() {
   const [loanAmount, setLoanAmount] = useState(1_500_000);
   const [rate, setRate] = useState(11.25);
   const [term, setTerm] = useState(20);
@@ -84,11 +64,7 @@ function BondCalculatorPage() {
   );
 
   return (
-    <CalculatorShell
-      name="Bond Repayment Calculator"
-      description="Estimate your monthly instalment and total cost of your home loan."
-      currentPath="/calculators/bond"
-    >
+    <div className="space-y-6">
       <div className="grid gap-5 lg:grid-cols-2">
         <GlassCard className="space-y-6">
           <h2 className="font-display text-sm font-semibold text-muted-foreground">Loan details</h2>
@@ -236,6 +212,6 @@ function BondCalculatorPage() {
           </GlassCard>
         </div>
       )}
-    </CalculatorShell>
+    </div>
   );
 }

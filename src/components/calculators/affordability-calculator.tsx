@@ -1,36 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { RadialBar, RadialBarChart, PolarAngleAxis, ResponsiveContainer } from "recharts";
-import { CalculatorShell } from "@/components/calculators/calculator-shell";
-import { SliderInput } from "@/components/calculators/slider-input";
-import { GlassCard } from "@/components/ui-kit";
-
-export const Route = createFileRoute("/calculators/affordability")({
-  head: () => ({
-    meta: [
-      { title: "Bond Affordability Calculator | Dream Supreme Properties" },
-      {
-        name: "description",
-        content:
-          "Work out the maximum loan and purchase price you can afford based on your income.",
-      },
-      { property: "og:title", content: "Bond Affordability Calculator | Dream Supreme Properties" },
-      {
-        property: "og:description",
-        content:
-          "Work out the maximum loan and purchase price you can afford based on your income.",
-      },
-    ],
-  }),
-  component: AffordabilityCalculatorPage,
-});
-
 const zarFmt = (n: number) =>
   `R ${n.toLocaleString("en-ZA", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
 const GUIDELINE = 30;
 
-function AffordabilityCalculatorPage() {
+import { useMemo, useState } from "react";
+import { RadialBar, RadialBarChart, PolarAngleAxis, ResponsiveContainer } from "recharts";
+import { SliderInput } from "@/components/calculators/slider-input";
+import { GlassCard } from "@/components/ui-kit";
+
+export function AffordabilityCalculator() {
   const [income, setIncome] = useState(65_000);
   const [expenses, setExpenses] = useState(12_000);
   const [rate, setRate] = useState(11.25);
@@ -59,11 +37,7 @@ function AffordabilityCalculatorPage() {
   ];
 
   return (
-    <CalculatorShell
-      name="Bond Affordability Calculator"
-      description="Estimate the maximum loan and purchase price you qualify for."
-      currentPath="/calculators/affordability"
-    >
+    <div className="space-y-6">
       <div className="grid gap-5 lg:grid-cols-2">
         <GlassCard className="space-y-6">
           <h2 className="font-display text-sm font-semibold text-muted-foreground">
@@ -170,6 +144,6 @@ function AffordabilityCalculatorPage() {
           </GlassCard>
         </div>
       </div>
-    </CalculatorShell>
+    </div>
   );
 }

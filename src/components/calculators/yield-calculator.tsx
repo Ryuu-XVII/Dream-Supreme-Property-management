@@ -1,34 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+const zarFmt = (n: number) =>
+  `R ${n.toLocaleString("en-ZA", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
 import { useMemo, useState } from "react";
-import { CalculatorShell } from "@/components/calculators/calculator-shell";
 import { SliderInput } from "@/components/calculators/slider-input";
 import { GlassCard } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/calculators/yield")({
-  head: () => ({
-    meta: [
-      { title: "Rental Yield Calculator | Dream Supreme Properties" },
-      {
-        name: "description",
-        content:
-          "Calculate gross and net rental yield, cash flow and payback period on an investment property.",
-      },
-      { property: "og:title", content: "Rental Yield Calculator | Dream Supreme Properties" },
-      {
-        property: "og:description",
-        content:
-          "Calculate gross and net rental yield, cash flow and payback period on an investment property.",
-      },
-    ],
-  }),
-  component: YieldCalculatorPage,
-});
-
-const zarFmt = (n: number) =>
-  `R ${n.toLocaleString("en-ZA", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-
-function YieldCalculatorPage() {
+export function YieldCalculator() {
   const [price, setPrice] = useState(1_800_000);
   const [rental, setRental] = useState(15_000);
   const [rates, setRates] = useState(1_400);
@@ -51,11 +29,7 @@ function YieldCalculatorPage() {
   const positive = monthlyCashFlow >= 0;
 
   return (
-    <CalculatorShell
-      name="Rental Yield Calculator"
-      description="Assess the return and cash flow of a buy-to-let investment property."
-      currentPath="/calculators/yield"
-    >
+    <div className="space-y-6">
       <div className="grid gap-5 lg:grid-cols-2">
         <GlassCard className="space-y-6">
           <h2 className="font-display text-sm font-semibold text-muted-foreground">
@@ -173,6 +147,6 @@ function YieldCalculatorPage() {
           </GlassCard>
         </div>
       </div>
-    </CalculatorShell>
+    </div>
   );
 }

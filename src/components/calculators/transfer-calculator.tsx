@@ -1,42 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { CalculatorShell } from "@/components/calculators/calculator-shell";
-import { SliderInput } from "@/components/calculators/slider-input";
-import { GlassCard } from "@/components/ui-kit";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-import { transferDutyBrackets } from "@/data/state";
-import { calculateTransferDutyCents } from "@/lib/domain";
-
-export const Route = createFileRoute("/calculators/transfer")({
-  head: () => ({
-    meta: [
-      { title: "Transfer Cost Calculator | Dream Supreme Properties" },
-      {
-        name: "description",
-        content:
-          "Estimate transfer duty, conveyancing fees and total transfer costs on a property purchase.",
-      },
-      { property: "og:title", content: "Transfer Cost Calculator | Dream Supreme Properties" },
-      {
-        property: "og:description",
-        content:
-          "Estimate transfer duty, conveyancing fees and total transfer costs on a property purchase.",
-      },
-    ],
-  }),
-  component: TransferCalculatorPage,
-});
-
 const zarFmt = (n: number) =>
   `R ${n.toLocaleString("en-ZA", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
@@ -62,7 +23,24 @@ function bondRegistrationCost(bondRands: number) {
   return 24_000 + (bondRands - 2_000_000) * 0.006;
 }
 
-function TransferCalculatorPage() {
+import { useMemo, useState } from "react";
+import { SliderInput } from "@/components/calculators/slider-input";
+import { GlassCard } from "@/components/ui-kit";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { transferDutyBrackets } from "@/data/state";
+import { calculateTransferDutyCents } from "@/lib/domain";
+
+export function TransferCalculator() {
   const [price, setPrice] = useState(1_800_000);
   const [bondAmount, setBondAmount] = useState(1_400_000);
   const [vatVendor, setVatVendor] = useState(false);
@@ -79,11 +57,7 @@ function TransferCalculatorPage() {
   const total = duty + conveyancing + deedsOffice + postagePetties + bondRegistration;
 
   return (
-    <CalculatorShell
-      name="Transfer Cost Calculator"
-      description="Estimate transfer duty, conveyancing and registration costs for a property purchase."
-      currentPath="/calculators/transfer"
-    >
+    <div className="space-y-6">
       <div className="grid gap-5 lg:grid-cols-2">
         <GlassCard className="space-y-6">
           <h2 className="font-display text-sm font-semibold text-muted-foreground">
@@ -186,7 +160,7 @@ function TransferCalculatorPage() {
           </Table>
         </div>
       </GlassCard>
-    </CalculatorShell>
+    </div>
   );
 }
 
