@@ -29,12 +29,7 @@ import { Route as AdminFinancialsRouteImport } from './routes/admin/financials'
 import { Route as AdminPropertiesRouteImport } from './routes/admin/properties'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
-import { Route as CalculatorsAffordabilityRouteImport } from './routes/calculators/affordability'
-import { Route as CalculatorsBondRouteImport } from './routes/calculators/bond'
-import { Route as CalculatorsTransferRouteImport } from './routes/calculators/transfer'
-import { Route as CalculatorsYieldRouteImport } from './routes/calculators/yield'
 import { Route as CommissionIndexRouteImport } from './routes/commission/index'
-import { Route as CommissionCalculatorRouteImport } from './routes/commission/calculator'
 import { Route as CommissionEarningsRouteImport } from './routes/commission/earnings'
 import { Route as CommissionReconciliationRouteImport } from './routes/commission/reconciliation'
 import { Route as ComplianceAuditRouteImport } from './routes/compliance/audit'
@@ -153,35 +148,9 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
-const CalculatorsAffordabilityRoute =
-  CalculatorsAffordabilityRouteImport.update({
-    id: '/calculators/affordability',
-    path: '/calculators/affordability',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const CalculatorsBondRoute = CalculatorsBondRouteImport.update({
-  id: '/calculators/bond',
-  path: '/calculators/bond',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CalculatorsTransferRoute = CalculatorsTransferRouteImport.update({
-  id: '/calculators/transfer',
-  path: '/calculators/transfer',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CalculatorsYieldRoute = CalculatorsYieldRouteImport.update({
-  id: '/calculators/yield',
-  path: '/calculators/yield',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CommissionIndexRoute = CommissionIndexRouteImport.update({
   id: '/commission/',
   path: '/commission/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CommissionCalculatorRoute = CommissionCalculatorRouteImport.update({
-  id: '/commission/calculator',
-  path: '/commission/calculator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommissionEarningsRoute = CommissionEarningsRouteImport.update({
@@ -291,11 +260,6 @@ export interface FileRoutesByFullPath {
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
-  '/calculators/affordability': typeof CalculatorsAffordabilityRoute
-  '/calculators/bond': typeof CalculatorsBondRoute
-  '/calculators/transfer': typeof CalculatorsTransferRoute
-  '/calculators/yield': typeof CalculatorsYieldRoute
-  '/commission/calculator': typeof CommissionCalculatorRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
   '/compliance/audit': typeof ComplianceAuditRoute
@@ -335,11 +299,6 @@ export interface FileRoutesByTo {
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
-  '/calculators/affordability': typeof CalculatorsAffordabilityRoute
-  '/calculators/bond': typeof CalculatorsBondRoute
-  '/calculators/transfer': typeof CalculatorsTransferRoute
-  '/calculators/yield': typeof CalculatorsYieldRoute
-  '/commission/calculator': typeof CommissionCalculatorRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
   '/compliance/audit': typeof ComplianceAuditRoute
@@ -381,11 +340,6 @@ export interface FileRoutesById {
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
-  '/calculators/affordability': typeof CalculatorsAffordabilityRoute
-  '/calculators/bond': typeof CalculatorsBondRoute
-  '/calculators/transfer': typeof CalculatorsTransferRoute
-  '/calculators/yield': typeof CalculatorsYieldRoute
-  '/commission/calculator': typeof CommissionCalculatorRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
   '/compliance/audit': typeof ComplianceAuditRoute
@@ -428,11 +382,6 @@ export interface FileRouteTypes {
     | '/admin/properties'
     | '/admin/settings'
     | '/admin/users'
-    | '/calculators/affordability'
-    | '/calculators/bond'
-    | '/calculators/transfer'
-    | '/calculators/yield'
-    | '/commission/calculator'
     | '/commission/earnings'
     | '/commission/reconciliation'
     | '/compliance/audit'
@@ -472,11 +421,6 @@ export interface FileRouteTypes {
     | '/admin/properties'
     | '/admin/settings'
     | '/admin/users'
-    | '/calculators/affordability'
-    | '/calculators/bond'
-    | '/calculators/transfer'
-    | '/calculators/yield'
-    | '/commission/calculator'
     | '/commission/earnings'
     | '/commission/reconciliation'
     | '/compliance/audit'
@@ -517,11 +461,6 @@ export interface FileRouteTypes {
     | '/admin/properties'
     | '/admin/settings'
     | '/admin/users'
-    | '/calculators/affordability'
-    | '/calculators/bond'
-    | '/calculators/transfer'
-    | '/calculators/yield'
-    | '/commission/calculator'
     | '/commission/earnings'
     | '/commission/reconciliation'
     | '/compliance/audit'
@@ -557,11 +496,6 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   SignRoute: typeof SignRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  CalculatorsAffordabilityRoute: typeof CalculatorsAffordabilityRoute
-  CalculatorsBondRoute: typeof CalculatorsBondRoute
-  CalculatorsTransferRoute: typeof CalculatorsTransferRoute
-  CalculatorsYieldRoute: typeof CalculatorsYieldRoute
-  CommissionCalculatorRoute: typeof CommissionCalculatorRoute
   CommissionEarningsRoute: typeof CommissionEarningsRoute
   CommissionReconciliationRoute: typeof CommissionReconciliationRoute
   ComplianceAuditRoute: typeof ComplianceAuditRoute
@@ -724,46 +658,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/calculators/affordability': {
-      id: '/calculators/affordability'
-      path: '/calculators/affordability'
-      fullPath: '/calculators/affordability'
-      preLoaderRoute: typeof CalculatorsAffordabilityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/calculators/bond': {
-      id: '/calculators/bond'
-      path: '/calculators/bond'
-      fullPath: '/calculators/bond'
-      preLoaderRoute: typeof CalculatorsBondRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/calculators/transfer': {
-      id: '/calculators/transfer'
-      path: '/calculators/transfer'
-      fullPath: '/calculators/transfer'
-      preLoaderRoute: typeof CalculatorsTransferRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/calculators/yield': {
-      id: '/calculators/yield'
-      path: '/calculators/yield'
-      fullPath: '/calculators/yield'
-      preLoaderRoute: typeof CalculatorsYieldRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/commission/': {
       id: '/commission/'
       path: '/commission'
       fullPath: '/commission/'
       preLoaderRoute: typeof CommissionIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/commission/calculator': {
-      id: '/commission/calculator'
-      path: '/commission/calculator'
-      fullPath: '/commission/calculator'
-      preLoaderRoute: typeof CommissionCalculatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/commission/earnings': {
@@ -924,11 +823,6 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   SignRoute: SignRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  CalculatorsAffordabilityRoute: CalculatorsAffordabilityRoute,
-  CalculatorsBondRoute: CalculatorsBondRoute,
-  CalculatorsTransferRoute: CalculatorsTransferRoute,
-  CalculatorsYieldRoute: CalculatorsYieldRoute,
-  CommissionCalculatorRoute: CommissionCalculatorRoute,
   CommissionEarningsRoute: CommissionEarningsRoute,
   CommissionReconciliationRoute: CommissionReconciliationRoute,
   ComplianceAuditRoute: ComplianceAuditRoute,
