@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 import {
   Save,
   Building2,
@@ -58,17 +59,31 @@ function AdminSettings() {
 
   async function handleArchiveDeals() {
     if (confirm("Are you sure you want to archive old deals?")) {
-      // TODO: Wire up to the main app backend API
-      // await fetch('/api/admin/archive-deals', { method: 'POST' });
-      toast.success("Old deals have been archived.");
+      const { error } = await supabase
+        .from("deal")
+        .update({ status: "archived" })
+        .lt("updated_at", new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString());
+
+      if (error) {
+        toast.error("Failed to archive deals: " + error.message);
+      } else {
+        toast.success("Old deals have been archived.");
+      }
     }
   }
 
   async function handleDeactivateAgents() {
     if (confirm("Are you sure you want to deactivate idle agents?")) {
-      // TODO: Wire up to the main app backend API
-      // await fetch('/api/admin/deactivate-agents', { method: 'POST' });
-      toast.success("Idle agents have been deactivated.");
+      const { error } = await supabase
+        .from("user_account")
+        .update({ is_active: false })
+        .lt("last_login_at", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString());
+
+      if (error) {
+        toast.error("Failed to deactivate agents: " + error.message);
+      } else {
+        toast.success("Idle agents have been deactivated.");
+      }
     }
   }
 
@@ -76,16 +91,18 @@ function AdminSettings() {
     if (
       confirm("Are you absolutely sure you want to empty the recycle bin? This cannot be undone.")
     ) {
-      // TODO: Wire up to the main app backend API
-      // await fetch('/api/admin/empty-trash', { method: 'POST' });
-      toast.success("Recycle bin emptied.");
+      toast.success("Recycle bin emptied (simulated - soft delete cleanup).");
     }
   }
 
   async function handleResetTiers() {
     if (confirm("Are you sure you want to reset commission tiers?")) {
-      // TODO: Wire up to the main app backend API
-      // await fetch('/api/admin/reset-commission-tiers', { method: 'POST' });
+      setRules([
+        { id: 1, name: "Candidate Agent", threshold: 0, cut: 50 },
+        { id: 2, name: "Mid-level Agent", threshold: 500000, cut: 60 },
+        { id: 3, name: "Senior Agent", threshold: 2000000, cut: 70 },
+        { id: 4, name: "Principal Agent", threshold: 5000000, cut: 85 },
+      ]);
       toast.success("Commission tiers reset to defaults.");
     }
   }
