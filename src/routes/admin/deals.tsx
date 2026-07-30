@@ -86,7 +86,7 @@ function AdminDeals() {
                         </div>
                       </TableCell>
                       <TableCell
-                        className="font-medium max-w-[200px] truncate"
+                        className="font-medium max-w-50 truncate"
                         title={d.property?.address}
                       >
                         {d.property?.address || "No Address"}
@@ -149,7 +149,7 @@ function AdminDeals() {
               </GlassCard>
             </div>
           ) : (
-            <GlassCard className="flex flex-col items-center justify-center text-center p-8 text-muted-foreground h-full min-h-[300px]">
+            <GlassCard className="flex flex-col items-center justify-center text-center p-8 text-muted-foreground h-full min-h-75">
               <History className="size-12 mb-4 opacity-20" />
               <p>Select a deal to view its details.</p>
             </GlassCard>
