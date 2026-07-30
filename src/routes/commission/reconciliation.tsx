@@ -67,7 +67,8 @@ function ReconciliationPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("commission_calculation")
-        .select(`
+        .select(
+          `
           id,
           calculated_at,
           status,
@@ -109,7 +110,8 @@ function ReconciliationPage() {
             amount_cents,
             reason
           )
-        `)
+        `,
+        )
         .gte("calculated_at", startDate)
         .lt("calculated_at", endDate)
         .order("calculated_at", { ascending: false });
@@ -203,13 +205,16 @@ function ReconciliationPage() {
       vat += c.vat_cents;
       officeShare += c.office_share_cents;
       agentPayouts += c.agent_pool_cents;
-      
+
       const snap = c.input_snapshot_json as any;
       if (snap?.rule_lines) {
         // Find franchise fee
         for (const line of snap.rule_lines) {
           if (line.line_type === "franchise_fee") {
-            const amt = line.calculation_basis === "fixed" ? line.fixed_amount_cents : Math.round(c.net_cents * line.rate_bps / 10000);
+            const amt =
+              line.calculation_basis === "fixed"
+                ? line.fixed_amount_cents
+                : Math.round((c.net_cents * line.rate_bps) / 10000);
             franchise += amt;
           }
         }
@@ -229,10 +234,12 @@ function ReconciliationPage() {
     const header = "Reference,Property,Sale Price,Gross Commission,Net Commission,Agents\n";
     const rows = registeredDeals.map((c) => {
       const prop = c.deal?.property;
-      const agents = c.allocations.map((a: any) => a.user?.full_name || a.external_payee_name).join(" | ");
+      const agents = c.allocations
+        .map((a: any) => a.user?.full_name || a.external_payee_name)
+        .join(" | ");
       return [
         c.deal?.reference,
-        `"${prop?.address_line || ''}, ${prop?.suburb || ''}"`,
+        `"${prop?.address_line || ""}, ${prop?.suburb || ""}"`,
         ((c.deal?.sale_price_cents || 0) / 100).toFixed(2),
         (c.gross_cents / 100).toFixed(2),
         (c.net_cents / 100).toFixed(2),
@@ -360,9 +367,20 @@ function ReconciliationPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex -space-x-1.5">
-                          {c.allocations.map((a: any) => (
-                            a.user ? <AgentAvatar key={a.id} user={{ id: a.user.id, name: a.user.full_name, avatarUrl: a.user.avatar_key ? `https://example.com/${a.user.avatar_key}` : undefined }} /> : null
-                          ))}
+                          {c.allocations.map((a: any) =>
+                            a.user ? (
+                              <AgentAvatar
+                                key={a.id}
+                                user={{
+                                  id: a.user.id,
+                                  name: a.user.full_name,
+                                  avatarUrl: a.user.avatar_key
+                                    ? `https://example.com/${a.user.avatar_key}`
+                                    : undefined,
+                                }}
+                              />
+                            ) : null,
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -386,7 +404,17 @@ function ReconciliationPage() {
             {practitionerRows.map((r) => (
               <div key={r.user.id} className="rounded-xl border border-border p-4">
                 <div className="mb-3 flex items-center gap-2">
-                  <AgentAvatar user={{ id: r.user.id, name: r.user.full_name, avatarUrl: r.user.avatar_key ? `https://example.com/${r.user.avatar_key}` : undefined }} showName size={8} />
+                  <AgentAvatar
+                    user={{
+                      id: r.user.id,
+                      name: r.user.full_name,
+                      avatarUrl: r.user.avatar_key
+                        ? `https://example.com/${r.user.avatar_key}`
+                        : undefined,
+                    }}
+                    showName
+                    size={8}
+                  />
                 </div>
                 <dl className="space-y-1.5 text-sm">
                   <div className="flex justify-between">
