@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Download, FileText, CheckCircle2 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
@@ -56,6 +56,7 @@ type RunStatus = "Not Started" | "Draft" | "Approved";
 
 function ReconciliationPage() {
   const can = useCan("commission.approve");
+  const queryClient = useQueryClient();
   const now = new Date();
   const [period, setPeriod] = useState({ month: now.getMonth(), year: now.getFullYear() });
 
@@ -224,10 +225,21 @@ function ReconciliationPage() {
     return { totalCommission, vat, franchise, officeShare, agentPayouts };
   }, [registeredDeals]);
 
-  const approveRun = () => {
-    toast.error("Approval is unavailable on this view", {
-      description: "Confirm each persisted deal calculation from the deal Commission tab.",
-    });
+  const approveRun = async () => {
+    if (!registeredDeals.length) return;
+    const ids = registeredDeals.map((c) => c.id);
+    const { error } = await supabase
+      .from("commission_calculation")
+      .update({ status: "approved" })
+      .in("id", ids)
+      .eq("status", "draft");
+
+    if (error) {
+      toast.error("Failed to approve run: " + error.message);
+    } else {
+      toast.success("Run approved successfully");
+      queryClient.invalidateQueries({ queryKey: ["commission-reconciliation"] });
+    }
   };
 
   const exportCsv = () => {
