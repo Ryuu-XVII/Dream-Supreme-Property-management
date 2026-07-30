@@ -34,7 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Search, Plus, UserPlus, Pencil, Trash2, DollarSign, Loader2 } from "lucide-react";
+import { Search, Plus, UserPlus, Pencil, Trash2, Percent, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/admin/users")({
   component: AdminUsers,
@@ -310,7 +310,7 @@ function AdminUsers() {
                             onClick={() => startEdit(u)}
                             className="text-xs mr-2"
                           >
-                            <DollarSign className="size-3 mr-1" />
+                            <Percent className="size-3 mr-1" />
                             Adjust Split
                           </Button>
                         )}
