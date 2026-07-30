@@ -400,9 +400,7 @@ function ReconciliationPage() {
                   return (
                     <TableRow key={dl.id}>
                       <TableCell className="money whitespace-nowrap">{dl.ref}</TableCell>
-                      <TableCell className="min-w-0 max-w-50 truncate">
-                        {prop.address}
-                      </TableCell>
+                      <TableCell className="min-w-0 max-w-50 truncate">{prop.address}</TableCell>
                       <TableCell>{dl.cancelled?.reason}</TableCell>
                       <TableCell className="whitespace-nowrap">
                         {dl.cancelled ? dateFmt(dl.cancelled.at) : "—"}

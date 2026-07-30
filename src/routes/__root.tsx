@@ -135,11 +135,11 @@ function AuthGuard({ children }: { children: ReactNode }) {
     } else if (!loading && session && account) {
       const path = window.location.pathname;
       const isAdminPath = path.startsWith("/admin");
-      
+
       // Admins are locked strictly to the admin portal
       if (account.role === "admin" && !isAdminPath && !isPublicPath(path)) {
         router.navigate({ to: "/admin", replace: true });
-      } 
+      }
       // Agents and Candidates are locked strictly to the main app
       else if ((account.role === "agent" || account.role === "candidate") && isAdminPath) {
         router.navigate({ to: "/", replace: true });

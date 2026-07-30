@@ -24,22 +24,32 @@ function LeaseDetail() {
       const [leaseRes, invoicesRes, maintRes] = await Promise.all([
         supabase
           .from("lease")
-          .select(`
+          .select(
+            `
             *,
             property:property_id(address, suburb)
-          `)
+          `,
+          )
           .eq("id", leaseId)
           .single(),
-        supabase.from("lease_invoice").select("*").eq("lease_id", leaseId).order("due_date", { ascending: false }),
-        supabase.from("maintenance_job").select("*").eq("lease_id", leaseId).order("created_at", { ascending: false })
+        supabase
+          .from("lease_invoice")
+          .select("*")
+          .eq("lease_id", leaseId)
+          .order("due_date", { ascending: false }),
+        supabase
+          .from("maintenance_job")
+          .select("*")
+          .eq("lease_id", leaseId)
+          .order("created_at", { ascending: false }),
       ]);
 
       if (leaseRes.error) throw leaseRes.error;
-      
+
       return {
         lease: leaseRes.data,
         invoices: invoicesRes.data || [],
-        maintenance: maintRes.data || []
+        maintenance: maintRes.data || [],
       };
     },
   });
@@ -56,10 +66,7 @@ function LeaseDetail() {
   const isManager = lease.managed_by === account?.id || account?.role === "principal";
 
   return (
-    <AppShell
-      title={`Lease: ${lease.tenant_name}`}
-      description={(lease.property as any)?.address}
-    >
+    <AppShell title={`Lease: ${lease.tenant_name}`} description={(lease.property as any)?.address}>
       <Tabs defaultValue="details" className="space-y-4">
         <TabsList>
           <TabsTrigger value="details">
@@ -103,10 +110,11 @@ function LeaseDetail() {
                 <div className="font-medium">{dateFmt(lease.end_date)}</div>
               </div>
             </div>
-            
+
             {!isManager && (
               <div className="mt-8 rounded-md bg-amber-500/10 p-4 text-amber-600 border border-amber-500/20">
-                You are viewing this lease in read-only mode because you are not the assigned managing agent.
+                You are viewing this lease in read-only mode because you are not the assigned
+                managing agent.
               </div>
             )}
           </GlassCard>
@@ -123,11 +131,15 @@ function LeaseDetail() {
                   <div key={inv.id} className="flex justify-between border-b pb-2">
                     <div>
                       <div className="font-medium">{inv.invoice_type} Invoice</div>
-                      <div className="text-sm text-muted-foreground">Due: {dateFmt(inv.due_date)}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Due: {dateFmt(inv.due_date)}
+                      </div>
                     </div>
                     <div className="text-right">
                       <div className="font-medium">{zar(inv.amount_cents / 100)}</div>
-                      <Badge variant={inv.status === 'paid' ? 'default' : 'outline'}>{inv.status}</Badge>
+                      <Badge variant={inv.status === "paid" ? "default" : "outline"}>
+                        {inv.status}
+                      </Badge>
                     </div>
                   </div>
                 ))}

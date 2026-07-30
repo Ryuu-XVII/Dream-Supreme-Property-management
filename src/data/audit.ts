@@ -47,7 +47,8 @@ export function useAuditLogs() {
           entityId: typeof log.entity_id === "string" ? log.entity_id : "-",
           details: log.after_json ? JSON.stringify(log.after_json) : "No details",
           ipAddress: typeof log.ip_address === "string" ? log.ip_address : "127.0.0.1",
-          timestamp: typeof log.occurred_at === "string" ? log.occurred_at : new Date().toISOString(),
+          timestamp:
+            typeof log.occurred_at === "string" ? log.occurred_at : new Date().toISOString(),
         };
       });
     },

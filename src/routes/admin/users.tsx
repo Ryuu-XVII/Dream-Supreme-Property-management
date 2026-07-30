@@ -81,9 +81,7 @@ function AdminUsers() {
   };
 
   const toggleSelect = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
   const bulkRetire = () => {
@@ -168,10 +166,20 @@ function AdminUsers() {
                 <span className="text-sm font-medium text-muted-foreground mr-2">
                   {selectedIds.length} selected
                 </span>
-                <Button variant="outline" size="sm" onClick={bulkResetCommission} className="text-xs h-8">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={bulkResetCommission}
+                  className="text-xs h-8"
+                >
                   Reset Commission
                 </Button>
-                <Button variant="destructive" size="sm" onClick={bulkRetire} className="text-xs h-8">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={bulkRetire}
+                  className="text-xs h-8"
+                >
                   Retire Selected
                 </Button>
               </div>
@@ -216,7 +224,9 @@ function AdminUsers() {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-12">
                     <Checkbox
-                      checked={selectedIds.length > 0 && selectedIds.length === paginatedUsers.length}
+                      checked={
+                        selectedIds.length > 0 && selectedIds.length === paginatedUsers.length
+                      }
                       onCheckedChange={toggleSelectAll}
                       aria-label="Select all"
                     />

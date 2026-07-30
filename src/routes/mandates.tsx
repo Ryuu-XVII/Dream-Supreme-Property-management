@@ -32,7 +32,8 @@ function MandatesRegister() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mandate")
-        .select(`
+        .select(
+          `
           id,
           mandate_type,
           listing_price_cents,
@@ -40,7 +41,8 @@ function MandatesRegister() {
           expires_on,
           status,
           property:property_id(id, address, suburb)
-        `)
+        `,
+        )
         .eq("agency_id", account!.agencyId)
         .order("created_at", { ascending: false });
 
@@ -51,10 +53,13 @@ function MandatesRegister() {
 
   const getExpiryWarning = (expiresOn: string | null) => {
     if (!expiresOn) return null;
-    const daysLeft = Math.ceil((new Date(expiresOn).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    
+    const daysLeft = Math.ceil(
+      (new Date(expiresOn).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+    );
+
     if (daysLeft < 0) return <Badge variant="destructive">Expired</Badge>;
-    if (daysLeft <= 14) return <Badge className="bg-amber-500 hover:bg-amber-600">Expires in {daysLeft} days</Badge>;
+    if (daysLeft <= 14)
+      return <Badge className="bg-amber-500 hover:bg-amber-600">Expires in {daysLeft} days</Badge>;
     return <span className="text-muted-foreground">{dateFmt(expiresOn)}</span>;
   };
 
@@ -129,7 +134,9 @@ function MandatesRegister() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => navigate({ to: "/deals/new", search: { mandateId: mandate.id } })}
+                      onClick={() =>
+                        navigate({ to: "/deals/new", search: { mandateId: mandate.id } })
+                      }
                       className="text-primary hover:text-primary/90 hover:bg-primary/10"
                     >
                       Convert to Deal <ArrowRight className="ml-2 size-4" />

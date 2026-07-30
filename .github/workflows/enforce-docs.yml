@@ -2,7 +2,7 @@ name: Enforce Documentation Updates
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   check-docs:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -20,7 +20,7 @@ jobs:
               - 'src/routes/__root.tsx'
             docs:
               - 'documentation/technical/**'
-              
+
       - name: Enforce Docs Update
         if: steps.filter.outputs.code == 'true' && steps.filter.outputs.docs == 'false'
         run: |

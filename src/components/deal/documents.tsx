@@ -34,11 +34,22 @@ const DOCUMENT_CATEGORIES = [
 const CHECKLIST_REQUIREMENTS = [
   { label: "Signed mandate agreement", categories: ["mandate"] },
   { label: "Signed offer to purchase", categories: ["otp"] },
-  { label: "FICA — seller", categories: ["fica_id", "fica_proof_of_address"], requiresPartySide: "Seller" },
-  { label: "FICA — purchaser", categories: ["fica_id", "fica_proof_of_address"], requiresPartySide: "Purchaser" },
+  {
+    label: "FICA — seller",
+    categories: ["fica_id", "fica_proof_of_address"],
+    requiresPartySide: "Seller",
+  },
+  {
+    label: "FICA — purchaser",
+    categories: ["fica_id", "fica_proof_of_address"],
+    requiresPartySide: "Purchaser",
+  },
   { label: "Copy of title deed", categories: ["title_deed"] },
   { label: "Municipal account", categories: ["municipal_account"] },
-  { label: "Applicable compliance certificates", categories: ["compliance_electrical", "compliance_gas"] },
+  {
+    label: "Applicable compliance certificates",
+    categories: ["compliance_electrical", "compliance_gas"],
+  },
   { label: "Rates and levy clearance", categories: ["levy_clearance"] },
 ];
 
@@ -71,21 +82,19 @@ export function DealDocumentsTab({ deal }: { deal: Deal }) {
   };
 
   const updateStagedFile = (id: string, updates: Partial<StagedFile>) => {
-    setStagedFiles((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, ...updates } : f))
-    );
+    setStagedFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...updates } : f)));
   };
 
   const commitUploads = async () => {
     if (!account) return toast.error("Your company profile is still loading.");
     if (stagedFiles.length === 0) return;
-    
+
     for (const staged of stagedFiles) {
       if (staged.category.startsWith("fica_") && !staged.partyId) {
         return toast.error(`Please select a party for the FICA document: ${staged.file.name}`);
       }
       if (staged.file.size > 20 * 1024 * 1024) {
-         return toast.error(`${staged.file.name} exceeds 20MB.`);
+        return toast.error(`${staged.file.name} exceeds 20MB.`);
       }
     }
 
@@ -152,17 +161,20 @@ export function DealDocumentsTab({ deal }: { deal: Deal }) {
         <div className="space-y-2">
           {CHECKLIST_REQUIREMENTS.map((req) => {
             const complete = documents.some((doc) => {
-               if (!req.categories.includes(doc.category)) return false;
-               if (req.requiresPartySide) {
-                  const party = deal.parties?.find(p => p.id === doc.partyId);
-                  if (!party || party.side !== req.requiresPartySide) return false;
-               }
-               return true;
+              if (!req.categories.includes(doc.category)) return false;
+              if (req.requiresPartySide) {
+                const party = deal.parties?.find((p) => p.id === doc.partyId);
+                if (!party || party.side !== req.requiresPartySide) return false;
+              }
+              return true;
             });
             return (
               <div key={req.label} className="flex items-center justify-between gap-2 text-sm">
                 <span>{req.label}</span>
-                <Badge variant="outline" className={complete ? "border-success/30 bg-success/10 text-success" : ""}>
+                <Badge
+                  variant="outline"
+                  className={complete ? "border-success/30 bg-success/10 text-success" : ""}
+                >
                   {complete ? "Uploaded" : "Required"}
                 </Badge>
               </div>
@@ -176,7 +188,7 @@ export function DealDocumentsTab({ deal }: { deal: Deal }) {
           <h3 className="font-display text-base font-semibold">Deal documents</h3>
           <Badge variant="outline">{documents.length} files</Badge>
         </div>
-        
+
         {/* Upload Area */}
         <button
           type="button"
@@ -204,7 +216,7 @@ export function DealDocumentsTab({ deal }: { deal: Deal }) {
           onChange={(event) => {
             if (event.target.files) {
               stageFiles(event.target.files);
-              event.target.value = ''; 
+              event.target.value = "";
             }
           }}
         />
@@ -212,78 +224,94 @@ export function DealDocumentsTab({ deal }: { deal: Deal }) {
         {/* Staging Area */}
         {stagedFiles.length > 0 && (
           <div className="mb-6 rounded-lg border border-border bg-muted/20 p-4">
-             <h4 className="mb-3 text-sm font-semibold">Pending Uploads ({stagedFiles.length})</h4>
-             <div className="space-y-3">
-               {stagedFiles.map((staged) => (
-                 <div key={staged.id} className="flex flex-col gap-2 rounded border border-border bg-background p-3 sm:flex-row sm:items-center">
-                    <div className="flex min-w-0 flex-1 items-center gap-2">
-                       <FileText className="size-4 shrink-0 text-primary" />
-                       <span className="truncate text-sm font-medium">{staged.file.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                       <Select
-                         value={staged.category}
-                         onValueChange={(val) => updateStagedFile(staged.id, { category: val })}
-                       >
-                         <SelectTrigger className="h-8 w-45 text-xs">
-                           <SelectValue placeholder="Category" />
-                         </SelectTrigger>
-                         <SelectContent>
-                           {DOCUMENT_CATEGORIES.map(c => (
-                             <SelectItem key={c.value} value={c.value} className="text-xs">{c.label}</SelectItem>
-                           ))}
-                         </SelectContent>
-                       </Select>
+            <h4 className="mb-3 text-sm font-semibold">Pending Uploads ({stagedFiles.length})</h4>
+            <div className="space-y-3">
+              {stagedFiles.map((staged) => (
+                <div
+                  key={staged.id}
+                  className="flex flex-col gap-2 rounded border border-border bg-background p-3 sm:flex-row sm:items-center"
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <FileText className="size-4 shrink-0 text-primary" />
+                    <span className="truncate text-sm font-medium">{staged.file.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={staged.category}
+                      onValueChange={(val) => updateStagedFile(staged.id, { category: val })}
+                    >
+                      <SelectTrigger className="h-8 w-45 text-xs">
+                        <SelectValue placeholder="Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DOCUMENT_CATEGORIES.map((c) => (
+                          <SelectItem key={c.value} value={c.value} className="text-xs">
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
-                       {staged.category.startsWith("fica_") && (
-                         <Select
-                           value={staged.partyId || ""}
-                           onValueChange={(val) => updateStagedFile(staged.id, { partyId: val })}
-                         >
-                           <SelectTrigger className="h-8 w-40 text-xs">
-                             <SelectValue placeholder="Select Party" />
-                           </SelectTrigger>
-                           <SelectContent>
-                             {deal.parties?.map(p => (
-                               <SelectItem key={p.id} value={p.id} className="text-xs">
-                                 {p.name} ({p.side})
-                               </SelectItem>
-                             ))}
-                           </SelectContent>
-                         </Select>
-                       )}
-                       <Button
-                         variant="ghost"
-                         size="icon"
-                         className="size-8 text-muted-foreground hover:text-destructive"
-                         onClick={() => removeStagedFile(staged.id)}
-                       >
-                         <X className="size-4" />
-                       </Button>
-                    </div>
-                 </div>
-               ))}
-             </div>
-             <div className="mt-4 flex justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={() => setStagedFiles([])} disabled={uploading}>
-                   Cancel
-                </Button>
-                <Button size="sm" onClick={() => void commitUploads()} disabled={uploading}>
-                   {uploading ? "Uploading..." : "Upload files"}
-                </Button>
-             </div>
+                    {staged.category.startsWith("fica_") && (
+                      <Select
+                        value={staged.partyId || ""}
+                        onValueChange={(val) => updateStagedFile(staged.id, { partyId: val })}
+                      >
+                        <SelectTrigger className="h-8 w-40 text-xs">
+                          <SelectValue placeholder="Select Party" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {deal.parties?.map((p) => (
+                            <SelectItem key={p.id} value={p.id} className="text-xs">
+                              {p.name} ({p.side})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeStagedFile(staged.id)}
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setStagedFiles([])}
+                disabled={uploading}
+              >
+                Cancel
+              </Button>
+              <Button size="sm" onClick={() => void commitUploads()} disabled={uploading}>
+                {uploading ? "Uploading..." : "Upload files"}
+              </Button>
+            </div>
           </div>
         )}
 
         {/* Existing Documents List */}
         <div className="space-y-2">
           {documents.length === 0 && stagedFiles.length === 0 && (
-             <p className="py-6 text-center text-sm text-muted-foreground">No documents uploaded yet.</p>
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No documents uploaded yet.
+            </p>
           )}
           {documents.map((document) => {
-            const categoryLabel = DOCUMENT_CATEGORIES.find(c => c.value === document.category)?.label || document.category;
-            const partyLabel = document.partyId ? deal.parties?.find(p => p.id === document.partyId)?.name : null;
-            
+            const categoryLabel =
+              DOCUMENT_CATEGORIES.find((c) => c.value === document.category)?.label ||
+              document.category;
+            const partyLabel = document.partyId
+              ? deal.parties?.find((p) => p.id === document.partyId)?.name
+              : null;
+
             return (
               <button
                 type="button"
@@ -296,7 +324,8 @@ export function DealDocumentsTab({ deal }: { deal: Deal }) {
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-medium">{document.name}</span>
                     <span className="block text-xs text-muted-foreground">
-                      {categoryLabel} {partyLabel && `· ${partyLabel}`} · v{document.version} · {dateFmt(document.uploadedAt)}
+                      {categoryLabel} {partyLabel && `· ${partyLabel}`} · v{document.version} ·{" "}
+                      {dateFmt(document.uploadedAt)}
                     </span>
                   </span>
                 </span>

@@ -38,8 +38,9 @@ export function useAdminProperties() {
         const addressLine2 = typeof p.address_line2 === "string" ? p.address_line2 : "";
         const city = typeof p.city === "string" ? p.city : "";
         const address = [addressLine1, addressLine2, city].filter(Boolean).join(", ");
-        
-        const createdAtStr = typeof p.created_at === "string" ? p.created_at : new Date().toISOString();
+
+        const createdAtStr =
+          typeof p.created_at === "string" ? p.created_at : new Date().toISOString();
         const createdDate = new Date(createdAtStr);
         const today = new Date();
         const diffTime = Math.abs(today.getTime() - createdDate.getTime());

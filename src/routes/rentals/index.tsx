@@ -31,7 +31,8 @@ function RentalsDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lease")
-        .select(`
+        .select(
+          `
           id,
           tenant_name,
           rent_amount_cents,
@@ -40,7 +41,8 @@ function RentalsDashboard() {
           status,
           managed_by,
           property:property_id(id, address, suburb)
-        `)
+        `,
+        )
         .eq("agency_id", account!.agencyId)
         .order("created_at", { ascending: false });
 
@@ -87,7 +89,7 @@ function RentalsDashboard() {
             ) : (
               leasesQuery.data?.map((lease) => {
                 const isManager = lease.managed_by === account?.id || account?.role === "principal";
-                
+
                 return (
                   <TableRow key={lease.id}>
                     <TableCell className="font-medium">{lease.tenant_name}</TableCell>

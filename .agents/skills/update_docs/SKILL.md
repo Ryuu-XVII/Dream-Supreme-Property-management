@@ -5,8 +5,8 @@ description: "Automatically reviews recent codebase and schema changes and intel
 
 # Update Documentation Skill
 
-**CRITICAL RULE**: You must act as an aggressive, proactive documentation synchronizer. DO NOT wait for the user to invoke this skill. 
-Whenever you complete a major feature, add a new database table, or change RLS policies, you MUST automatically run through this workflow before ending your turn. 
+**CRITICAL RULE**: You must act as an aggressive, proactive documentation synchronizer. DO NOT wait for the user to invoke this skill.
+Whenever you complete a major feature, add a new database table, or change RLS policies, you MUST automatically run through this workflow before ending your turn.
 
 ## Workflow
 

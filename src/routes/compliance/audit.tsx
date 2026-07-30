@@ -143,9 +143,7 @@ function AuditRow({
             <Icon className="size-3" /> {event.action}
           </Badge>
         </TableCell>
-        <TableCell className="max-w-70 truncate text-muted-foreground">
-          {event.summary}
-        </TableCell>
+        <TableCell className="max-w-70 truncate text-muted-foreground">{event.summary}</TableCell>
       </TableRow>
       {expanded && (
         <TableRow className="hover:bg-transparent">

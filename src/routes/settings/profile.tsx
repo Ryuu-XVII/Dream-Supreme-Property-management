@@ -18,7 +18,7 @@ export const Route = createFileRoute("/settings/profile")({
 
 function ProfileSettings() {
   const { account } = useAuth();
-  
+
   // Personal Details State
   const [fullName, setFullName] = useState(account?.fullName || "");
   const [telephone, setTelephone] = useState(account?.telephone || "");
@@ -42,7 +42,7 @@ function ProfileSettings() {
           telephone: telephone || null,
         })
         .eq("id", account.id);
-      
+
       if (error) throw error;
       toast.success("Profile details updated.");
     } catch (error) {
@@ -63,12 +63,12 @@ function ProfileSettings() {
     if (file.size > 5 * 1024 * 1024) {
       return toast.error("File exceeds 5MB limit.");
     }
-    
+
     setUploadingFFC(true);
     try {
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
       const key = `${account.agencyId}/compliance/${account.id}/${crypto.randomUUID()}-${safeName}`;
-      
+
       await uploadFileToR2(file, key);
 
       const { error } = await supabase.rpc("upsert_ffc_certificate", {
@@ -81,9 +81,9 @@ function ProfileSettings() {
         p_mime_type: file.type,
         p_size_bytes: file.size,
       });
-      
+
       if (error) throw error;
-      
+
       toast.success("FFC Certificate successfully uploaded and verified.");
       setCertificateNumber("");
       setIssuedOn("");
@@ -166,11 +166,7 @@ function ProfileSettings() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Issue Date</Label>
-                <Input
-                  type="date"
-                  value={issuedOn}
-                  onChange={(e) => setIssuedOn(e.target.value)}
-                />
+                <Input type="date" value={issuedOn} onChange={(e) => setIssuedOn(e.target.value)} />
               </div>
               <div className="space-y-1.5">
                 <Label>Expiry Date</Label>
@@ -181,7 +177,7 @@ function ProfileSettings() {
                 />
               </div>
             </div>
-            
+
             <div className="space-y-1.5">
               <Label>Certificate File</Label>
               <div className="relative">
@@ -201,7 +197,9 @@ function ProfileSettings() {
                     {file ? file.name : "Click to select certificate"}
                   </span>
                   {!file && (
-                    <span className="text-[10px] text-muted-foreground">PDF or Image up to 5MB</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      PDF or Image up to 5MB
+                    </span>
                   )}
                 </label>
               </div>
