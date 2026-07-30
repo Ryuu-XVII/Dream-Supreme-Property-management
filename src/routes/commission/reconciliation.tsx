@@ -281,7 +281,7 @@ function ReconciliationPage() {
           <Button variant="outline" size="icon" onClick={() => shiftPeriod(-1)}>
             <ChevronLeft className="size-4" />
           </Button>
-          <span className="font-display min-w-[140px] text-center text-lg font-semibold">
+          <span className="font-display min-w-35 text-center text-lg font-semibold">
             {MONTHS[period.month]} {period.year}
           </span>
           <Button variant="outline" size="icon" onClick={() => shiftPeriod(1)}>
@@ -353,7 +353,7 @@ function ReconciliationPage() {
                   return (
                     <TableRow key={c.id}>
                       <TableCell className="money whitespace-nowrap">{c.deal?.reference}</TableCell>
-                      <TableCell className="min-w-0 max-w-[220px] truncate">
+                      <TableCell className="min-w-0 max-w-55 truncate">
                         {prop?.address_line}, {prop?.suburb}
                       </TableCell>
                       <TableCell className="money text-right whitespace-nowrap">
@@ -475,7 +475,7 @@ function ReconciliationPage() {
                   return (
                     <TableRow key={c.id}>
                       <TableCell className="money whitespace-nowrap">{c.deal?.reference}</TableCell>
-                      <TableCell className="min-w-0 max-w-[200px] truncate">
+                      <TableCell className="min-w-0 max-w-50 truncate">
                         {prop?.address_line}
                       </TableCell>
                       <TableCell>{c.deal?.cancellation_reason}</TableCell>

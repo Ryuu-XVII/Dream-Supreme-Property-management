@@ -32,35 +32,56 @@ export const navItems = [
   { label: "Clients", to: "/clients", icon: Users2 },
   { label: "Compliance", to: "/compliance/ffc", icon: ShieldCheck },
   { label: "Documents", to: "/documents", icon: FolderOpen },
-  { label: "Calculators", to: "/calculators/bond", icon: Calculator },
+  { label: "Calculators", icon: Calculator },
   { label: "Leads", to: "/leads", icon: Users2 },
   { label: "Reports", to: "/reports", icon: BarChart3 },
   { label: "Settings", to: "/settings/agency", icon: Settings },
 ] as const;
 
 function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
-  const { role } = useApp();
+  const { role, toggleCalculator } = useApp();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="flex flex-col gap-1 px-3">
       {navItems.map((item) => {
         if (item.label === "Settings" && !["Principal", "Admin"].includes(role)) return null;
         const active =
-          item.to === "/"
-            ? pathname === "/"
-            : pathname.startsWith(item.to.split("/").slice(0, 2).join("/"));
+          "to" in item
+            ? item.to === "/"
+              ? pathname === "/"
+              : pathname.startsWith(item.to.split("/").slice(0, 2).join("/"))
+            : false;
+        const navClassName = cn(
+          "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+          active
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+        );
+
+        if (item.label === "Calculators") {
+          return (
+            <button
+              key={item.label}
+              onClick={() => {
+                toggleCalculator(true);
+                onNavigate?.();
+              }}
+              title={item.label}
+              className={navClassName}
+            >
+              <item.icon className="size-4.5 shrink-0" />
+              {!collapsed && <span className="truncate">{item.label}</span>}
+            </button>
+          );
+        }
+
         return (
           <Link
             key={item.label}
             to={item.to}
             onClick={onNavigate}
             title={item.label}
-            className={cn(
-              "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-              active
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-            )}
+            className={navClassName}
           >
             {active && (
               <motion.span
@@ -156,6 +177,7 @@ export function MobileNav() {
       </AnimatePresence>
       <div className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-card/95 backdrop-blur-md md:hidden">
         {primary.map((item) => {
+          if (!("to" in item)) return null;
           const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
           return (
             <Link

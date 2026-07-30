@@ -36,7 +36,7 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [quickModalOpen, setQuickModalOpen] = useState(false);
   const navigate = useNavigate();
-  const { theme, setTheme, role } = useApp();
+  const { theme, setTheme, role, toggleCalculator } = useApp();
   const { account, signOut } = useAuth();
   const notificationQuery = useQuery({
     queryKey: ["notifications", account?.id],
@@ -103,7 +103,7 @@ export function Header() {
           size="sm"
           variant="outline"
           className="gap-1.5 text-xs"
-          onClick={() => navigate({ to: "/commission/calculator" })}
+          onClick={() => toggleCalculator(true)}
         >
           <Calculator className="size-3.5 text-primary" /> Calculator
         </Button>
@@ -260,11 +260,15 @@ export function Header() {
           <CommandGroup heading="Pages">
             {navItems.map((item) => (
               <CommandItem
-                key={item.to}
+                key={item.label}
                 value={item.label}
                 onSelect={() => {
                   setOpen(false);
-                  navigate({ to: item.to });
+                  if ("to" in item) {
+                    navigate({ to: item.to });
+                  } else if (item.label === "Calculators") {
+                    toggleCalculator(true);
+                  }
                 }}
               >
                 <item.icon className="size-4" /> {item.label}

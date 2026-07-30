@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { Sidebar, MobileNav } from "./sidebar";
 import { Header } from "./header";
 import { ChevronRight } from "lucide-react";
+import { CalculatorModal } from "@/components/calculators/calculator-modal";
 
 export interface Crumb {
   label: string;
@@ -66,6 +67,7 @@ export function AppShell({
         </main>
       </div>
       <MobileNav />
+      <CalculatorModal />
     </div>
   );
 }
