@@ -362,7 +362,7 @@ function Index() {
                     transition={{ delay: i * 0.03 }}
                     className="relative pb-4 last:pb-0"
                   >
-                    <span className="absolute -left-[21px] top-1 size-2.5 rounded-full bg-primary" />
+                    <span className="absolute -left-5.25 top-1 size-2.5 rounded-full bg-primary" />
                     <p className="min-w-0 truncate text-sm">{e.summary}</p>
                     <p className="mt-0.5 truncate text-xs text-muted-foreground">
                       {e.user} · {e.entityRef} · {relative(e.at)}

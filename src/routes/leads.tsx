@@ -415,10 +415,10 @@ function LeadsTable({
             {pageRows.map(({ lead }) => (
               <TableRow key={lead.id} className="cursor-pointer" onClick={() => onOpen(lead)}>
                 {visibleCols.name && (
-                  <TableCell className="max-w-[160px] truncate font-medium">{lead.name}</TableCell>
+                  <TableCell className="max-w-40 truncate font-medium">{lead.name}</TableCell>
                 )}
                 {visibleCols.email && (
-                  <TableCell className="max-w-[200px] truncate text-muted-foreground">
+                  <TableCell className="max-w-50 truncate text-muted-foreground">
                     {lead.email}
                   </TableCell>
                 )}
@@ -436,7 +436,7 @@ function LeadsTable({
                       value={lead.assignedTo ?? "unassigned"}
                       onValueChange={(v) => onQuickAssign(lead.id, v)}
                     >
-                      <SelectTrigger className="h-8 w-[160px] text-xs">
+                      <SelectTrigger className="h-8 w-40 text-xs">
                         {lead.assignedTo &&
                         practitioners.find((user) => user.id === lead.assignedTo) ? (
                           <AgentAvatar
@@ -467,7 +467,7 @@ function LeadsTable({
                       value={lead.status}
                       onValueChange={(v) => onQuickStatus(lead.id, v as Lead["status"])}
                     >
-                      <SelectTrigger className="h-8 w-[130px] text-xs">
+                      <SelectTrigger className="h-8 w-32.5 text-xs">
                         <StatusBadge status={lead.status} />
                       </SelectTrigger>
                       <SelectContent>

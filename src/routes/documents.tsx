@@ -248,7 +248,7 @@ function LibraryTab() {
             <Building2 className="size-4 text-muted-foreground" /> Agency Tree
           </h3>
         </div>
-        <div className="max-h-[600px] overflow-y-auto scrollbar-thin p-2">
+        <div className="max-h-150 overflow-y-auto scrollbar-thin p-2">
           <TreeAgency
             dealsByBranch={dealsByBranch}
             selectedDealId={selectedDealId}
@@ -487,7 +487,7 @@ function UploadZone({
             toast.success(`Uploaded to category: ${category}`);
           }}
           className={cn(
-            "flex min-h-[88px] flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed px-4 py-4 text-center text-xs text-muted-foreground transition-colors",
+            "flex min-h-22 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed px-4 py-4 text-center text-xs text-muted-foreground transition-colors",
             dragging ? "border-primary bg-primary/5 text-primary" : "border-border",
           )}
         >

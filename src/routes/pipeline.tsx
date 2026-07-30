@@ -235,7 +235,7 @@ function DealCard({ deal }: { deal: PipelineDeal }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <AgentAvatar user={{ name: deal.agent.name, colour: "#1f7a52" } as any} size={6} />
-          <span className="text-[10px] text-muted-foreground truncate max-w-[60px]">
+          <span className="text-[10px] text-muted-foreground truncate max-w-15">
             {deal.agent.name}
           </span>
         </div>
@@ -279,7 +279,7 @@ function KanbanBoard({ filtered }: { filtered: PipelineDeal[] }) {
         {STAGES.map((stage) => {
           const stageDeals = byStage(stage);
           return (
-            <div key={stage} className="w-[280px] shrink-0">
+            <div key={stage} className="w-70 shrink-0">
               <div className="mb-2 flex items-center justify-between gap-2 px-1">
                 <h3 className="truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {stage}
@@ -480,7 +480,7 @@ function TableView({ filtered }: { filtered: PipelineDeal[] }) {
               >
                 {visibleCols.ref && <TableCell className="font-mono text-xs">{deal.ref}</TableCell>}
                 {visibleCols.address && (
-                  <TableCell className="max-w-[220px] truncate">{deal.property.address}</TableCell>
+                  <TableCell className="max-w-55 truncate">{deal.property.address}</TableCell>
                 )}
                 {visibleCols.stage && (
                   <TableCell>
