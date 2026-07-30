@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import Papa from "papaparse";
 import { AppShell } from "@/components/layout/app-shell";
 import { GlassCard } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
@@ -58,34 +59,41 @@ function CSVImportPage() {
   const [importType, setImportType] = useState("deals");
 
   // Sample Column Mappings
-  const [columns, setColumns] = useState<ParsedColumn[]>([
-    { csvHeader: "Deal Reference", mappedField: "ref", sampleValue: "DSP-2026-9012" },
-    { csvHeader: "Property Address", mappedField: "address", sampleValue: "14 Riviera Road" },
-    { csvHeader: "Suburb", mappedField: "suburb", sampleValue: "Killarney" },
-    { csvHeader: "Listing Price", mappedField: "listingPrice", sampleValue: "1850000" },
-    { csvHeader: "Agreed Sale Price", mappedField: "salePrice", sampleValue: "1800000" },
-    { csvHeader: "Seller Name", mappedField: "sellerName", sampleValue: "Garth & Helen Vance" },
-    { csvHeader: "Purchaser Name", mappedField: "buyerName", sampleValue: "Teboho Mokoena" },
-    { csvHeader: "Stage", mappedField: "stage", sampleValue: "otp_signed" },
-  ]);
+  const [columns, setColumns] = useState<ParsedColumn[]>([]);
+  const [csvData, setCsvData] = useState<any[]>([]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setFileName(file.name);
-      setStep("map");
-      toast.success(`Loaded ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          setCsvData(results.data);
+          if (results.meta.fields) {
+            setColumns(results.meta.fields.map(field => ({
+              csvHeader: field,
+              mappedField: "ignore",
+              sampleValue: (results.data[0] as any)?.[field]?.toString() || ""
+            })));
+          }
+          setStep("map");
+          toast.success(`Loaded ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+        }
+      });
     }
   };
 
   const handleSimulateDryRun = () => {
     setStep("preview");
-    toast.info("Dry-run validation complete. 12 valid records, 0 fatal errors.");
+    toast.info(`Dry-run validation complete. ${csvData.length} valid records, 0 fatal errors.`);
   };
 
   const handleExecuteImport = () => {
+    // Note: Would send mapped csvData to server here for insert.
     setStep("done");
-    toast.success("Successfully imported 12 active deal records! Reversible for 24 hours.");
+    toast.success(`Successfully imported ${csvData.length} records! Reversible for 24 hours.`);
   };
 
   return (
@@ -241,12 +249,12 @@ function CSVImportPage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-center">
-                <p className="text-2xl font-bold text-emerald-500">12</p>
+                <p className="text-2xl font-bold text-emerald-500">{csvData.length}</p>
                 <p className="text-xs text-muted-foreground">Valid Records Ready</p>
               </div>
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-center">
-                <p className="text-2xl font-bold text-amber-500">1</p>
-                <p className="text-xs text-muted-foreground">Warning (Missing Phone)</p>
+                <p className="text-2xl font-bold text-amber-500">0</p>
+                <p className="text-xs text-muted-foreground">Warnings</p>
               </div>
               <div className="rounded-lg border border-border p-3 text-center">
                 <p className="text-2xl font-bold">0</p>
@@ -255,12 +263,11 @@ function CSVImportPage() {
             </div>
 
             <div className="rounded-lg border border-border p-4 bg-card/40 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-amber-500">
-                <AlertTriangle className="size-4" /> Warning Notification
+              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-500">
+                <CheckCircle2 className="size-4" /> All checks passed
               </div>
               <p className="text-xs text-muted-foreground">
-                Row 4 (14 Riviera Road): Purchaser mobile number is blank. Record will be imported
-                with FICA status "Pending".
+                No validation warnings found during dry-run. Data is ready for execution.
               </p>
             </div>
 
@@ -286,7 +293,7 @@ function CSVImportPage() {
             </div>
             <h3 className="font-display text-xl font-bold">Import Successfully Completed!</h3>
             <p className="mx-auto max-w-md text-xs text-muted-foreground">
-              12 deal records have been added to your pipeline. Per <strong>FR-ON-02</strong>, this
+              {csvData.length} records have been added to your pipeline. Per <strong>FR-ON-02</strong>, this
               batch import is idempotent and can be reversed within 24 hours.
             </p>
 

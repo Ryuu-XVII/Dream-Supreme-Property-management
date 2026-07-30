@@ -298,6 +298,15 @@ function CommissionRulesPage() {
       },
     });
     if (error) return toast.error(error.message);
+
+    await supabase.rpc("log_audit_event", {
+      p_entity_type: "commission_rule_set",
+      p_entity_id: editing.id,
+      p_action: "Saved rule set",
+      p_summary: `Saved rule set: ${editing.name}`,
+      p_after_json: editing,
+    });
+
     await queryClient.invalidateQueries({ queryKey: ["commission-rule-sets"] });
     toast.success(`Rule set "${editing.name}" saved`);
     setEditorOpen(false);

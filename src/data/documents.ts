@@ -119,6 +119,15 @@ export function useUploadDocument() {
         throw error;
       }
 
+      // 4. Log audit event
+      await supabase.rpc("log_audit_event", {
+        p_entity_type: "document",
+        p_entity_id: data.id,
+        p_action: "Uploaded document",
+        p_summary: `Uploaded ${file.name} to category ${category}`,
+        p_after_json: data
+      });
+
       return data;
     },
     onSuccess: (_, variables) => {

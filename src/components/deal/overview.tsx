@@ -10,6 +10,21 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
   const property = (deal as Deal & { property?: ReturnType<typeof propertyShape> }).property;
   const gross = Math.round((deal.salePrice * deal.commissionBps) / 10000);
 
+  // Occupational interest accrual
+  let occupationalInterest = 0;
+  let occupationalDays = 0;
+  if (deal.occupationDate && deal.occupationalRent && deal.occupationalRent > 0) {
+    const occDate = new Date(deal.occupationDate).getTime();
+    const endDate = deal.registeredAt ? new Date(deal.registeredAt).getTime() : Date.now();
+    
+    if (endDate > occDate) {
+      occupationalDays = Math.floor((endDate - occDate) / 86400000);
+      // Daily rent = monthly / (365 / 12) = monthly / 30.416
+      const dailyRent = deal.occupationalRent / (365 / 12);
+      occupationalInterest = Math.round(occupationalDays * dailyRent);
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
       <GlassCard className="lg:col-span-2">
@@ -64,6 +79,15 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
           <Row label="Sale price" value={zar(deal.salePrice, { decimals: false })} />
           <Row label="Commission rate" value={pct(deal.commissionBps)} />
           <Row label="Gross commission" value={zar(gross, { decimals: false })} strong />
+          {deal.occupationalRent && deal.occupationalRent > 0 && (
+            <>
+              <div className="my-2 border-t border-border/40" />
+              <Row label="Occupational rent (mo)" value={zar(deal.occupationalRent, { decimals: false })} />
+              {occupationalDays > 0 && (
+                <Row label={`Accrued (${occupationalDays} days)`} value={zar(occupationalInterest, { decimals: false })} />
+              )}
+            </>
+          )}
         </div>
       </GlassCard>
 

@@ -31,6 +31,7 @@ import { DealDocumentsTab } from "@/components/deal/documents";
 import { DealCommissionTab } from "@/components/deal/commission";
 import { DealOffersTab } from "@/components/deal/offers";
 import { DealTimelineTab } from "@/components/deal/timeline";
+import { DealBondsTab } from "@/components/deal/bonds";
 import { ArrowLeft, ChevronRight, ChevronLeft, XCircle, CheckCircle2, Link2 } from "lucide-react";
 import { useDealDetail } from "@/data/deals";
 import { stageToDb } from "@/lib/domain";
@@ -57,6 +58,8 @@ function DealDetailPage() {
   const [stageModal, setStageModal] = useState<"advance" | "revert" | "cancel" | null>(null);
   const [stageReason, setStageReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
+  const [stageOverride, setStageOverride] = useState(false);
+  const [gateError, setGateError] = useState("");
 
   if (error) {
     return (
@@ -91,9 +94,16 @@ function DealDetailPage() {
         p_deal_id: dealId,
         p_to_stage: stageToDb[nextStage],
         p_reason: stageReason || null,
-        p_override: false,
+        p_override: stageOverride,
       });
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes("GATE_FAILED")) {
+          setGateError(error.message.replace("GATE_FAILED: ", ""));
+          toast.dismiss();
+          return; // leave modal open
+        }
+        throw error;
+      }
       setDeal((prev) => {
         if (!prev) return prev;
         return {
@@ -117,6 +127,8 @@ function DealDetailPage() {
       toast.success(`Deal advanced to ${nextStage}`);
       setStageModal(null);
       setStageReason("");
+      setStageOverride(false);
+      setGateError("");
     } catch (err: any) {
       toast.dismiss();
       toast.error(`Failed: ${err.message}`);
@@ -330,6 +342,7 @@ function DealDetailPage() {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="conditions">Conditions ({deal.conditions.length})</TabsTrigger>
             <TabsTrigger value="documents">Documents ({deal.documents.length})</TabsTrigger>
+            <TabsTrigger value="bonds">Bonds</TabsTrigger>
             <TabsTrigger value="commission">Commission</TabsTrigger>
             <TabsTrigger value="offers">Offers ({deal.offers.length})</TabsTrigger>
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
@@ -347,6 +360,10 @@ function DealDetailPage() {
             <DealDocumentsTab deal={deal} />
           </TabsContent>
 
+          <TabsContent value="bonds">
+            <DealBondsTab dealId={deal.id} />
+          </TabsContent>
+
           <TabsContent value="commission">
             <DealCommissionTab deal={deal} />
           </TabsContent>
@@ -362,7 +379,17 @@ function DealDetailPage() {
       </div>
 
       {/* Advance Stage Modal */}
-      <Dialog open={stageModal === "advance"} onOpenChange={() => setStageModal(null)}>
+      <Dialog 
+        open={stageModal === "advance"} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setStageModal(null);
+            setGateError("");
+            setStageOverride(false);
+            setStageReason("");
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Advance Stage</DialogTitle>
@@ -379,9 +406,31 @@ function DealDetailPage() {
               value={stageReason}
               onChange={(e) => setStageReason(e.target.value)}
             />
+            {gateError && (
+              <div className="mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                <p className="font-semibold mb-1">Stage Gate Blocked</p>
+                <p>{gateError}</p>
+                <div className="mt-3 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="override"
+                    checked={stageOverride}
+                    onChange={(e) => setStageOverride(e.target.checked)}
+                    className="size-4 rounded border-destructive/50 text-destructive focus:ring-destructive"
+                  />
+                  <Label htmlFor="override" className="text-destructive font-medium cursor-pointer">
+                    Force override (Principal/Admin only)
+                  </Label>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setStageModal(null)}>
+            <Button variant="outline" onClick={() => {
+              setStageModal(null);
+              setGateError("");
+              setStageOverride(false);
+            }}>
               Cancel
             </Button>
             <Button onClick={handleAdvanceStage}>Confirm Advance</Button>

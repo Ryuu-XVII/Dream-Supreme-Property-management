@@ -158,6 +158,7 @@ export interface Deal {
   mandateExpiry: string;
   otpSigned?: string;
   occupationDate?: string;
+  occupationalRent?: number;
   registeredAt?: string;
   branch: string;
   stageSince: string;

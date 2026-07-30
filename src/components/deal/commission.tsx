@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Calculator, ShieldAlert } from "lucide-react";
+import { Calculator, ShieldAlert, Printer } from "lucide-react";
 import { GlassCard, EmptyState } from "@/components/ui-kit";
 import { AgentAvatar } from "@/components/badges";
 import type { Deal } from "@/types";
@@ -75,21 +75,29 @@ export function DealCommissionTab({ deal }: { deal: Deal }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2 no-print">
+        {value && (
+          <Button variant="outline" onClick={() => window.print()} className="gap-2">
+            <Printer className="size-4" />
+            Print statement
+          </Button>
+        )}
         <Button onClick={() => void runCalculation()} disabled={calculating} className="gap-2">
           <Calculator className="size-4" />
           {calculating ? "Calculating…" : value ? "Recalculate" : "Calculate commission"}
         </Button>
       </div>
 
-      <Alert>
-        <ShieldAlert className="size-4" />
-        <AlertTitle>Compliance enforced</AlertTitle>
-        <AlertDescription>
-          Calculation is blocked unless practitioner splits total 100% and every internal
-          practitioner has a valid FFC.
-        </AlertDescription>
-      </Alert>
+      <div className="no-print">
+        <Alert>
+          <ShieldAlert className="size-4" />
+          <AlertTitle>Compliance enforced</AlertTitle>
+          <AlertDescription>
+            Calculation is blocked unless practitioner splits total 100% and every internal
+            practitioner has a valid FFC.
+          </AlertDescription>
+        </Alert>
+      </div>
 
       {!value && !calculation.isLoading ? (
         <EmptyState
