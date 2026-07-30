@@ -213,6 +213,9 @@ export function Header() {
             </DropdownMenuItem>
           )}
           <DropdownMenuItem asChild>
+            <Link to="/settings/profile">My profile</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
             <Link to="/settings/agency">Agency settings</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
