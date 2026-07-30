@@ -1,3 +1,6 @@
+DROP FUNCTION IF EXISTS public.register_new_agent(text, text, text);
+DROP FUNCTION IF EXISTS public.register_new_agent(text, text, text, text);
+
 CREATE OR REPLACE FUNCTION public.register_new_agent(
     p_full_name text,
     p_email text,

@@ -3,8 +3,8 @@ import { toast } from "sonner";
 import { FileText, UploadCloud } from "lucide-react";
 import { GlassCard } from "@/components/ui-kit";
 import type { Deal, DocumentRec } from "@/types";
-import { uploadFileToR2, getR2FileUrl } from "@/lib/storage";
-import { supabase } from "@/lib/supabase";
+import { useDocuments, useUploadDocument } from "@/data/documents";
+import { getR2FileUrl } from "@/lib/storage";
 import { useAuth } from "@/lib/auth";
 import { dateFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
@@ -24,61 +24,36 @@ const CHECKLIST = [
 
 export function DealDocumentsTab({ deal }: { deal: Deal }) {
   const { account } = useAuth();
-  const [documents, setDocuments] = useState<DocumentRec[]>(deal.documents);
-  const [uploading, setUploading] = useState(false);
+  const { data: documents = [], isLoading } = useDocuments(deal.id);
+  const uploadDoc = useUploadDocument();
   const [previewUrl, setPreviewUrl] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
 
   const uploadFiles = async (files: FileList | File[]) => {
     if (!account) return toast.error("Your company profile is still loading.");
-    setUploading(true);
-    try {
-      for (const file of Array.from(files)) {
-        if (file.size > 20 * 1024 * 1024) throw new Error(`${file.name} exceeds 20MB.`);
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-        const key = `${account.agencyId}/deals/${deal.id}/${crypto.randomUUID()}-${safeName}`;
-        await uploadFileToR2(file, key);
-        const { data, error } = await supabase
-          .from("document")
-          .insert({
-            agency_id: account.agencyId,
-            deal_id: deal.id,
-            category: "other",
-            filename: file.name,
-            storage_key: key,
-            mime_type: file.type,
-            size_bytes: file.size,
-            uploaded_by: account.id,
-          })
-          .select("id, filename, category, version, uploaded_at, size_bytes")
-          .single();
-        if (error) throw error;
-        setDocuments((current) => [
-          ...current,
-          {
-            id: data.id,
-            name: data.filename,
-            category: data.category,
-            version: data.version,
-            uploadedBy: account.fullName,
-            uploadedAt: data.uploaded_at,
-            sizeKb: Math.round((data.size_bytes || 0) / 1024),
-            url: key,
-          },
-        ]);
+    
+    for (const file of Array.from(files)) {
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error(`${file.name} exceeds 20MB.`);
+        continue;
       }
-      toast.success("Document upload completed.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Document upload failed.");
-    } finally {
-      setUploading(false);
+      
+      uploadDoc.mutate({
+        file,
+        dealId: deal.id,
+        category: "other",
+        agencyId: account.agencyId,
+      }, {
+        onSuccess: () => toast.success(`Uploaded ${file.name}`),
+        onError: (err) => toast.error(`Failed to upload ${file.name}: ${err.message}`),
+      });
     }
   };
 
-  const preview = async (document: DocumentRec) => {
-    if (!document.url) return toast.error("This legacy document has no storage key.");
+  const preview = async (document: any) => {
+    if (!document.storageKey && !document.url) return toast.error("This legacy document has no storage key.");
     try {
-      setPreviewUrl(await getR2FileUrl(document.url));
+      setPreviewUrl(await getR2FileUrl(document.storageKey || document.url));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Preview could not be opened.");
     }
@@ -110,7 +85,7 @@ export function DealDocumentsTab({ deal }: { deal: Deal }) {
         </div>
         <button
           type="button"
-          disabled={uploading}
+          disabled={uploadDoc.isPending}
           onClick={() => fileInput.current?.click()}
           onDragOver={(event) => event.preventDefault()}
           onDrop={(event) => {
@@ -121,7 +96,7 @@ export function DealDocumentsTab({ deal }: { deal: Deal }) {
         >
           <UploadCloud className="size-8 text-muted-foreground" />
           <span className="text-sm font-medium">
-            {uploading ? "Uploading…" : "Drop files or click to browse"}
+            {uploadDoc.isPending ? "Uploading…" : "Drop files or click to browse"}
           </span>
           <span className="text-xs text-muted-foreground">PDF, DOCX and images up to 20MB</span>
         </button>

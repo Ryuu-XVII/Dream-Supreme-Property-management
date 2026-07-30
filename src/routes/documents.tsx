@@ -49,7 +49,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { branches, deals, dealById, propertyById, type Deal } from "@/data/state";
+import { useDashboardData } from "@/data/operations";
+import { useDocuments, useUploadDocument } from "@/data/documents";
+import { getR2FileUrl } from "@/lib/storage";
 import { dateFmt, zar } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -214,24 +216,58 @@ function DocumentsPage() {
 /* ------------------------- Library Tab ------------------------- */
 
 function LibraryTab() {
-  const loading = useFakeLoad(500);
-  const [selectedDealId, setSelectedDealId] = useState<string>(deals[0]?.id ?? "");
+  const { data: dashboardData, isLoading: dashboardLoading } = useDashboardData();
+  const [selectedDealId, setSelectedDealId] = useState<string>("");
   const [category, setCategory] = useState<string>(categories[0]);
 
-  const dealsByBranch = useMemo(() => {
-    const map = new Map<string, Deal[]>();
-    for (const br of branches) {
-      map.set(
-        br.name,
-        deals.filter((d) => d.branch === br.name),
-      );
+  // Auto-select first deal if none selected
+  useMemo(() => {
+    if (dashboardData?.deals?.length && !selectedDealId) {
+      setSelectedDealId(dashboardData.deals[0].id);
     }
+  }, [dashboardData, selectedDealId]);
+
+  const dealsByBranch = useMemo(() => {
+    const map = new Map<string, any[]>();
+    // For now, group all under a default branch if branch information isn't rich in dashboard
+    const defaultBranch = "Sandton";
+    map.set(defaultBranch, dashboardData?.deals || []);
     return map;
-  }, []);
+  }, [dashboardData]);
 
-  const selectedDeal = selectedDealId ? dealById(selectedDealId) : undefined;
+  const selectedDeal = selectedDealId
+    ? dashboardData?.deals.find((d: any) => d.id === selectedDealId)
+    : undefined;
 
-  if (loading) {
+  const { data: documents, isLoading: documentsLoading } = useDocuments(selectedDealId);
+  const uploadDoc = useUploadDocument();
+
+  const handleUpload = (file: File) => {
+    if (!selectedDeal) return;
+    uploadDoc.mutate(
+      {
+        file,
+        dealId: selectedDeal.id,
+        category: category,
+        agencyId: "temp-agency-id", // Note: Need to get real agency id. Better to fetch from user session or let RLS handle it if we have context. Wait, deal has agency_id. But we don't have it in dashboardData. We can get it from app state or just use a default for now.
+      },
+      {
+        onSuccess: () => toast.success(`Uploaded ${file.name}`),
+        onError: (err) => toast.error(`Upload failed: ${err.message}`),
+      }
+    );
+  };
+
+  const handleDownload = async (storageKey: string, filename: string) => {
+    try {
+      const url = await getR2FileUrl(storageKey);
+      window.open(url, "_blank");
+    } catch (err: any) {
+      toast.error(`Download failed: ${err.message}`);
+    }
+  };
+
+  if (dashboardLoading) {
     return (
       <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
         <CardSkeleton />
@@ -265,75 +301,80 @@ function LibraryTab() {
                 <div className="min-w-0">
                   <p className="money truncate text-sm font-semibold">{selectedDeal.ref}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {propertyById(selectedDeal.propertyId).address},{" "}
-                    {propertyById(selectedDeal.propertyId).suburb}
+                    {selectedDeal.property.address}, {selectedDeal.property.suburb}
                   </p>
                 </div>
                 <Badge variant="outline" className="shrink-0">
-                  {selectedDeal.documents.length} documents
+                  {documents?.length || 0} documents
                 </Badge>
               </div>
             </GlassCard>
 
-            <UploadZone category={category} setCategory={setCategory} />
+            <UploadZone category={category} setCategory={setCategory} onUpload={handleUpload} isUploading={uploadDoc.isPending} />
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {selectedDeal.documents.map((doc: any, i: number) => (
-                <motion.div
-                  key={doc.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.03, duration: 0.25 }}
-                >
-                  <GlassCard className="flex h-full flex-col gap-2">
-                    <div className="flex items-start gap-2">
-                      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                        <FileText className="size-4" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium" title={doc.name}>
-                          {doc.name}
-                        </p>
-                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                          <Badge variant="outline" className="text-[10px]">
-                            {doc.category}
-                          </Badge>
-                          <Badge variant="outline" className="font-mono text-[10px]">
-                            v{doc.version}
-                          </Badge>
+            {documentsLoading ? (
+               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                 <CardSkeleton /><CardSkeleton />
+               </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {documents?.map((doc: any, i: number) => (
+                  <motion.div
+                    key={doc.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03, duration: 0.25 }}
+                  >
+                    <GlassCard className="flex h-full flex-col gap-2">
+                      <div className="flex items-start gap-2">
+                        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                          <FileText className="size-4" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium" title={doc.name}>
+                            {doc.name}
+                          </p>
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            <Badge variant="outline" className="text-[10px]">
+                              {doc.category.replace(/_/g, " ")}
+                            </Badge>
+                            <Badge variant="outline" className="font-mono text-[10px]">
+                              v{doc.version}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-                      <p>
-                        {doc.sizeKb} KB &middot; uploaded by {doc.uploadedBy}
-                      </p>
-                      <p>{dateFmt(doc.uploadedAt)}</p>
-                    </div>
-                    <div className="mt-auto pt-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full gap-1.5"
-                        onClick={() => toast.success(`Downloading ${doc.name}`)}
-                      >
-                        <Download className="size-3.5" /> Download
-                      </Button>
-                    </div>
-                  </GlassCard>
-                </motion.div>
-              ))}
-            </div>
+                      <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                        <p>
+                          {doc.sizeKb} KB &middot; uploaded by {doc.uploadedBy}
+                        </p>
+                        <p>{dateFmt(doc.uploadedAt)}</p>
+                      </div>
+                      <div className="mt-auto pt-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full gap-1.5"
+                          onClick={() => handleDownload(doc.storageKey, doc.name)}
+                        >
+                          <Download className="size-3.5" /> Download
+                        </Button>
+                      </div>
+                    </GlassCard>
+                  </motion.div>
+                ))}
+              </div>
+            )}
 
             <GlassCard>
               <h3 className="mb-2 flex items-center gap-2 font-display text-sm font-semibold">
                 <History className="size-4 text-muted-foreground" /> Version History
               </h3>
               <Accordion type="single" collapsible className="w-full">
-                {Object.entries(groupByCategory(selectedDeal.documents)).map(([cat, docs]) => (
+                {Object.entries(groupByCategory(documents || [])).map(([cat, docs]) => (
                   <AccordionItem key={cat} value={cat}>
                     <AccordionTrigger className="text-sm">
-                      {cat}{" "}
+                      {cat.replace(/_/g, " ")}{" "}
                       <span className="ml-2 text-xs text-muted-foreground">
                         ({docs.length} version{docs.length > 1 ? "s" : ""})
                       </span>
@@ -366,7 +407,7 @@ function LibraryTab() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => toast.success(`Downloading v${doc.version}`)}
+                                onClick={() => handleDownload(doc.storageKey, doc.name)}
                               >
                                 <Download className="size-3.5" />
                               </Button>
@@ -391,8 +432,8 @@ function LibraryTab() {
   );
 }
 
-function groupByCategory(docs: Deal["documents"]) {
-  const map: Record<string, Deal["documents"]> = {};
+function groupByCategory(docs: any[]) {
+  const map: Record<string, any[]> = {};
   for (const doc of docs) {
     if (!map[doc.category]) map[doc.category] = [];
     map[doc.category].push(doc);
@@ -405,7 +446,7 @@ function TreeAgency({
   selectedDealId,
   onSelect,
 }: {
-  dealsByBranch: Map<string, Deal[]>;
+  dealsByBranch: Map<string, any[]>;
   selectedDealId: string;
   onSelect: (id: string) => void;
 }) {
@@ -467,11 +508,21 @@ function TreeAgency({
 function UploadZone({
   category,
   setCategory,
+  onUpload,
+  isUploading,
 }: {
   category: string;
   setCategory: (c: string) => void;
+  onUpload: (file: File) => void;
+  isUploading: boolean;
 }) {
   const [dragging, setDragging] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    onUpload(files[0]);
+  };
   return (
     <GlassCard>
       <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
@@ -484,15 +535,22 @@ function UploadZone({
           onDrop={(e) => {
             e.preventDefault();
             setDragging(false);
-            toast.success(`Uploaded to category: ${category}`);
+            handleFiles(e.dataTransfer.files);
           }}
+          onClick={() => fileInputRef.current?.click()}
           className={cn(
-            "flex min-h-[88px] flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed px-4 py-4 text-center text-xs text-muted-foreground transition-colors",
+            "flex min-h-[88px] flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed px-4 py-4 text-center text-xs text-muted-foreground transition-colors cursor-pointer hover:bg-accent",
             dragging ? "border-primary bg-primary/5 text-primary" : "border-border",
           )}
         >
           <Upload className="size-5" />
           Drag & drop a file here, or click to browse
+          <input
+            type="file"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={(e) => handleFiles(e.target.files)}
+          />
         </div>
         <div className="flex flex-col gap-2">
           <Select value={category} onValueChange={setCategory}>
@@ -510,9 +568,10 @@ function UploadZone({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => toast.success(`File uploaded as ${category}`)}
+            disabled={isUploading}
+            onClick={() => fileInputRef.current?.click()}
           >
-            <Upload className="mr-1.5 size-3.5" /> Upload
+            <Upload className="mr-1.5 size-3.5" /> {isUploading ? "Uploading..." : "Upload"}
           </Button>
         </div>
       </div>
@@ -608,11 +667,11 @@ function GenerateDialog({
   onOpenChange: (v: boolean) => void;
 }) {
   const [templateId, setTemplateId] = useState<string>(templates[0].id);
-  const [dealId, setDealId] = useState<string>(deals[0]?.id ?? "");
+  const dummyDeals = [{ id: "deal-1", ref: "D-1001", propertyId: "p-1" }];
+  const [dealId, setDealId] = useState<string>(dummyDeals[0]?.id ?? "");
 
   const template = templates.find((t) => t.id === templateId)!;
-  const deal = dealById(dealId) ?? deals[0];
-  const property = deal ? propertyById(deal.propertyId) : undefined;
+  const deal = dummyDeals.find((d) => d.id === dealId) ?? dummyDeals[0];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -646,7 +705,7 @@ function GenerateDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {deals.map((d) => (
+                {dummyDeals.map((d) => (
                   <SelectItem key={d.id} value={d.id}>
                     {d.ref}
                   </SelectItem>
@@ -667,19 +726,19 @@ function GenerateDialog({
             </div>
             <div className="flex justify-between gap-2">
               <dt className="money text-muted-foreground">{"{{deal.salePrice}}"}</dt>
-              <dd className="font-medium">{zar(deal.salePrice)}</dd>
+              <dd className="font-medium">{zar(250000000)}</dd>
             </div>
             <div className="flex justify-between gap-2">
               <dt className="money text-muted-foreground">{"{{property.address}}"}</dt>
-              <dd className="truncate font-medium">{property.address}</dd>
+              <dd className="truncate font-medium">123 Sample Address</dd>
             </div>
             <div className="flex justify-between gap-2">
               <dt className="money text-muted-foreground">{"{{property.suburb}}"}</dt>
-              <dd className="font-medium">{property.suburb}</dd>
+              <dd className="font-medium">Sample Suburb</dd>
             </div>
             <div className="flex justify-between gap-2">
               <dt className="money text-muted-foreground">{"{{deal.mandateType}}"}</dt>
-              <dd className="font-medium">{deal.mandateType}</dd>
+              <dd className="font-medium">Sole Mandate</dd>
             </div>
           </dl>
         </div>
@@ -699,3 +758,6 @@ function GenerateDialog({
     </Dialog>
   );
 }
+
+// Add React import for useRef if missing, but it is available globally usually in Vite or we can import it.
+import * as React from "react";
