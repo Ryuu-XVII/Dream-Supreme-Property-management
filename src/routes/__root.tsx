@@ -115,7 +115,7 @@ function RootShell({ children }: { children: ReactNode }) {
 import { AuthProvider, useAuth } from "@/lib/auth";
 
 function AuthGuard({ children }: { children: ReactNode }) {
-  const { session, account, loading } = useAuth();
+  const { session, account, loading, signOut } = useAuth();
   const router = useRouter();
 
   const isPublicPath = (path: string) =>
@@ -148,10 +148,41 @@ function AuthGuard({ children }: { children: ReactNode }) {
     }
   }, [session, account, loading, router]);
 
-  if (loading || (session && !account)) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
         Loading secure session…
+      </div>
+    );
+  }
+
+  if (session && !account) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-center px-4">
+        <div className="max-w-sm space-y-2">
+          <h2 className="text-lg font-semibold text-foreground">Account Not Found</h2>
+          <p className="text-sm text-muted-foreground">
+            We found your login session, but your agency profile is missing. This usually happens if
+            the database was reset.
+          </p>
+        </div>
+        <button
+          onClick={async () => {
+            try {
+              await signOut();
+            } catch (e) {
+              console.error(e);
+              // Force clear everything if supabase signout fails
+              localStorage.clear();
+              sessionStorage.clear();
+            } finally {
+              window.location.href = "/login";
+            }
+          }}
+          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          Clear Session & Sign In Again
+        </button>
       </div>
     );
   }

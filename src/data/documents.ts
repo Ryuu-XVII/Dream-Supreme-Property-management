@@ -125,7 +125,7 @@ export function useUploadDocument() {
         p_entity_id: data.id,
         p_action: "Uploaded document",
         p_summary: `Uploaded ${file.name} to category ${category}`,
-        p_after_json: data
+        p_after_json: data,
       });
 
       return data;

@@ -16,7 +16,7 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
   if (deal.occupationDate && deal.occupationalRent && deal.occupationalRent > 0) {
     const occDate = new Date(deal.occupationDate).getTime();
     const endDate = deal.registeredAt ? new Date(deal.registeredAt).getTime() : Date.now();
-    
+
     if (endDate > occDate) {
       occupationalDays = Math.floor((endDate - occDate) / 86400000);
       // Daily rent = monthly / (365 / 12) = monthly / 30.416
@@ -82,9 +82,15 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
           {deal.occupationalRent && deal.occupationalRent > 0 && (
             <>
               <div className="my-2 border-t border-border/40" />
-              <Row label="Occupational rent (mo)" value={zar(deal.occupationalRent, { decimals: false })} />
+              <Row
+                label="Occupational rent (mo)"
+                value={zar(deal.occupationalRent, { decimals: false })}
+              />
               {occupationalDays > 0 && (
-                <Row label={`Accrued (${occupationalDays} days)`} value={zar(occupationalInterest, { decimals: false })} />
+                <Row
+                  label={`Accrued (${occupationalDays} days)`}
+                  value={zar(occupationalInterest, { decimals: false })}
+                />
               )}
             </>
           )}

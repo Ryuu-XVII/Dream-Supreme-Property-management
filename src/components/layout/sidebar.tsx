@@ -20,6 +20,7 @@ import {
 import { useApp } from "@/lib/app-state";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { LogOut } from "lucide-react";
 
 export const navItems = [
   { label: "Dashboard", to: "/", icon: LayoutDashboard },
@@ -77,7 +78,7 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
 }
 
 export function Sidebar() {
-  const { sidebarCollapsed, toggleSidebar } = useApp();
+  const { sidebarCollapsed, toggleSidebar, role } = useApp();
   return (
     <aside
       className={cn(
@@ -101,6 +102,17 @@ export function Sidebar() {
       <div className="mt-2 flex-1 overflow-y-auto scrollbar-thin">
         <NavList collapsed={sidebarCollapsed} />
       </div>
+      {["principal", "admin"].includes(role) && (
+        <div className="border-t border-sidebar-border p-3">
+          <Link
+            to="/admin"
+            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
+          >
+            <ShieldCheck className="size-4.5 shrink-0" />
+            {!sidebarCollapsed && <span className="truncate">Admin Portal</span>}
+          </Link>
+        </div>
+      )}
       <button
         onClick={toggleSidebar}
         className="m-3 flex items-center justify-center gap-2 rounded-lg border border-sidebar-border py-2 text-xs text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/60"

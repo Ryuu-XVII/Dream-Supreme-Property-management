@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { data, error } = await supabase
         .from("user_account")
-        .select("id, agency_id, branch_id, full_name, email, telephone, role, status")
+        .select("id, agency_id, branch_id, full_name, email, mobile, role, status")
         .eq("auth_user_id", nextSession.user.id)
         .maybeSingle();
 
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               branchId: data.branch_id,
               fullName: data.full_name,
               email: data.email,
-              telephone: data.telephone,
+              telephone: data.mobile,
               role: data.role,
               status: data.status,
             }

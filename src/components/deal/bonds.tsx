@@ -51,18 +51,16 @@ export function DealBondsTab({ dealId }: { dealId: string }) {
 
   const handleSave = () => {
     if (!editing.institution) return toast.error("Institution is required.");
-    if (!editing.amountCents || editing.amountCents <= 0) return toast.error("Valid amount is required.");
-    
-    saveBond.mutate(
-      { ...editing, dealId } as any,
-      {
-        onSuccess: () => {
-          toast.success("Bond application saved");
-          setEditorOpen(false);
-        },
-        onError: (err) => toast.error(err.message),
-      }
-    );
+    if (!editing.amountCents || editing.amountCents <= 0)
+      return toast.error("Valid amount is required.");
+
+    saveBond.mutate({ ...editing, dealId } as any, {
+      onSuccess: () => {
+        toast.success("Bond application saved");
+        setEditorOpen(false);
+      },
+      onError: (err) => toast.error(err.message),
+    });
   };
 
   const handleDelete = (id: string) => {
@@ -72,7 +70,7 @@ export function DealBondsTab({ dealId }: { dealId: string }) {
       {
         onSuccess: () => toast.success("Deleted bond application"),
         onError: (err) => toast.error(err.message),
-      }
+      },
     );
   };
 
@@ -100,31 +98,44 @@ export function DealBondsTab({ dealId }: { dealId: string }) {
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <h3 className="font-semibold">{b.institution}</h3>
-                  {b.originator && <p className="text-xs text-muted-foreground">Orig: {b.originator}</p>}
+                  {b.originator && (
+                    <p className="text-xs text-muted-foreground">Orig: {b.originator}</p>
+                  )}
                 </div>
-                <Badge variant="outline" className={
-                  b.status === 'granted' ? 'bg-success/10 text-success border-success/30' :
-                  b.status === 'declined' ? 'bg-destructive/10 text-destructive border-destructive/30' :
-                  b.status === 'aip' ? 'bg-primary/10 text-primary border-primary/30' :
-                  'bg-muted'
-                }>
+                <Badge
+                  variant="outline"
+                  className={
+                    b.status === "granted"
+                      ? "bg-success/10 text-success border-success/30"
+                      : b.status === "declined"
+                        ? "bg-destructive/10 text-destructive border-destructive/30"
+                        : b.status === "aip"
+                          ? "bg-primary/10 text-primary border-primary/30"
+                          : "bg-muted"
+                  }
+                >
                   {b.status.toUpperCase()}
                 </Badge>
               </div>
-              
+
               <div className="text-xl font-bold font-mono tracking-tight my-2">
                 {zar(b.amountCents)}
               </div>
-              
+
               <div className="text-xs text-muted-foreground mt-auto">
                 Applied: {dateFmt(b.appliedOn)}
               </div>
-              
+
               <div className="mt-4 flex items-center justify-end gap-2 border-t border-border pt-3">
                 <Button variant="outline" size="sm" onClick={() => handleOpenEdit(b)}>
                   Edit
                 </Button>
-                <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDelete(b.id)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive"
+                  onClick={() => handleDelete(b.id)}
+                >
                   <Trash2 className="size-4" />
                 </Button>
               </div>
@@ -136,10 +147,14 @@ export function DealBondsTab({ dealId }: { dealId: string }) {
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing.id ? "Edit Bond Application" : "New Bond Application"}</DialogTitle>
-            <DialogDescription>Track application status to a specific bank or originator.</DialogDescription>
+            <DialogTitle>
+              {editing.id ? "Edit Bond Application" : "New Bond Application"}
+            </DialogTitle>
+            <DialogDescription>
+              Track application status to a specific bank or originator.
+            </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-3">
             <div className="space-y-1.5">
               <Label>Institution / Bank</Label>
@@ -149,7 +164,7 @@ export function DealBondsTab({ dealId }: { dealId: string }) {
                 onChange={(e) => setEditing({ ...editing, institution: e.target.value })}
               />
             </div>
-            
+
             <div className="space-y-1.5">
               <Label>Originator (Optional)</Label>
               <Input
@@ -158,16 +173,18 @@ export function DealBondsTab({ dealId }: { dealId: string }) {
                 onChange={(e) => setEditing({ ...editing, originator: e.target.value })}
               />
             </div>
-            
+
             <div className="space-y-1.5">
               <Label>Amount Requested</Label>
               <Input
                 type="number"
                 value={(editing.amountCents || 0) / 100}
-                onChange={(e) => setEditing({ ...editing, amountCents: Number(e.target.value) * 100 })}
+                onChange={(e) =>
+                  setEditing({ ...editing, amountCents: Number(e.target.value) * 100 })
+                }
               />
             </div>
-            
+
             <div className="space-y-1.5">
               <Label>Status</Label>
               <Select
@@ -185,7 +202,7 @@ export function DealBondsTab({ dealId }: { dealId: string }) {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-1.5">
               <Label>Date Applied</Label>
               <Input
@@ -195,10 +212,14 @@ export function DealBondsTab({ dealId }: { dealId: string }) {
               />
             </div>
           </div>
-          
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditorOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saveBond.isPending}>Save</Button>
+            <Button variant="outline" onClick={() => setEditorOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={saveBond.isPending}>
+              Save
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

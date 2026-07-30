@@ -72,15 +72,17 @@ function CSVImportPage() {
         complete: (results) => {
           setCsvData(results.data);
           if (results.meta.fields) {
-            setColumns(results.meta.fields.map(field => ({
-              csvHeader: field,
-              mappedField: "ignore",
-              sampleValue: (results.data[0] as any)?.[field]?.toString() || ""
-            })));
+            setColumns(
+              results.meta.fields.map((field) => ({
+                csvHeader: field,
+                mappedField: "ignore",
+                sampleValue: (results.data[0] as any)?.[field]?.toString() || "",
+              })),
+            );
           }
           setStep("map");
           toast.success(`Loaded ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
-        }
+        },
       });
     }
   };
@@ -293,8 +295,9 @@ function CSVImportPage() {
             </div>
             <h3 className="font-display text-xl font-bold">Import Successfully Completed!</h3>
             <p className="mx-auto max-w-md text-xs text-muted-foreground">
-              {csvData.length} records have been added to your pipeline. Per <strong>FR-ON-02</strong>, this
-              batch import is idempotent and can be reversed within 24 hours.
+              {csvData.length} records have been added to your pipeline. Per{" "}
+              <strong>FR-ON-02</strong>, this batch import is idempotent and can be reversed within
+              24 hours.
             </p>
 
             <div className="pt-4 flex flex-wrap justify-center gap-3">

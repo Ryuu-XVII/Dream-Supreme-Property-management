@@ -62,12 +62,12 @@ export function useSaveBond() {
         .single();
 
       if (error) throw error;
-      
+
       await supabase.rpc("log_audit_event", {
         p_entity_type: "bond_application",
         p_entity_id: data.id,
         p_action: id ? "Updated bond application" : "Created bond application",
-        p_summary: `${id ? "Updated" : "Created"} ${institution} bond for ${amountCents / 100}`,
+        p_summary: `${id ? "Updated" : "Created"} ${institution} bond for ${amountCents !== undefined ? amountCents / 100 : "unknown"}`,
         p_after_json: data,
       });
 
@@ -86,7 +86,7 @@ export function useDeleteBond() {
     mutationFn: async ({ id, dealId }: { id: string; dealId: string }) => {
       const { error } = await supabase.from("bond_application").delete().eq("id", id);
       if (error) throw error;
-      
+
       await supabase.rpc("log_audit_event", {
         p_entity_type: "bond_application",
         p_entity_id: id,

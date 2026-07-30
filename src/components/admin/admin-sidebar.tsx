@@ -60,7 +60,7 @@ function AdminNavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigat
 }
 
 export function AdminSidebar() {
-  const { sidebarCollapsed, toggleSidebar } = useApp();
+  const { sidebarCollapsed } = useApp();
   return (
     <aside
       className={cn(
@@ -81,6 +81,15 @@ export function AdminSidebar() {
       </div>
       <div className="mt-2 flex-1 overflow-y-auto scrollbar-thin">
         <AdminNavList collapsed={sidebarCollapsed} />
+      </div>
+      <div className="mt-auto border-t border-slate-800 p-3">
+        <Link
+          to="/"
+          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+        >
+          <LayoutDashboard className="size-[18px] shrink-0" />
+          {!sidebarCollapsed && <span className="truncate">Agent Portal</span>}
+        </Link>
       </div>
     </aside>
   );

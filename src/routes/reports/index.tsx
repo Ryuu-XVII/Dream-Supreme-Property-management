@@ -45,33 +45,47 @@ function ReportsHub() {
           .from("commission_calculation")
           .select("gross_commission_cents")
           .eq("agency_id", account!.agencyId)
-          .gte("created_at", new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString())
+          .gte(
+            "created_at",
+            new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString(),
+          ),
       ]);
 
       if (dealsRes.error) throw dealsRes.error;
       if (usersRes.error) throw usersRes.error;
       if (commissionRes.error) throw commissionRes.error;
 
-      const activeDeals = dealsRes.data.filter(d => d.stage !== "CANCELLED" && d.stage !== "REGISTERED").length;
-      const totalCancellations = dealsRes.data.filter(d => d.stage === "CANCELLED").length;
-      const compliantUsers = usersRes.data.filter(u => 
-        u.ffc?.[0]?.expires_on && new Date(u.ffc[0].expires_on) > new Date()
+      const activeDeals = dealsRes.data.filter(
+        (d) => d.stage !== "CANCELLED" && d.stage !== "REGISTERED",
+      ).length;
+      const totalCancellations = dealsRes.data.filter((d) => d.stage === "CANCELLED").length;
+      const compliantUsers = usersRes.data.filter(
+        (u) => u.ffc?.[0]?.expires_on && new Date(u.ffc[0].expires_on) > new Date(),
       ).length;
       const totalUsers = usersRes.data.length || 1;
-      
-      const lastMonthGross = commissionRes.data.reduce((acc, curr) => acc + (curr.gross_commission_cents || 0), 0);
+
+      const lastMonthGross = commissionRes.data.reduce(
+        (acc, curr) => acc + (curr.gross_commission_cents || 0),
+        0,
+      );
 
       return {
         activeDeals,
         totalCancellations,
         compliantUsers,
         totalUsers,
-        lastMonthGross
+        lastMonthGross,
       };
-    }
+    },
   });
 
-  const { activeDeals = 0, totalCancellations = 0, compliantUsers = 0, totalUsers = 1, lastMonthGross = 0 } = reportsQuery.data || {};
+  const {
+    activeDeals = 0,
+    totalCancellations = 0,
+    compliantUsers = 0,
+    totalUsers = 1,
+    lastMonthGross = 0,
+  } = reportsQuery.data || {};
 
   const reportCards = [
     {

@@ -379,8 +379,8 @@ function DealDetailPage() {
       </div>
 
       {/* Advance Stage Modal */}
-      <Dialog 
-        open={stageModal === "advance"} 
+      <Dialog
+        open={stageModal === "advance"}
         onOpenChange={(open) => {
           if (!open) {
             setStageModal(null);
@@ -426,11 +426,14 @@ function DealDetailPage() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setStageModal(null);
-              setGateError("");
-              setStageOverride(false);
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setStageModal(null);
+                setGateError("");
+                setStageOverride(false);
+              }}
+            >
               Cancel
             </Button>
             <Button onClick={handleAdvanceStage}>Confirm Advance</Button>
