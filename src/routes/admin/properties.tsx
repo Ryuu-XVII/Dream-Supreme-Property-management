@@ -120,7 +120,7 @@ function AdminProperties() {
                           <MapPin className="size-4 text-indigo-500" />
                           <div className="flex flex-col">
                             <span
-                              className="font-medium text-sm max-w-[250px] truncate"
+                              className="font-medium text-sm max-w-62.5 truncate"
                               title={p.address}
                             >
                               {p.address}
@@ -156,7 +156,7 @@ function AdminProperties() {
                         <span className="text-xs text-muted-foreground ml-1">days</span>
                       </TableCell>
                       <TableCell
-                        className="text-xs text-muted-foreground max-w-[200px] truncate"
+                        className="text-xs text-muted-foreground max-w-50 truncate"
                         title={p.lastAudit || "None"}
                       >
                         {p.lastAudit || "Property created in system"}
