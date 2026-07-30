@@ -9,9 +9,15 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 - **`user_account`**: Links a Supabase Auth `user` to a specific `agency`. Contains the user's operational role (`principal`, `admin`, `agent`, `candidate`). 
 - **`commission_pct`**: (Recently added) Stores an agent's individual commission split. If `NULL`, the system falls back to the agency's default rules.
 
-### `property` & `deal`
+### `property`, `mandate`, & `deal`
 - **`property`**: The physical real estate asset. Independent of the transaction.
-- **`deal`**: The transactional workflow. Links a `property` to `user_account`s (via `deal_participant`). Moves through strict stages (e.g., `Mandate Signed` -> `OTP Signed` -> `Registered`).
+- **`mandate`**: The exclusive or open listing agreement to sell/rent a `property`. Tracks listing price and expiry.
+- **`deal`**: The transactional workflow. Links a `property` (and optionally a `mandate`) to `user_account`s (via `deal_participant`). Moves through strict stages (e.g., `Mandate Signed` -> `OTP Signed` -> `Registered`).
+
+### `lease`, `lease_invoice`, & `maintenance_job` (Rentals Module)
+- **`lease`**: The core rentals agreement linking a tenant to a property. Owned by a specific `managed_by` rental agent.
+- **`lease_invoice`**: Financial tracking for rent, utilities, and deposits against a lease.
+- **`maintenance_job`**: Tracks property repairs, linked to a lease and requiring principal/agent approval.
 
 ### `commission_rule_set` & `commission_calculation`
 - **`commission_rule_set`**: Defines global agency rules (e.g., Office Share %, Franchise Fees, Marketing Deductions).
@@ -30,6 +36,9 @@ Another helper `public.get_current_role()` extracts the user's role from their `
 - **Principals & Admins**: Can view, edit, and delete almost all records within their `agency_id`.
 - **Agents & Candidates**: Can only view and edit records they are explicitly assigned to (e.g., a `deal` where they exist in `deal_participant`).
 
+### `managed_by` Edit Rights (Rentals)
+For the Rentals module, read access is granted to the entire agency for transparency, but write/edit access on a `lease` (and its invoices/maintenance) is strictly limited to the `managed_by` agent via the `public.can_edit_lease()` RLS helper function.
+
 ## 3. Remote Procedure Calls (RPCs)
 
 We utilize Postgres functions (RPCs) to handle complex transactions that require strict data integrity and audit logging.
@@ -46,3 +55,4 @@ Sets an array of users' `commission_pct` to `NULL`, forcing them to inherit the 
 ## 4. Triggers & Automation
 - **`deal_stage_history`**: A Postgres trigger automatically records an entry in `deal_timeline` whenever a deal's `stage` column is updated.
 - **`audit_log`**: Crucial actions (like commission finalization, user archival, entity updates) write to `audit_log` for complete financial transparency.
+- **`pg_cron` (Scheduled Jobs)**: Used for automated daily background tasks. For example, `run_daily_sweeps()` runs every night at midnight to check all FFC certificates and automatically suspends accounts if their FFC has expired.

@@ -14,6 +14,7 @@ The application operates as a **Monolith with Subdirectory Routing**, serving tw
 
 - **Agent Portal (Main App)**: Resides in the root (`/`, `/deals`, `/pipeline`, `/leads`). Wrapped by `<AppShell>` which includes the main sidebar and header. Restricted to Agents, Candidates, and Principals.
 - **Admin Portal**: Resides under `/admin/*`. Wrapped by `<AdminShell>` with its own dedicated sidebar and header. Restricted strictly to Admins and Principals. 
+- **Conveyancer Portal (Public Links)**: Resides under `/conveyancer`. This is a standalone, public-facing portal accessed via secure "magic links" (URL tokens). Conveyancers do NOT require user accounts and do not use the standard login flow.
 
 **Enforcement Strategy**:
 Role-Based Access Control (RBAC) is enforced client-side via the `<AuthGuard>` in `src/routes/__root.tsx`. 
@@ -50,6 +51,15 @@ State is separated into three distinct domains:
   /migrations      # PostgreSQL schema, functions, and RLS policies
 ```
 
-## 5. Security Principles
+## 5. Security Principles & Storage
 - **Never Trust the Client**: While `AuthGuard` handles UI routing, true data security is enforced at the database layer using Postgres Row Level Security (RLS). Even if a user bypasses the UI blocks, Supabase will reject queries they are not authorized for.
 - **No Shared Secrets**: The application only ships with the `VITE_SUPABASE_ANON_KEY`, relying strictly on JWTs for authorization.
+- **Cloudflare R2 Integration**: We utilize an S3-compatible storage bucket (`cloudflare-r2`) for all sensitive documents (FFCs, FICA documents, Deal PDFs). Files are uploaded with strict path constraints (`<agency_id>/...`).
+- **Signed URLs**: Documents are strictly private. The frontend requests signed URLs from Supabase to render PDFs safely in the UI.
+
+## 6. Developer Guidelines
+To make ongoing development easier and more predictable, please follow these conventions:
+1. **Routing Strategy**: Always use `createFileRoute` provided by `@tanstack/react-router`. Avoid traditional React Router constructs. Keep data loading local to the route or inside a dedicated TanStack Query hook.
+2. **Component Granularity**: If a UI chunk exceeds 150 lines inside a Route component, break it out into a sub-component within the same file or move it to `src/components/` if it can be reused.
+3. **State Management**: Prefer server-state (TanStack Query) over client-state (Context/Zustand) wherever possible. Only use global state (`useApp`) for purely visual UI states like sidebar toggles.
+4. **Forms and Validation**: Standardize on `react-hook-form` and `zod` for all form parsing and validation to guarantee type-safe data reaches the database.
