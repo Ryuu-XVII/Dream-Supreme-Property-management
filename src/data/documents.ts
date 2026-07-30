@@ -22,7 +22,8 @@ export function useDocuments(dealId?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("document")
-        .select(`
+        .select(
+          `
           id,
           category,
           filename,
@@ -33,7 +34,8 @@ export function useDocuments(dealId?: string) {
           supersedes_id,
           uploaded_at,
           uploader:uploaded_by(full_name)
-        `)
+        `,
+        )
         .eq("deal_id", dealId)
         .order("uploaded_at", { ascending: false });
 
@@ -76,7 +78,9 @@ export function useUploadDocument() {
       currentVersion?: number;
     }) => {
       // 1. Get current user
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data: userAccount } = await supabase
@@ -84,7 +88,7 @@ export function useUploadDocument() {
         .select("id")
         .eq("auth_user_id", user.id)
         .single();
-        
+
       if (!userAccount) throw new Error("User account not found");
 
       // 2. Upload file to storage

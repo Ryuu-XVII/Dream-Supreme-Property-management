@@ -116,7 +116,7 @@ function ReconciliationPage() {
         .lt("calculated_at", endDate)
         .order("calculated_at", { ascending: false });
       if (error) throw error;
-      return data || [];
+      return (data || []) as any[];
     },
   });
 
@@ -262,7 +262,7 @@ function ReconciliationPage() {
   };
 
   const statusTone =
-    status === "Approved"
+    (status as string) === "Approved"
       ? "border-success/30 bg-success/10 text-success"
       : status === "Draft"
         ? "border-warning/40 bg-warning/15 text-warning"
@@ -294,7 +294,7 @@ function ReconciliationPage() {
       </div>
 
       <div className="mb-6 flex flex-wrap gap-2">
-        {can && status !== "Approved" && registeredDeals.length > 0 && (
+        {can && (status as string) !== "Approved" && registeredDeals.length > 0 && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button className="gap-2">
@@ -371,13 +371,15 @@ function ReconciliationPage() {
                             a.user ? (
                               <AgentAvatar
                                 key={a.id}
-                                user={{
-                                  id: a.user.id,
-                                  name: a.user.full_name,
-                                  avatarUrl: a.user.avatar_key
-                                    ? `https://example.com/${a.user.avatar_key}`
-                                    : undefined,
-                                }}
+                                user={
+                                  {
+                                    id: a.user.id,
+                                    name: a.user.full_name,
+                                    avatarUrl: a.user.avatar_key
+                                      ? `https://example.com/${a.user.avatar_key}`
+                                      : undefined,
+                                  } as any
+                                }
                               />
                             ) : null,
                           )}
@@ -405,13 +407,15 @@ function ReconciliationPage() {
               <div key={r.user.id} className="rounded-xl border border-border p-4">
                 <div className="mb-3 flex items-center gap-2">
                   <AgentAvatar
-                    user={{
-                      id: r.user.id,
-                      name: r.user.full_name,
-                      avatarUrl: r.user.avatar_key
-                        ? `https://example.com/${r.user.avatar_key}`
-                        : undefined,
-                    }}
+                    user={
+                      {
+                        id: r.user.id,
+                        name: r.user.full_name,
+                        avatarUrl: r.user.avatar_key
+                          ? `https://example.com/${r.user.avatar_key}`
+                          : undefined,
+                      } as any
+                    }
                     showName
                     size={8}
                   />
@@ -467,7 +471,7 @@ function ReconciliationPage() {
               <TableBody>
                 {cancelledDeals.map((c) => {
                   const prop = c.deal?.property;
-                  const amt = c.clawbacks.reduce((sum, cb) => sum + cb.amount_cents, 0);
+                  const amt = c.clawbacks.reduce((sum: any, cb: any) => sum + cb.amount_cents, 0);
                   return (
                     <TableRow key={c.id}>
                       <TableCell className="money whitespace-nowrap">{c.deal?.reference}</TableCell>

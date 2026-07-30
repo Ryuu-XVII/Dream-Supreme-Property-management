@@ -254,7 +254,7 @@ function LibraryTab() {
       {
         onSuccess: () => toast.success(`Uploaded ${file.name}`),
         onError: (err) => toast.error(`Upload failed: ${err.message}`),
-      }
+      },
     );
   };
 
@@ -310,12 +310,18 @@ function LibraryTab() {
               </div>
             </GlassCard>
 
-            <UploadZone category={category} setCategory={setCategory} onUpload={handleUpload} isUploading={uploadDoc.isPending} />
+            <UploadZone
+              category={category}
+              setCategory={setCategory}
+              onUpload={handleUpload}
+              isUploading={uploadDoc.isPending}
+            />
 
             {documentsLoading ? (
-               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                 <CardSkeleton /><CardSkeleton />
-               </div>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <CardSkeleton />
+                <CardSkeleton />
+              </div>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {documents?.map((doc: any, i: number) => (
