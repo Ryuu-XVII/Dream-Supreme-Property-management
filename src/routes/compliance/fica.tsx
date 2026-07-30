@@ -141,7 +141,7 @@ function FicaRegister() {
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Select value={entityFilter} onValueChange={setEntityFilter}>
-          <SelectTrigger className="h-9 w-[200px]">
+          <SelectTrigger className="h-9 w-50">
             <SelectValue placeholder="Entity type" />
           </SelectTrigger>
           <SelectContent>

@@ -615,7 +615,7 @@ function CountdownBoard() {
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <Select value={agentFilter} onValueChange={setAgentFilter}>
-          <SelectTrigger className="h-9 w-[170px]">
+          <SelectTrigger className="h-9 w-42.5">
             <SelectValue placeholder="Agent" />
           </SelectTrigger>
           <SelectContent>
@@ -628,7 +628,7 @@ function CountdownBoard() {
           </SelectContent>
         </Select>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="h-9 w-[190px]">
+          <SelectTrigger className="h-9 w-47.5">
             <SelectValue placeholder="Condition type" />
           </SelectTrigger>
           <SelectContent>
@@ -641,7 +641,7 @@ function CountdownBoard() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="h-9 w-[150px]">
+          <SelectTrigger className="h-9 w-37.5">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -692,7 +692,7 @@ function CountdownBoard() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(i * 0.02, 0.3), duration: 0.25 }}
-                  className="min-w-[720px]"
+                  className="min-w-180"
                 >
                   <ConditionRowView
                     row={row}
