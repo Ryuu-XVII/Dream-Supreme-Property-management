@@ -69,11 +69,11 @@ function CSVImportPage() {
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
-        complete: (results) => {
+        complete: (results: any) => {
           setCsvData(results.data);
           if (results.meta.fields) {
             setColumns(
-              results.meta.fields.map((field) => ({
+              results.meta.fields.map((field: string) => ({
                 csvHeader: field,
                 mappedField: "ignore",
                 sampleValue: (results.data[0] as any)?.[field]?.toString() || "",
