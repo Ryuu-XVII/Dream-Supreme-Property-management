@@ -12,6 +12,8 @@ interface AppState {
   setRole: (r: Role) => void;
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
+  calculatorOpen: boolean;
+  toggleCalculator: (open?: boolean) => void;
 }
 
 const Ctx = createContext<AppState | null>(null);
@@ -22,6 +24,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [resolved, setResolved] = useState<"light" | "dark">("light");
   const [role, setRoleState] = useState<Role>("Principal");
   const [sidebarCollapsed, setCollapsed] = useState(false);
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
 
   useEffect(() => {
     const t = (localStorage.getItem("dsp-theme") as Theme) || "system";
@@ -67,9 +70,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return !c;
     });
 
+  const toggleCalculator = (open?: boolean) => setCalculatorOpen((o) => open ?? !o);
+
   return (
     <Ctx.Provider
-      value={{ theme, setTheme, resolved, role, setRole, sidebarCollapsed, toggleSidebar }}
+      value={{
+        theme,
+        setTheme,
+        resolved,
+        role,
+        setRole,
+        sidebarCollapsed,
+        toggleSidebar,
+        calculatorOpen,
+        toggleCalculator,
+      }}
     >
       {children}
     </Ctx.Provider>
