@@ -55,12 +55,39 @@ const typeIcons: Record<Condition["type"], React.ComponentType<{ className?: str
   "Electrical Compliance": Zap,
 };
 
-export function DealConditionsTab({ deal }: { deal: Deal }) {
-  const [conditions, setConditions] = useState<Condition[]>(deal.conditions);
-  const [extendTarget, setExtendTarget] = useState<Condition | null>(null);
+import { conditionStatusFromDb, conditionTypeFromDb } from "@/lib/domain";
+
+export function DealConditionsTab({ deal }: { deal: any }) {
+  const bond = Array.isArray(deal.bond) ? deal.bond[0] : deal.bond;
+
+  const mappedConditions = (deal.conditions || []).map((c: any) => ({
+    id: c.id,
+    type: conditionTypeFromDb[c.condition_type] ?? "Due Diligence",
+    description: c.description,
+    dueDate: c.due_on,
+    originalDueDate: c.original_due_on,
+    status: conditionStatusFromDb[c.status] ?? "Open",
+    responsibleParty: c.responsible_party || "Purchaser",
+    responsibleUserId: c.responsible_user_id || "",
+  }));
+
+  const [conditions, setConditions] = useState<any[]>(mappedConditions);
+  const [extendTarget, setExtendTarget] = useState<any | null>(null);
   const [newDate, setNewDate] = useState("");
   const [reason, setReason] = useState("");
-  const [bondStatus, setBondStatus] = useState(deal.bond.status);
+
+  const rawBondStatus =
+    bond?.status === "approved_in_principle"
+      ? "Approved in principle"
+      : bond?.status === "formally_granted"
+        ? "Formally granted"
+        : bond?.status === "submitted"
+          ? "Submitted"
+          : bond?.status === "declined"
+            ? "Declined"
+            : "Not applied";
+
+  const [bondStatus, setBondStatus] = useState(rawBondStatus);
 
   const updateBondStatus = async (value: Deal["bond"]["status"]) => {
     const statusMap: Record<Deal["bond"]["status"], string> = {
@@ -72,8 +99,8 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
     };
     const { error } = await supabase.rpc("set_bond_status", {
       p_deal_id: deal.id,
-      p_status: statusMap[value],
-      p_institution: deal.bond.institution === "—" ? null : deal.bond.institution,
+      p_status: statusMap[value as keyof typeof statusMap],
+      p_institution: bond?.institution === "—" ? null : bond?.institution,
     });
     if (error) {
       toast.error(error.message);
@@ -83,8 +110,8 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
     toast.success("Bond status updated");
   };
 
-  const setStatus = async (id: string, status: ConditionStatus) => {
-    const statusMap: Record<ConditionStatus, string> = {
+  const setStatus = async (id: string, status: string) => {
+    const statusMap: Record<string, string> = {
       Open: "pending",
       Fulfilled: "fulfilled",
       Extended: "extended",
@@ -163,7 +190,7 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
               </TableHeader>
               <TableBody>
                 {conditions.map((c) => {
-                  const Icon = typeIcons[c.type];
+                  const Icon = typeIcons[c.type as keyof typeof typeIcons] || SearchCheck;
                   const isOpen = c.status === "Open" || c.status === "Extended";
                   return (
                     <TableRow key={c.id}>
@@ -268,14 +295,11 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
               </SelectContent>
             </Select>
           </div>
-          <Detail label="Institution" value={deal.bond.institution} />
-          <Detail
-            label="Applied"
-            value={deal.bond.appliedAt ? dateFmt(deal.bond.appliedAt) : "—"}
-          />
+          <Detail label="Institution" value={bond?.institution || "—"} />
+          <Detail label="Applied" value={bond?.applied_on ? dateFmt(bond.applied_on) : "—"} />
           <Detail
             label="Decided"
-            value={deal.bond.decidedAt ? dateFmt(deal.bond.decidedAt) : "—"}
+            value={bond?.status_updated_on ? dateFmt(bond.status_updated_on) : "—"}
           />
         </div>
       </GlassCard>
