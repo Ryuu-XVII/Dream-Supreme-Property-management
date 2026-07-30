@@ -225,7 +225,7 @@ export function DealDocumentsTab({ deal }: { deal: Deal }) {
                          value={staged.category}
                          onValueChange={(val) => updateStagedFile(staged.id, { category: val })}
                        >
-                         <SelectTrigger className="h-8 w-[180px] text-xs">
+                         <SelectTrigger className="h-8 w-45 text-xs">
                            <SelectValue placeholder="Category" />
                          </SelectTrigger>
                          <SelectContent>
@@ -240,7 +240,7 @@ export function DealDocumentsTab({ deal }: { deal: Deal }) {
                            value={staged.partyId || ""}
                            onValueChange={(val) => updateStagedFile(staged.id, { partyId: val })}
                          >
-                           <SelectTrigger className="h-8 w-[160px] text-xs">
+                           <SelectTrigger className="h-8 w-40 text-xs">
                              <SelectValue placeholder="Select Party" />
                            </SelectTrigger>
                            <SelectContent>
