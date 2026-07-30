@@ -30,7 +30,6 @@ export const navItems = [
   { label: "Countdown Board", to: "/countdown", icon: Timer },
   { label: "Commission", to: "/commission", icon: Coins },
   { label: "Clients", to: "/clients", icon: Users2 },
-  { label: "Compliance", to: "/compliance/ffc", icon: ShieldCheck },
   { label: "Documents", to: "/documents", icon: FolderOpen },
   { label: "Calculators", icon: Calculator },
   { label: "Leads", to: "/leads", icon: Users2 },

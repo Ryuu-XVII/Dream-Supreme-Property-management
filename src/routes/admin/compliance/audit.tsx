@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { AppShell } from "@/components/layout/app-shell";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { ComplianceTabs } from "@/components/compliance/compliance-tabs";
 import { GlassCard, TableSkeleton, EmptyState } from "@/components/ui-kit";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +38,7 @@ import {
   Trash2,
 } from "lucide-react";
 
-export const Route = createFileRoute("/compliance/audit")({
+export const Route = createFileRoute("/admin/compliance/audit")({
   component: AuditLog,
   head: () => ({
     meta: [
@@ -244,16 +244,16 @@ function AuditLog() {
   }
 
   return (
-    <AppShell
-      title="Audit Log"
-      description="Searchable, filterable record of every change made across the platform."
-      crumbs={[{ label: "Compliance" }, { label: "Audit Log" }]}
-      actions={
-        <Button size="sm" variant="outline" className="gap-1.5" onClick={exportCsv}>
-          <Download className="size-4" /> Export CSV
-        </Button>
-      }
-    >
+    <>
+      <AdminPageHeader
+        title="Audit Log"
+        description="Searchable, filterable record of every change made across the platform."
+        actions={
+          <Button size="sm" variant="outline" className="gap-1.5" onClick={exportCsv}>
+            <Download className="size-4" /> Export CSV
+          </Button>
+        }
+      />
       <ComplianceTabs />
 
       <GlassCard className="mb-4">
@@ -433,6 +433,6 @@ function AuditLog() {
           </>
         )}
       </GlassCard>
-    </AppShell>
+    </>
   );
 }

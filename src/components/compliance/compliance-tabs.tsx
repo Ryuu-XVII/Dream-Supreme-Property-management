@@ -3,9 +3,9 @@ import { cn } from "@/lib/utils";
 import { ShieldCheck, Users, ScrollText } from "lucide-react";
 
 const tabs = [
-  { to: "/compliance/ffc", label: "FFC Register", icon: ShieldCheck },
-  { to: "/compliance/fica", label: "FICA Register", icon: Users },
-  { to: "/compliance/audit", label: "Audit Log", icon: ScrollText },
+  { to: "/admin/compliance/ffc", label: "FFC Register", icon: ShieldCheck },
+  { to: "/admin/compliance/fica", label: "FICA Register", icon: Users },
+  { to: "/admin/compliance/audit", label: "Audit Log", icon: ScrollText },
 ] as const;
 
 export function ComplianceTabs() {

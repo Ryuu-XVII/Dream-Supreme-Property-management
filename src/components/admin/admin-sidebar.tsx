@@ -21,7 +21,7 @@ export const adminNavItems = [
   { label: "Properties", to: "/admin/properties", icon: Building2 },
   { label: "Deals", to: "/admin/deals", icon: FileText },
   { label: "Financials", to: "/admin/financials", icon: FileText },
-  { label: "Audit Log", to: "/admin/audit", icon: Activity },
+  { label: "Compliance", to: "/admin/compliance/ffc", icon: ShieldCheck },
   { label: "Settings", to: "/admin/settings", icon: Settings },
 ] as const;
 

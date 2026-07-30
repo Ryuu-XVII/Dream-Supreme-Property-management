@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { AppShell } from "@/components/layout/app-shell";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { ComplianceTabs } from "@/components/compliance/compliance-tabs";
 import { GlassCard, KpiCard, TableSkeleton } from "@/components/ui-kit";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +42,7 @@ import {
   Award,
 } from "lucide-react";
 
-export const Route = createFileRoute("/compliance/ffc")({
+export const Route = createFileRoute("/admin/compliance/ffc")({
   component: FfcRegister,
   head: () => ({
     meta: [
@@ -288,11 +288,11 @@ function FfcRegister() {
   );
 
   return (
-    <AppShell
-      title="FFC Register"
-      description="Fidelity Fund Certificate tracking for every practitioner in the agency."
-      crumbs={[{ label: "Compliance" }, { label: "FFC Register" }]}
-    >
+    <>
+      <AdminPageHeader
+        title="FFC Register"
+        description="Fidelity Fund Certificate tracking for every practitioner in the agency."
+      />
       <ComplianceTabs />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -417,6 +417,6 @@ function FfcRegister() {
           onSaved={() => void queryClient.invalidateQueries({ queryKey: ["dashboard"] })}
         />
       )}
-    </AppShell>
+    </>
   );
 }

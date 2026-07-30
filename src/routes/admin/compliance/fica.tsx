@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AppShell } from "@/components/layout/app-shell";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { ComplianceTabs } from "@/components/compliance/compliance-tabs";
 import { GlassCard, TableSkeleton, EmptyState } from "@/components/ui-kit";
 import { FicaBadge } from "@/components/badges";
@@ -32,7 +32,7 @@ import type { Party } from "@/data/state";
 import { supabase } from "@/lib/supabase";
 import { ChevronDown, ChevronRight, UploadCloud, ShieldCheck, ShieldOff } from "lucide-react";
 
-export const Route = createFileRoute("/compliance/fica")({
+export const Route = createFileRoute("/admin/compliance/fica")({
   component: FicaRegister,
   head: () => ({
     meta: [
@@ -132,11 +132,11 @@ function FicaRegister() {
   }
 
   return (
-    <AppShell
-      title="FICA Register"
-      description="Every party across every deal, with FICA checklist status and POPIA consent."
-      crumbs={[{ label: "Compliance" }, { label: "FICA Register" }]}
-    >
+    <>
+      <AdminPageHeader
+        title="FICA Register"
+        description="FICA compliance and POPIA consent register for every party across all deals."
+      />
       <ComplianceTabs />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -348,6 +348,6 @@ function FicaRegister() {
           </div>
         )}
       </GlassCard>
-    </AppShell>
+    </>
   );
 }

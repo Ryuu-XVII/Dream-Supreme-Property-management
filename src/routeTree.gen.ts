@@ -23,7 +23,6 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SignRouteImport } from './routes/sign'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as AdminAuditRouteImport } from './routes/admin/audit'
 import { Route as AdminDealsRouteImport } from './routes/admin/deals'
 import { Route as AdminFinancialsRouteImport } from './routes/admin/financials'
 import { Route as AdminPropertiesRouteImport } from './routes/admin/properties'
@@ -32,9 +31,6 @@ import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as CommissionIndexRouteImport } from './routes/commission/index'
 import { Route as CommissionEarningsRouteImport } from './routes/commission/earnings'
 import { Route as CommissionReconciliationRouteImport } from './routes/commission/reconciliation'
-import { Route as ComplianceAuditRouteImport } from './routes/compliance/audit'
-import { Route as ComplianceFfcRouteImport } from './routes/compliance/ffc'
-import { Route as ComplianceFicaRouteImport } from './routes/compliance/fica'
 import { Route as DealsDealIdRouteImport } from './routes/deals/$dealId'
 import { Route as DealsNewRouteImport } from './routes/deals/new'
 import { Route as RentalsIndexRouteImport } from './routes/rentals/index'
@@ -47,6 +43,9 @@ import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SettingsUsersRouteImport } from './routes/settings/users'
 import { Route as SetupIndexRouteImport } from './routes/setup/index'
 import { Route as SetupImportRouteImport } from './routes/setup/import'
+import { Route as AdminComplianceAuditRouteImport } from './routes/admin/compliance/audit'
+import { Route as AdminComplianceFfcRouteImport } from './routes/admin/compliance/ffc'
+import { Route as AdminComplianceFicaRouteImport } from './routes/admin/compliance/fica'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -118,11 +117,6 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminAuditRoute = AdminAuditRouteImport.update({
-  id: '/audit',
-  path: '/audit',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminDealsRoute = AdminDealsRouteImport.update({
   id: '/deals',
   path: '/deals',
@@ -164,21 +158,6 @@ const CommissionReconciliationRoute =
     path: '/commission/reconciliation',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ComplianceAuditRoute = ComplianceAuditRouteImport.update({
-  id: '/compliance/audit',
-  path: '/compliance/audit',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ComplianceFfcRoute = ComplianceFfcRouteImport.update({
-  id: '/compliance/ffc',
-  path: '/compliance/ffc',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ComplianceFicaRoute = ComplianceFicaRouteImport.update({
-  id: '/compliance/fica',
-  path: '/compliance/fica',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DealsDealIdRoute = DealsDealIdRouteImport.update({
   id: '/deals/$dealId',
   path: '/deals/$dealId',
@@ -239,6 +218,21 @@ const SetupImportRoute = SetupImportRouteImport.update({
   path: '/setup/import',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminComplianceAuditRoute = AdminComplianceAuditRouteImport.update({
+  id: '/compliance/audit',
+  path: '/compliance/audit',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminComplianceFfcRoute = AdminComplianceFfcRouteImport.update({
+  id: '/compliance/ffc',
+  path: '/compliance/ffc',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminComplianceFicaRoute = AdminComplianceFicaRouteImport.update({
+  id: '/compliance/fica',
+  path: '/compliance/fica',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -254,7 +248,6 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/admin/audit': typeof AdminAuditRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
   '/admin/properties': typeof AdminPropertiesRoute
@@ -262,9 +255,6 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
-  '/compliance/audit': typeof ComplianceAuditRoute
-  '/compliance/ffc': typeof ComplianceFfcRoute
-  '/compliance/fica': typeof ComplianceFicaRoute
   '/deals/$dealId': typeof DealsDealIdRoute
   '/deals/new': typeof DealsNewRoute
   '/rentals/$leaseId': typeof RentalsLeaseIdRoute
@@ -279,6 +269,9 @@ export interface FileRoutesByFullPath {
   '/rentals/': typeof RentalsIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/setup/': typeof SetupIndexRoute
+  '/admin/compliance/audit': typeof AdminComplianceAuditRoute
+  '/admin/compliance/ffc': typeof AdminComplianceFfcRoute
+  '/admin/compliance/fica': typeof AdminComplianceFicaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -293,7 +286,6 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/admin/audit': typeof AdminAuditRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
   '/admin/properties': typeof AdminPropertiesRoute
@@ -301,9 +293,6 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
-  '/compliance/audit': typeof ComplianceAuditRoute
-  '/compliance/ffc': typeof ComplianceFfcRoute
-  '/compliance/fica': typeof ComplianceFicaRoute
   '/deals/$dealId': typeof DealsDealIdRoute
   '/deals/new': typeof DealsNewRoute
   '/rentals/$leaseId': typeof RentalsLeaseIdRoute
@@ -318,6 +307,9 @@ export interface FileRoutesByTo {
   '/rentals': typeof RentalsIndexRoute
   '/reports': typeof ReportsIndexRoute
   '/setup': typeof SetupIndexRoute
+  '/admin/compliance/audit': typeof AdminComplianceAuditRoute
+  '/admin/compliance/ffc': typeof AdminComplianceFfcRoute
+  '/admin/compliance/fica': typeof AdminComplianceFicaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -334,7 +326,6 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/admin/audit': typeof AdminAuditRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
   '/admin/properties': typeof AdminPropertiesRoute
@@ -342,9 +333,6 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
-  '/compliance/audit': typeof ComplianceAuditRoute
-  '/compliance/ffc': typeof ComplianceFfcRoute
-  '/compliance/fica': typeof ComplianceFicaRoute
   '/deals/$dealId': typeof DealsDealIdRoute
   '/deals/new': typeof DealsNewRoute
   '/rentals/$leaseId': typeof RentalsLeaseIdRoute
@@ -359,6 +347,9 @@ export interface FileRoutesById {
   '/rentals/': typeof RentalsIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/setup/': typeof SetupIndexRoute
+  '/admin/compliance/audit': typeof AdminComplianceAuditRoute
+  '/admin/compliance/ffc': typeof AdminComplianceFfcRoute
+  '/admin/compliance/fica': typeof AdminComplianceFicaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -376,7 +367,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/sign'
     | '/sitemap.xml'
-    | '/admin/audit'
     | '/admin/deals'
     | '/admin/financials'
     | '/admin/properties'
@@ -384,9 +374,6 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/commission/earnings'
     | '/commission/reconciliation'
-    | '/compliance/audit'
-    | '/compliance/ffc'
-    | '/compliance/fica'
     | '/deals/$dealId'
     | '/deals/new'
     | '/rentals/$leaseId'
@@ -401,6 +388,9 @@ export interface FileRouteTypes {
     | '/rentals/'
     | '/reports/'
     | '/setup/'
+    | '/admin/compliance/audit'
+    | '/admin/compliance/ffc'
+    | '/admin/compliance/fica'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -415,7 +405,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/sign'
     | '/sitemap.xml'
-    | '/admin/audit'
     | '/admin/deals'
     | '/admin/financials'
     | '/admin/properties'
@@ -423,9 +412,6 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/commission/earnings'
     | '/commission/reconciliation'
-    | '/compliance/audit'
-    | '/compliance/ffc'
-    | '/compliance/fica'
     | '/deals/$dealId'
     | '/deals/new'
     | '/rentals/$leaseId'
@@ -440,6 +426,9 @@ export interface FileRouteTypes {
     | '/rentals'
     | '/reports'
     | '/setup'
+    | '/admin/compliance/audit'
+    | '/admin/compliance/ffc'
+    | '/admin/compliance/fica'
   id:
     | '__root__'
     | '/'
@@ -455,7 +444,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/sign'
     | '/sitemap.xml'
-    | '/admin/audit'
     | '/admin/deals'
     | '/admin/financials'
     | '/admin/properties'
@@ -463,9 +451,6 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/commission/earnings'
     | '/commission/reconciliation'
-    | '/compliance/audit'
-    | '/compliance/ffc'
-    | '/compliance/fica'
     | '/deals/$dealId'
     | '/deals/new'
     | '/rentals/$leaseId'
@@ -480,6 +465,9 @@ export interface FileRouteTypes {
     | '/rentals/'
     | '/reports/'
     | '/setup/'
+    | '/admin/compliance/audit'
+    | '/admin/compliance/ffc'
+    | '/admin/compliance/fica'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -498,9 +486,6 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CommissionEarningsRoute: typeof CommissionEarningsRoute
   CommissionReconciliationRoute: typeof CommissionReconciliationRoute
-  ComplianceAuditRoute: typeof ComplianceAuditRoute
-  ComplianceFfcRoute: typeof ComplianceFfcRoute
-  ComplianceFicaRoute: typeof ComplianceFicaRoute
   DealsDealIdRoute: typeof DealsDealIdRoute
   DealsNewRoute: typeof DealsNewRoute
   RentalsLeaseIdRoute: typeof RentalsLeaseIdRoute
@@ -616,13 +601,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/audit': {
-      id: '/admin/audit'
-      path: '/audit'
-      fullPath: '/admin/audit'
-      preLoaderRoute: typeof AdminAuditRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/deals': {
       id: '/admin/deals'
       path: '/deals'
@@ -677,27 +655,6 @@ declare module '@tanstack/react-router' {
       path: '/commission/reconciliation'
       fullPath: '/commission/reconciliation'
       preLoaderRoute: typeof CommissionReconciliationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/compliance/audit': {
-      id: '/compliance/audit'
-      path: '/compliance/audit'
-      fullPath: '/compliance/audit'
-      preLoaderRoute: typeof ComplianceAuditRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/compliance/ffc': {
-      id: '/compliance/ffc'
-      path: '/compliance/ffc'
-      fullPath: '/compliance/ffc'
-      preLoaderRoute: typeof ComplianceFfcRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/compliance/fica': {
-      id: '/compliance/fica'
-      path: '/compliance/fica'
-      fullPath: '/compliance/fica'
-      preLoaderRoute: typeof ComplianceFicaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/deals/$dealId': {
@@ -784,27 +741,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SetupImportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/compliance/audit': {
+      id: '/admin/compliance/audit'
+      path: '/compliance/audit'
+      fullPath: '/admin/compliance/audit'
+      preLoaderRoute: typeof AdminComplianceAuditRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/compliance/ffc': {
+      id: '/admin/compliance/ffc'
+      path: '/compliance/ffc'
+      fullPath: '/admin/compliance/ffc'
+      preLoaderRoute: typeof AdminComplianceFfcRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/compliance/fica': {
+      id: '/admin/compliance/fica'
+      path: '/compliance/fica'
+      fullPath: '/admin/compliance/fica'
+      preLoaderRoute: typeof AdminComplianceFicaRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
-  AdminAuditRoute: typeof AdminAuditRoute
   AdminDealsRoute: typeof AdminDealsRoute
   AdminFinancialsRoute: typeof AdminFinancialsRoute
   AdminPropertiesRoute: typeof AdminPropertiesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminComplianceAuditRoute: typeof AdminComplianceAuditRoute
+  AdminComplianceFfcRoute: typeof AdminComplianceFfcRoute
+  AdminComplianceFicaRoute: typeof AdminComplianceFicaRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
-  AdminAuditRoute: AdminAuditRoute,
   AdminDealsRoute: AdminDealsRoute,
   AdminFinancialsRoute: AdminFinancialsRoute,
   AdminPropertiesRoute: AdminPropertiesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminComplianceAuditRoute: AdminComplianceAuditRoute,
+  AdminComplianceFfcRoute: AdminComplianceFfcRoute,
+  AdminComplianceFicaRoute: AdminComplianceFicaRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -825,9 +807,6 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   CommissionEarningsRoute: CommissionEarningsRoute,
   CommissionReconciliationRoute: CommissionReconciliationRoute,
-  ComplianceAuditRoute: ComplianceAuditRoute,
-  ComplianceFfcRoute: ComplianceFfcRoute,
-  ComplianceFicaRoute: ComplianceFicaRoute,
   DealsDealIdRoute: DealsDealIdRoute,
   DealsNewRoute: DealsNewRoute,
   RentalsLeaseIdRoute: RentalsLeaseIdRoute,
