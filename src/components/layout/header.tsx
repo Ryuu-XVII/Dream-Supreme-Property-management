@@ -207,12 +207,25 @@ export function Header() {
             <p className="text-xs font-normal text-muted-foreground">{agency.name}</p>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          {["Principal", "Admin"].includes(role) && (
+            <DropdownMenuItem asChild>
+              <Link to="/admin">Admin Dashboard</Link>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem asChild>
+            <Link to="/settings/profile">My profile</Link>
+          </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link to="/settings/agency">Agency settings</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link to="/commission/earnings">My earnings</Link>
           </DropdownMenuItem>
+          {["Principal", "Admin"].includes(role) && (
+            <DropdownMenuItem asChild>
+              <Link to="/register">Agent Registration</Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => void handleSignOut()}>
             <LogOut className="size-4" /> Sign out

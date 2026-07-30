@@ -143,7 +143,7 @@ function AuditRow({
             <Icon className="size-3" /> {event.action}
           </Badge>
         </TableCell>
-        <TableCell className="max-w-[280px] truncate text-muted-foreground">
+        <TableCell className="max-w-70 truncate text-muted-foreground">
           {event.summary}
         </TableCell>
       </TableRow>
@@ -335,7 +335,7 @@ function AuditLog() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-45">
               <SelectValue placeholder="Action" />
             </SelectTrigger>
             <SelectContent>
@@ -400,7 +400,7 @@ function AuditLog() {
                     setPage(1);
                   }}
                 >
-                  <SelectTrigger className="h-8 w-[80px]">
+                  <SelectTrigger className="h-8 w-20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

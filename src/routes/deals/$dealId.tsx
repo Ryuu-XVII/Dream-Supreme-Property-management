@@ -281,7 +281,7 @@ function DealDetailPage() {
 
         {/* Stage Progress Stepper */}
         <div className="overflow-x-auto rounded-xl border border-border bg-card/60 p-4 backdrop-blur-md">
-          <div className="flex min-w-[700px] items-center justify-between">
+          <div className="flex min-w-175 items-center justify-between">
             {STAGES.map((s, idx) => {
               const isPast = idx < currentStageIdx;
               const isCurrent = idx === currentStageIdx;
@@ -300,7 +300,7 @@ function DealDetailPage() {
                       {isPast ? <CheckCircle2 className="size-4" /> : idx + 1}
                     </div>
                     <span
-                      className={`max-w-[80px] text-center text-[10px] leading-tight ${
+                      className={`max-w-20 text-center text-[10px] leading-tight ${
                         isCurrent
                           ? "font-semibold text-foreground"
                           : isPast
@@ -313,7 +313,7 @@ function DealDetailPage() {
                   </div>
                   {idx < STAGES.length - 1 && (
                     <div
-                      className={`mx-1 h-[2px] w-8 sm:w-12 ${
+                      className={`mx-1 h-0.5 w-8 sm:w-12 ${
                         idx < currentStageIdx ? "bg-primary" : "bg-muted"
                       }`}
                     />

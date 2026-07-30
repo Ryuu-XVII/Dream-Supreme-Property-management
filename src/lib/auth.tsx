@@ -16,6 +16,7 @@ export interface UserAccount {
   branchId: string | null;
   fullName: string;
   email: string;
+  telephone?: string | null;
   role: "principal" | "agent" | "candidate" | "admin";
   status: "active" | "suspended" | "archived";
 }
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { data, error } = await supabase
         .from("user_account")
-        .select("id, agency_id, branch_id, full_name, email, role, status")
+        .select("id, agency_id, branch_id, full_name, email, telephone, role, status")
         .eq("auth_user_id", nextSession.user.id)
         .maybeSingle();
 
@@ -59,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               branchId: data.branch_id,
               fullName: data.full_name,
               email: data.email,
+              telephone: data.telephone,
               role: data.role,
               status: data.status,
             }

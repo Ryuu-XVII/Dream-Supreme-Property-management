@@ -275,7 +275,7 @@ function PipelineReport() {
     <ReportChrome reportKey="pipeline" csvRows={csvRows} csvFilename="pipeline-report.csv">
       <GlassCard>
         <h3 className="mb-4 text-sm font-semibold">Deals by stage &amp; branch</h3>
-        <div className="h-[340px] w-full">
+        <div className="h-85 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={byStageBranch} margin={{ left: 0, right: 12 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -314,7 +314,7 @@ function PipelineReport() {
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <GlassCard>
           <h3 className="mb-4 text-sm font-semibold">Average days in stage</h3>
-          <div className="h-[380px] w-full">
+          <div className="h-95 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={avgDaysInStage} layout="vertical" margin={{ left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -386,7 +386,7 @@ function PipelineReport() {
             <TableBody>
               {STAGES.map((stage, i) => (
                 <TableRow key={stage}>
-                  <TableCell className="max-w-[200px] truncate">{stage}</TableCell>
+                  <TableCell className="max-w-50 truncate">{stage}</TableCell>
                   {branches.map((b) => (
                     <TableCell key={b.id} className="text-right">
                       {activeDeals.filter((d) => d.stage === stage && d.branch === b.name).length}
@@ -428,7 +428,7 @@ function FallThroughReport() {
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <GlassCard>
           <h3 className="mb-4 text-sm font-semibold">Cancellations by reason</h3>
-          <div className="h-[320px] w-full">
+          <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -459,7 +459,7 @@ function FallThroughReport() {
 
         <GlassCard>
           <h3 className="mb-4 text-sm font-semibold">Monthly fall-through trend</h3>
-          <div className="h-[320px] w-full">
+          <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -575,7 +575,7 @@ function CommissionReport() {
 
       <GlassCard>
         <h3 className="mb-4 text-sm font-semibold">Monthly earnings by agent</h3>
-        <div className="h-[340px] w-full">
+        <div className="h-85 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={byAgent}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -606,7 +606,7 @@ function CommissionReport() {
 
       <GlassCard>
         <h3 className="mb-4 text-sm font-semibold">Cumulative YTD agency commission</h3>
-        <div className="h-[300px] w-full">
+        <div className="h-75 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={cumulative}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -729,7 +729,7 @@ function ComplianceReport() {
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <GlassCard>
           <h3 className="mb-4 text-sm font-semibold">FFC status summary</h3>
-          <div className="h-[300px] w-full">
+          <div className="h-75 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -805,7 +805,7 @@ function ComplianceReport() {
                         : "Current";
                 return (
                   <TableRow key={u.id}>
-                    <TableCell className="max-w-[160px] truncate">{u.name}</TableCell>
+                    <TableCell className="max-w-40 truncate">{u.name}</TableCell>
                     <TableCell>{u.branch}</TableCell>
                     <TableCell className="font-mono text-xs">{u.ffc?.number ?? "—"}</TableCell>
                     <TableCell>{u.ffc?.expiry ? dateFmt(u.ffc.expiry) : "—"}</TableCell>

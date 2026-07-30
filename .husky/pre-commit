@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# Check if any files in supabase/migrations/ are staged for commit
+if git diff --cached --name-only | grep -q "^supabase/migrations/"; then
+  
+  # If migrations are modified, check if documentation/technical/ is also modified
+  if ! git diff --cached --name-only | grep -q "^documentation/technical/"; then
+    echo ""
+    echo "============================================================"
+    echo "🚨 PRE-COMMIT HOOK FAILED: MISSING DOCUMENTATION 🚨"
+    echo "============================================================"
+    echo "You are committing a database migration without updating the"
+    echo "technical documentation!"
+    echo ""
+    echo "Please update files in 'documentation/technical/' (e.g., "
+    echo "DATABASE_SCHEMA_AND_RLS.md) to reflect your schema changes."
+    echo ""
+    echo "To bypass this check (NOT RECOMMENDED), use git commit --no-verify"
+    echo "============================================================"
+    echo ""
+    exit 1
+  fi
+fi
+
+# Tests pass
+exit 0

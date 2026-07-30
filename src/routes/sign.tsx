@@ -180,7 +180,7 @@ function SignPage() {
           <div className="flex shrink-0 items-center gap-2">
             <span className="text-xs text-muted-foreground">Demo: category</span>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-[240px]">
+              <SelectTrigger className="w-60">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -461,7 +461,7 @@ function SuccessCard({
           </div>
           <div className="flex justify-between gap-2">
             <dt className="text-muted-foreground">Document hash (SHA-256)</dt>
-            <dd className="money max-w-[220px] truncate font-medium" title={hash}>
+            <dd className="money max-w-55 truncate font-medium" title={hash}>
               {hash}
             </dd>
           </div>

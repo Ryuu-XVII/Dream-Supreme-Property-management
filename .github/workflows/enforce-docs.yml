@@ -1,0 +1,29 @@
+name: Enforce Documentation Updates
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-docs:
+    name: Validate Doc Sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - 'supabase/migrations/**'
+              - 'src/routes/__root.tsx'
+            docs:
+              - 'documentation/technical/**'
+              
+      - name: Enforce Docs Update
+        if: steps.filter.outputs.code == 'true' && steps.filter.outputs.docs == 'false'
+        run: |
+          echo "::error::You have modified core architectural files (database migrations or routing) without updating the technical documentation."
+          echo "::error::Please use the '@update_docs' skill in your IDE to automatically update ARCHITECTURE.md or DATABASE_SCHEMA_AND_RLS.md, and include those changes in this pull request."
+          exit 1

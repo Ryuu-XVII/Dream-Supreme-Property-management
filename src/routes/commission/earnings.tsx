@@ -80,7 +80,7 @@ function EarningsPage() {
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr]">
         <div className="glass lift relative overflow-hidden rounded-xl p-6">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-success/10" />
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/15 via-transparent to-success/10" />
           <div className="relative">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               YTD Total Earnings
@@ -180,7 +180,7 @@ function EarningsPage() {
                     <TableCell className="whitespace-nowrap">
                       {deal.registeredAt ? dateFmt(deal.registeredAt) : "—"}
                     </TableCell>
-                    <TableCell className="min-w-0 max-w-[240px] truncate">
+                    <TableCell className="min-w-0 max-w-60 truncate">
                       {property.address}, {property.suburb}
                     </TableCell>
                     <TableCell className="money text-right whitespace-nowrap">

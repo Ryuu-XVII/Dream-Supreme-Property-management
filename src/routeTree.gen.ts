@@ -10,16 +10,25 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as ConveyancerRouteImport } from './routes/conveyancer'
 import { Route as CountdownRouteImport } from './routes/countdown'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MandatesRouteImport } from './routes/mandates'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SignRouteImport } from './routes/sign'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminAuditRouteImport } from './routes/admin/audit'
+import { Route as AdminDealsRouteImport } from './routes/admin/deals'
+import { Route as AdminFinancialsRouteImport } from './routes/admin/financials'
+import { Route as AdminPropertiesRouteImport } from './routes/admin/properties'
+import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as CalculatorsAffordabilityRouteImport } from './routes/calculators/affordability'
 import { Route as CalculatorsBondRouteImport } from './routes/calculators/bond'
 import { Route as CalculatorsTransferRouteImport } from './routes/calculators/transfer'
@@ -33,10 +42,13 @@ import { Route as ComplianceFfcRouteImport } from './routes/compliance/ffc'
 import { Route as ComplianceFicaRouteImport } from './routes/compliance/fica'
 import { Route as DealsDealIdRouteImport } from './routes/deals/$dealId'
 import { Route as DealsNewRouteImport } from './routes/deals/new'
+import { Route as RentalsIndexRouteImport } from './routes/rentals/index'
+import { Route as RentalsLeaseIdRouteImport } from './routes/rentals/$leaseId'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as ReportsReportRouteImport } from './routes/reports/$report'
 import { Route as SettingsAgencyRouteImport } from './routes/settings/agency'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings/notifications'
+import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SettingsUsersRouteImport } from './routes/settings/users'
 import { Route as SetupIndexRouteImport } from './routes/setup/index'
 import { Route as SetupImportRouteImport } from './routes/setup/import'
@@ -44,6 +56,11 @@ import { Route as SetupImportRouteImport } from './routes/setup/import'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientsRoute = ClientsRouteImport.update({
@@ -76,6 +93,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MandatesRoute = MandatesRouteImport.update({
+  id: '/mandates',
+  path: '/mandates',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PipelineRoute = PipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
@@ -95,6 +117,41 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDealsRoute = AdminDealsRouteImport.update({
+  id: '/deals',
+  path: '/deals',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFinancialsRoute = AdminFinancialsRouteImport.update({
+  id: '/financials',
+  path: '/financials',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPropertiesRoute = AdminPropertiesRouteImport.update({
+  id: '/properties',
+  path: '/properties',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
 } as any)
 const CalculatorsAffordabilityRoute =
   CalculatorsAffordabilityRouteImport.update({
@@ -163,6 +220,16 @@ const DealsNewRoute = DealsNewRouteImport.update({
   path: '/deals/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RentalsIndexRoute = RentalsIndexRouteImport.update({
+  id: '/rentals/',
+  path: '/rentals/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RentalsLeaseIdRoute = RentalsLeaseIdRouteImport.update({
+  id: '/rentals/$leaseId',
+  path: '/rentals/$leaseId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReportsIndexRoute = ReportsIndexRouteImport.update({
   id: '/reports/',
   path: '/reports/',
@@ -183,6 +250,11 @@ const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
   path: '/settings/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsProfileRoute = SettingsProfileRouteImport.update({
+  id: '/settings/profile',
+  path: '/settings/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsUsersRoute = SettingsUsersRouteImport.update({
   id: '/settings/users',
   path: '/settings/users',
@@ -201,16 +273,24 @@ const SetupImportRoute = SetupImportRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/clients': typeof ClientsRoute
   '/conveyancer': typeof ConveyancerRoute
   '/countdown': typeof CountdownRoute
   '/documents': typeof DocumentsRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/mandates': typeof MandatesRoute
   '/pipeline': typeof PipelineRoute
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/deals': typeof AdminDealsRoute
+  '/admin/financials': typeof AdminFinancialsRoute
+  '/admin/properties': typeof AdminPropertiesRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/calculators/affordability': typeof CalculatorsAffordabilityRoute
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
@@ -223,12 +303,16 @@ export interface FileRoutesByFullPath {
   '/compliance/fica': typeof ComplianceFicaRoute
   '/deals/$dealId': typeof DealsDealIdRoute
   '/deals/new': typeof DealsNewRoute
+  '/rentals/$leaseId': typeof RentalsLeaseIdRoute
   '/reports/$report': typeof ReportsReportRoute
   '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/profile': typeof SettingsProfileRoute
   '/settings/users': typeof SettingsUsersRoute
   '/setup/import': typeof SetupImportRoute
+  '/admin/': typeof AdminIndexRoute
   '/commission/': typeof CommissionIndexRoute
+  '/rentals/': typeof RentalsIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/setup/': typeof SetupIndexRoute
 }
@@ -240,10 +324,17 @@ export interface FileRoutesByTo {
   '/documents': typeof DocumentsRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/mandates': typeof MandatesRoute
   '/pipeline': typeof PipelineRoute
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/deals': typeof AdminDealsRoute
+  '/admin/financials': typeof AdminFinancialsRoute
+  '/admin/properties': typeof AdminPropertiesRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/calculators/affordability': typeof CalculatorsAffordabilityRoute
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
@@ -256,28 +347,40 @@ export interface FileRoutesByTo {
   '/compliance/fica': typeof ComplianceFicaRoute
   '/deals/$dealId': typeof DealsDealIdRoute
   '/deals/new': typeof DealsNewRoute
+  '/rentals/$leaseId': typeof RentalsLeaseIdRoute
   '/reports/$report': typeof ReportsReportRoute
   '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/profile': typeof SettingsProfileRoute
   '/settings/users': typeof SettingsUsersRoute
   '/setup/import': typeof SetupImportRoute
+  '/admin': typeof AdminIndexRoute
   '/commission': typeof CommissionIndexRoute
+  '/rentals': typeof RentalsIndexRoute
   '/reports': typeof ReportsIndexRoute
   '/setup': typeof SetupIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/clients': typeof ClientsRoute
   '/conveyancer': typeof ConveyancerRoute
   '/countdown': typeof CountdownRoute
   '/documents': typeof DocumentsRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/mandates': typeof MandatesRoute
   '/pipeline': typeof PipelineRoute
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/deals': typeof AdminDealsRoute
+  '/admin/financials': typeof AdminFinancialsRoute
+  '/admin/properties': typeof AdminPropertiesRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/calculators/affordability': typeof CalculatorsAffordabilityRoute
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
@@ -290,12 +393,16 @@ export interface FileRoutesById {
   '/compliance/fica': typeof ComplianceFicaRoute
   '/deals/$dealId': typeof DealsDealIdRoute
   '/deals/new': typeof DealsNewRoute
+  '/rentals/$leaseId': typeof RentalsLeaseIdRoute
   '/reports/$report': typeof ReportsReportRoute
   '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/profile': typeof SettingsProfileRoute
   '/settings/users': typeof SettingsUsersRoute
   '/setup/import': typeof SetupImportRoute
+  '/admin/': typeof AdminIndexRoute
   '/commission/': typeof CommissionIndexRoute
+  '/rentals/': typeof RentalsIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/setup/': typeof SetupIndexRoute
 }
@@ -303,16 +410,24 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/clients'
     | '/conveyancer'
     | '/countdown'
     | '/documents'
     | '/leads'
     | '/login'
+    | '/mandates'
     | '/pipeline'
     | '/register'
     | '/sign'
     | '/sitemap.xml'
+    | '/admin/audit'
+    | '/admin/deals'
+    | '/admin/financials'
+    | '/admin/properties'
+    | '/admin/settings'
+    | '/admin/users'
     | '/calculators/affordability'
     | '/calculators/bond'
     | '/calculators/transfer'
@@ -325,12 +440,16 @@ export interface FileRouteTypes {
     | '/compliance/fica'
     | '/deals/$dealId'
     | '/deals/new'
+    | '/rentals/$leaseId'
     | '/reports/$report'
     | '/settings/agency'
     | '/settings/notifications'
+    | '/settings/profile'
     | '/settings/users'
     | '/setup/import'
+    | '/admin/'
     | '/commission/'
+    | '/rentals/'
     | '/reports/'
     | '/setup/'
   fileRoutesByTo: FileRoutesByTo
@@ -342,10 +461,17 @@ export interface FileRouteTypes {
     | '/documents'
     | '/leads'
     | '/login'
+    | '/mandates'
     | '/pipeline'
     | '/register'
     | '/sign'
     | '/sitemap.xml'
+    | '/admin/audit'
+    | '/admin/deals'
+    | '/admin/financials'
+    | '/admin/properties'
+    | '/admin/settings'
+    | '/admin/users'
     | '/calculators/affordability'
     | '/calculators/bond'
     | '/calculators/transfer'
@@ -358,27 +484,39 @@ export interface FileRouteTypes {
     | '/compliance/fica'
     | '/deals/$dealId'
     | '/deals/new'
+    | '/rentals/$leaseId'
     | '/reports/$report'
     | '/settings/agency'
     | '/settings/notifications'
+    | '/settings/profile'
     | '/settings/users'
     | '/setup/import'
+    | '/admin'
     | '/commission'
+    | '/rentals'
     | '/reports'
     | '/setup'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/clients'
     | '/conveyancer'
     | '/countdown'
     | '/documents'
     | '/leads'
     | '/login'
+    | '/mandates'
     | '/pipeline'
     | '/register'
     | '/sign'
     | '/sitemap.xml'
+    | '/admin/audit'
+    | '/admin/deals'
+    | '/admin/financials'
+    | '/admin/properties'
+    | '/admin/settings'
+    | '/admin/users'
     | '/calculators/affordability'
     | '/calculators/bond'
     | '/calculators/transfer'
@@ -391,24 +529,30 @@ export interface FileRouteTypes {
     | '/compliance/fica'
     | '/deals/$dealId'
     | '/deals/new'
+    | '/rentals/$leaseId'
     | '/reports/$report'
     | '/settings/agency'
     | '/settings/notifications'
+    | '/settings/profile'
     | '/settings/users'
     | '/setup/import'
+    | '/admin/'
     | '/commission/'
+    | '/rentals/'
     | '/reports/'
     | '/setup/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   ClientsRoute: typeof ClientsRoute
   ConveyancerRoute: typeof ConveyancerRoute
   CountdownRoute: typeof CountdownRoute
   DocumentsRoute: typeof DocumentsRoute
   LeadsRoute: typeof LeadsRoute
   LoginRoute: typeof LoginRoute
+  MandatesRoute: typeof MandatesRoute
   PipelineRoute: typeof PipelineRoute
   RegisterRoute: typeof RegisterRoute
   SignRoute: typeof SignRoute
@@ -425,12 +569,15 @@ export interface RootRouteChildren {
   ComplianceFicaRoute: typeof ComplianceFicaRoute
   DealsDealIdRoute: typeof DealsDealIdRoute
   DealsNewRoute: typeof DealsNewRoute
+  RentalsLeaseIdRoute: typeof RentalsLeaseIdRoute
   ReportsReportRoute: typeof ReportsReportRoute
   SettingsAgencyRoute: typeof SettingsAgencyRoute
   SettingsNotificationsRoute: typeof SettingsNotificationsRoute
+  SettingsProfileRoute: typeof SettingsProfileRoute
   SettingsUsersRoute: typeof SettingsUsersRoute
   SetupImportRoute: typeof SetupImportRoute
   CommissionIndexRoute: typeof CommissionIndexRoute
+  RentalsIndexRoute: typeof RentalsIndexRoute
   ReportsIndexRoute: typeof ReportsIndexRoute
   SetupIndexRoute: typeof SetupIndexRoute
 }
@@ -442,6 +589,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clients': {
@@ -486,6 +640,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mandates': {
+      id: '/mandates'
+      path: '/mandates'
+      fullPath: '/mandates'
+      preLoaderRoute: typeof MandatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pipeline': {
       id: '/pipeline'
       path: '/pipeline'
@@ -513,6 +674,55 @@ declare module '@tanstack/react-router' {
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/deals': {
+      id: '/admin/deals'
+      path: '/deals'
+      fullPath: '/admin/deals'
+      preLoaderRoute: typeof AdminDealsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/financials': {
+      id: '/admin/financials'
+      path: '/financials'
+      fullPath: '/admin/financials'
+      preLoaderRoute: typeof AdminFinancialsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/properties': {
+      id: '/admin/properties'
+      path: '/properties'
+      fullPath: '/admin/properties'
+      preLoaderRoute: typeof AdminPropertiesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/calculators/affordability': {
       id: '/calculators/affordability'
@@ -605,6 +815,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DealsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rentals/': {
+      id: '/rentals/'
+      path: '/rentals'
+      fullPath: '/rentals/'
+      preLoaderRoute: typeof RentalsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rentals/$leaseId': {
+      id: '/rentals/$leaseId'
+      path: '/rentals/$leaseId'
+      fullPath: '/rentals/$leaseId'
+      preLoaderRoute: typeof RentalsLeaseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reports/': {
       id: '/reports/'
       path: '/reports'
@@ -633,6 +857,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsNotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/profile': {
+      id: '/settings/profile'
+      path: '/settings/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof SettingsProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/users': {
       id: '/settings/users'
       path: '/settings/users'
@@ -657,14 +888,38 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminAuditRoute: typeof AdminAuditRoute
+  AdminDealsRoute: typeof AdminDealsRoute
+  AdminFinancialsRoute: typeof AdminFinancialsRoute
+  AdminPropertiesRoute: typeof AdminPropertiesRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAuditRoute: AdminAuditRoute,
+  AdminDealsRoute: AdminDealsRoute,
+  AdminFinancialsRoute: AdminFinancialsRoute,
+  AdminPropertiesRoute: AdminPropertiesRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   ClientsRoute: ClientsRoute,
   ConveyancerRoute: ConveyancerRoute,
   CountdownRoute: CountdownRoute,
   DocumentsRoute: DocumentsRoute,
   LeadsRoute: LeadsRoute,
   LoginRoute: LoginRoute,
+  MandatesRoute: MandatesRoute,
   PipelineRoute: PipelineRoute,
   RegisterRoute: RegisterRoute,
   SignRoute: SignRoute,
@@ -681,12 +936,15 @@ const rootRouteChildren: RootRouteChildren = {
   ComplianceFicaRoute: ComplianceFicaRoute,
   DealsDealIdRoute: DealsDealIdRoute,
   DealsNewRoute: DealsNewRoute,
+  RentalsLeaseIdRoute: RentalsLeaseIdRoute,
   ReportsReportRoute: ReportsReportRoute,
   SettingsAgencyRoute: SettingsAgencyRoute,
   SettingsNotificationsRoute: SettingsNotificationsRoute,
+  SettingsProfileRoute: SettingsProfileRoute,
   SettingsUsersRoute: SettingsUsersRoute,
   SetupImportRoute: SetupImportRoute,
   CommissionIndexRoute: CommissionIndexRoute,
+  RentalsIndexRoute: RentalsIndexRoute,
   ReportsIndexRoute: ReportsIndexRoute,
   SetupIndexRoute: SetupIndexRoute,
 }

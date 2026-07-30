@@ -115,7 +115,7 @@ function RootShell({ children }: { children: ReactNode }) {
 import { AuthProvider, useAuth } from "@/lib/auth";
 
 function AuthGuard({ children }: { children: ReactNode }) {
-  const { session, loading } = useAuth();
+  const { session, account, loading } = useAuth();
   const router = useRouter();
 
   const isPublicPath = (path: string) =>
@@ -132,10 +132,23 @@ function AuthGuard({ children }: { children: ReactNode }) {
       if (!isPublicPath(path)) {
         router.navigate({ to: "/login", replace: true });
       }
+    } else if (!loading && session && account) {
+      const path = window.location.pathname;
+      const isAdminPath = path.startsWith("/admin");
+      
+      // Admins are locked strictly to the admin portal
+      if (account.role === "admin" && !isAdminPath && !isPublicPath(path)) {
+        router.navigate({ to: "/admin", replace: true });
+      } 
+      // Agents and Candidates are locked strictly to the main app
+      else if ((account.role === "agent" || account.role === "candidate") && isAdminPath) {
+        router.navigate({ to: "/", replace: true });
+      }
+      // Principals have access to both, so no restrictive redirect needed for them
     }
-  }, [session, loading, router]);
+  }, [session, account, loading, router]);
 
-  if (loading) {
+  if (loading || (session && !account)) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
         Loading secure session…

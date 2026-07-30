@@ -197,7 +197,7 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
                     step="0.1"
                     value={commRate || ""}
                     onChange={(e) => setCommRate(Number(e.target.value))}
-                    className="font-mono text-base max-w-[120px]"
+                    className="font-mono text-base max-w-30"
                   />
                   <Slider
                     min={1}
@@ -326,7 +326,7 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
         {/* Results Card & Breakdown (5 Cols) */}
         <div className="lg:col-span-5 space-y-6">
           <GlassCard className="relative overflow-hidden border-primary/30">
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-success/10" />
+            <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-success/10" />
 
             <div className="relative">
               <div className="flex items-center justify-between border-b border-border pb-3">
