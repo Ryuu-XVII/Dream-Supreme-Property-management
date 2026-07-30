@@ -74,19 +74,19 @@ function AdminAuditLog() {
             <EmptyState
               title="No activity found"
               message="Try adjusting your search query."
-              icon={<History className="size-8 text-muted-foreground" />}
+              icon={History}
             />
           </div>
         ) : (
-          <div className="overflow-x-auto min-h-[400px]">
+          <div className="overflow-x-auto min-h-100">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[180px]">Date & Time</TableHead>
-                  <TableHead className="w-[200px]">Actor / System</TableHead>
-                  <TableHead className="w-[200px]">Action</TableHead>
+                  <TableHead className="w-45">Date & Time</TableHead>
+                  <TableHead className="w-50">Actor / System</TableHead>
+                  <TableHead className="w-50">Action</TableHead>
                   <TableHead>Details</TableHead>
-                  <TableHead className="w-[100px] text-right">Risk</TableHead>
+                  <TableHead className="w-25 text-right">Risk</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -105,7 +105,7 @@ function AdminAuditLog() {
                       </div>
                     </TableCell>
                     <TableCell
-                      className="text-muted-foreground text-sm max-w-[300px] truncate"
+                      className="text-muted-foreground text-sm max-w-75 truncate"
                       title={log.details}
                     >
                       {log.details}
