@@ -140,6 +140,9 @@ function ReportChrome({
       crumbs={[{ label: "Reports", to: "/reports" }, { label: meta.title }]}
       actions={
         <>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => window.print()}>
+            <FileText className="size-3.5" /> Print to PDF
+          </Button>
           <Button
             variant="outline"
             size="sm"
