@@ -141,6 +141,7 @@ export interface DocumentRec {
   sizeKb: number;
   supersedes?: string;
   url?: string;
+  partyId?: string;
 }
 
 export interface Deal {
