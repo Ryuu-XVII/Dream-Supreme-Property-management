@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Calculator, ShieldAlert, Printer } from "lucide-react";
 import { GlassCard, EmptyState } from "@/components/ui-kit";
 import { AgentAvatar } from "@/components/badges";
-import type { Deal } from "@/types";
+
 import { zar } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-export function DealCommissionTab({ deal }: { deal: Deal }) {
+export function DealCommissionTab({ deal }: { deal: any }) {
   const [calculating, setCalculating] = useState(false);
   const calculation = useQuery({
     queryKey: ["deal-commission", deal.id],
