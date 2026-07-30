@@ -9,7 +9,8 @@ echo ""
 echo "1/4: Typechecking codebase (tsc)..."
 if ! npm run typecheck; then
   echo "❌ TypeScript compiler found errors!"
-  echo "💡 PLAIN TERMS: You have some type mismatches or syntax errors. Check the lines mentioned above."
+  echo "💡 PLAIN TERMS: Your code has type mismatches or syntax errors."
+  echo "👉 ACTION REQUIRED: Open your terminal and run 'npm run typecheck' to see the exact files and lines that need fixing."
   exit 1
 fi
 echo "✅ Typecheck passed!"
@@ -18,7 +19,8 @@ echo ""
 echo "2/4: Linting codebase (eslint)..."
 if ! npm run lint; then
   echo "❌ ESLint found code style or quality issues!"
-  echo "💡 PLAIN TERMS: You have formatting or styling issues. You can often fix this by running 'npm run format' or checking the lines mentioned."
+  echo "💡 PLAIN TERMS: You have formatting or styling issues."
+  echo "👉 ACTION REQUIRED: Open your terminal and run 'npm run format' to auto-fix, or 'npm run lint' to see the remaining errors."
   exit 1
 fi
 echo "✅ Lint passed!"
@@ -27,7 +29,8 @@ echo ""
 echo "3/4: Running Unit Tests (vitest)..."
 if ! npm run test; then
   echo "❌ Unit tests failed!"
-  echo "💡 PLAIN TERMS: Some of your automated tests didn't pass. Read the test output above to see which ones failed."
+  echo "💡 PLAIN TERMS: Some of your automated tests didn't pass."
+  echo "👉 ACTION REQUIRED: Open your terminal and run 'npm run test' to see exactly which tests are failing."
   exit 1
 fi
 echo "✅ Tests passed!"
@@ -36,7 +39,8 @@ echo ""
 echo "4/4: Verifying Production Build (vite)..."
 if ! npm run build; then
   echo "❌ Production build failed!"
-  echo "💡 PLAIN TERMS: The application couldn't be bundled for production. Check the errors above."
+  echo "💡 PLAIN TERMS: The application couldn't be bundled for production."
+  echo "👉 ACTION REQUIRED: Open your terminal and run 'npm run build' to see the build errors."
   exit 1
 fi
 echo "✅ Build passed!"
