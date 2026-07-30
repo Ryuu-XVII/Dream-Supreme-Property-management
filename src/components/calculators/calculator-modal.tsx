@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calculator } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,8 +10,14 @@ import { YieldCalculator } from "./yield-calculator";
 import { CommissionCalculator } from "./commission-calculator";
 
 export function CalculatorModal() {
-  const { calculatorOpen, toggleCalculator } = useApp();
+  const { calculatorOpen, calculatorContext, toggleCalculator } = useApp();
   const [activeTab, setActiveTab] = useState("bond");
+
+  useEffect(() => {
+    if (calculatorOpen && calculatorContext?.tab) {
+      setActiveTab(calculatorContext.tab);
+    }
+  }, [calculatorOpen, calculatorContext]);
 
   return (
     <Dialog open={calculatorOpen} onOpenChange={toggleCalculator}>

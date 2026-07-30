@@ -4,6 +4,11 @@ import { useAuth } from "@/lib/auth";
 
 type Theme = "light" | "dark" | "system";
 
+export interface CalculatorContext {
+  tab?: "commission" | "bond" | "transfer";
+  payload?: any;
+}
+
 interface AppState {
   theme: Theme;
   setTheme: (t: Theme) => void;
@@ -13,7 +18,8 @@ interface AppState {
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
   calculatorOpen: boolean;
-  toggleCalculator: (open?: boolean) => void;
+  calculatorContext: CalculatorContext | null;
+  toggleCalculator: (open?: boolean, context?: CalculatorContext | null) => void;
 }
 
 const Ctx = createContext<AppState | null>(null);
@@ -25,6 +31,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [role, setRoleState] = useState<Role>("Principal");
   const [sidebarCollapsed, setCollapsed] = useState(false);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const [calculatorContext, setCalculatorContext] = useState<CalculatorContext | null>(null);
 
   useEffect(() => {
     const t = (localStorage.getItem("dsp-theme") as Theme) || "system";
@@ -70,7 +77,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return !c;
     });
 
-  const toggleCalculator = (open?: boolean) => setCalculatorOpen((o) => open ?? !o);
+  const toggleCalculator = (open?: boolean, context?: CalculatorContext | null) => {
+    setCalculatorOpen((o) => open ?? !o);
+    if (context !== undefined) {
+      setCalculatorContext(context);
+    }
+  };
 
   return (
     <Ctx.Provider
@@ -83,6 +95,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         sidebarCollapsed,
         toggleSidebar,
         calculatorOpen,
+        calculatorContext,
         toggleCalculator,
       }}
     >

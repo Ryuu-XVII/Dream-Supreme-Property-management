@@ -20,10 +20,17 @@ import {
   RefreshCw,
   FileText,
 } from "lucide-react";
+import { useApp } from "@/lib/app-state";
 
 export function CommissionCalculator() {
+  const { calculatorContext } = useApp();
+
   // Inputs
-  const [salePrice, setSalePrice] = useState<number>(2_500_000);
+  const [salePrice, setSalePrice] = useState<number>(
+    calculatorContext?.payload?.salePriceCents
+      ? calculatorContext.payload.salePriceCents / 100
+      : 2_500_000,
+  );
   const [commRate, setCommRate] = useState<number>(5.0); // %
   const [isVatVendor, setIsVatVendor] = useState<boolean>(true);
   const [isVatInclusive, setIsVatInclusive] = useState<boolean>(true);

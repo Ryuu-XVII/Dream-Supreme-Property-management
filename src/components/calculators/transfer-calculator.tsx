@@ -39,10 +39,20 @@ import {
 import { cn } from "@/lib/utils";
 import { transferDutyBrackets } from "@/data/state";
 import { calculateTransferDutyCents } from "@/lib/domain";
+import { useApp } from "@/lib/app-state";
 
 export function TransferCalculator() {
-  const [price, setPrice] = useState(1_800_000);
-  const [bondAmount, setBondAmount] = useState(1_400_000);
+  const { calculatorContext } = useApp();
+  const [price, setPrice] = useState(
+    calculatorContext?.payload?.salePriceCents
+      ? calculatorContext.payload.salePriceCents / 100
+      : 1_800_000,
+  );
+  const [bondAmount, setBondAmount] = useState(
+    calculatorContext?.payload?.salePriceCents
+      ? calculatorContext.payload.salePriceCents / 100
+      : 1_400_000,
+  );
   const [vatVendor, setVatVendor] = useState(false);
 
   const priceCents = price * 100;

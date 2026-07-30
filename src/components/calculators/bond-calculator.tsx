@@ -51,9 +51,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useApp } from "@/lib/app-state";
 
 export function BondCalculator() {
-  const [loanAmount, setLoanAmount] = useState(1_500_000);
+  const { calculatorContext } = useApp();
+  const [loanAmount, setLoanAmount] = useState(
+    calculatorContext?.payload?.salePriceCents
+      ? calculatorContext.payload.salePriceCents / 100
+      : 1_500_000,
+  );
   const [rate, setRate] = useState(11.25);
   const [term, setTerm] = useState(20);
   const [showSchedule, setShowSchedule] = useState(false);
