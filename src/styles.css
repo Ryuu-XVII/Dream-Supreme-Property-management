@@ -218,41 +218,45 @@
     scrollbar-color: var(--glass-border) transparent;
   }
   &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 14px;
+    height: 14px;
   }
   &::-webkit-scrollbar-track {
     background: transparent;
   }
   &::-webkit-scrollbar-thumb {
     background: var(--glass-bg);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--glass-border);
+    background-clip: padding-box;
+    border: 4px solid transparent;
     border-radius: 999px;
-    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.4);
   }
   &::-webkit-scrollbar-thumb:hover {
-    background: oklch(1 0 0 / 25%);
+    background: oklch(1 0 0 / 40%);
+    background-clip: padding-box;
+    border: 4px solid transparent;
   }
 }
 
 @layer base {
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 14px;
+    height: 14px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
     background: var(--glass-bg);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--glass-border);
+    background-clip: padding-box;
+    border: 4px solid transparent;
     border-radius: 999px;
-    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.4);
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(1 0 0 / 25%);
+    background: oklch(1 0 0 / 40%);
+    background-clip: padding-box;
+    border: 4px solid transparent;
   }
   * {
     scrollbar-width: thin;
