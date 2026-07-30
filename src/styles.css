@@ -176,6 +176,7 @@
 
 @utility glass {
   background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
   backdrop-filter: blur(16px) saturate(140%);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-soft);
@@ -212,7 +213,9 @@
 }
 
 @utility scrollbar-thin {
-  scrollbar-width: thin;
+  @supports (scrollbar-width: thin) {
+    scrollbar-width: thin;
+  }
   &::-webkit-scrollbar {
     height: 8px;
     width: 8px;
