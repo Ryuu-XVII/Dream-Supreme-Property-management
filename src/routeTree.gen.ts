@@ -17,6 +17,7 @@ import { Route as CountdownRouteImport } from './routes/countdown'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MandatesRouteImport } from './routes/mandates'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SignRouteImport } from './routes/sign'
@@ -45,6 +46,7 @@ import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as ReportsReportRouteImport } from './routes/reports/$report'
 import { Route as SettingsAgencyRouteImport } from './routes/settings/agency'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings/notifications'
+import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SettingsUsersRouteImport } from './routes/settings/users'
 import { Route as SetupIndexRouteImport } from './routes/setup/index'
 import { Route as SetupImportRouteImport } from './routes/setup/import'
@@ -87,6 +89,11 @@ const LeadsRoute = LeadsRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MandatesRoute = MandatesRouteImport.update({
+  id: '/mandates',
+  path: '/mandates',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PipelineRoute = PipelineRouteImport.update({
@@ -231,6 +238,11 @@ const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
   path: '/settings/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsProfileRoute = SettingsProfileRouteImport.update({
+  id: '/settings/profile',
+  path: '/settings/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsUsersRoute = SettingsUsersRouteImport.update({
   id: '/settings/users',
   path: '/settings/users',
@@ -256,6 +268,7 @@ export interface FileRoutesByFullPath {
   '/documents': typeof DocumentsRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/mandates': typeof MandatesRoute
   '/pipeline': typeof PipelineRoute
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
@@ -281,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/reports/$report': typeof ReportsReportRoute
   '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/profile': typeof SettingsProfileRoute
   '/settings/users': typeof SettingsUsersRoute
   '/setup/import': typeof SetupImportRoute
   '/admin/': typeof AdminIndexRoute
@@ -296,6 +310,7 @@ export interface FileRoutesByTo {
   '/documents': typeof DocumentsRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/mandates': typeof MandatesRoute
   '/pipeline': typeof PipelineRoute
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
@@ -321,6 +336,7 @@ export interface FileRoutesByTo {
   '/reports/$report': typeof ReportsReportRoute
   '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/profile': typeof SettingsProfileRoute
   '/settings/users': typeof SettingsUsersRoute
   '/setup/import': typeof SetupImportRoute
   '/admin': typeof AdminIndexRoute
@@ -338,6 +354,7 @@ export interface FileRoutesById {
   '/documents': typeof DocumentsRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/mandates': typeof MandatesRoute
   '/pipeline': typeof PipelineRoute
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
@@ -363,6 +380,7 @@ export interface FileRoutesById {
   '/reports/$report': typeof ReportsReportRoute
   '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/profile': typeof SettingsProfileRoute
   '/settings/users': typeof SettingsUsersRoute
   '/setup/import': typeof SetupImportRoute
   '/admin/': typeof AdminIndexRoute
@@ -381,6 +399,7 @@ export interface FileRouteTypes {
     | '/documents'
     | '/leads'
     | '/login'
+    | '/mandates'
     | '/pipeline'
     | '/register'
     | '/sign'
@@ -406,6 +425,7 @@ export interface FileRouteTypes {
     | '/reports/$report'
     | '/settings/agency'
     | '/settings/notifications'
+    | '/settings/profile'
     | '/settings/users'
     | '/setup/import'
     | '/admin/'
@@ -421,6 +441,7 @@ export interface FileRouteTypes {
     | '/documents'
     | '/leads'
     | '/login'
+    | '/mandates'
     | '/pipeline'
     | '/register'
     | '/sign'
@@ -446,6 +467,7 @@ export interface FileRouteTypes {
     | '/reports/$report'
     | '/settings/agency'
     | '/settings/notifications'
+    | '/settings/profile'
     | '/settings/users'
     | '/setup/import'
     | '/admin'
@@ -462,6 +484,7 @@ export interface FileRouteTypes {
     | '/documents'
     | '/leads'
     | '/login'
+    | '/mandates'
     | '/pipeline'
     | '/register'
     | '/sign'
@@ -487,6 +510,7 @@ export interface FileRouteTypes {
     | '/reports/$report'
     | '/settings/agency'
     | '/settings/notifications'
+    | '/settings/profile'
     | '/settings/users'
     | '/setup/import'
     | '/admin/'
@@ -504,6 +528,7 @@ export interface RootRouteChildren {
   DocumentsRoute: typeof DocumentsRoute
   LeadsRoute: typeof LeadsRoute
   LoginRoute: typeof LoginRoute
+  MandatesRoute: typeof MandatesRoute
   PipelineRoute: typeof PipelineRoute
   RegisterRoute: typeof RegisterRoute
   SignRoute: typeof SignRoute
@@ -523,6 +548,7 @@ export interface RootRouteChildren {
   ReportsReportRoute: typeof ReportsReportRoute
   SettingsAgencyRoute: typeof SettingsAgencyRoute
   SettingsNotificationsRoute: typeof SettingsNotificationsRoute
+  SettingsProfileRoute: typeof SettingsProfileRoute
   SettingsUsersRoute: typeof SettingsUsersRoute
   SetupImportRoute: typeof SetupImportRoute
   CommissionIndexRoute: typeof CommissionIndexRoute
@@ -586,6 +612,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mandates': {
+      id: '/mandates'
+      path: '/mandates'
+      fullPath: '/mandates'
+      preLoaderRoute: typeof MandatesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pipeline': {
@@ -784,6 +817,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsNotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/profile': {
+      id: '/settings/profile'
+      path: '/settings/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof SettingsProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/users': {
       id: '/settings/users'
       path: '/settings/users'
@@ -839,6 +879,7 @@ const rootRouteChildren: RootRouteChildren = {
   DocumentsRoute: DocumentsRoute,
   LeadsRoute: LeadsRoute,
   LoginRoute: LoginRoute,
+  MandatesRoute: MandatesRoute,
   PipelineRoute: PipelineRoute,
   RegisterRoute: RegisterRoute,
   SignRoute: SignRoute,
@@ -858,6 +899,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReportsReportRoute: ReportsReportRoute,
   SettingsAgencyRoute: SettingsAgencyRoute,
   SettingsNotificationsRoute: SettingsNotificationsRoute,
+  SettingsProfileRoute: SettingsProfileRoute,
   SettingsUsersRoute: SettingsUsersRoute,
   SetupImportRoute: SetupImportRoute,
   CommissionIndexRoute: CommissionIndexRoute,
