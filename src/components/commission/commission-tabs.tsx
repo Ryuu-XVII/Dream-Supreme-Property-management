@@ -5,7 +5,6 @@ const tabs = [
   { label: "Rules Configuration", to: "/commission" as const },
   { label: "Monthly Reconciliation", to: "/commission/reconciliation" as const },
   { label: "Agent Earnings", to: "/commission/earnings" as const },
-  { label: "Calculator", to: "/commission/calculator" as const },
 ];
 
 export function CommissionTabs() {

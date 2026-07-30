@@ -1,8 +1,5 @@
 import { useState, useMemo } from "react";
-import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { AppShell } from "@/components/layout/app-shell";
-import { CommissionTabs } from "@/components/commission/commission-tabs";
 import { GlassCard } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,21 +21,7 @@ import {
   FileText,
 } from "lucide-react";
 
-export const Route = createFileRoute("/commission/calculator")({
-  head: () => ({
-    meta: [
-      { title: "Commission Calculator | Dream Supreme Properties" },
-      {
-        name: "description",
-        content:
-          "Instant itemized commission breakdown, VAT resolution, franchise fees, and agent net payout calculator.",
-      },
-    ],
-  }),
-  component: CommissionCalculatorPage,
-});
-
-function CommissionCalculatorPage() {
+export function CommissionCalculator() {
   // Inputs
   const [salePrice, setSalePrice] = useState<number>(2_500_000);
   const [commRate, setCommRate] = useState<number>(5.0); // %
@@ -138,13 +121,7 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
   };
 
   return (
-    <AppShell
-      title="Commission Calculator"
-      description="Calculate gross commission, VAT deductions, franchise splits, and net agent payout in real-time."
-      crumbs={[{ label: "Commission", to: "/commission" }, { label: "Calculator" }]}
-    >
-      <CommissionTabs />
-
+    <div className="space-y-6 pt-2">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Input Parameters Form (7 Cols) */}
         <div className="lg:col-span-7 space-y-6">
@@ -422,6 +399,6 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
           </GlassCard>
         </div>
       </div>
-    </AppShell>
+    </div>
   );
 }
