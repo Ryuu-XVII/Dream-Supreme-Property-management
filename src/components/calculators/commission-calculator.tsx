@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { zar } from "@/lib/format";
 import {
   Calculator,
-  DollarSign,
+
   Percent,
   Copy,
   Check,

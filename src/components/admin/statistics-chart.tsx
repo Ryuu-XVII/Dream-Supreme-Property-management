@@ -16,7 +16,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   TrendingUp,
   Activity,
-  DollarSign,
   Percent,
   ArrowUpRight,
   ArrowDownRight,
@@ -105,7 +104,7 @@ export function StatisticsChart() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 sm:px-6 pb-0">
         <div className="bg-muted/30 rounded-xl p-4 border border-border/50 flex flex-col justify-center">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <DollarSign className="size-4" />
+            <Percent className="size-4" />
             <span className="text-xs font-medium uppercase tracking-wider">Total Revenue YTD</span>
           </div>
           <div className="flex items-end justify-between">
