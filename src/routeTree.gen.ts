@@ -42,6 +42,8 @@ import { Route as ComplianceFfcRouteImport } from './routes/compliance/ffc'
 import { Route as ComplianceFicaRouteImport } from './routes/compliance/fica'
 import { Route as DealsDealIdRouteImport } from './routes/deals/$dealId'
 import { Route as DealsNewRouteImport } from './routes/deals/new'
+import { Route as RentalsIndexRouteImport } from './routes/rentals/index'
+import { Route as RentalsLeaseIdRouteImport } from './routes/rentals/$leaseId'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as ReportsReportRouteImport } from './routes/reports/$report'
 import { Route as SettingsAgencyRouteImport } from './routes/settings/agency'
@@ -218,6 +220,16 @@ const DealsNewRoute = DealsNewRouteImport.update({
   path: '/deals/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RentalsIndexRoute = RentalsIndexRouteImport.update({
+  id: '/rentals/',
+  path: '/rentals/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RentalsLeaseIdRoute = RentalsLeaseIdRouteImport.update({
+  id: '/rentals/$leaseId',
+  path: '/rentals/$leaseId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReportsIndexRoute = ReportsIndexRouteImport.update({
   id: '/reports/',
   path: '/reports/',
@@ -291,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/compliance/fica': typeof ComplianceFicaRoute
   '/deals/$dealId': typeof DealsDealIdRoute
   '/deals/new': typeof DealsNewRoute
+  '/rentals/$leaseId': typeof RentalsLeaseIdRoute
   '/reports/$report': typeof ReportsReportRoute
   '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
@@ -299,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/setup/import': typeof SetupImportRoute
   '/admin/': typeof AdminIndexRoute
   '/commission/': typeof CommissionIndexRoute
+  '/rentals/': typeof RentalsIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/setup/': typeof SetupIndexRoute
 }
@@ -333,6 +347,7 @@ export interface FileRoutesByTo {
   '/compliance/fica': typeof ComplianceFicaRoute
   '/deals/$dealId': typeof DealsDealIdRoute
   '/deals/new': typeof DealsNewRoute
+  '/rentals/$leaseId': typeof RentalsLeaseIdRoute
   '/reports/$report': typeof ReportsReportRoute
   '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
@@ -341,6 +356,7 @@ export interface FileRoutesByTo {
   '/setup/import': typeof SetupImportRoute
   '/admin': typeof AdminIndexRoute
   '/commission': typeof CommissionIndexRoute
+  '/rentals': typeof RentalsIndexRoute
   '/reports': typeof ReportsIndexRoute
   '/setup': typeof SetupIndexRoute
 }
@@ -377,6 +393,7 @@ export interface FileRoutesById {
   '/compliance/fica': typeof ComplianceFicaRoute
   '/deals/$dealId': typeof DealsDealIdRoute
   '/deals/new': typeof DealsNewRoute
+  '/rentals/$leaseId': typeof RentalsLeaseIdRoute
   '/reports/$report': typeof ReportsReportRoute
   '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
@@ -385,6 +402,7 @@ export interface FileRoutesById {
   '/setup/import': typeof SetupImportRoute
   '/admin/': typeof AdminIndexRoute
   '/commission/': typeof CommissionIndexRoute
+  '/rentals/': typeof RentalsIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/setup/': typeof SetupIndexRoute
 }
@@ -422,6 +440,7 @@ export interface FileRouteTypes {
     | '/compliance/fica'
     | '/deals/$dealId'
     | '/deals/new'
+    | '/rentals/$leaseId'
     | '/reports/$report'
     | '/settings/agency'
     | '/settings/notifications'
@@ -430,6 +449,7 @@ export interface FileRouteTypes {
     | '/setup/import'
     | '/admin/'
     | '/commission/'
+    | '/rentals/'
     | '/reports/'
     | '/setup/'
   fileRoutesByTo: FileRoutesByTo
@@ -464,6 +484,7 @@ export interface FileRouteTypes {
     | '/compliance/fica'
     | '/deals/$dealId'
     | '/deals/new'
+    | '/rentals/$leaseId'
     | '/reports/$report'
     | '/settings/agency'
     | '/settings/notifications'
@@ -472,6 +493,7 @@ export interface FileRouteTypes {
     | '/setup/import'
     | '/admin'
     | '/commission'
+    | '/rentals'
     | '/reports'
     | '/setup'
   id:
@@ -507,6 +529,7 @@ export interface FileRouteTypes {
     | '/compliance/fica'
     | '/deals/$dealId'
     | '/deals/new'
+    | '/rentals/$leaseId'
     | '/reports/$report'
     | '/settings/agency'
     | '/settings/notifications'
@@ -515,6 +538,7 @@ export interface FileRouteTypes {
     | '/setup/import'
     | '/admin/'
     | '/commission/'
+    | '/rentals/'
     | '/reports/'
     | '/setup/'
   fileRoutesById: FileRoutesById
@@ -545,6 +569,7 @@ export interface RootRouteChildren {
   ComplianceFicaRoute: typeof ComplianceFicaRoute
   DealsDealIdRoute: typeof DealsDealIdRoute
   DealsNewRoute: typeof DealsNewRoute
+  RentalsLeaseIdRoute: typeof RentalsLeaseIdRoute
   ReportsReportRoute: typeof ReportsReportRoute
   SettingsAgencyRoute: typeof SettingsAgencyRoute
   SettingsNotificationsRoute: typeof SettingsNotificationsRoute
@@ -552,6 +577,7 @@ export interface RootRouteChildren {
   SettingsUsersRoute: typeof SettingsUsersRoute
   SetupImportRoute: typeof SetupImportRoute
   CommissionIndexRoute: typeof CommissionIndexRoute
+  RentalsIndexRoute: typeof RentalsIndexRoute
   ReportsIndexRoute: typeof ReportsIndexRoute
   SetupIndexRoute: typeof SetupIndexRoute
 }
@@ -789,6 +815,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DealsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rentals/': {
+      id: '/rentals/'
+      path: '/rentals'
+      fullPath: '/rentals/'
+      preLoaderRoute: typeof RentalsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rentals/$leaseId': {
+      id: '/rentals/$leaseId'
+      path: '/rentals/$leaseId'
+      fullPath: '/rentals/$leaseId'
+      preLoaderRoute: typeof RentalsLeaseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reports/': {
       id: '/reports/'
       path: '/reports'
@@ -896,6 +936,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComplianceFicaRoute: ComplianceFicaRoute,
   DealsDealIdRoute: DealsDealIdRoute,
   DealsNewRoute: DealsNewRoute,
+  RentalsLeaseIdRoute: RentalsLeaseIdRoute,
   ReportsReportRoute: ReportsReportRoute,
   SettingsAgencyRoute: SettingsAgencyRoute,
   SettingsNotificationsRoute: SettingsNotificationsRoute,
@@ -903,6 +944,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsUsersRoute: SettingsUsersRoute,
   SetupImportRoute: SetupImportRoute,
   CommissionIndexRoute: CommissionIndexRoute,
+  RentalsIndexRoute: RentalsIndexRoute,
   ReportsIndexRoute: ReportsIndexRoute,
   SetupIndexRoute: SetupIndexRoute,
 }

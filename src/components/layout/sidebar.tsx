@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   FileSignature,
+  Home,
 } from "lucide-react";
 import { useApp } from "@/lib/app-state";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ import { useState } from "react";
 export const navItems = [
   { label: "Dashboard", to: "/", icon: LayoutDashboard },
   { label: "Mandates", to: "/mandates", icon: FileSignature },
+  { label: "Rentals", to: "/rentals", icon: Home },
   { label: "Pipeline", to: "/pipeline", icon: KanbanSquare },
   { label: "Countdown Board", to: "/countdown", icon: Timer },
   { label: "Commission", to: "/commission", icon: Coins },
