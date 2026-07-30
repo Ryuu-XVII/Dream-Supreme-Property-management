@@ -22,7 +22,7 @@ const CHECKLIST = [
   "Guarantees",
 ];
 
-export function DealDocumentsTab({ deal }: { deal: Deal }) {
+export function DealDocumentsTab({ deal }: { deal: any }) {
   const { account } = useAuth();
   const { data: documents = [], isLoading } = useDocuments(deal.id);
   const uploadDoc = useUploadDocument();
