@@ -12,7 +12,7 @@ This document outlines the core architecture of the Dream Supreme Property Manag
 ## 2. Portal Separation (RBAC)
 The application operates as a **Monolith with Subdirectory Routing**, serving two distinct portals based on the user's authenticated role (`Principal`, `Admin`, `Agent`, `Candidate`):
 
-- **Agent Portal (Main App)**: Resides in the root (`/`, `/deals`, `/pipeline`, `/leads`). Wrapped by `<AppShell>` which includes the main sidebar and header. Restricted to Agents, Candidates, and Principals.
+- **Agent Portal (Main App)**: Resides in the root (`/`, `/deals`, `/pipeline`, `/leads`, `/rentals`, `/mandates`). Wrapped by `<AppShell>` which includes the main sidebar and header. Restricted to Agents, Candidates, and Principals.
 - **Admin Portal**: Resides under `/admin/*`. Wrapped by `<AdminShell>` with its own dedicated sidebar and header. Restricted strictly to Admins and Principals. 
 - **Conveyancer Portal (Public Links)**: Resides under `/conveyancer`. This is a standalone, public-facing portal accessed via secure "magic links" (URL tokens). Conveyancers do NOT require user accounts and do not use the standard login flow.
 
