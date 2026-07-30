@@ -15,11 +15,29 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { GitCompareArrows, Presentation } from "lucide-react";
 
-export function DealOffersTab({ deal }: { deal: Deal }) {
+export function DealOffersTab({ deal }: { deal: any }) {
   const [compare, setCompare] = useState(false);
   const [presenting, setPresenting] = useState(false);
 
-  if (deal.offers.length === 0) {
+  const offers = (deal.offers || []).map((o: any) => ({
+    id: o.id,
+    price: o.offer_price_cents,
+    deposit: o.deposit_cents,
+    bondAmount: o.bond_amount_cents,
+    expiry: o.expires_on,
+    purchaser: "Purchaser",
+    occupationDate: deal.occupation_date,
+    status:
+      o.status === "accepted"
+        ? "Accepted"
+        : o.status === "rejected"
+          ? "Rejected"
+          : o.status === "expired"
+            ? "Expired"
+            : "Pending",
+  }));
+
+  if (offers.length === 0) {
     return (
       <EmptyState
         title="No offers received yet"
@@ -46,7 +64,7 @@ export function DealOffersTab({ deal }: { deal: Deal }) {
 
       {!compare ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {deal.offers.map((o) => (
+          {offers.map((o: any) => (
             <GlassCard key={o.id}>
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="truncate text-sm font-medium">{o.purchaser}</p>
@@ -70,7 +88,7 @@ export function DealOffersTab({ deal }: { deal: Deal }) {
           ))}
         </div>
       ) : (
-        <OfferComparisonTable deal={deal} />
+        <OfferComparisonTable offers={offers} />
       )}
 
       <Dialog open={presenting} onOpenChange={setPresenting}>
@@ -79,7 +97,7 @@ export function DealOffersTab({ deal }: { deal: Deal }) {
             <DialogTitle>Seller Presentation — Offer Comparison</DialogTitle>
           </DialogHeader>
           <div className="rounded-lg border border-border bg-card p-4">
-            <OfferComparisonTable deal={deal} />
+            <OfferComparisonTable offers={offers} />
           </div>
         </DialogContent>
       </Dialog>
@@ -87,7 +105,7 @@ export function DealOffersTab({ deal }: { deal: Deal }) {
   );
 }
 
-function OfferComparisonTable({ deal }: { deal: Deal }) {
+function OfferComparisonTable({ offers }: { offers: any[] }) {
   return (
     <div className="overflow-x-auto scrollbar-thin">
       <Table>
@@ -103,7 +121,7 @@ function OfferComparisonTable({ deal }: { deal: Deal }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {deal.offers.map((o) => (
+          {offers.map((o: any) => (
             <TableRow key={o.id}>
               <TableCell className="text-sm">{o.purchaser}</TableCell>
               <TableCell className="money">{zar(o.price, { decimals: false })}</TableCell>
