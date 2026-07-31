@@ -2,7 +2,6 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { label: "Rules Configuration", to: "/commission" as const },
   { label: "Monthly Reconciliation", to: "/commission/reconciliation" as const },
   { label: "Agent Earnings", to: "/commission/earnings" as const },
 ];
