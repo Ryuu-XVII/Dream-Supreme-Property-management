@@ -13,13 +13,7 @@ import {
 } from "recharts";
 import { GlassCard } from "@/components/ui-kit";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  TrendingUp,
-  Activity,
-  Percent,
-  ArrowUpRight,
-  ArrowDownRight,
-} from "lucide-react";
+import { TrendingUp, Activity, Percent, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { DatePickerWithRange } from "@/components/admin/date-range-picker";
 import { cn } from "@/lib/utils";
 
@@ -172,7 +166,7 @@ export function StatisticsChart() {
           </TabsList>
 
           <TabsContent value="revenue" className="space-y-4">
-            <div className="h-[350px] w-full">
+            <div className="h-87.5 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
@@ -253,7 +247,7 @@ export function StatisticsChart() {
           </TabsContent>
 
           <TabsContent value="occupancy" className="space-y-4">
-            <div className="h-[350px] w-full">
+            <div className="h-87.5 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={occupancyData}
