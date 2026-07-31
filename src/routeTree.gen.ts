@@ -23,6 +23,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SignRouteImport } from './routes/sign'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminCommissionRulesRouteImport } from './routes/admin/commission-rules'
 import { Route as AdminDealsRouteImport } from './routes/admin/deals'
 import { Route as AdminFinancialsRouteImport } from './routes/admin/financials'
 import { Route as AdminPropertiesRouteImport } from './routes/admin/properties'
@@ -115,6 +116,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCommissionRulesRoute = AdminCommissionRulesRouteImport.update({
+  id: '/commission-rules',
+  path: '/commission-rules',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminDealsRoute = AdminDealsRouteImport.update({
@@ -248,6 +254,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/commission-rules': typeof AdminCommissionRulesRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
   '/admin/properties': typeof AdminPropertiesRoute
@@ -286,6 +293,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/commission-rules': typeof AdminCommissionRulesRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
   '/admin/properties': typeof AdminPropertiesRoute
@@ -326,6 +334,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/commission-rules': typeof AdminCommissionRulesRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
   '/admin/properties': typeof AdminPropertiesRoute
@@ -367,6 +376,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/sign'
     | '/sitemap.xml'
+    | '/admin/commission-rules'
     | '/admin/deals'
     | '/admin/financials'
     | '/admin/properties'
@@ -405,6 +415,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/sign'
     | '/sitemap.xml'
+    | '/admin/commission-rules'
     | '/admin/deals'
     | '/admin/financials'
     | '/admin/properties'
@@ -444,6 +455,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/sign'
     | '/sitemap.xml'
+    | '/admin/commission-rules'
     | '/admin/deals'
     | '/admin/financials'
     | '/admin/properties'
@@ -599,6 +611,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/commission-rules': {
+      id: '/admin/commission-rules'
+      path: '/commission-rules'
+      fullPath: '/admin/commission-rules'
+      preLoaderRoute: typeof AdminCommissionRulesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/deals': {
@@ -766,6 +785,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminCommissionRulesRoute: typeof AdminCommissionRulesRoute
   AdminDealsRoute: typeof AdminDealsRoute
   AdminFinancialsRoute: typeof AdminFinancialsRoute
   AdminPropertiesRoute: typeof AdminPropertiesRoute
@@ -778,6 +798,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminCommissionRulesRoute: AdminCommissionRulesRoute,
   AdminDealsRoute: AdminDealsRoute,
   AdminFinancialsRoute: AdminFinancialsRoute,
   AdminPropertiesRoute: AdminPropertiesRoute,
