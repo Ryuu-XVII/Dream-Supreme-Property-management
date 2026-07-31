@@ -2,10 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { Building2, Bell, Users, UserCircle } from "lucide-react";
 
-const tabs = [
-  { to: "/settings/profile" as const, label: "My Profile", icon: UserCircle },
-  { to: "/settings/notifications" as const, label: "Notifications", icon: Bell },
-];
+const tabs = [{ to: "/settings/profile" as const, label: "My Profile", icon: UserCircle }];
 
 export function SettingsTabs() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });

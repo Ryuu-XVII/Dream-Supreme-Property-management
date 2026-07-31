@@ -27,6 +27,7 @@ import { Route as AdminAgencyRouteImport } from './routes/admin/agency'
 import { Route as AdminCommissionRulesRouteImport } from './routes/admin/commission-rules'
 import { Route as AdminDealsRouteImport } from './routes/admin/deals'
 import { Route as AdminFinancialsRouteImport } from './routes/admin/financials'
+import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminPropertiesRouteImport } from './routes/admin/properties'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
@@ -39,7 +40,6 @@ import { Route as RentalsIndexRouteImport } from './routes/rentals/index'
 import { Route as RentalsLeaseIdRouteImport } from './routes/rentals/$leaseId'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as ReportsReportRouteImport } from './routes/reports/$report'
-import { Route as SettingsNotificationsRouteImport } from './routes/settings/notifications'
 import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SetupIndexRouteImport } from './routes/setup/index'
 import { Route as SetupImportRouteImport } from './routes/setup/import'
@@ -137,6 +137,11 @@ const AdminFinancialsRoute = AdminFinancialsRouteImport.update({
   path: '/financials',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPropertiesRoute = AdminPropertiesRouteImport.update({
   id: '/properties',
   path: '/properties',
@@ -198,11 +203,6 @@ const ReportsReportRoute = ReportsReportRouteImport.update({
   path: '/reports/$report',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
-  id: '/settings/notifications',
-  path: '/settings/notifications',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsProfileRoute = SettingsProfileRouteImport.update({
   id: '/settings/profile',
   path: '/settings/profile',
@@ -252,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/admin/commission-rules': typeof AdminCommissionRulesRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -261,7 +262,6 @@ export interface FileRoutesByFullPath {
   '/deals/new': typeof DealsNewRoute
   '/rentals/$leaseId': typeof RentalsLeaseIdRoute
   '/reports/$report': typeof ReportsReportRoute
-  '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/setup/import': typeof SetupImportRoute
   '/admin/': typeof AdminIndexRoute
@@ -290,6 +290,7 @@ export interface FileRoutesByTo {
   '/admin/commission-rules': typeof AdminCommissionRulesRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -299,7 +300,6 @@ export interface FileRoutesByTo {
   '/deals/new': typeof DealsNewRoute
   '/rentals/$leaseId': typeof RentalsLeaseIdRoute
   '/reports/$report': typeof ReportsReportRoute
-  '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/setup/import': typeof SetupImportRoute
   '/admin': typeof AdminIndexRoute
@@ -330,6 +330,7 @@ export interface FileRoutesById {
   '/admin/commission-rules': typeof AdminCommissionRulesRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -339,7 +340,6 @@ export interface FileRoutesById {
   '/deals/new': typeof DealsNewRoute
   '/rentals/$leaseId': typeof RentalsLeaseIdRoute
   '/reports/$report': typeof ReportsReportRoute
-  '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/setup/import': typeof SetupImportRoute
   '/admin/': typeof AdminIndexRoute
@@ -371,6 +371,7 @@ export interface FileRouteTypes {
     | '/admin/commission-rules'
     | '/admin/deals'
     | '/admin/financials'
+    | '/admin/notifications'
     | '/admin/properties'
     | '/admin/settings'
     | '/admin/users'
@@ -380,7 +381,6 @@ export interface FileRouteTypes {
     | '/deals/new'
     | '/rentals/$leaseId'
     | '/reports/$report'
-    | '/settings/notifications'
     | '/settings/profile'
     | '/setup/import'
     | '/admin/'
@@ -409,6 +409,7 @@ export interface FileRouteTypes {
     | '/admin/commission-rules'
     | '/admin/deals'
     | '/admin/financials'
+    | '/admin/notifications'
     | '/admin/properties'
     | '/admin/settings'
     | '/admin/users'
@@ -418,7 +419,6 @@ export interface FileRouteTypes {
     | '/deals/new'
     | '/rentals/$leaseId'
     | '/reports/$report'
-    | '/settings/notifications'
     | '/settings/profile'
     | '/setup/import'
     | '/admin'
@@ -448,6 +448,7 @@ export interface FileRouteTypes {
     | '/admin/commission-rules'
     | '/admin/deals'
     | '/admin/financials'
+    | '/admin/notifications'
     | '/admin/properties'
     | '/admin/settings'
     | '/admin/users'
@@ -457,7 +458,6 @@ export interface FileRouteTypes {
     | '/deals/new'
     | '/rentals/$leaseId'
     | '/reports/$report'
-    | '/settings/notifications'
     | '/settings/profile'
     | '/setup/import'
     | '/admin/'
@@ -490,7 +490,6 @@ export interface RootRouteChildren {
   DealsNewRoute: typeof DealsNewRoute
   RentalsLeaseIdRoute: typeof RentalsLeaseIdRoute
   ReportsReportRoute: typeof ReportsReportRoute
-  SettingsNotificationsRoute: typeof SettingsNotificationsRoute
   SettingsProfileRoute: typeof SettingsProfileRoute
   SetupImportRoute: typeof SetupImportRoute
   CommissionIndexRoute: typeof CommissionIndexRoute
@@ -627,6 +626,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFinancialsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/properties': {
       id: '/admin/properties'
       path: '/properties'
@@ -711,13 +717,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsReportRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/notifications': {
-      id: '/settings/notifications'
-      path: '/settings/notifications'
-      fullPath: '/settings/notifications'
-      preLoaderRoute: typeof SettingsNotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/settings/profile': {
       id: '/settings/profile'
       path: '/settings/profile'
@@ -768,6 +767,7 @@ interface AdminRouteChildren {
   AdminCommissionRulesRoute: typeof AdminCommissionRulesRoute
   AdminDealsRoute: typeof AdminDealsRoute
   AdminFinancialsRoute: typeof AdminFinancialsRoute
+  AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminPropertiesRoute: typeof AdminPropertiesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -782,6 +782,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCommissionRulesRoute: AdminCommissionRulesRoute,
   AdminDealsRoute: AdminDealsRoute,
   AdminFinancialsRoute: AdminFinancialsRoute,
+  AdminNotificationsRoute: AdminNotificationsRoute,
   AdminPropertiesRoute: AdminPropertiesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
@@ -813,7 +814,6 @@ const rootRouteChildren: RootRouteChildren = {
   DealsNewRoute: DealsNewRoute,
   RentalsLeaseIdRoute: RentalsLeaseIdRoute,
   ReportsReportRoute: ReportsReportRoute,
-  SettingsNotificationsRoute: SettingsNotificationsRoute,
   SettingsProfileRoute: SettingsProfileRoute,
   SetupImportRoute: SetupImportRoute,
   CommissionIndexRoute: CommissionIndexRoute,

@@ -3,8 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { AppShell } from "@/components/layout/app-shell";
-import { SettingsTabs } from "@/components/settings/settings-tabs";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { GlassCard } from "@/components/ui-kit";
 import { notificationTypes } from "@/data/state";
 import { Switch } from "@/components/ui/switch";
@@ -24,7 +23,7 @@ import { ChevronDown, Bell } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
-export const Route = createFileRoute("/settings/notifications")({
+export const Route = createFileRoute("/admin/notifications")({
   head: () => ({
     meta: [
       { title: "Notification Preferences | Dream Supreme Properties" },
@@ -171,8 +170,11 @@ function NotificationsPage() {
   }
 
   return (
-    <AppShell title="Settings" description="Choose how and who is notified for each event type.">
-      <SettingsTabs />
+    <>
+      <AdminPageHeader
+        title="Notification Matrix"
+        description="Configure email, in-app and recipient rules for every notification type."
+      />
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -253,6 +255,6 @@ function NotificationsPage() {
           </div>
         </GlassCard>
       </motion.div>
-    </AppShell>
+    </>
   );
 }

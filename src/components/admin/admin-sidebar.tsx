@@ -10,6 +10,7 @@ import {
   FileText,
   Activity,
   ShieldCheck,
+  Bell,
 } from "lucide-react";
 import { useApp } from "@/lib/app-state";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ export const adminNavItems = [
   { label: "Commission Rules", to: "/admin/commission-rules", icon: FileText },
   { label: "Compliance", to: "/admin/compliance/ffc", icon: ShieldCheck },
   { label: "Agency Config", to: "/admin/agency", icon: Building2 },
+  { label: "Notifications", to: "/admin/notifications", icon: Bell },
   { label: "Settings", to: "/admin/settings", icon: Settings },
 ] as const;
 
