@@ -120,8 +120,8 @@ function computePreview(rs: RuleSet, sampleSale: number) {
       kind: "base",
     },
     {
-      label: rs.vatInclusive ? "Less VAT (15%, incl.)" : "Plus VAT (15%, excl.)",
-      formula: rs.vatInclusive ? "gross − gross ÷ 1.15" : "gross × 15%",
+      label: rs.vatInclusive ? `Less VAT (${VAT_RATE}%, incl.)` : `Plus VAT (${VAT_RATE}%, excl.)`,
+      formula: rs.vatInclusive ? `gross − gross ÷ (1 + ${VAT_RATE}/100)` : `gross × ${VAT_RATE}%`,
       amount: rs.vatInclusive ? -vat : vat,
       kind: "deduct",
     },

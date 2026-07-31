@@ -55,6 +55,10 @@ We utilize Postgres functions (RPCs) to handle complex transactions that require
 
 Calculates the exact net payable amounts for all participants on a deal using a cascading waterfall approach. Supports dynamically calculating franchise/marketing fees based on the remaining commission pool (`percentage_of_remaining`). Re-runnable (archives previous calculations). Restricted to Principals and Admins.
 
+### `get_vat_rate()`
+
+A central configuration function that returns the current VAT rate (`0.15`). Used consistently by the commission calculations to prevent hardcoded VAT percentages.
+
 ### `admin_bulk_retire_users(p_user_ids)`
 
 Changes multiple users' statuses to `'archived'` securely in one transaction and automatically writes to the `audit_log`.

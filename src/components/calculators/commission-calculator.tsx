@@ -13,6 +13,7 @@ import { Calculator, Copy, Check } from "lucide-react";
 import { useApp } from "@/lib/app-state";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { VAT_RATE } from "@/data/state";
 
 export type CalcLine = {
   id: string;
@@ -102,10 +103,10 @@ export function CommissionCalculator() {
 
     if (isVatVendor) {
       if (isVatInclusive) {
-        netCommCents = Math.round(grossCommCents / 1.15);
+        netCommCents = Math.round(grossCommCents / (1 + VAT_RATE / 100));
         vatCents = grossCommCents - netCommCents;
       } else {
-        vatCents = Math.round(grossCommCents * 0.15);
+        vatCents = Math.round(grossCommCents * (VAT_RATE / 100));
       }
     }
 
@@ -168,7 +169,7 @@ export function CommissionCalculator() {
 Property Sale Price: ${zar(salePrice * 100)}
 Commission Rate: ${commRate}% (${isVatInclusive ? "VAT-Inclusive" : "VAT-Exclusive"})
 Gross Commission: ${zar(calc.grossCommCents)}
-VAT Portion (15%): ${zar(calc.vatCents)}
+VAT Portion (${VAT_RATE}%): ${zar(calc.vatCents)}
 Net Commission: ${zar(calc.netCommCents)}
 ------------------------------------------------------
 `;
@@ -265,7 +266,7 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
                 <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-card/40">
                   <div className="space-y-0.5">
                     <Label className="text-xs font-semibold">Agency VAT Vendor</Label>
-                    <p className="text-[11px] text-muted-foreground">Charge 15% SA VAT</p>
+                    <p className="text-[11px] text-muted-foreground">Charge {VAT_RATE}% SA VAT</p>
                   </div>
                   <Switch checked={isVatVendor} onCheckedChange={setIsVatVendor} />
                 </div>
@@ -427,7 +428,7 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
                 {isVatVendor && (
                   <>
                     <div className="flex justify-between py-1 border-b border-border/50 text-muted-foreground">
-                      <span>Less SARS VAT (15%)</span>
+                      <span>Less SARS VAT ({VAT_RATE}%)</span>
                       <span className="text-destructive">-{zar(calc.vatCents)}</span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-border/50 font-medium">
