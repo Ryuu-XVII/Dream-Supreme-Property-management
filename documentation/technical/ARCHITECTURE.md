@@ -42,7 +42,7 @@ State is separated into three distinct domains:
 ```text
 /src
   /components
-    /admin         # Admin Portal specific components (AdminShell, Charts, Headers)
+    /admin         # Admin Portal specific components (AdminShell, Charts, Global Config)
     /deal          # Deal-specific components (QuickDealModal)
     /layout        # Main Agent Portal shell (AppShell, Sidebar, Header)
     /ui            # Shadcn UI primitives (Buttons, Inputs, Dialogs)
@@ -50,8 +50,9 @@ State is separated into three distinct domains:
   /lib             # Core utilities (Auth, Supabase client, Formatting, State)
   /routes          # TanStack Router file-based route definitions
     __root.tsx     # Root context and AuthGuard enforcement
-    /admin         # Admin Portal routes
+    /admin         # Admin Portal routes (Agency Config, Commission Rules, System Settings)
     /deals         # Agent Portal deal routes
+    /settings      # Agent personal preferences (My Profile)
 /supabase
   /migrations      # PostgreSQL schema, functions, and RLS policies
 ```
