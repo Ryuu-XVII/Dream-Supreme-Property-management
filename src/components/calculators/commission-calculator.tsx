@@ -33,8 +33,9 @@ export function CommissionCalculator() {
   const [commRate, setCommRate] = useState<number>(5.0); // %
   const [isVatVendor, setIsVatVendor] = useState<boolean>(true);
   const [isVatInclusive, setIsVatInclusive] = useState<boolean>(true);
+  const [pcFeePct, setPcFeePct] = useState<number>(10.0); // %
   const [franchiseFeePct, setFranchiseFeePct] = useState<number>(6.0); // %
-  const [referralFeePct, setReferralFeePct] = useState<number>(0.0); // %
+  const [marketingFeePct, setMarketingFeePct] = useState<number>(2.0); // %
   const [officeSharePct, setOfficeSharePct] = useState<number>(50.0); // %
   const [agentASplitPct, setAgentASplitPct] = useState<number>(60.0); // %
   const [agentBSplitPct, setAgentBSplitPct] = useState<number>(40.0); // %
@@ -59,9 +60,13 @@ export function CommissionCalculator() {
       }
     }
 
-    const franchiseDeductionCents = Math.round((netCommCents * franchiseFeePct) / 100);
-    const referralDeductionCents = Math.round((netCommCents * referralFeePct) / 100);
-    const distributablePoolCents = netCommCents - franchiseDeductionCents - referralDeductionCents;
+    const pcFeeDeductionCents = Math.round((netCommCents * pcFeePct) / 100);
+    const netPoolBaseCents = netCommCents - pcFeeDeductionCents;
+
+    const franchiseDeductionCents = Math.round((netPoolBaseCents * franchiseFeePct) / 100);
+    const marketingDeductionCents = Math.round((netPoolBaseCents * marketingFeePct) / 100);
+    const distributablePoolCents =
+      netPoolBaseCents - franchiseDeductionCents - marketingDeductionCents;
 
     const officeShareCents = Math.round((distributablePoolCents * officeSharePct) / 100);
     const agentPoolCents = distributablePoolCents - officeShareCents;
@@ -80,8 +85,10 @@ export function CommissionCalculator() {
       grossCommCents,
       vatCents,
       netCommCents,
+      pcFeeDeductionCents,
+      netPoolBaseCents,
       franchiseDeductionCents,
-      referralDeductionCents,
+      marketingDeductionCents,
       distributablePoolCents,
       officeShareCents,
       agentPoolCents,
@@ -94,8 +101,9 @@ export function CommissionCalculator() {
     commRate,
     isVatVendor,
     isVatInclusive,
+    pcFeePct,
     franchiseFeePct,
-    referralFeePct,
+    marketingFeePct,
     officeSharePct,
     agentASplitPct,
     hasCoAgent,
@@ -111,7 +119,11 @@ Gross Commission: ${zar(calc.grossCommCents)}
 VAT Portion (15%): ${zar(calc.vatCents)}
 Net Commission: ${zar(calc.netCommCents)}
 ------------------------------------------------------
+PC / Admin Fee (${pcFeePct}%): -${zar(calc.pcFeeDeductionCents)}
+Net Commission Pool: ${zar(calc.netPoolBaseCents)}
+------------------------------------------------------
 Franchise Fee (${franchiseFeePct}%): -${zar(calc.franchiseDeductionCents)}
+Marketing Fee (${marketingFeePct}%): -${zar(calc.marketingDeductionCents)}
 Distributable Pool: ${zar(calc.distributablePoolCents)}
 Office Share (${officeSharePct}%): ${zar(calc.officeShareCents)}
 Agent Pool (${100 - officeSharePct}%): ${zar(calc.agentPoolCents)}
@@ -223,9 +235,20 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
               <Separator />
 
               {/* Deductions & Splits */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium">Franchise / Royalty Fee (%)</Label>
+                  <Label className="text-xs font-medium">PC / Admin Fee (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.5"
+                    value={pcFeePct}
+                    onChange={(e) => setPcFeePct(Number(e.target.value))}
+                    className="font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Franchise Fee (%)</Label>
                   <Input
                     type="number"
                     step="0.5"
@@ -235,6 +258,19 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
                   />
                 </div>
 
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Marketing Fee (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.5"
+                    value={marketingFeePct}
+                    onChange={(e) => setMarketingFeePct(Number(e.target.value))}
+                    className="font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium">Office Share (%)</Label>
                   <Input
@@ -355,10 +391,29 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
                   </>
                 )}
 
+                {pcFeePct > 0 && (
+                  <div className="flex justify-between py-1 border-b border-border/50 text-muted-foreground">
+                    <span>Less PC / Admin Fee ({pcFeePct}%)</span>
+                    <span className="text-destructive">-{zar(calc.pcFeeDeductionCents)}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between py-1 border-b border-border/50 font-medium">
+                  <span>Net Commission Pool</span>
+                  <span>{zar(calc.netPoolBaseCents)}</span>
+                </div>
+
                 {franchiseFeePct > 0 && (
                   <div className="flex justify-between py-1 border-b border-border/50 text-muted-foreground">
-                    <span>Less Franchise / Royalty ({franchiseFeePct}%)</span>
+                    <span>Less Franchise Fee ({franchiseFeePct}%)</span>
                     <span className="text-destructive">-{zar(calc.franchiseDeductionCents)}</span>
+                  </div>
+                )}
+
+                {marketingFeePct > 0 && (
+                  <div className="flex justify-between py-1 border-b border-border/50 text-muted-foreground">
+                    <span>Less Marketing Fee ({marketingFeePct}%)</span>
+                    <span className="text-destructive">-{zar(calc.marketingDeductionCents)}</span>
                   </div>
                 )}
 
