@@ -33,28 +33,9 @@ export const Route = createFileRoute("/admin/settings")({
 });
 
 function AdminSettings() {
-  const [rules, setRules] = useState([
-    { id: 1, name: "Candidate Agent", threshold: 0, cut: 50 },
-    { id: 2, name: "Mid-level Agent", threshold: 500000, cut: 60 },
-    { id: 3, name: "Senior Agent", threshold: 2000000, cut: 70 },
-    { id: 4, name: "Principal Agent", threshold: 5000000, cut: 85 },
-  ]);
-
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
     toast.success("System settings updated successfully.");
-  }
-
-  function addRule() {
-    setRules([...rules, { id: Date.now(), name: "New Tier", threshold: 0, cut: 50 }]);
-  }
-
-  function removeRule(id: number) {
-    setRules(rules.filter((r) => r.id !== id));
-  }
-
-  function updateRule(id: number, field: string, value: string | number) {
-    setRules(rules.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
   }
 
   async function handleArchiveDeals() {
@@ -95,18 +76,6 @@ function AdminSettings() {
     }
   }
 
-  async function handleResetTiers() {
-    if (confirm("Are you sure you want to reset commission tiers?")) {
-      setRules([
-        { id: 1, name: "Candidate Agent", threshold: 0, cut: 50 },
-        { id: 2, name: "Mid-level Agent", threshold: 500000, cut: 60 },
-        { id: 3, name: "Senior Agent", threshold: 2000000, cut: 70 },
-        { id: 4, name: "Principal Agent", threshold: 5000000, cut: 85 },
-      ]);
-      toast.success("Commission tiers reset to defaults.");
-    }
-  }
-
   return (
     <>
       <AdminPageHeader
@@ -116,8 +85,8 @@ function AdminSettings() {
       <div className="max-w-4xl">
         <Tabs defaultValue="financial" className="w-full">
           <TabsList className="mb-6 grid w-full max-w-2xl grid-cols-4 bg-slate-900/50">
-            <TabsTrigger value="general" className="gap-2">
-              <Building2 className="size-4" /> General
+            <TabsTrigger value="operations" className="gap-2">
+              <Building2 className="size-4" /> Operations
             </TabsTrigger>
             <TabsTrigger value="financial" className="gap-2">
               <Wallet className="size-4" /> Financial
@@ -133,37 +102,10 @@ function AdminSettings() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="general" className="space-y-6">
+          <TabsContent value="operations" className="space-y-6">
             <GlassCard>
-              <h3 className="font-display text-base font-semibold mb-4">Agency Details</h3>
+              <h3 className="font-display text-base font-semibold mb-4">Operational Settings</h3>
               <form onSubmit={handleSave} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Agency Name</Label>
-                    <Input defaultValue="Dream Supreme Properties" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Trading As (if different)</Label>
-                    <Input placeholder="Optional" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Contact Email (System Notifications)</Label>
-                  <Input type="email" defaultValue="admin@dreamsupreme.co.za" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Primary Phone Number</Label>
-                  <Input type="tel" defaultValue="+27 11 555 0192" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Physical Address</Label>
-                  <Input defaultValue="142 Sandton Drive, Sandton, Johannesburg, 2196" />
-                </div>
-
-                <h4 className="font-medium text-sm pt-4 border-t border-border mt-4">
-                  Operational Settings
-                </h4>
-
                 <div className="flex items-center justify-between p-4 border border-border/50 rounded-lg bg-background/30">
                   <div className="space-y-0.5">
                     <Label className="text-base font-medium">
@@ -242,78 +184,6 @@ function AdminSettings() {
                   </Button>
                 </div>
               </form>
-            </GlassCard>
-
-            <GlassCard>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="font-display text-base font-semibold">Commission Tiers</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Set how commissions are shared with agents based on their performance this year.
-                  </p>
-                </div>
-                <Button onClick={addRule} variant="outline" size="sm" className="gap-2">
-                  <Plus className="size-4" /> Add Tier
-                </Button>
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-12 gap-4 text-xs font-medium text-muted-foreground px-2">
-                  <div className="col-span-4">Tier Name</div>
-                  <div className="col-span-4">Yearly Target (ZAR)</div>
-                  <div className="col-span-3">Agent Share (%)</div>
-                  <div className="col-span-1 text-right">Actions</div>
-                </div>
-
-                {rules.map((rule, idx) => (
-                  <div
-                    key={rule.id}
-                    className="grid grid-cols-12 gap-4 items-center bg-background/50 p-2 rounded-lg border border-border/50"
-                  >
-                    <div className="col-span-4">
-                      <Input
-                        value={rule.name}
-                        onChange={(e) => updateRule(rule.id, "name", e.target.value)}
-                        placeholder="e.g. Bronze"
-                        className="h-8"
-                      />
-                    </div>
-                    <div className="col-span-4 relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
-                        R
-                      </span>
-                      <Input
-                        type="number"
-                        value={rule.threshold}
-                        onChange={(e) => updateRule(rule.id, "threshold", Number(e.target.value))}
-                        className="pl-7 h-8"
-                      />
-                    </div>
-                    <div className="col-span-3 relative">
-                      <Input
-                        type="number"
-                        value={rule.cut}
-                        onChange={(e) => updateRule(rule.id, "cut", Number(e.target.value))}
-                        max="100"
-                        className="h-8"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
-                        %
-                      </span>
-                    </div>
-                    <div className="col-span-1 text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeRule(rule.id)}
-                        className="h-8 w-8 text-slate-500 hover:text-red-600"
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </GlassCard>
           </TabsContent>
 
@@ -422,21 +292,6 @@ function AdminSettings() {
                   </div>
                   <Button variant="destructive" onClick={handleEmptyTrash}>
                     Empty Trash
-                  </Button>
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-red-200 dark:border-red-900/50 rounded-lg bg-red-50 dark:bg-red-950/20 gap-4">
-                  <div>
-                    <h4 className="font-medium text-red-900 dark:text-red-400">
-                      Reset Commission Tiers
-                    </h4>
-                    <p className="text-xs text-red-700 dark:text-red-500/70 mt-1">
-                      Revert all agent commission splits and tiers back to the default factory
-                      settings.
-                    </p>
-                  </div>
-                  <Button variant="destructive" onClick={handleResetTiers}>
-                    Reset Tiers
                   </Button>
                 </div>
               </div>
