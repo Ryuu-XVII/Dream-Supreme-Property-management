@@ -181,7 +181,7 @@ export interface Deal {
 export interface DeductionLine {
   id: string;
   type: "Franchise Fee" | "Referral Fee" | "Marketing Recovery" | "Co-mandate Share" | "Desk Fee";
-  basis: "Percentage" | "Fixed";
+  basis: "Percentage" | "Percentage of Remaining" | "Fixed";
   bps?: number;
   fixed?: number;
   payee: string;

@@ -53,7 +53,7 @@ We utilize Postgres functions (RPCs) to handle complex transactions that require
 
 ### `calculate_deal_commission(p_deal_id, p_rule_set_id)`
 
-Calculates the exact net payable amounts for all participants on a deal. Re-runnable (archives previous calculations). Restricted to Principals and Admins.
+Calculates the exact net payable amounts for all participants on a deal using a cascading waterfall approach. Supports dynamically calculating franchise/marketing fees based on the remaining commission pool (`percentage_of_remaining`). Re-runnable (archives previous calculations). Restricted to Principals and Admins.
 
 ### `admin_bulk_retire_users(p_user_ids)`
 

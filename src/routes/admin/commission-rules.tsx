@@ -79,7 +79,7 @@ function newLine(): DeductionLine {
   return {
     id: `newline-${lineSeq}`,
     type: "Franchise Fee",
-    basis: "Percentage",
+    basis: "Percentage of Remaining",
     bps: 500,
     payee: "",
   };
@@ -100,10 +100,8 @@ function blankRuleSet(): RuleSet {
   };
 }
 
-const SAMPLE_SALE = 250000000; // R2,500,000 in cents
-
-function computePreview(rs: RuleSet) {
-  const gross = Math.round((SAMPLE_SALE * rs.defaultBps) / 10000);
+function computePreview(rs: RuleSet, sampleSale: number) {
+  const gross = Math.round((sampleSale * rs.defaultBps) / 10000);
   const vat = rs.vatInclusive
     ? Math.round(gross - gross / (1 + VAT_RATE))
     : Math.round(gross * VAT_RATE);
@@ -140,8 +138,11 @@ function computePreview(rs: RuleSet) {
     let amt = 0;
     let formula = "";
     if (line.basis === "Percentage") {
-      amt = Math.round((running * (line.bps ?? 0)) / 10000);
+      amt = Math.round((net * (line.bps ?? 0)) / 10000);
       formula = `net × ${((line.bps ?? 0) / 100).toFixed(2)}%`;
+    } else if (line.basis === "Percentage of Remaining") {
+      amt = Math.round((running * (line.bps ?? 0)) / 10000);
+      formula = `remaining pool × ${((line.bps ?? 0) / 100).toFixed(2)}%`;
     } else {
       amt = line.fixed ?? 0;
       formula = "fixed amount";
@@ -217,7 +218,12 @@ function CommissionRulesPage() {
           .map((line: any) => ({
             id: line.id,
             type: typeNames[line.line_type] || "Desk Fee",
-            basis: line.calculation_basis === "fixed" ? "Fixed" : "Percentage",
+            basis:
+              line.calculation_basis === "fixed"
+                ? "Fixed"
+                : line.calculation_basis === "percentage_of_remaining"
+                  ? "Percentage of Remaining"
+                  : "Percentage",
             bps: line.rate_bps,
             fixed: line.fixed_amount_cents,
             payee: line.payee_type || "",
@@ -229,6 +235,7 @@ function CommissionRulesPage() {
   const [ruleSets, setRuleSets] = useState<RuleSet[]>(seedRuleSets);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<RuleSet | null>(null);
+  const [sampleSale, setSampleSale] = useState(250000000);
 
   useEffect(() => {
     if (ruleQuery.data) setRuleSets(ruleQuery.data);
@@ -288,7 +295,12 @@ function CommissionRulesPage() {
         deductions: editing.deductions.map((line, index) => ({
           sequence: index,
           lineType: lineTypes[line.type],
-          basis: line.basis.toLowerCase(),
+          basis:
+            line.basis === "Percentage of Remaining"
+              ? "percentage_of_remaining"
+              : line.basis === "Percentage"
+                ? "percentage"
+                : "fixed",
           rateBps: line.bps || 0,
           fixedCents: line.fixed || 0,
           payee: line.payee,
@@ -334,7 +346,10 @@ function CommissionRulesPage() {
     toast.success(`Archived "${rs.name}"`);
   };
 
-  const preview = useMemo(() => (editing ? computePreview(editing) : []), [editing]);
+  const preview = useMemo(
+    () => (editing ? computePreview(editing, sampleSale) : []),
+    [editing, sampleSale],
+  );
 
   return (
     <div className="space-y-6 max-w-6xl w-full mx-auto">
@@ -625,7 +640,12 @@ function CommissionRulesPage() {
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="Percentage">Percentage</SelectItem>
+                                    <SelectItem value="Percentage">
+                                      Percentage of Net Base
+                                    </SelectItem>
+                                    <SelectItem value="Percentage of Remaining">
+                                      Percentage of Remaining (Waterfall)
+                                    </SelectItem>
                                     <SelectItem value="Fixed">Fixed</SelectItem>
                                   </SelectContent>
                                 </Select>
@@ -758,9 +778,14 @@ function CommissionRulesPage() {
                   <div className="min-w-0">
                     <GlassCard className="sticky top-4">
                       <h3 className="mb-1 font-display text-sm font-semibold">Live Preview</h3>
-                      <p className="mb-3 text-xs text-muted-foreground">
-                        Worked example on a R2,500,000 sale
-                      </p>
+                      <div className="mb-3 space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">Mock Sale Price</Label>
+                        <Input
+                          type="number"
+                          value={sampleSale / 100}
+                          onChange={(e) => setSampleSale((Number(e.target.value) || 0) * 100)}
+                        />
+                      </div>
                       <div className="space-y-1.5">
                         {preview.map((step, i) => (
                           <div
