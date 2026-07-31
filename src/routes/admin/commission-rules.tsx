@@ -103,8 +103,8 @@ function blankRuleSet(): RuleSet {
 function computePreview(rs: RuleSet, sampleSale: number) {
   const gross = Math.round((sampleSale * rs.defaultBps) / 10000);
   const vat = rs.vatInclusive
-    ? Math.round(gross - gross / (1 + VAT_RATE))
-    : Math.round(gross * VAT_RATE);
+    ? Math.round(gross - gross / (1 + VAT_RATE / 100))
+    : Math.round(gross * (VAT_RATE / 100));
   const net = rs.vatInclusive ? gross - vat : gross;
 
   const steps: {
