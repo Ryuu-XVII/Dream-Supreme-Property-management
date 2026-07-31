@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import { GlassCard } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
@@ -9,17 +9,18 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { zar } from "@/lib/format";
-import {
-  Calculator,
-  Percent,
-  Copy,
-  Check,
-  Info,
-  ArrowRight,
-  RefreshCw,
-  FileText,
-} from "lucide-react";
+import { Calculator, Copy, Check } from "lucide-react";
 import { useApp } from "@/lib/app-state";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+
+export type CalcLine = {
+  id: string;
+  type: string;
+  basis: string;
+  bps: number;
+  fixed: number;
+};
 
 export function CommissionCalculator() {
   const { calculatorContext } = useApp();
@@ -33,15 +34,63 @@ export function CommissionCalculator() {
   const [commRate, setCommRate] = useState<number>(5.0); // %
   const [isVatVendor, setIsVatVendor] = useState<boolean>(true);
   const [isVatInclusive, setIsVatInclusive] = useState<boolean>(true);
-  const [pcFeePct, setPcFeePct] = useState<number>(10.0); // %
-  const [franchiseFeePct, setFranchiseFeePct] = useState<number>(6.0); // %
-  const [marketingFeePct, setMarketingFeePct] = useState<number>(2.0); // %
   const [officeSharePct, setOfficeSharePct] = useState<number>(50.0); // %
   const [agentASplitPct, setAgentASplitPct] = useState<number>(60.0); // %
   const [agentBSplitPct, setAgentBSplitPct] = useState<number>(40.0); // %
   const [hasCoAgent, setHasCoAgent] = useState<boolean>(false);
   const [advanceDeduction, setAdvanceDeduction] = useState<number>(0);
   const [copied, setCopied] = useState<boolean>(false);
+
+  const [lines, setLines] = useState<CalcLine[]>([
+    { id: "1", type: "PC / Admin Fee", basis: "percentage", bps: 1000, fixed: 0 },
+    { id: "2", type: "Franchise Fee", basis: "percentage_of_remaining", bps: 600, fixed: 0 },
+    { id: "3", type: "Marketing Fee", basis: "percentage_of_remaining", bps: 200, fixed: 0 },
+  ]);
+
+  const rulesQuery = useQuery({
+    queryKey: ["default-commission-rules"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("commission_rule_set")
+        .select(
+          `
+          id, vat_treatment, default_commission_rate_bps, office_share_bps,
+          lines:commission_rule_line(
+            id, line_type, calculation_basis, rate_bps, fixed_amount_cents, sequence
+          )
+        `,
+        )
+        .eq("is_default", true)
+        .order("effective_from", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    const rs = rulesQuery.data;
+    if (rs) {
+      setCommRate((rs.default_commission_rate_bps || 500) / 100);
+      setIsVatInclusive(rs.vat_treatment === "inclusive");
+      setOfficeSharePct((rs.office_share_bps || 5000) / 100);
+      if (rs.lines && rs.lines.length > 0) {
+        setLines(
+          rs.lines
+            .filter((l: any) => l.line_type !== "office_share")
+            .sort((a: any, b: any) => a.sequence - b.sequence)
+            .map((l: any) => ({
+              id: l.id,
+              type: l.line_type,
+              basis: l.calculation_basis,
+              bps: l.rate_bps || 0,
+              fixed: l.fixed_amount_cents || 0,
+            })),
+        );
+      }
+    }
+  }, [rulesQuery.data]);
 
   // Calculations
   const calc = useMemo(() => {
@@ -60,13 +109,21 @@ export function CommissionCalculator() {
       }
     }
 
-    const pcFeeDeductionCents = Math.round((netCommCents * pcFeePct) / 100);
-    const netPoolBaseCents = netCommCents - pcFeeDeductionCents;
+    let poolCents = netCommCents;
+    const appliedDeductions = lines.map((line) => {
+      let amount = 0;
+      if (line.basis === "fixed") {
+        amount = line.fixed;
+      } else if (line.basis === "percentage_of_remaining") {
+        amount = Math.round((poolCents * line.bps) / 10000);
+      } else {
+        amount = Math.round((netCommCents * line.bps) / 10000);
+      }
+      poolCents -= amount;
+      return { ...line, amount };
+    });
 
-    const franchiseDeductionCents = Math.round((netPoolBaseCents * franchiseFeePct) / 100);
-    const marketingDeductionCents = Math.round((netPoolBaseCents * marketingFeePct) / 100);
-    const distributablePoolCents =
-      netPoolBaseCents - franchiseDeductionCents - marketingDeductionCents;
+    const distributablePoolCents = poolCents;
 
     const officeShareCents = Math.round((distributablePoolCents * officeSharePct) / 100);
     const agentPoolCents = distributablePoolCents - officeShareCents;
@@ -85,10 +142,7 @@ export function CommissionCalculator() {
       grossCommCents,
       vatCents,
       netCommCents,
-      pcFeeDeductionCents,
-      netPoolBaseCents,
-      franchiseDeductionCents,
-      marketingDeductionCents,
+      appliedDeductions,
       distributablePoolCents,
       officeShareCents,
       agentPoolCents,
@@ -101,9 +155,7 @@ export function CommissionCalculator() {
     commRate,
     isVatVendor,
     isVatInclusive,
-    pcFeePct,
-    franchiseFeePct,
-    marketingFeePct,
+    lines,
     officeSharePct,
     agentASplitPct,
     hasCoAgent,
@@ -111,7 +163,7 @@ export function CommissionCalculator() {
   ]);
 
   const copySummary = () => {
-    const summaryText = `
+    let summaryText = `
 --- DREAM SUPREME PROPERTIES COMMISSION CALCULATION ---
 Property Sale Price: ${zar(salePrice * 100)}
 Commission Rate: ${commRate}% (${isVatInclusive ? "VAT-Inclusive" : "VAT-Exclusive"})
@@ -119,12 +171,13 @@ Gross Commission: ${zar(calc.grossCommCents)}
 VAT Portion (15%): ${zar(calc.vatCents)}
 Net Commission: ${zar(calc.netCommCents)}
 ------------------------------------------------------
-PC / Admin Fee (${pcFeePct}%): -${zar(calc.pcFeeDeductionCents)}
-Net Commission Pool: ${zar(calc.netPoolBaseCents)}
-------------------------------------------------------
-Franchise Fee (${franchiseFeePct}%): -${zar(calc.franchiseDeductionCents)}
-Marketing Fee (${marketingFeePct}%): -${zar(calc.marketingDeductionCents)}
-Distributable Pool: ${zar(calc.distributablePoolCents)}
+`;
+
+    calc.appliedDeductions.forEach((d) => {
+      summaryText += `${d.type.replace(/_/g, " ")} (${d.basis === "fixed" ? "Fixed" : `${d.bps / 100}%`}): -${zar(d.amount)}\n`;
+    });
+
+    summaryText += `Distributable Pool: ${zar(calc.distributablePoolCents)}
 Office Share (${officeSharePct}%): ${zar(calc.officeShareCents)}
 Agent Pool (${100 - officeSharePct}%): ${zar(calc.agentPoolCents)}
 ------------------------------------------------------
@@ -234,40 +287,33 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
 
               <Separator />
 
-              {/* Deductions & Splits */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium">PC / Admin Fee (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.5"
-                    value={pcFeePct}
-                    onChange={(e) => setPcFeePct(Number(e.target.value))}
-                    className="font-mono"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium">Franchise Fee (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.5"
-                    value={franchiseFeePct}
-                    onChange={(e) => setFranchiseFeePct(Number(e.target.value))}
-                    className="font-mono"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium">Marketing Fee (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.5"
-                    value={marketingFeePct}
-                    onChange={(e) => setMarketingFeePct(Number(e.target.value))}
-                    className="font-mono"
-                  />
-                </div>
+              {/* Dynamic Deductions & Splits */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {lines.map((line, idx) => (
+                  <div key={line.id} className="space-y-1.5">
+                    <Label
+                      className="text-xs font-medium capitalize truncate block"
+                      title={line.type.replace(/_/g, " ")}
+                    >
+                      {line.type.replace(/_/g, " ")} ({line.basis === "fixed" ? "R" : "%"})
+                    </Label>
+                    <Input
+                      type="number"
+                      step={line.basis === "fixed" ? 100 : 0.5}
+                      value={line.basis === "fixed" ? line.fixed / 100 : line.bps / 100}
+                      onChange={(e) => {
+                        const next = [...lines];
+                        if (line.basis === "fixed") {
+                          next[idx].fixed = Number(e.target.value) * 100;
+                        } else {
+                          next[idx].bps = Number(e.target.value) * 100;
+                        }
+                        setLines(next);
+                      }}
+                      className="font-mono"
+                    />
+                  </div>
+                ))}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
@@ -391,30 +437,20 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
                   </>
                 )}
 
-                {pcFeePct > 0 && (
-                  <div className="flex justify-between py-1 border-b border-border/50 text-muted-foreground">
-                    <span>Less PC / Admin Fee ({pcFeePct}%)</span>
-                    <span className="text-destructive">-{zar(calc.pcFeeDeductionCents)}</span>
-                  </div>
-                )}
-
-                <div className="flex justify-between py-1 border-b border-border/50 font-medium">
-                  <span>Net Commission Pool</span>
-                  <span>{zar(calc.netPoolBaseCents)}</span>
-                </div>
-
-                {franchiseFeePct > 0 && (
-                  <div className="flex justify-between py-1 border-b border-border/50 text-muted-foreground">
-                    <span>Less Franchise Fee ({franchiseFeePct}%)</span>
-                    <span className="text-destructive">-{zar(calc.franchiseDeductionCents)}</span>
-                  </div>
-                )}
-
-                {marketingFeePct > 0 && (
-                  <div className="flex justify-between py-1 border-b border-border/50 text-muted-foreground">
-                    <span>Less Marketing Fee ({marketingFeePct}%)</span>
-                    <span className="text-destructive">-{zar(calc.marketingDeductionCents)}</span>
-                  </div>
+                {calc.appliedDeductions.map(
+                  (d) =>
+                    d.amount > 0 && (
+                      <div
+                        key={d.id}
+                        className="flex justify-between py-1 border-b border-border/50 text-muted-foreground"
+                      >
+                        <span className="capitalize">
+                          Less {d.type.replace(/_/g, " ")} (
+                          {d.basis === "fixed" ? "Fixed" : `${d.bps / 100}%`})
+                        </span>
+                        <span className="text-destructive">-{zar(d.amount)}</span>
+                      </div>
+                    ),
                 )}
 
                 <div className="flex justify-between py-1 border-b border-border/50 font-medium text-primary">
