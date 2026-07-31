@@ -236,33 +236,6 @@ function AdminSettings() {
                   </div>
                 </div>
 
-                <h4 className="font-medium text-sm pt-4 border-t border-border mt-4">
-                  Commission Calculation Rules
-                </h4>
-
-                <div className="flex items-center justify-between p-4 border border-border/50 rounded-lg bg-background/30">
-                  <div className="space-y-0.5">
-                    <Label className="text-base font-medium">Calculate VAT on Commission</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Include VAT when calculating gross commission on deals.
-                    </p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-
-                <div className="flex items-center justify-between p-4 border border-border/50 rounded-lg bg-background/30">
-                  <div className="space-y-0.5">
-                    <Label className="text-base font-medium">
-                      Deduct Franchise Fee Before Splits
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Deduct the franchise/royalty fee from gross commission before applying agent
-                      splits.
-                    </p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-
                 <div className="pt-4 border-t border-border flex justify-end">
                   <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white">
                     <Save className="size-4 mr-2" /> Save Settings
