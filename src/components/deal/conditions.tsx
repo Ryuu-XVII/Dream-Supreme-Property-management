@@ -199,9 +199,7 @@ export function DealConditionsTab({ deal }: { deal: any }) {
                           <Icon className="size-4 text-primary" /> {c.type}
                         </span>
                       </TableCell>
-                      <TableCell className="max-w-[240px] truncate text-sm">
-                        {c.description}
-                      </TableCell>
+                      <TableCell className="max-w-60 truncate text-sm">{c.description}</TableCell>
                       <TableCell className="text-xs">{dateFmt(c.dueDate)}</TableCell>
                       <TableCell>
                         <UrgencyBadge dueDate={c.dueDate} status={c.status} />
