@@ -4,9 +4,7 @@ import { Building2, Bell, Users, UserCircle } from "lucide-react";
 
 const tabs = [
   { to: "/settings/profile" as const, label: "My Profile", icon: UserCircle },
-  { to: "/settings/agency" as const, label: "Agency Profile", icon: Building2 },
   { to: "/settings/notifications" as const, label: "Notifications", icon: Bell },
-  { to: "/settings/users" as const, label: "Users", icon: Users },
 ];
 
 export function SettingsTabs() {
