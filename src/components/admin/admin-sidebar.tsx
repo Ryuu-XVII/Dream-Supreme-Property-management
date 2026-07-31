@@ -50,7 +50,7 @@ function AdminNavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigat
                 className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-sidebar-primary"
               />
             )}
-            <item.icon className="size-[18px] shrink-0" />
+            <item.icon className="size-4.5 shrink-0" />
             {!collapsed && <span className="truncate">{item.label}</span>}
           </Link>
         );
@@ -65,7 +65,7 @@ export function AdminSidebar() {
     <aside
       className={cn(
         "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-slate-950 text-slate-50 transition-[width] duration-300 md:flex",
-        sidebarCollapsed ? "w-[76px]" : "w-64",
+        sidebarCollapsed ? "w-19" : "w-64",
       )}
     >
       <div className="flex h-16 items-center gap-3 px-5">
@@ -87,7 +87,7 @@ export function AdminSidebar() {
           to="/"
           className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
         >
-          <LayoutDashboard className="size-[18px] shrink-0" />
+          <LayoutDashboard className="size-4.5 shrink-0" />
           {!sidebarCollapsed && <span className="truncate">Agent Portal</span>}
         </Link>
       </div>
