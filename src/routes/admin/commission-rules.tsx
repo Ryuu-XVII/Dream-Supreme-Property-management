@@ -39,6 +39,9 @@ import {
   ruleSets as seedRuleSets,
   ruleTemplates,
   VAT_RATE,
+  DEFAULT_SALE_PRICE_CENTS,
+  DEFAULT_COMMISSION_BPS,
+  DEFAULT_OFFICE_SHARE_PCT,
   type RuleSet,
   type DeductionLine,
 } from "@/data/state";
@@ -93,9 +96,9 @@ function blankRuleSet(): RuleSet {
     effectiveTo: undefined,
     isDefault: false,
     vatInclusive: true,
-    defaultBps: 600,
+    defaultBps: DEFAULT_COMMISSION_BPS,
     rounding: "Nearest cent",
-    officeSharePct: 45,
+    officeSharePct: DEFAULT_OFFICE_SHARE_PCT,
     deductions: [],
   };
 }
@@ -115,7 +118,7 @@ function computePreview(rs: RuleSet, sampleSale: number) {
   }[] = [
     {
       label: "Gross commission",
-      formula: `R 2,500,000 × ${(rs.defaultBps / 100).toFixed(2)}%`,
+      formula: `${zar(sampleSale)} × ${(rs.defaultBps / 100).toFixed(2)}%`,
       amount: gross,
       kind: "base",
     },
@@ -235,7 +238,7 @@ function CommissionRulesPage() {
   const [ruleSets, setRuleSets] = useState<RuleSet[]>(seedRuleSets);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<RuleSet | null>(null);
-  const [sampleSale, setSampleSale] = useState(250000000);
+  const [sampleSale, setSampleSale] = useState(DEFAULT_SALE_PRICE_CENTS);
 
   useEffect(() => {
     if (ruleQuery.data) setRuleSets(ruleQuery.data);

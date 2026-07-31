@@ -13,7 +13,12 @@ import { Calculator, Copy, Check } from "lucide-react";
 import { useApp } from "@/lib/app-state";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { VAT_RATE } from "@/data/state";
+import {
+  VAT_RATE,
+  DEFAULT_SALE_PRICE_CENTS,
+  DEFAULT_COMMISSION_BPS,
+  DEFAULT_OFFICE_SHARE_PCT,
+} from "@/data/state";
 
 export type CalcLine = {
   id: string;
@@ -30,12 +35,12 @@ export function CommissionCalculator() {
   const [salePrice, setSalePrice] = useState<number>(
     calculatorContext?.payload?.salePriceCents
       ? calculatorContext.payload.salePriceCents / 100
-      : 2_500_000,
+      : DEFAULT_SALE_PRICE_CENTS / 100,
   );
-  const [commRate, setCommRate] = useState<number>(5.0); // %
+  const [commRate, setCommRate] = useState<number>(DEFAULT_COMMISSION_BPS / 100); // %
   const [isVatVendor, setIsVatVendor] = useState<boolean>(true);
   const [isVatInclusive, setIsVatInclusive] = useState<boolean>(true);
-  const [officeSharePct, setOfficeSharePct] = useState<number>(50.0); // %
+  const [officeSharePct, setOfficeSharePct] = useState<number>(DEFAULT_OFFICE_SHARE_PCT); // %
   const [agentASplitPct, setAgentASplitPct] = useState<number>(60.0); // %
   const [agentBSplitPct, setAgentBSplitPct] = useState<number>(40.0); // %
   const [hasCoAgent, setHasCoAgent] = useState<boolean>(false);
