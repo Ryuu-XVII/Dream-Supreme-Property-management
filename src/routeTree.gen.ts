@@ -23,6 +23,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SignRouteImport } from './routes/sign'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminAgencyRouteImport } from './routes/admin/agency'
 import { Route as AdminCommissionRulesRouteImport } from './routes/admin/commission-rules'
 import { Route as AdminDealsRouteImport } from './routes/admin/deals'
 import { Route as AdminFinancialsRouteImport } from './routes/admin/financials'
@@ -38,10 +39,8 @@ import { Route as RentalsIndexRouteImport } from './routes/rentals/index'
 import { Route as RentalsLeaseIdRouteImport } from './routes/rentals/$leaseId'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as ReportsReportRouteImport } from './routes/reports/$report'
-import { Route as SettingsAgencyRouteImport } from './routes/settings/agency'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings/notifications'
 import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
-import { Route as SettingsUsersRouteImport } from './routes/settings/users'
 import { Route as SetupIndexRouteImport } from './routes/setup/index'
 import { Route as SetupImportRouteImport } from './routes/setup/import'
 import { Route as AdminComplianceAuditRouteImport } from './routes/admin/compliance/audit'
@@ -116,6 +115,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAgencyRoute = AdminAgencyRouteImport.update({
+  id: '/agency',
+  path: '/agency',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminCommissionRulesRoute = AdminCommissionRulesRouteImport.update({
@@ -194,11 +198,6 @@ const ReportsReportRoute = ReportsReportRouteImport.update({
   path: '/reports/$report',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsAgencyRoute = SettingsAgencyRouteImport.update({
-  id: '/settings/agency',
-  path: '/settings/agency',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
   id: '/settings/notifications',
   path: '/settings/notifications',
@@ -207,11 +206,6 @@ const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
 const SettingsProfileRoute = SettingsProfileRouteImport.update({
   id: '/settings/profile',
   path: '/settings/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsUsersRoute = SettingsUsersRouteImport.update({
-  id: '/settings/users',
-  path: '/settings/users',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SetupIndexRoute = SetupIndexRouteImport.update({
@@ -254,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/agency': typeof AdminAgencyRoute
   '/admin/commission-rules': typeof AdminCommissionRulesRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
@@ -266,10 +261,8 @@ export interface FileRoutesByFullPath {
   '/deals/new': typeof DealsNewRoute
   '/rentals/$leaseId': typeof RentalsLeaseIdRoute
   '/reports/$report': typeof ReportsReportRoute
-  '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/profile': typeof SettingsProfileRoute
-  '/settings/users': typeof SettingsUsersRoute
   '/setup/import': typeof SetupImportRoute
   '/admin/': typeof AdminIndexRoute
   '/commission/': typeof CommissionIndexRoute
@@ -293,6 +286,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/agency': typeof AdminAgencyRoute
   '/admin/commission-rules': typeof AdminCommissionRulesRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
@@ -305,10 +299,8 @@ export interface FileRoutesByTo {
   '/deals/new': typeof DealsNewRoute
   '/rentals/$leaseId': typeof RentalsLeaseIdRoute
   '/reports/$report': typeof ReportsReportRoute
-  '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/profile': typeof SettingsProfileRoute
-  '/settings/users': typeof SettingsUsersRoute
   '/setup/import': typeof SetupImportRoute
   '/admin': typeof AdminIndexRoute
   '/commission': typeof CommissionIndexRoute
@@ -334,6 +326,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/agency': typeof AdminAgencyRoute
   '/admin/commission-rules': typeof AdminCommissionRulesRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
@@ -346,10 +339,8 @@ export interface FileRoutesById {
   '/deals/new': typeof DealsNewRoute
   '/rentals/$leaseId': typeof RentalsLeaseIdRoute
   '/reports/$report': typeof ReportsReportRoute
-  '/settings/agency': typeof SettingsAgencyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/profile': typeof SettingsProfileRoute
-  '/settings/users': typeof SettingsUsersRoute
   '/setup/import': typeof SetupImportRoute
   '/admin/': typeof AdminIndexRoute
   '/commission/': typeof CommissionIndexRoute
@@ -376,6 +367,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/sign'
     | '/sitemap.xml'
+    | '/admin/agency'
     | '/admin/commission-rules'
     | '/admin/deals'
     | '/admin/financials'
@@ -388,10 +380,8 @@ export interface FileRouteTypes {
     | '/deals/new'
     | '/rentals/$leaseId'
     | '/reports/$report'
-    | '/settings/agency'
     | '/settings/notifications'
     | '/settings/profile'
-    | '/settings/users'
     | '/setup/import'
     | '/admin/'
     | '/commission/'
@@ -415,6 +405,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/sign'
     | '/sitemap.xml'
+    | '/admin/agency'
     | '/admin/commission-rules'
     | '/admin/deals'
     | '/admin/financials'
@@ -427,10 +418,8 @@ export interface FileRouteTypes {
     | '/deals/new'
     | '/rentals/$leaseId'
     | '/reports/$report'
-    | '/settings/agency'
     | '/settings/notifications'
     | '/settings/profile'
-    | '/settings/users'
     | '/setup/import'
     | '/admin'
     | '/commission'
@@ -455,6 +444,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/sign'
     | '/sitemap.xml'
+    | '/admin/agency'
     | '/admin/commission-rules'
     | '/admin/deals'
     | '/admin/financials'
@@ -467,10 +457,8 @@ export interface FileRouteTypes {
     | '/deals/new'
     | '/rentals/$leaseId'
     | '/reports/$report'
-    | '/settings/agency'
     | '/settings/notifications'
     | '/settings/profile'
-    | '/settings/users'
     | '/setup/import'
     | '/admin/'
     | '/commission/'
@@ -502,10 +490,8 @@ export interface RootRouteChildren {
   DealsNewRoute: typeof DealsNewRoute
   RentalsLeaseIdRoute: typeof RentalsLeaseIdRoute
   ReportsReportRoute: typeof ReportsReportRoute
-  SettingsAgencyRoute: typeof SettingsAgencyRoute
   SettingsNotificationsRoute: typeof SettingsNotificationsRoute
   SettingsProfileRoute: typeof SettingsProfileRoute
-  SettingsUsersRoute: typeof SettingsUsersRoute
   SetupImportRoute: typeof SetupImportRoute
   CommissionIndexRoute: typeof CommissionIndexRoute
   RentalsIndexRoute: typeof RentalsIndexRoute
@@ -613,6 +599,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/agency': {
+      id: '/admin/agency'
+      path: '/agency'
+      fullPath: '/admin/agency'
+      preLoaderRoute: typeof AdminAgencyRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/commission-rules': {
       id: '/admin/commission-rules'
       path: '/commission-rules'
@@ -718,13 +711,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsReportRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/agency': {
-      id: '/settings/agency'
-      path: '/settings/agency'
-      fullPath: '/settings/agency'
-      preLoaderRoute: typeof SettingsAgencyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/settings/notifications': {
       id: '/settings/notifications'
       path: '/settings/notifications'
@@ -737,13 +723,6 @@ declare module '@tanstack/react-router' {
       path: '/settings/profile'
       fullPath: '/settings/profile'
       preLoaderRoute: typeof SettingsProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings/users': {
-      id: '/settings/users'
-      path: '/settings/users'
-      fullPath: '/settings/users'
-      preLoaderRoute: typeof SettingsUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/setup/': {
@@ -785,6 +764,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminAgencyRoute: typeof AdminAgencyRoute
   AdminCommissionRulesRoute: typeof AdminCommissionRulesRoute
   AdminDealsRoute: typeof AdminDealsRoute
   AdminFinancialsRoute: typeof AdminFinancialsRoute
@@ -798,6 +778,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAgencyRoute: AdminAgencyRoute,
   AdminCommissionRulesRoute: AdminCommissionRulesRoute,
   AdminDealsRoute: AdminDealsRoute,
   AdminFinancialsRoute: AdminFinancialsRoute,
@@ -832,10 +813,8 @@ const rootRouteChildren: RootRouteChildren = {
   DealsNewRoute: DealsNewRoute,
   RentalsLeaseIdRoute: RentalsLeaseIdRoute,
   ReportsReportRoute: ReportsReportRoute,
-  SettingsAgencyRoute: SettingsAgencyRoute,
   SettingsNotificationsRoute: SettingsNotificationsRoute,
   SettingsProfileRoute: SettingsProfileRoute,
-  SettingsUsersRoute: SettingsUsersRoute,
   SetupImportRoute: SetupImportRoute,
   CommissionIndexRoute: CommissionIndexRoute,
   RentalsIndexRoute: RentalsIndexRoute,

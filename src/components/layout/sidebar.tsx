@@ -34,7 +34,7 @@ export const navItems = [
   { label: "Calculators", icon: Calculator },
   { label: "Leads", to: "/leads", icon: Users2 },
   { label: "Reports", to: "/reports", icon: BarChart3 },
-  { label: "Settings", to: "/settings/agency", icon: Settings },
+  { label: "Settings", to: "/admin/settings", icon: Settings },
 ] as const;
 
 function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {

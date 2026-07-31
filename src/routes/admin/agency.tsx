@@ -6,8 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { AppShell } from "@/components/layout/app-shell";
-import { SettingsTabs } from "@/components/settings/settings-tabs";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { GlassCard, EmptyState } from "@/components/ui-kit";
 import {
   agency,
@@ -68,7 +67,7 @@ import { Plus, Pencil, Archive, Building2, Scale, Percent, Landmark } from "luci
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 
-export const Route = createFileRoute("/settings/agency")({
+export const Route = createFileRoute("/admin/agency")({
   head: () => ({
     meta: [
       { title: "Agency Profile | Dream Supreme Properties" },
@@ -244,11 +243,11 @@ function AgencyProfilePage() {
   }
 
   return (
-    <AppShell
-      title="Settings"
-      description="Agency profile, branches, conveyancers and transfer duty configuration."
-    >
-      <SettingsTabs />
+    <>
+      <AdminPageHeader
+        title="Agency Configuration"
+        description="Agency profile, branches, conveyancers and transfer duty configuration."
+      />
       <div className="space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -379,10 +378,9 @@ function AgencyProfilePage() {
           setEffectiveDate={setEffectiveDate}
         />
       </div>
-    </AppShell>
+    </>
   );
 }
-
 function BranchSection({
   branchList,
   setBranchList,

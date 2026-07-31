@@ -23,6 +23,7 @@ export const adminNavItems = [
   { label: "Financials", to: "/admin/financials", icon: FileText },
   { label: "Commission Rules", to: "/admin/commission-rules", icon: FileText },
   { label: "Compliance", to: "/admin/compliance/ffc", icon: ShieldCheck },
+  { label: "Agency Config", to: "/admin/agency", icon: Building2 },
   { label: "Settings", to: "/admin/settings", icon: Settings },
 ] as const;
 

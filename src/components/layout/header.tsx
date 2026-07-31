@@ -215,9 +215,11 @@ export function Header() {
           <DropdownMenuItem asChild>
             <Link to="/settings/profile">My profile</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link to="/settings/agency">Agency settings</Link>
-          </DropdownMenuItem>
+          {["Principal", "Admin"].includes(role) && (
+            <DropdownMenuItem asChild>
+              <Link to="/admin/agency">Agency settings</Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem asChild>
             <Link to="/commission/earnings">My earnings</Link>
           </DropdownMenuItem>

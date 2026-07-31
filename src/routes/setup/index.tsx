@@ -92,7 +92,7 @@ function SetupPage() {
 
   const handleFinish = () => {
     toast.info("Use Settings to save agency configuration.");
-    navigate({ to: "/settings/agency" });
+    navigate({ to: "/admin/agency" });
   };
 
   return (
