@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { motion } from "framer-motion";
-import { Activity, AlertTriangle, Banknote, Calendar, ShieldAlert } from "lucide-react";
+import { Activity, AlertTriangle, Banknote, Calendar } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { GlassCard, KpiCard, CardSkeleton, EmptyState } from "@/components/ui-kit";
 import { UrgencyBadge, StatusDot } from "@/components/badges";
@@ -25,13 +25,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Agency-wide overview of pipeline, conditions, FFC compliance and commission for Dream Supreme Properties.",
+          "Agency-wide overview of pipeline, conditions, and commission for Dream Supreme Properties.",
       },
       { property: "og:title", content: "Dashboard | Dream Supreme Properties" },
       {
         property: "og:description",
         content:
-          "Agency-wide overview of pipeline, conditions, FFC compliance and commission for Dream Supreme Properties.",
+          "Agency-wide overview of pipeline, conditions, and commission for Dream Supreme Properties.",
       },
     ],
   }),
@@ -125,16 +125,6 @@ function Index() {
     () =>
       [...openConditions].sort((a, b) => daysUntil(a.dueDate) - daysUntil(b.dueDate)).slice(0, 5),
     [openConditions],
-  );
-
-  const ffcAlerts = useMemo(
-    () =>
-      users.filter((u) => {
-        if (!u.ffc) return true;
-        if (!u.ffc.expiry) return false;
-        return daysUntil(u.ffc.expiry) <= 30;
-      }),
-    [users],
   );
 
   const recentEvents = useMemo(() => [...auditEvents].slice(0, 10), [auditEvents]);
@@ -257,7 +247,7 @@ function Index() {
           </GlassCard>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <GlassCard>
             <h3 className="font-display text-base font-semibold">Urgent Conditions</h3>
             <p className="text-xs text-muted-foreground">Top 5 by days remaining</p>
@@ -289,56 +279,6 @@ function Index() {
                     <UrgencyBadge dueDate={c.dueDate} status={c.status} />
                   </Link>
                 ))}
-              </div>
-            )}
-          </GlassCard>
-
-          <GlassCard>
-            <div className="flex items-center gap-2">
-              <ShieldAlert className="size-4 text-warning" />
-              <h3 className="font-display text-base font-semibold">FFC Alerts</h3>
-            </div>
-            <p className="text-xs text-muted-foreground">Missing or expiring within 30 days</p>
-            {loading ? (
-              <div className="mt-4 space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />
-                ))}
-              </div>
-            ) : ffcAlerts.length === 0 ? (
-              <EmptyState
-                title="All FFCs valid"
-                message="No agents have expiring or missing certificates."
-              />
-            ) : (
-              <div className="mt-4 space-y-2">
-                {ffcAlerts.map((u) => {
-                  const status = !u.ffc
-                    ? "Missing"
-                    : !u.ffc.expiry
-                      ? "Unknown"
-                      : daysUntil(u.ffc.expiry) < 0
-                        ? "Expired"
-                        : `Expires in ${daysUntil(u.ffc.expiry)}d`;
-                  return (
-                    <div
-                      key={u.id}
-                      className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-border/60 px-3 py-2"
-                    >
-                      <span className="min-w-0 truncate text-sm">{u.name}</span>
-                      <span
-                        className={
-                          "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium " +
-                          (status === "Missing" || status === "Expired"
-                            ? "border-destructive/30 bg-destructive/10 text-destructive"
-                            : "border-warning/40 bg-warning/15 text-warning")
-                        }
-                      >
-                        {status}
-                      </span>
-                    </div>
-                  );
-                })}
               </div>
             )}
           </GlassCard>
