@@ -112,7 +112,7 @@ export function Header() {
           className="gap-1.5 text-xs font-semibold shadow-sm"
           onClick={() => setQuickModalOpen(true)}
         >
-          <PlusCircle className="size-3.5" /> + New Deal
+          <PlusCircle className="size-3.5" /> New Deal
         </Button>
       </div>
 
