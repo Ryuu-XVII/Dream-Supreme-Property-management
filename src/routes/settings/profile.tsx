@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   UserCircle,
   ShieldCheck,
@@ -33,6 +34,9 @@ import {
   Copy,
   Loader2,
   Lock,
+  Camera,
+  Trash2,
+  Cloud,
 } from "lucide-react";
 
 export const Route = createFileRoute("/settings/profile")({
@@ -42,6 +46,11 @@ export const Route = createFileRoute("/settings/profile")({
 function ProfileSettings() {
   const { account } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
+
+  // Avatar State
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // Tab 1: Personal Details State
   const [fullName, setFullName] = useState(account?.fullName || "");
@@ -81,6 +90,28 @@ function ProfileSettings() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [updatingPassword, setUpdatingPassword] = useState(false);
+
+  const uploadAvatarPhoto = async () => {
+    if (!account || !avatarFile) return;
+    setUploadingAvatar(true);
+    try {
+      const ext = avatarFile.name.split(".").pop() || "jpg";
+      const key = `${account.agencyId}/avatars/${account.id}/profile-${Date.now()}.${ext}`;
+      await uploadFileToR2(avatarFile, key);
+
+      const { error } = await supabase
+        .from("user_account")
+        .update({ avatar_url: key })
+        .eq("id", account.id);
+
+      if (error) throw error;
+      toast.success("Profile picture updated and stored on Cloudflare R2!");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to upload profile picture.");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const savePersonalDetails = async () => {
     if (!account) return;
@@ -206,6 +237,93 @@ function ProfileSettings() {
 
           {/* TAB 1: MY PROFILE */}
           <TabsContent value="profile" className="space-y-6">
+            {/* Profile Avatar Card */}
+            <GlassCard>
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="relative group">
+                  <Avatar className="size-24 border-2 border-primary/40 shadow-xl">
+                    <AvatarImage src={avatarPreview || undefined} alt={fullName} />
+                    <AvatarFallback className="text-2xl font-bold bg-primary/20 text-primary">
+                      {fullName
+                        ? fullName
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)
+                            .toUpperCase()
+                        : "AG"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <label
+                    htmlFor="avatar-file-input"
+                    className="absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full shadow-lg cursor-pointer hover:scale-105 transition-transform"
+                    title="Upload new profile picture"
+                  >
+                    <Camera className="size-4" />
+                  </label>
+                  <input
+                    id="avatar-file-input"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          toast.error("Avatar image must be under 5MB.");
+                          return;
+                        }
+                        setAvatarFile(file);
+                        setAvatarPreview(URL.createObjectURL(file));
+                      }
+                    }}
+                  />
+                </div>
+                <div className="space-y-1.5 text-center sm:text-left flex-1">
+                  <div className="flex items-center justify-center sm:justify-start gap-2">
+                    <h3 className="font-display text-base font-semibold">Profile Picture</h3>
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] bg-sky-500/10 text-sky-400 border-sky-500/20"
+                    >
+                      <Cloud className="mr-1 size-3" /> Cloudflare R2 Storage
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Upload a professional headshot for client mandates, OTPs, and public
+                    practitioner cards.
+                  </p>
+                  <div className="pt-2 flex flex-wrap gap-2 justify-center sm:justify-start">
+                    <Button
+                      size="sm"
+                      disabled={!avatarFile || uploadingAvatar}
+                      onClick={() => void uploadAvatarPhoto()}
+                    >
+                      {uploadingAvatar ? (
+                        <Loader2 className="mr-2 size-3.5 animate-spin" />
+                      ) : (
+                        <UploadCloud className="mr-2 size-3.5" />
+                      )}
+                      {uploadingAvatar ? "Saving..." : "Save Picture"}
+                    </Button>
+                    {avatarPreview && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => {
+                          setAvatarFile(null);
+                          setAvatarPreview(null);
+                        }}
+                      >
+                        <Trash2 className="mr-1.5 size-3.5" /> Remove Preview
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
+
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <GlassCard>
                 <div className="mb-6 flex items-center justify-between">
