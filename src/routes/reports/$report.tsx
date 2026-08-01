@@ -140,9 +140,6 @@ function ReportChrome({
       crumbs={[{ label: "Reports", to: "/reports" }, { label: meta.title }]}
       actions={
         <>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => window.print()}>
-            <FileText className="size-3.5" /> Print to PDF
-          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -151,12 +148,7 @@ function ReportChrome({
           >
             <Download className="size-3.5" /> Export CSV
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            onClick={() => toast.error("PDF generation requires the production report worker.")}
-          >
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => window.print()}>
             <FileText className="size-3.5" /> Export PDF
           </Button>
         </>

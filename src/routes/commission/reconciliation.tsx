@@ -270,7 +270,7 @@ function ReconciliationPage() {
   };
 
   const exportPdf = () => {
-    toast.error("PDF generation requires the production report worker.");
+    window.print();
   };
 
   const statusTone =
