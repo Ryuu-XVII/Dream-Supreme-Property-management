@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { playNotificationSound } from "@/lib/sound";
 import {
   UserCircle,
   ShieldCheck,
@@ -37,6 +38,8 @@ import {
   Camera,
   Trash2,
   Cloud,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 export const Route = createFileRoute("/settings/profile")({
@@ -68,7 +71,9 @@ function ProfileSettings() {
   const [file, setFile] = useState<File | null>(null);
   const [uploadingFFC, setUploadingFFC] = useState(false);
 
-  // Tab 3: Notification Preferences State
+  // Tab 3: Notification & Audio Sound Preferences State
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundType, setSoundType] = useState<"chime" | "alert" | "success">("chime");
   const [notifyDealUpdates, setNotifyDealUpdates] = useState(true);
   const [notifyConditionReminders, setNotifyConditionReminders] = useState(true);
   const [notifyLeadAssignments, setNotifyLeadAssignments] = useState(true);
@@ -564,6 +569,68 @@ function ProfileSettings() {
               </div>
 
               <div className="space-y-6">
+                {/* Audio Sound Settings Card */}
+                <div className="rounded-xl border p-4 bg-muted/20 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                        {soundEnabled ? (
+                          <Volume2 className="size-5" />
+                        ) : (
+                          <VolumeX className="size-5" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-sm">Audio Chimes & Sound Effects</div>
+                        <div className="text-xs text-muted-foreground">
+                          Play an audible audio tone when new notifications, alerts, or toast events
+                          occur.
+                        </div>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={soundEnabled}
+                      onCheckedChange={(val) => {
+                        setSoundEnabled(val);
+                        if (val) playNotificationSound(soundType);
+                      }}
+                    />
+                  </div>
+
+                  {soundEnabled && (
+                    <div className="flex items-center justify-between gap-4 pt-3 border-t">
+                      <div className="flex items-center gap-3">
+                        <Label className="text-xs">Chime Tone Style:</Label>
+                        <Select
+                          value={soundType}
+                          onValueChange={(val: "chime" | "alert" | "success") => {
+                            setSoundType(val);
+                            playNotificationSound(val);
+                          }}
+                        >
+                          <SelectTrigger className="w-[160px] h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="chime">Modern Triad Chime</SelectItem>
+                            <SelectItem value="alert">Attention Alert Tone</SelectItem>
+                            <SelectItem value="success">Success Bell</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => playNotificationSound(soundType)}
+                      >
+                        <Volume2 className="mr-1.5 size-3.5" /> Test Sound
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
                 <div className="space-y-3">
                   <h4 className="text-sm font-medium text-primary">Event Triggers</h4>
                   <div className="space-y-2">
@@ -574,7 +641,13 @@ function ProfileSettings() {
                           Receive alerts when deals move to OTP Signed, Lodged, or Registered.
                         </div>
                       </div>
-                      <Switch checked={notifyDealUpdates} onCheckedChange={setNotifyDealUpdates} />
+                      <Switch
+                        checked={notifyDealUpdates}
+                        onCheckedChange={(val) => {
+                          setNotifyDealUpdates(val);
+                          if (val && soundEnabled) playNotificationSound(soundType);
+                        }}
+                      />
                     </div>
 
                     <div className="flex items-center justify-between rounded-lg border p-3">
