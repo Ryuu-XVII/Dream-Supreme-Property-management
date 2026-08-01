@@ -130,7 +130,7 @@ export function generateProfessionalPdf(options: PdfReportOptions): void {
       fillColor: [248, 250, 252],
     },
     margin: { left: 14, right: 14 },
-    didDrawPage: (data) => {
+    didDrawPage: (data: any) => {
       // Footer on every page
       const pageHeight = doc.internal.pageSize.getHeight();
       doc.setFont("helvetica", "normal");
