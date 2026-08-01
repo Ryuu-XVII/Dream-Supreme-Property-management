@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Download, FileText, CheckCircle2 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
+import { generateProfessionalPdf } from "@/lib/pdf-generator";
 import { CommissionTabs } from "@/components/commission/commission-tabs";
 import { GlassCard, EmptyState, TableSkeleton } from "@/components/ui-kit";
 import { AgentAvatar } from "@/components/badges";
@@ -270,7 +271,50 @@ function ReconciliationPage() {
   };
 
   const exportPdf = () => {
-    window.print();
+    const headers = [
+      "Reference",
+      "Property Address",
+      "Sale Price",
+      "Gross Comm.",
+      "Net Comm.",
+      "Practitioners",
+    ];
+    const rows = registeredDeals.map((c) => {
+      const prop = c.deal?.property;
+      const agents = c.allocations
+        .map((a: any) => a.user?.full_name || a.external_payee_name)
+        .join(", ");
+      return [
+        c.deal?.reference || "REF-DEAL",
+        `${prop?.address_line || ""}, ${prop?.suburb || ""}`,
+        zar((c.deal?.sale_price_cents || 0) / 100),
+        zar(c.gross_cents / 100),
+        zar(c.net_cents / 100),
+        agents || "N/A",
+      ];
+    });
+
+    const periodName = `${MONTHS[period.month]} ${period.year}`;
+
+    generateProfessionalPdf({
+      title: "Monthly Commission Reconciliation Statement",
+      subtitle: `Registered Deals, Practitioner Allocation & Payout Audits for ${periodName}`,
+      periodText: `Period: ${periodName}`,
+      summaryKpis: [
+        { label: "Total Commission", value: zar(totals.totalCommission / 100) },
+        { label: "Agent Payouts", value: zar(totals.agentPayouts / 100) },
+        { label: "Office Share", value: zar(totals.officeShare / 100) },
+        { label: "Registered Deals", value: String(registeredDeals.length) },
+      ],
+      headers,
+      rows:
+        rows.length > 0
+          ? rows
+          : [["N/A", "No registered deals for this period", "R 0.00", "R 0.00", "R 0.00", "N/A"]],
+      filename: `Commission-Reconciliation-${period.year}-${String(period.month + 1).padStart(2, "0")}.pdf`,
+    });
+
+    toast.success("Professional Commission Reconciliation PDF Statement generated.");
   };
 
   const statusTone =

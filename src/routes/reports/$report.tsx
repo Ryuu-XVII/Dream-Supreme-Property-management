@@ -18,6 +18,7 @@ import {
   YAxis,
 } from "recharts";
 import { AppShell } from "@/components/layout/app-shell";
+import { generateProfessionalPdf } from "@/lib/pdf-generator";
 import { GlassCard } from "@/components/ui-kit";
 import {
   deals,
@@ -132,6 +133,23 @@ function ReportChrome({
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const meta = REPORT_META[reportKey];
+  const handleExportPdf = () => {
+    const headers = csvRows.length > 0 ? csvRows[0].map(String) : ["Data Column"];
+    const rows =
+      csvRows.length > 1
+        ? csvRows.slice(1)
+        : [["No active data records matching selected filter."]];
+
+    generateProfessionalPdf({
+      title: meta.title,
+      subtitle: meta.description,
+      headers,
+      rows,
+      filename: `${reportKey}-report-${new Date().toISOString().slice(0, 10)}.pdf`,
+    });
+
+    toast.success(`${meta.title} PDF Document generated.`);
+  };
 
   return (
     <AppShell
@@ -148,7 +166,7 @@ function ReportChrome({
           >
             <Download className="size-3.5" /> Export CSV
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => window.print()}>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleExportPdf}>
             <FileText className="size-3.5" /> Export PDF
           </Button>
         </>
