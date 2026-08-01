@@ -7,8 +7,9 @@ This document outlines the core architecture of the Dream Supreme Property Manag
 - **Frontend Framework**: React 18, Vite, TypeScript
 - **Routing**: `@tanstack/react-router` (File-based routing)
 - **Data Fetching/Caching**: `@tanstack/react-query`
-- **Styling**: Tailwind CSS, `lucide-react` (icons), `framer-motion` (animations), `shadcn/ui` (accessible components)
-- **Backend / Database**: Supabase (PostgreSQL, Auth, RLS)
+- **Styling & Audio**: Tailwind CSS, `lucide-react` (icons), `framer-motion` (animations), `shadcn/ui` (accessible components), Web Audio API Synthesizer (`src/lib/sound.ts`)
+- **PDF Generation**: Client-side `jspdf` & `jspdf-autotable` B2B document builder (`src/lib/pdf-generator.ts`)
+- **Backend / Database**: Supabase (PostgreSQL, Auth, RLS), Cloudflare R2 Storage adapter (`src/lib/storage.ts`)
 
 ## 2. Portal Separation (RBAC)
 
