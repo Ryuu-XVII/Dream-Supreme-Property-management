@@ -224,3 +224,80 @@ export interface AuditEvent {
   before: Record<string, unknown>;
   after: Record<string, unknown>;
 }
+
+export type TrustAccountType = "section_86_2_general" | "section_86_4_investment";
+export type TrustTransactionType =
+  | "deposit_inflow"
+  | "refund_outflow"
+  | "conveyancer_transfer"
+  | "interest_credit"
+  | "ppra_levy_deduction";
+
+export interface TrustLedgerEntry {
+  id: string;
+  agencyId: string;
+  dealId?: string;
+  leaseId?: string;
+  accountType: TrustAccountType;
+  transactionType: TrustTransactionType;
+  amountCents: number;
+  referenceNumber: string;
+  bankStatementDate: string;
+  payerPayeeName: string;
+  interestSplitClientPct: number;
+  interestSplitPpraPct: number;
+  approvedByPrincipal?: string;
+  approvedAt?: string;
+  createdAt: string;
+}
+
+export interface LeaseEscalationSchedule {
+  id: string;
+  leaseId: string;
+  effectiveDate: string;
+  escalationPercentage: number;
+  previousRentCents: number;
+  newRentCents: number;
+  isApplied: boolean;
+  appliedAt?: string;
+  createdAt: string;
+}
+
+export interface DocumentTemplate {
+  id: string;
+  agencyId: string;
+  name: string;
+  category: string;
+  bodyMarkdown: string;
+  version: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AgencyRentalSettings {
+  defaultManagementFeeBps: number;
+  defaultProcurementFeeCents: number;
+  proRataCalculationBasis: "exact_calendar_days" | "standard_30_days";
+}
+
+export interface LeaseOnboardingPayload {
+  propertyId: string;
+  landlordPartyId: string;
+  tenantPartyId: string;
+  managedBy?: string;
+  monthlyRentCents: number;
+  depositCents?: number;
+  depositHeldBy?: "agency_trust" | "landlord" | "deposit_scheme";
+  procurementFeeCents?: number;
+  managementFeeBps?: number;
+  startOn: string;
+  endOn: string;
+  escalationRateBps?: number;
+  escalationMonth?: number;
+  adminFeeCents?: number;
+  proRataRentCents?: number;
+  inspectionDate?: string;
+  occupantsText?: string;
+  cpaNoticeApplicable?: boolean;
+}

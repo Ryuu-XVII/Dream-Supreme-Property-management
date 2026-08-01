@@ -170,6 +170,11 @@ function AgencyProfilePage() {
     },
   });
 
+  const [defaultMgmtFeePct, setDefaultMgmtFeePct] = useState("8.0");
+  const [proRataBasis, setProRataBasis] = useState<"exact_calendar_days" | "standard_30_days">(
+    "exact_calendar_days",
+  );
+
   useEffect(() => {
     if (!settingsQuery.data) return;
     const data = settingsQuery.data;
@@ -182,6 +187,12 @@ function AgencyProfilePage() {
       address: data.agency.address || "",
     });
     setLogo(data.agency.logo_key || null);
+    if (data.agency.default_management_fee_bps !== undefined) {
+      setDefaultMgmtFeePct((data.agency.default_management_fee_bps / 100).toFixed(1));
+    }
+    if (data.agency.pro_rata_calculation_basis) {
+      setProRataBasis(data.agency.pro_rata_calculation_basis);
+    }
     setBranchList(
       data.branches.map((branch: any) => ({
         id: branch.id,
@@ -224,6 +235,8 @@ function AgencyProfilePage() {
         vat_number: values.vatNumber,
         is_vat_vendor: values.vatVendor,
         address: values.address,
+        default_management_fee_bps: Math.round((parseFloat(defaultMgmtFeePct) || 8.0) * 100),
+        pro_rata_calculation_basis: proRataBasis,
       })
       .eq("id", account.agencyId);
     if (error) {
@@ -360,6 +373,48 @@ function AgencyProfilePage() {
                       </FormItem>
                     )}
                   />
+
+                  <div className="sm:col-span-2 mt-4 pt-4 border-t border-border/50">
+                    <h3 className="font-display text-sm font-semibold text-primary mb-3">
+                      Rental Management Agency Settings
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="defaultMgmtFee">Default Agency Management Fee (%)</Label>
+                        <Input
+                          id="defaultMgmtFee"
+                          type="number"
+                          step="0.1"
+                          placeholder="e.g. 8.0"
+                          value={defaultMgmtFeePct}
+                          onChange={(e) => setDefaultMgmtFeePct(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Pre-populated in lease wizard step 3.
+                        </p>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="proRataBasis">Pro-Rata Rent Calculation Method</Label>
+                        <Select
+                          value={proRataBasis}
+                          onValueChange={(val: any) => setProRataBasis(val)}
+                        >
+                          <SelectTrigger id="proRataBasis">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="exact_calendar_days">
+                              Exact Calendar Days (Rent / Days in Month * Days)
+                            </SelectItem>
+                            <SelectItem value="standard_30_days">
+                              Standard 30-Day Month (Rent / 30 * Days)
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex justify-end">
                   <Button type="submit">Save Agency Details</Button>

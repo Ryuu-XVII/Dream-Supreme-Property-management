@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
@@ -12,10 +13,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, ArrowRight, Settings } from "lucide-react";
+import { PlusCircle, ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { zar, dateFmt } from "@/lib/format";
+import { LeaseOnboardingWizard } from "@/components/rentals/lease-onboarding-wizard";
 
 export const Route = createFileRoute("/rentals/")({
   component: RentalsDashboard,
@@ -24,6 +26,7 @@ export const Route = createFileRoute("/rentals/")({
 function RentalsDashboard() {
   const { account } = useAuth();
   const navigate = useNavigate();
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const leasesQuery = useQuery({
     queryKey: ["leases", account?.agencyId],
@@ -34,20 +37,49 @@ function RentalsDashboard() {
         .select(
           `
           id,
-          tenant_name,
-          rent_amount_cents,
-          start_date,
-          end_date,
+          monthly_rent_cents,
+          start_on,
+          end_on,
           status,
           managed_by,
-          property:property_id(id, address, suburb)
+          tenant_party:tenant_party_id(full_name),
+          property:property_id(id, address_line, suburb)
         `,
         )
         .eq("agency_id", account!.agencyId)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        // Fallback for basic schema fields
+        const { data: fallback } = await supabase
+          .from("lease")
+          .select("*")
+          .eq("agency_id", account!.agencyId);
+        return (fallback || []).map((l: any) => ({
+          id: l.id,
+          tenant_name: l.tenant_name || "Tenant",
+          rent_amount_cents: l.monthly_rent_cents || l.rent_amount_cents || 0,
+          start_date: l.start_on || l.start_date,
+          end_date: l.end_on || l.end_date,
+          status: l.status,
+          managed_by: l.managed_by,
+          property: l.property || { address: "Property #" + l.id.slice(0, 6), suburb: "" },
+        }));
+      }
+
+      return (data || []).map((l: any) => ({
+        id: l.id,
+        tenant_name: l.tenant_party?.full_name || l.tenant_name || "Tenant",
+        rent_amount_cents: l.monthly_rent_cents || 0,
+        start_date: l.start_on,
+        end_date: l.end_on,
+        status: l.status,
+        managed_by: l.managed_by,
+        property: {
+          address: l.property?.address_line || "Property #" + l.id.slice(0, 6),
+          suburb: l.property?.suburb || "",
+        },
+      }));
     },
   });
 
@@ -56,11 +88,12 @@ function RentalsDashboard() {
       title="Rentals Management"
       description="Manage active leases, track tenant invoices, and log maintenance tickets."
       actions={
-        <Button onClick={() => navigate({ to: "/" })} disabled>
+        <Button onClick={() => setIsCreateOpen(true)}>
           <PlusCircle className="mr-2 size-4" /> New Lease
         </Button>
       }
     >
+      <LeaseOnboardingWizard open={isCreateOpen} onOpenChange={setIsCreateOpen} />
       <GlassCard className="p-0">
         <Table>
           <TableHeader>

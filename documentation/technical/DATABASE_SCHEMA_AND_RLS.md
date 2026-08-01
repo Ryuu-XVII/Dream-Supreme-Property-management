@@ -16,16 +16,23 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 - **`mandate`**: The exclusive or open listing agreement to sell/rent a `property`. Tracks listing price and expiry.
 - **`deal`**: The transactional workflow. Links a `property` (and optionally a `mandate`) to `user_account`s (via `deal_participant`). Moves through strict stages (e.g., `Mandate Signed` -> `OTP Signed` -> `Registered`).
 
-### `lease`, `lease_invoice`, & `maintenance_job` (Rentals Module)
+### `lease`, `lease_invoice`, `lease_escalation_schedule` & `maintenance_job` (Rentals Module)
 
 - **`lease`**: The core rentals agreement linking a tenant to a property. Owned by a specific `managed_by` rental agent.
 - **`lease_invoice`**: Financial tracking for rent, utilities, and deposits against a lease.
+- **`lease_escalation_schedule`**: Tracks scheduled annual CPI/fixed rent escalations.
 - **`maintenance_job`**: Tracks property repairs, linked to a lease and requiring principal/agent approval.
+
+### `trust_account_ledger` & `document_template` (Trust & Compliance Operations)
+
+- **`trust_account_ledger`**: Audited sub-ledger for Section 86(2) General and Section 86(4) Investment trust deposits, managing 95%/5% client vs PPRA statutory interest allocations and principal sign-offs.
+- **`document_template`**: Template repository for auto-generating ECTA-compliant mandates, lease agreements, and OTP legal documents.
 
 ### `commission_rule_set` & `commission_calculation`
 
 - **`commission_rule_set`**: Defines global agency rules (e.g., Office Share %, Franchise Fees, Marketing Deductions).
 - **`commission_calculation`**: Triggered when a deal registers. Calculates the gross commission, subtracts deductions, and allocates the remaining net commission to the agents (`commission_allocation`).
+
 
 ## 2. Row Level Security (RLS) Strategy
 
@@ -59,7 +66,21 @@ Calculates the exact net payable amounts for all participants on a deal using a 
 
 A central configuration function that returns the current VAT rate (`0.15`). Used consistently by the commission calculations to prevent hardcoded VAT percentages.
 
+### `record_trust_transaction(p_deal_id, p_lease_id, p_account_type, p_transaction_type, ...)`
+
+Enforces single-principal approval for Section 86 trust sub-ledger transactions, automatically stamping approval metadata and writing structured records to `audit_log`.
+
+### `generate_document_from_template(p_template_id, p_deal_id, p_lease_id)`
+
+Executes server-side document merge substitution on template markdown, creates the generated document entry in `public.document`, and logs an automated audit entry.
+
+### `create_lease_onboarding(p_payload jsonb)`
+
+Executes atomic lease onboarding, inserting the `lease` record, trust deposit ledger entries, initial pro-rata rent invoice, and ingoing inspection schedule in a single audited transaction.
+
 ### `admin_bulk_retire_users(p_user_ids)`
+
+
 
 Changes multiple users' statuses to `'archived'` securely in one transaction and automatically writes to the `audit_log`.
 

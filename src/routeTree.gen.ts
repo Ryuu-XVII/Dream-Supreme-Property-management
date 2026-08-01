@@ -30,6 +30,7 @@ import { Route as AdminFinancialsRouteImport } from './routes/admin/financials'
 import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminPropertiesRouteImport } from './routes/admin/properties'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
+import { Route as AdminTrustRouteImport } from './routes/admin/trust'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as CommissionIndexRouteImport } from './routes/commission/index'
 import { Route as CommissionEarningsRouteImport } from './routes/commission/earnings'
@@ -152,6 +153,11 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminTrustRoute = AdminTrustRouteImport.update({
+  id: '/trust',
+  path: '/trust',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/trust': typeof AdminTrustRoute
   '/admin/users': typeof AdminUsersRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
@@ -293,6 +300,7 @@ export interface FileRoutesByTo {
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/trust': typeof AdminTrustRoute
   '/admin/users': typeof AdminUsersRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
@@ -333,6 +341,7 @@ export interface FileRoutesById {
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/trust': typeof AdminTrustRoute
   '/admin/users': typeof AdminUsersRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
@@ -374,6 +383,7 @@ export interface FileRouteTypes {
     | '/admin/notifications'
     | '/admin/properties'
     | '/admin/settings'
+    | '/admin/trust'
     | '/admin/users'
     | '/commission/earnings'
     | '/commission/reconciliation'
@@ -412,6 +422,7 @@ export interface FileRouteTypes {
     | '/admin/notifications'
     | '/admin/properties'
     | '/admin/settings'
+    | '/admin/trust'
     | '/admin/users'
     | '/commission/earnings'
     | '/commission/reconciliation'
@@ -451,6 +462,7 @@ export interface FileRouteTypes {
     | '/admin/notifications'
     | '/admin/properties'
     | '/admin/settings'
+    | '/admin/trust'
     | '/admin/users'
     | '/commission/earnings'
     | '/commission/reconciliation'
@@ -647,6 +659,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/trust': {
+      id: '/admin/trust'
+      path: '/trust'
+      fullPath: '/admin/trust'
+      preLoaderRoute: typeof AdminTrustRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
@@ -770,6 +789,7 @@ interface AdminRouteChildren {
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminPropertiesRoute: typeof AdminPropertiesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminTrustRoute: typeof AdminTrustRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminComplianceAuditRoute: typeof AdminComplianceAuditRoute
@@ -785,6 +805,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminPropertiesRoute: AdminPropertiesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
+  AdminTrustRoute: AdminTrustRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminComplianceAuditRoute: AdminComplianceAuditRoute,
