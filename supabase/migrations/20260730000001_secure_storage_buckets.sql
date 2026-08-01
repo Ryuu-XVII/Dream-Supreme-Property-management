@@ -17,8 +17,10 @@ values (
 )
 on conflict (id) do update set public = false;
 
--- 2. Enforce RLS on storage.objects
-alter table storage.objects enable row level security;
+-- 2. Enforce RLS on storage.objects (Managed by Supabase Storage)
+do $$ begin
+  alter table storage.objects enable row level security;
+exception when others then null; end $$;
 
 -- Drop existing policies if any
 drop policy if exists "Agency users can upload documents" on storage.objects;
