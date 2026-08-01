@@ -282,12 +282,6 @@ function ProfileSettings() {
                 <div className="space-y-1.5 text-center sm:text-left flex-1">
                   <div className="flex items-center justify-center sm:justify-start gap-2">
                     <h3 className="font-display text-base font-semibold">Profile Picture</h3>
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] bg-sky-500/10 text-sky-400 border-sky-500/20"
-                    >
-                      <Cloud className="mr-1 size-3" /> Cloudflare R2 Storage
-                    </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Upload a professional headshot for client mandates, OTPs, and public
