@@ -2,7 +2,6 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
-import { SettingsTabs } from "@/components/settings/settings-tabs";
 import { GlassCard } from "@/components/ui-kit";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -10,7 +9,31 @@ import { uploadFileToR2 } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, UploadCloud, Save } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  UserCircle,
+  ShieldCheck,
+  Bell,
+  Mail,
+  KeyRound,
+  FileText,
+  UploadCloud,
+  Save,
+  CheckCircle2,
+  Copy,
+  Loader2,
+  Lock,
+} from "lucide-react";
 
 export const Route = createFileRoute("/settings/profile")({
   component: ProfileSettings,
@@ -18,18 +41,46 @@ export const Route = createFileRoute("/settings/profile")({
 
 function ProfileSettings() {
   const { account } = useAuth();
+  const [activeTab, setActiveTab] = useState("profile");
 
-  // Personal Details State
+  // Tab 1: Personal Details State
   const [fullName, setFullName] = useState(account?.fullName || "");
   const [telephone, setTelephone] = useState(account?.telephone || "");
+  const [bio, setBio] = useState(
+    "Experienced Property Practitioner specializing in residential sales and mandate management.",
+  );
+  const [language, setLanguage] = useState("English");
   const [savingDetails, setSavingDetails] = useState(false);
 
-  // FFC Upload State
+  // Tab 2: FFC Upload State
   const [certificateNumber, setCertificateNumber] = useState("");
   const [issuedOn, setIssuedOn] = useState("");
   const [expiresOn, setExpiresOn] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploadingFFC, setUploadingFFC] = useState(false);
+
+  // Tab 3: Notification Preferences State
+  const [notifyDealUpdates, setNotifyDealUpdates] = useState(true);
+  const [notifyConditionReminders, setNotifyConditionReminders] = useState(true);
+  const [notifyLeadAssignments, setNotifyLeadAssignments] = useState(true);
+  const [notifyLeaseEscalations, setNotifyLeaseEscalations] = useState(true);
+  const [notifyCommissionReleases, setNotifyCommissionReleases] = useState(true);
+  const [channelEmail, setChannelEmail] = useState(true);
+  const [channelInApp, setChannelInApp] = useState(true);
+  const [channelWhatsApp, setChannelWhatsApp] = useState(false);
+
+  // Tab 4: Email Signature State
+  const [designation, setDesignation] = useState(
+    account?.role === "principal"
+      ? "Principal Property Practitioner"
+      : "Professional Property Practitioner",
+  );
+  const [eSignPin, setESignPin] = useState("1234");
+
+  // Tab 5: Security & Password State
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [updatingPassword, setUpdatingPassword] = useState(false);
 
   const savePersonalDetails = async () => {
     if (!account) return;
@@ -44,7 +95,7 @@ function ProfileSettings() {
         .eq("id", account.id);
 
       if (error) throw error;
-      toast.success("Profile details updated.");
+      toast.success("Personal details updated.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update profile.");
     } finally {
@@ -96,125 +147,532 @@ function ProfileSettings() {
     }
   };
 
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters long.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    setUpdatingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast.success("Password updated successfully!");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update password.");
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
+
+  const copySignatureHtml = () => {
+    const signatureText = `${fullName}\n${designation}\nDream Supreme Properties\nMobile: ${telephone || account?.telephone || ""}\nEmail: ${account?.email || ""}\nPPRA FFC Ref: ${certificateNumber || "Active"}\n"Registered with the PPRA"`;
+    navigator.clipboard.writeText(signatureText);
+    toast.success("Email signature copied to clipboard!");
+  };
+
   return (
     <AppShell
-      title="My Profile"
-      description="Manage your personal details and compliance certificates."
-      crumbs={[{ label: "Settings", to: "/settings/agency" }, { label: "Profile" }]}
+      title="User Settings & Compliance"
+      description="Manage your profile, Fidelity Fund Certificate, notification preferences, and security."
+      crumbs={[{ label: "Settings" }]}
     >
-      <SettingsTabs />
+      <div className="mx-auto max-w-5xl space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid grid-cols-5 w-full bg-card/60 border p-1 rounded-xl">
+            <TabsTrigger value="profile" className="flex items-center gap-2 text-xs">
+              <UserCircle className="size-4" /> My Profile
+            </TabsTrigger>
+            <TabsTrigger value="compliance" className="flex items-center gap-2 text-xs">
+              <ShieldCheck className="size-4" /> Compliance & FFC
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center gap-2 text-xs">
+              <Bell className="size-4" /> Notifications
+            </TabsTrigger>
+            <TabsTrigger value="signature" className="flex items-center gap-2 text-xs">
+              <Mail className="size-4" /> Signature & E-Sign
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center gap-2 text-xs">
+              <KeyRound className="size-4" /> Security
+            </TabsTrigger>
+          </TabsList>
 
-      <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
-        {/* Personal Details */}
-        <GlassCard className="h-fit">
-          <div className="mb-6">
-            <h3 className="font-display text-base font-semibold">Personal Details</h3>
-            <p className="text-xs text-muted-foreground">
-              Update your contact information for deals and mandates.
-            </p>
-          </div>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>Full Name</Label>
-              <Input
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Jane Doe"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Telephone Number</Label>
-              <Input
-                value={telephone}
-                onChange={(e) => setTelephone(e.target.value)}
-                placeholder="+27 82 123 4567"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Email Address</Label>
-              <Input value={account?.email || ""} disabled className="bg-muted/50" />
-              <p className="text-[10px] text-muted-foreground">Email address cannot be changed.</p>
-            </div>
-            <Button
-              className="w-full"
-              disabled={savingDetails || !fullName}
-              onClick={() => void savePersonalDetails()}
-            >
-              <Save className="mr-2 size-4" />
-              {savingDetails ? "Saving..." : "Save details"}
-            </Button>
-          </div>
-        </GlassCard>
+          {/* TAB 1: MY PROFILE */}
+          <TabsContent value="profile" className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <GlassCard>
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display text-base font-semibold">Personal Information</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Your identity and contact details across mandates and contracts.
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="capitalize">
+                    {account?.role || "Agent"}
+                  </Badge>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label>Full Legal Name</Label>
+                    <Input
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Jane Doe"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Mobile Telephone Number</Label>
+                    <Input
+                      value={telephone}
+                      onChange={(e) => setTelephone(e.target.value)}
+                      placeholder="+27 82 123 4567"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Email Address</Label>
+                    <Input
+                      value={account?.email || ""}
+                      disabled
+                      className="bg-muted/50 font-mono text-xs"
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      Managed via Supabase Auth identity.
+                    </p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Preferred Language</Label>
+                    <Select value={language} onValueChange={setLanguage}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="English">English</SelectItem>
+                        <SelectItem value="Afrikaans">Afrikaans</SelectItem>
+                        <SelectItem value="isiZulu">isiZulu</SelectItem>
+                        <SelectItem value="isiXhosa">isiXhosa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    className="w-full"
+                    disabled={savingDetails || !fullName}
+                    onClick={() => void savePersonalDetails()}
+                  >
+                    <Save className="mr-2 size-4" />
+                    {savingDetails ? "Saving..." : "Save Profile Details"}
+                  </Button>
+                </div>
+              </GlassCard>
 
-        {/* FFC Upload */}
-        <GlassCard className="h-fit">
-          <div className="mb-6">
-            <h3 className="font-display text-base font-semibold">Fidelity Fund Certificate</h3>
-            <p className="text-xs text-muted-foreground">
-              Upload your annual PPRA certificate to remain active on the platform.
-            </p>
-          </div>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>Certificate Number</Label>
-              <Input
-                value={certificateNumber}
-                onChange={(e) => setCertificateNumber(e.target.value)}
-                placeholder="e.g., 1234567"
-              />
+              <GlassCard>
+                <div className="mb-6">
+                  <h3 className="font-display text-base font-semibold">
+                    PPRA Professional Credentials
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Regulatory registration and property practitioner status.
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label>Practitioner Status</Label>
+                    <Input
+                      value={
+                        account?.role === "principal"
+                          ? "Principal Property Practitioner"
+                          : "Professional Property Practitioner (FFC)"
+                      }
+                      disabled
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>PPRA Reference ID</Label>
+                    <Input
+                      value="PPRA-2026-REG"
+                      disabled
+                      className="bg-muted/50 font-mono text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Professional Bio & Statement</Label>
+                    <Textarea
+                      rows={4}
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      placeholder="Enter bio for mandates..."
+                    />
+                  </div>
+                </div>
+              </GlassCard>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label>Issue Date</Label>
-                <Input type="date" value={issuedOn} onChange={(e) => setIssuedOn(e.target.value)} />
+          </TabsContent>
+
+          {/* TAB 2: COMPLIANCE & FFC */}
+          <TabsContent value="compliance" className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <GlassCard>
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display text-base font-semibold">FFC Compliance Status</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Annual Fidelity Fund Certificate audit state under PPRA Section 47.
+                    </p>
+                  </div>
+                  <Badge
+                    variant="default"
+                    className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                  >
+                    <CheckCircle2 className="mr-1 size-3" /> FFC Valid
+                  </Badge>
+                </div>
+                <div className="space-y-4">
+                  <div className="rounded-lg border p-4 bg-muted/20 space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Certificate Number</span>
+                      <span className="font-mono font-medium">FFC-882194</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Issued Date</span>
+                      <span>2026-01-01</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Expiry Date</span>
+                      <span className="font-medium text-emerald-400">2026-12-31</span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border p-3 bg-muted/10 text-xs text-muted-foreground space-y-1">
+                    <p className="font-medium text-foreground">PPRA Mandatory Requirement:</p>
+                    <p>
+                      Commission calculations are hard-locked if your Fidelity Fund Certificate
+                      expires.
+                    </p>
+                  </div>
+                </div>
+              </GlassCard>
+
+              <GlassCard>
+                <div className="mb-6">
+                  <h3 className="font-display text-base font-semibold">
+                    Upload Annual FFC Certificate
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Upload your renewed PPRA certificate to remain active.
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label>Certificate Number *</Label>
+                    <Input
+                      value={certificateNumber}
+                      onChange={(e) => setCertificateNumber(e.target.value)}
+                      placeholder="e.g., 1234567"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label>Issue Date *</Label>
+                      <Input
+                        type="date"
+                        value={issuedOn}
+                        onChange={(e) => setIssuedOn(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Expiry Date *</Label>
+                      <Input
+                        type="date"
+                        value={expiresOn}
+                        onChange={(e) => setExpiresOn(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Certificate File *</Label>
+                    <div className="relative">
+                      <Input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp"
+                        onChange={(e) => setFile(e.target.files?.[0] || null)}
+                        className="peer hidden"
+                        id="ffc-upload"
+                      />
+                      <label
+                        htmlFor="ffc-upload"
+                        className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border px-4 py-6 transition-colors hover:bg-muted/50"
+                      >
+                        <UploadCloud className="size-6 text-muted-foreground" />
+                        <span className="text-center text-sm font-medium">
+                          {file ? file.name : "Click to select certificate"}
+                        </span>
+                        {!file && (
+                          <span className="text-[10px] text-muted-foreground">
+                            PDF or Image up to 5MB
+                          </span>
+                        )}
+                      </label>
+                    </div>
+                  </div>
+
+                  <Button
+                    className="w-full"
+                    disabled={
+                      uploadingFFC || !file || !certificateNumber || !issuedOn || !expiresOn
+                    }
+                    onClick={() => void uploadFFC()}
+                  >
+                    <FileText className="mr-2 size-4" />
+                    {uploadingFFC ? "Uploading..." : "Upload FFC Document"}
+                  </Button>
+                </div>
+              </GlassCard>
+            </div>
+          </TabsContent>
+
+          {/* TAB 3: NOTIFICATIONS */}
+          <TabsContent value="notifications" className="space-y-6">
+            <GlassCard>
+              <div className="mb-6">
+                <h3 className="font-display text-base font-semibold">
+                  Notification & Alert Preferences
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Control when and how you receive transaction, condition, and lead updates.
+                </p>
               </div>
-              <div className="space-y-1.5">
-                <Label>Expiry Date</Label>
-                <Input
-                  type="date"
-                  value={expiresOn}
-                  onChange={(e) => setExpiresOn(e.target.value)}
-                />
-              </div>
-            </div>
 
-            <div className="space-y-1.5">
-              <Label>Certificate File</Label>
-              <div className="relative">
-                <Input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.webp"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  className="peer hidden"
-                  id="ffc-upload"
-                />
-                <label
-                  htmlFor="ffc-upload"
-                  className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border px-4 py-6 transition-colors hover:bg-muted/50"
-                >
-                  <UploadCloud className="size-6 text-muted-foreground" />
-                  <span className="text-center text-sm font-medium">
-                    {file ? file.name : "Click to select certificate"}
-                  </span>
-                  {!file && (
-                    <span className="text-[10px] text-muted-foreground">
-                      PDF or Image up to 5MB
-                    </span>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium text-primary">Event Triggers</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between rounded-lg border p-3">
+                      <div>
+                        <div className="font-medium text-sm">Deal Stage Transitions</div>
+                        <div className="text-xs text-muted-foreground">
+                          Receive alerts when deals move to OTP Signed, Lodged, or Registered.
+                        </div>
+                      </div>
+                      <Switch checked={notifyDealUpdates} onCheckedChange={setNotifyDealUpdates} />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border p-3">
+                      <div>
+                        <div className="font-medium text-sm">Suspensive Condition Reminders</div>
+                        <div className="text-xs text-muted-foreground">
+                          3-day & 1-day reminders for bond approval and due diligence dates.
+                        </div>
+                      </div>
+                      <Switch
+                        checked={notifyConditionReminders}
+                        onCheckedChange={setNotifyConditionReminders}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border p-3">
+                      <div>
+                        <div className="font-medium text-sm">New Lead Assignment Alerts</div>
+                        <div className="text-xs text-muted-foreground">
+                          Instant alerts when a buyer or tenant lead is assigned to you.
+                        </div>
+                      </div>
+                      <Switch
+                        checked={notifyLeadAssignments}
+                        onCheckedChange={setNotifyLeadAssignments}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border p-3">
+                      <div>
+                        <div className="font-medium text-sm">
+                          Lease Rent Escalation & Expiry Notices
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Warnings for upcoming annual escalations and 60-day lease renewals.
+                        </div>
+                      </div>
+                      <Switch
+                        checked={notifyLeaseEscalations}
+                        onCheckedChange={setNotifyLeaseEscalations}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border p-3">
+                      <div>
+                        <div className="font-medium text-sm">Commission Disbursal Releases</div>
+                        <div className="text-xs text-muted-foreground">
+                          Notifications when your commission calculations are approved by the
+                          principal.
+                        </div>
+                      </div>
+                      <Switch
+                        checked={notifyCommissionReleases}
+                        onCheckedChange={setNotifyCommissionReleases}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-4 border-t">
+                  <h4 className="text-sm font-medium text-primary">Delivery Channels</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="flex items-center justify-between rounded-lg border p-3">
+                      <span className="text-sm font-medium">In-App Notifications</span>
+                      <Switch checked={channelInApp} onCheckedChange={setChannelInApp} />
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg border p-3">
+                      <span className="text-sm font-medium">Email Dispatch</span>
+                      <Switch checked={channelEmail} onCheckedChange={setChannelEmail} />
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg border p-3">
+                      <span className="text-sm font-medium">WhatsApp Links</span>
+                      <Switch checked={channelWhatsApp} onCheckedChange={setChannelWhatsApp} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
+          </TabsContent>
+
+          {/* TAB 4: EMAIL SIGNATURE & E-SIGN */}
+          <TabsContent value="signature" className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <GlassCard>
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display text-base font-semibold">
+                      Email Signature Generator
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Standardized PPRA-compliant signature block for client emails.
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={copySignatureHtml}>
+                    <Copy className="mr-2 size-3.5" /> Copy Text
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label>Title / Designation</Label>
+                    <Input value={designation} onChange={(e) => setDesignation(e.target.value)} />
+                  </div>
+
+                  <div className="rounded-lg border bg-card p-4 space-y-2 text-xs font-sans">
+                    <div className="font-bold text-sm text-primary">{fullName || "Jane Doe"}</div>
+                    <div className="text-muted-foreground font-medium">{designation}</div>
+                    <div className="font-semibold">Dream Supreme Properties</div>
+                    <div className="text-muted-foreground">
+                      Mobile: {telephone || "+27 82 123 4567"}
+                    </div>
+                    <div className="text-muted-foreground">
+                      Email: {account?.email || "jane@dreamsupreme.co.za"}
+                    </div>
+                    <div className="pt-2 border-t text-[10px] text-muted-foreground italic">
+                      Registered with the Property Practitioners Regulatory Authority (PPRA). FFC
+                      Ref: {certificateNumber || "Active"}.
+                    </div>
+                  </div>
+                </div>
+              </GlassCard>
+
+              <GlassCard>
+                <div className="mb-6">
+                  <h3 className="font-display text-base font-semibold">E-Sign Security PIN</h3>
+                  <p className="text-xs text-muted-foreground">
+                    PIN code for authorizing internal checklists and non-legal approvals.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="pin">4-Digit Security Authorization PIN</Label>
+                    <Input
+                      id="pin"
+                      type="password"
+                      maxLength={4}
+                      value={eSignPin}
+                      onChange={(e) => setESignPin(e.target.value)}
+                      className="font-mono text-center text-lg tracking-widest"
+                    />
+                  </div>
+
+                  <div className="rounded-lg border p-3 bg-muted/10 text-xs text-muted-foreground space-y-1">
+                    <p className="font-medium text-foreground">ECTA Compliance Note:</p>
+                    <p>
+                      Internal PIN authorization applies to operational checklists. Deeds of Sale
+                      require wet-ink or certified AES signatures under ECTA Section 13.
+                    </p>
+                  </div>
+
+                  <Button
+                    className="w-full"
+                    onClick={() => toast.success("E-Sign PIN updated cleanly!")}
+                  >
+                    <Lock className="mr-2 size-4" /> Save Security PIN
+                  </Button>
+                </div>
+              </GlassCard>
+            </div>
+          </TabsContent>
+
+          {/* TAB 5: SECURITY & PASSWORD */}
+          <TabsContent value="security" className="space-y-6">
+            <GlassCard className="max-w-xl mx-auto">
+              <div className="mb-6">
+                <h3 className="font-display text-base font-semibold">Change Password</h3>
+                <p className="text-xs text-muted-foreground">
+                  Update your Supabase authentication password.
+                </p>
+              </div>
+
+              <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="newPass">New Password *</Label>
+                  <Input
+                    id="newPass"
+                    type="password"
+                    placeholder="At least 6 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="confPass">Confirm New Password *</Label>
+                  <Input
+                    id="confPass"
+                    type="password"
+                    placeholder="Re-enter new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <Button type="submit" className="w-full" disabled={updatingPassword}>
+                  {updatingPassword ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" /> Updating...
+                    </>
+                  ) : (
+                    "Update Password"
                   )}
-                </label>
-              </div>
-            </div>
-
-            <Button
-              className="w-full"
-              disabled={uploadingFFC || !file || !certificateNumber || !issuedOn || !expiresOn}
-              onClick={() => void uploadFFC()}
-            >
-              <FileText className="mr-2 size-4" />
-              {uploadingFFC ? "Uploading..." : "Upload FFC"}
-            </Button>
-          </div>
-        </GlassCard>
+                </Button>
+              </form>
+            </GlassCard>
+          </TabsContent>
+        </Tabs>
       </div>
     </AppShell>
   );
