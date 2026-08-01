@@ -34,16 +34,15 @@ export const navItems = [
   { label: "Calculators", icon: Calculator },
   { label: "Leads", to: "/leads", icon: Users2 },
   { label: "Reports", to: "/reports", icon: BarChart3 },
-  { label: "Settings", to: "/admin/settings", icon: Settings },
+  { label: "Settings", to: "/settings/profile", icon: Settings },
 ] as const;
 
 function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
-  const { role, toggleCalculator } = useApp();
+  const { toggleCalculator } = useApp();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="flex flex-col gap-1 px-3">
       {navItems.map((item) => {
-        if (item.label === "Settings" && !["Principal", "Admin"].includes(role)) return null;
         const active =
           "to" in item
             ? item.to === "/"
