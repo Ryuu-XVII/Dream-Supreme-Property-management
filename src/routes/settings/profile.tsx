@@ -608,7 +608,7 @@ function ProfileSettings() {
                             playNotificationSound(val);
                           }}
                         >
-                          <SelectTrigger className="w-[160px] h-8 text-xs">
+                          <SelectTrigger className="w-40 h-8 text-xs">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
