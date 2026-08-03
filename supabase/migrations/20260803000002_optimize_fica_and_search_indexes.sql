@@ -16,6 +16,6 @@ create index if not exists idx_party_agency_name
 create index if not exists idx_document_agency_deal 
   on public.document (agency_id, deal_id, category);
 
--- 5. Commission Split Distribution Index (deal + agent)
-create index if not exists idx_commission_split_deal_agent 
-  on public.commission_split (deal_id, agent_id);
+-- 5. Commission Allocation Payee Index (calculation_id + user_account_id)
+create index if not exists idx_commission_allocation_calc_user 
+  on public.commission_allocation (calculation_id, user_account_id);
