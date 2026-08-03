@@ -10,7 +10,16 @@ const DOCUMENT_BUCKET = "mandate-documents";
  * backing implementation uses the private Supabase bucket configured by the
  * database migration. R2 can be introduced behind a server-side adapter later.
  */
+export const MAX_SINGLE_FILE_BYTES = 50 * 1024 * 1024; // 50MB max per document
+export const MAX_BUCKET_STORAGE_BYTES = 8 * 1024 * 1024 * 1024; // 8GB total storage cap
+
 export async function uploadFileToR2(file: File | Blob, path: string): Promise<string> {
+  if (file.size > MAX_SINGLE_FILE_BYTES) {
+    throw new Error(
+      `File size (${(file.size / (1024 * 1024)).toFixed(1)}MB) exceeds maximum allowable limit of 50MB per file to maintain 8GB storage ceiling.`,
+    );
+  }
+
   const { data, error } = await supabase.storage.from(DOCUMENT_BUCKET).upload(path, file, {
     upsert: false,
     contentType: file.type || "application/octet-stream",

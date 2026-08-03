@@ -16,7 +16,8 @@
     "format": "prettier --write .",
     "prepare": "husky",
     "r2:create": "wrangler r2 bucket create dream-supreme-documents",
-    "r2:list": "wrangler r2 bucket list"
+    "r2:list": "wrangler r2 bucket list",
+    "r2:lifecycle": "wrangler r2 bucket lifecycle add dream-supreme-documents --expire-days 90 --abort-multipart-days 1"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
