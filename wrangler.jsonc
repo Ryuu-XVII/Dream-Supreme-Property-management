@@ -5,7 +5,7 @@
   "r2_buckets": [
     {
       "binding": "DOCUMENTS_BUCKET",
-      "bucket_name": "dream-supreme-documents"
-    }
-  ]
+      "bucket_name": "dream-supreme-documents",
+    },
+  ],
 }

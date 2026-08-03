@@ -2,10 +2,13 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
+  FileSignature,
+  Home,
   KanbanSquare,
   Timer,
   Coins,
   ShieldCheck,
+  Users,
   FolderOpen,
   Calculator,
   Users2,
@@ -14,13 +17,10 @@ import {
   ChevronLeft,
   Menu,
   X,
-  FileSignature,
-  Home,
 } from "lucide-react";
 import { useApp } from "@/lib/app-state";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { LogOut } from "lucide-react";
 
 export const navItems = [
   { label: "Dashboard", to: "/", icon: LayoutDashboard },
@@ -29,57 +29,36 @@ export const navItems = [
   { label: "Pipeline", to: "/pipeline", icon: KanbanSquare },
   { label: "Countdown Board", to: "/countdown", icon: Timer },
   { label: "Commission", to: "/commission", icon: Coins },
-  { label: "Clients", to: "/clients", icon: Users2 },
+  { label: "Clients", to: "/clients", icon: Users },
+  { label: "Compliance", to: "/compliance/ffc", icon: ShieldCheck },
   { label: "Documents", to: "/documents", icon: FolderOpen },
-  { label: "Calculators", icon: Calculator },
+  { label: "Calculators", to: "/calculators/bond", icon: Calculator },
   { label: "Leads", to: "/leads", icon: Users2 },
   { label: "Reports", to: "/reports", icon: BarChart3 },
-  { label: "Settings", to: "/settings/profile", icon: Settings },
+  { label: "Settings", to: "/settings/agency", icon: Settings },
 ] as const;
 
 function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
-  const { toggleCalculator } = useApp();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="flex flex-col gap-1 px-3">
       {navItems.map((item) => {
         const active =
-          "to" in item
-            ? item.to === "/"
-              ? pathname === "/"
-              : pathname.startsWith(item.to.split("/").slice(0, 2).join("/"))
-            : false;
-        const navClassName = cn(
-          "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-          active
-            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-        );
-
-        if (item.label === "Calculators") {
-          return (
-            <button
-              key={item.label}
-              onClick={() => {
-                toggleCalculator(true);
-                onNavigate?.();
-              }}
-              title={item.label}
-              className={navClassName}
-            >
-              <item.icon className="size-4.5 shrink-0" />
-              {!collapsed && <span className="truncate">{item.label}</span>}
-            </button>
-          );
-        }
-
+          item.to === "/"
+            ? pathname === "/"
+            : pathname.startsWith(item.to.split("/").slice(0, 2).join("/"));
         return (
           <Link
-            key={item.label}
-            to={item.to}
+            key={item.to}
+            to={item.to as any}
             onClick={onNavigate}
             title={item.label}
-            className={navClassName}
+            className={cn(
+              "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              active
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+            )}
           >
             {active && (
               <motion.span
@@ -87,7 +66,7 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
                 className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-sidebar-primary"
               />
             )}
-            <item.icon className="size-4.5 shrink-0" />
+            <item.icon className="size-[18px] shrink-0" />
             {!collapsed && <span className="truncate">{item.label}</span>}
           </Link>
         );
@@ -97,12 +76,12 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
 }
 
 export function Sidebar() {
-  const { sidebarCollapsed, toggleSidebar, role } = useApp();
+  const { sidebarCollapsed, toggleSidebar } = useApp();
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-300 md:flex",
-        sidebarCollapsed ? "w-19" : "w-64",
+        "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar/80 backdrop-blur-xl backdrop-saturate-150 transition-[width] duration-300 md:flex",
+        sidebarCollapsed ? "w-[76px]" : "w-64",
       )}
     >
       <div className="flex h-16 items-center gap-3 px-5">
@@ -121,17 +100,6 @@ export function Sidebar() {
       <div className="mt-2 flex-1 overflow-y-auto scrollbar-thin">
         <NavList collapsed={sidebarCollapsed} />
       </div>
-      {["principal", "admin"].includes(role) && (
-        <div className="border-t border-sidebar-border p-3">
-          <Link
-            to="/admin"
-            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
-          >
-            <ShieldCheck className="size-4.5 shrink-0" />
-            {!sidebarCollapsed && <span className="truncate">Admin Portal</span>}
-          </Link>
-        </div>
-      )}
       <button
         onClick={toggleSidebar}
         className="m-3 flex items-center justify-center gap-2 rounded-lg border border-sidebar-border py-2 text-xs text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/60"
@@ -173,14 +141,13 @@ export function MobileNav() {
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-card/95 backdrop-blur-md md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-white/20 bg-card/60 backdrop-blur-xl backdrop-saturate-150 md:hidden">
         {primary.map((item) => {
-          if (!("to" in item)) return null;
           const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
           return (
             <Link
               key={item.label}
-              to={item.to}
+              to={item.to as any}
               className={cn(
                 "flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium",
                 active ? "text-primary" : "text-muted-foreground",

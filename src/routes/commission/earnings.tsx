@@ -15,10 +15,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { monthlyCommission, advances } from "@/data/state";
+import {
+  deals,
+  propertyById,
+  monthlyCommission,
+  advances,
+  userById,
+  netPayable,
+} from "@/data/mock";
 import { dateFmt, zar } from "@/lib/format";
-
-import { useMyEarnings } from "@/data/deals";
 
 export const Route = createFileRoute("/commission/earnings")({
   head: () => ({
@@ -26,17 +31,21 @@ export const Route = createFileRoute("/commission/earnings")({
       { title: "Agent Earnings | Dream Supreme Properties" },
       {
         name: "description",
-        content: "Year-to-date commission earnings, deal breakdown, advances and tier progress.",
+        content:
+          "Riaan van Niekerk's year-to-date commission earnings, deal breakdown, advances and tier progress.",
       },
       { property: "og:title", content: "Agent Earnings | Dream Supreme Properties" },
       {
         property: "og:description",
-        content: "Year-to-date commission earnings, deal breakdown, advances and tier progress.",
+        content:
+          "Riaan van Niekerk's year-to-date commission earnings, deal breakdown, advances and tier progress.",
       },
     ],
   }),
   component: EarningsPage,
 });
+
+const AGENT_ID = "u2"; // Riaan van Niekerk
 
 const TIERS = [
   { threshold: 0, split: 45 },
@@ -46,16 +55,44 @@ const TIERS = [
 ];
 
 function EarningsPage() {
-  const { data: earnings, isLoading } = useMyEarnings();
+  const loading = useFakeLoad(500);
+  const agent = userById(AGENT_ID);
 
-  const ytdEarnings = earnings?.ytdEarnings || 0;
-  const pendingPipeline = earnings?.pendingPipeline || 0;
-  const dealsYtd = earnings?.dealsYtd || 0;
-  const avgPerDeal = earnings?.avgPerDeal || 0;
-  const dealRows = earnings?.dealRows || [];
-  const agentName = earnings?.agentName || "Agent";
-  const loading = isLoading;
-  const myAdvances = advances;
+  const myRegisteredDeals = useMemo(
+    () => deals.filter((d) => d.registeredAt && d.practitioners.some((p) => p.userId === AGENT_ID)),
+    [],
+  );
+
+  const myAdvances = useMemo(() => advances.filter((a) => a.userId === AGENT_ID), []);
+
+  const dealRows = useMemo(
+    () =>
+      myRegisteredDeals.map((dl) => {
+        const pr = dl.practitioners.find((p) => p.userId === AGENT_ID)!;
+        const commission = Math.round((netPayable(dl) * pr.splitPct) / 100);
+        return { deal: dl, property: propertyById(dl.propertyId), commission };
+      }),
+    [myRegisteredDeals],
+  );
+
+  const ytdEarnings = dealRows.reduce((s, r) => s + r.commission, 0);
+  const dealsYtd = dealRows.length;
+  const avgPerDeal = dealsYtd > 0 ? Math.round(ytdEarnings / dealsYtd) : 0;
+
+  const pendingPipeline = useMemo(
+    () =>
+      deals
+        .filter(
+          (d) =>
+            !d.registeredAt && !d.cancelled && d.practitioners.some((p) => p.userId === AGENT_ID),
+        )
+        .reduce((s, d) => {
+          const pr = d.practitioners.find((p) => p.userId === AGENT_ID)!;
+          const gross = Math.round((d.salePrice * d.commissionBps) / 10000);
+          return s + Math.round(((gross * pr.splitPct) / 100) * 0.5);
+        }, 0),
+    [],
+  );
 
   const currentTierIndex = TIERS.reduce((acc, t, i) => (ytdEarnings >= t.threshold ? i : acc), 0);
   const currentTier = TIERS[currentTierIndex];
@@ -73,14 +110,14 @@ function EarningsPage() {
   return (
     <AppShell
       title="Agent Earnings"
-      description={`Year-to-date commission earnings for ${agentName}.`}
+      description={`Year-to-date commission earnings for ${agent.name}.`}
       crumbs={[{ label: "Commission", to: "/commission" }, { label: "Earnings" }]}
     >
       <CommissionTabs />
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr]">
         <div className="glass lift relative overflow-hidden rounded-xl p-6">
-          <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/15 via-transparent to-success/10" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-success/10" />
           <div className="relative">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               YTD Total Earnings
@@ -180,7 +217,7 @@ function EarningsPage() {
                     <TableCell className="whitespace-nowrap">
                       {deal.registeredAt ? dateFmt(deal.registeredAt) : "—"}
                     </TableCell>
-                    <TableCell className="min-w-0 max-w-60 truncate">
+                    <TableCell className="min-w-0 max-w-[240px] truncate">
                       {property.address}, {property.suburb}
                     </TableCell>
                     <TableCell className="money text-right whitespace-nowrap">

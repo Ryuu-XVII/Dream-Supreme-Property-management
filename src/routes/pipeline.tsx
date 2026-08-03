@@ -1,9 +1,18 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/app-shell";
-import { GlassCard, EmptyState, TableSkeleton } from "@/components/ui-kit";
+import { GlassCard, EmptyState, useFakeLoad, TableSkeleton } from "@/components/ui-kit";
 import { AgentAvatar, StageBadge, StatusDot } from "@/components/badges";
-import { STAGES, type Stage } from "@/data/state"; // STAGES is still fine as constants
+import {
+  deals,
+  STAGES,
+  branches,
+  users,
+  userById,
+  propertyById,
+  type Deal,
+  type Stage,
+} from "@/data/mock";
 import { zar, dateFmt, urgencyOf, type Urgency } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,8 +42,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LayoutGrid, List, SlidersHorizontal, ArrowUpDown, XCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import { usePipelineDeals, type PipelineDeal } from "@/data/deals";
-import { useAgents, useBranches } from "@/data/reference";
 
 export const Route = createFileRoute("/pipeline")({
   head: () => ({
@@ -42,6 +49,11 @@ export const Route = createFileRoute("/pipeline")({
       { title: "Deal Pipeline | Dream Supreme Properties" },
       {
         name: "description",
+        content: "Kanban and table view of all active deals through every transaction stage.",
+      },
+      { property: "og:title", content: "Deal Pipeline | Dream Supreme Properties" },
+      {
+        property: "og:description",
         content: "Kanban and table view of all active deals through every transaction stage.",
       },
     ],
@@ -52,14 +64,16 @@ export const Route = createFileRoute("/pipeline")({
 const MIN_PRICE = 0;
 const MAX_PRICE = 100_000_000_00; // R100m in cents
 
-function mostUrgentTone(deal: PipelineDeal): Urgency {
-  const open = deal.conditions.filter(
-    (c: any) => c.status === "pending" || c.status === "extended",
-  );
+function daysInStage(deal: Deal) {
+  return Math.round((Date.now() - new Date(deal.stageSince).getTime()) / 86400000);
+}
+
+function mostUrgentTone(deal: Deal): Urgency {
+  const open = deal.conditions.filter((c) => c.status === "Open" || c.status === "Extended");
   if (open.length === 0) return "safe";
   const rank: Record<Urgency, number> = { lapsed: 0, critical: 1, warning: 2, safe: 3 };
-  return open.reduce<Urgency>((acc, c: any) => {
-    const days = Math.round((new Date(c.due_on).getTime() - Date.now()) / 86400000);
+  return open.reduce<Urgency>((acc, c) => {
+    const days = Math.round((new Date(c.dueDate).getTime() - Date.now()) / 86400000);
     const u = urgencyOf(days);
     return rank[u] < rank[acc] ? u : acc;
   }, "safe");
@@ -85,12 +99,12 @@ const defaultFilters: Filters = {
   to: "",
 };
 
-function useFilteredDeals(deals: PipelineDeal[] | undefined, filters: Filters) {
+function useFilteredDeals(filters: Filters) {
   return useMemo(() => {
-    if (!deals) return [];
     return deals.filter((deal) => {
-      if (filters.agent !== "all" && deal.agent.id !== filters.agent) return false;
-      // if (filters.branch !== "all" && deal.branch !== filters.branch) return false; // Branch not fetched yet
+      if (filters.agent !== "all" && !deal.practitioners.some((p) => p.userId === filters.agent))
+        return false;
+      if (filters.branch !== "all" && deal.branch !== filters.branch) return false;
       if (filters.status === "active" && deal.cancelled) return false;
       if (filters.status === "cancelled" && !deal.cancelled) return false;
       if (deal.salePrice < filters.priceMin || deal.salePrice > filters.priceMax) return false;
@@ -98,7 +112,7 @@ function useFilteredDeals(deals: PipelineDeal[] | undefined, filters: Filters) {
       if (filters.to && new Date(deal.stageSince) > new Date(filters.to)) return false;
       return true;
     });
-  }, [deals, filters]);
+  }, [filters]);
 }
 
 function FilterBar({
@@ -108,9 +122,6 @@ function FilterBar({
   filters: Filters;
   setFilters: (f: Filters) => void;
 }) {
-  const { data: agents = [] } = useAgents();
-  const { data: branches = [] } = useBranches();
-
   return (
     <GlassCard className="mb-5">
       <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -125,11 +136,13 @@ function FilterBar({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All agents</SelectItem>
-              {agents.map((u) => (
-                <SelectItem key={u.id} value={u.id}>
-                  {u.full_name}
-                </SelectItem>
-              ))}
+              {users
+                .filter((u) => u.role !== "Admin")
+                .map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.name}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
@@ -214,55 +227,42 @@ function FilterBar({
   );
 }
 
-function DealCard({ deal }: { deal: PipelineDeal }) {
+function DealCard({ deal }: { deal: Deal }) {
   const navigate = useNavigate();
+  const prop = propertyById(deal.propertyId);
+  const lead = userById(deal.practitioners[0].userId);
+  const days = daysInStage(deal);
   const tone = mostUrgentTone(deal);
   return (
     <motion.div
       layout
       whileHover={{ y: -3 }}
-      onClick={() => navigate({ to: "/deals/$dealId", params: { dealId: deal.id } })}
+      onClick={() => navigate({ to: "/pipeline" as any })}
       className="lift cursor-pointer rounded-lg border border-border bg-card p-3 shadow-sm"
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <span className="truncate font-mono text-[11px] text-muted-foreground">{deal.ref}</span>
         <StatusDot tone={tone} />
       </div>
-      <p className="mb-2 truncate text-sm font-medium" title={deal.property.address}>
-        {deal.property.address}
+      <p className="mb-2 truncate text-sm font-medium" title={prop?.address}>
+        {prop?.address}
       </p>
       <p className="money mb-2 text-sm font-semibold">{zar(deal.salePrice, { decimals: false })}</p>
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
-          <AgentAvatar user={{ name: deal.agent.name, colour: "#1f7a52" } as any} size={6} />
-          <span className="text-[10px] text-muted-foreground truncate max-w-15">
-            {deal.agent.name}
-          </span>
-        </div>
+        <AgentAvatar user={lead} size={6} />
         <Badge variant="outline" className="shrink-0 text-[10px]">
-          {deal.daysInStage}d in stage
+          {days}d in stage
         </Badge>
       </div>
     </motion.div>
   );
 }
 
-function KanbanBoard({ filtered }: { filtered: PipelineDeal[] }) {
+function KanbanBoard({ filtered }: { filtered: Deal[] }) {
   const navigate = useNavigate();
   const active = filtered.filter((d) => !d.cancelled);
   const cancelled = filtered.filter((d) => d.cancelled);
-
-  // Note: STAGES from mock uses specific names, Supabase enum is slightly different format.
-  // Will map properly later if needed, but for now we assume deal.stage matches the UI STAGES or we'll just format it.
-  const byStage = (stage: string) =>
-    active.filter((d) => {
-      // Map supabase enum to STAGES
-      const mappedStage = d.stage.replace(/_/g, " ").toLowerCase();
-      const uiStage = stage.toLowerCase();
-      return (
-        mappedStage === uiStage || mappedStage.includes(uiStage) || uiStage.includes(mappedStage)
-      );
-    });
+  const byStage = (stage: Stage) => active.filter((d) => d.stage === stage);
 
   if (filtered.length === 0) {
     return (
@@ -309,10 +309,11 @@ function KanbanBoard({ filtered }: { filtered: PipelineDeal[] }) {
           </h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {cancelled.map((deal) => {
+              const prop = propertyById(deal.propertyId);
               return (
                 <div
                   key={deal.id}
-                  onClick={() => navigate({ to: "/deals/$dealId", params: { dealId: deal.id } })}
+                  onClick={() => navigate({ to: "/pipeline" as any })}
                   className="lift cursor-pointer rounded-lg border border-destructive/30 bg-destructive/5 p-3"
                 >
                   <div className="mb-1 flex items-center justify-between gap-2">
@@ -326,7 +327,7 @@ function KanbanBoard({ filtered }: { filtered: PipelineDeal[] }) {
                       Cancelled
                     </Badge>
                   </div>
-                  <p className="truncate text-sm font-medium">{deal.property.address}</p>
+                  <p className="truncate text-sm font-medium">{prop?.address}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {deal.cancelled?.reason} · {deal.cancelled && dateFmt(deal.cancelled.at)}
                   </p>
@@ -350,7 +351,7 @@ const ALL_COLS: { key: SortKey; label: string }[] = [
   { key: "days", label: "Days in stage" },
 ];
 
-function TableView({ filtered }: { filtered: PipelineDeal[] }) {
+function TableView({ filtered }: { filtered: Deal[] }) {
   const navigate = useNavigate();
   const [sortKey, setSortKey] = useState<SortKey>("days");
   const [sortDir, setSortDir] = useState<1 | -1>(-1);
@@ -366,27 +367,32 @@ function TableView({ filtered }: { filtered: PipelineDeal[] }) {
   });
 
   const sorted = useMemo(() => {
-    const withMeta = [...filtered];
+    const withMeta = filtered.map((d) => ({
+      deal: d,
+      address: propertyById(d.propertyId)?.address ?? "",
+      agent: userById(d.practitioners[0].userId).name,
+      days: daysInStage(d),
+    }));
     withMeta.sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
         case "ref":
-          cmp = a.ref.localeCompare(b.ref);
+          cmp = a.deal.ref.localeCompare(b.deal.ref);
           break;
         case "address":
-          cmp = a.property.address.localeCompare(b.property.address);
+          cmp = a.address.localeCompare(b.address);
           break;
         case "stage":
-          cmp = a.stage.localeCompare(b.stage);
+          cmp = STAGES.indexOf(a.deal.stage) - STAGES.indexOf(b.deal.stage);
           break;
         case "price":
-          cmp = a.salePrice - b.salePrice;
+          cmp = a.deal.salePrice - b.deal.salePrice;
           break;
         case "agent":
-          cmp = a.agent.name.localeCompare(b.agent.name);
+          cmp = a.agent.localeCompare(b.agent);
           break;
         case "days":
-          cmp = a.daysInStage - b.daysInStage;
+          cmp = a.days - b.days;
           break;
       }
       return cmp * sortDir;
@@ -472,19 +478,19 @@ function TableView({ filtered }: { filtered: PipelineDeal[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pageRows.map((deal) => (
+            {pageRows.map(({ deal, address, agent, days }) => (
               <TableRow
                 key={deal.id}
                 className="cursor-pointer"
-                onClick={() => navigate({ to: "/deals/$dealId", params: { dealId: deal.id } })}
+                onClick={() => navigate({ to: "/pipeline" as any })}
               >
                 {visibleCols.ref && <TableCell className="font-mono text-xs">{deal.ref}</TableCell>}
                 {visibleCols.address && (
-                  <TableCell className="max-w-55 truncate">{deal.property.address}</TableCell>
+                  <TableCell className="max-w-55 truncate">{address}</TableCell>
                 )}
                 {visibleCols.stage && (
                   <TableCell>
-                    <StageBadge stage={deal.stage as Stage} />
+                    <StageBadge stage={deal.stage} />
                   </TableCell>
                 )}
                 {visibleCols.price && (
@@ -492,8 +498,8 @@ function TableView({ filtered }: { filtered: PipelineDeal[] }) {
                     {zar(deal.salePrice, { decimals: false })}
                   </TableCell>
                 )}
-                {visibleCols.agent && <TableCell className="truncate">{deal.agent.name}</TableCell>}
-                {visibleCols.days && <TableCell>{deal.daysInStage}d</TableCell>}
+                {visibleCols.agent && <TableCell className="truncate">{agent}</TableCell>}
+                {visibleCols.days && <TableCell>{days}d</TableCell>}
               </TableRow>
             ))}
           </TableBody>
@@ -529,9 +535,8 @@ function TableView({ filtered }: { filtered: PipelineDeal[] }) {
 function PipelinePage() {
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [view, setView] = useState<"kanban" | "table">("kanban");
-
-  const { data: deals, isLoading } = usePipelineDeals();
-  const filtered = useFilteredDeals(deals, filters);
+  const filtered = useFilteredDeals(filters);
+  const loading = useFakeLoad(400);
 
   return (
     <AppShell
@@ -553,7 +558,7 @@ function PipelinePage() {
       }
     >
       <FilterBar filters={filters} setFilters={setFilters} />
-      {isLoading ? (
+      {loading ? (
         <TableSkeleton rows={8} cols={6} />
       ) : view === "kanban" ? (
         <KanbanBoard filtered={filtered} />

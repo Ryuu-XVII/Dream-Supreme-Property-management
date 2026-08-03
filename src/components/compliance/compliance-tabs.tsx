@@ -3,9 +3,9 @@ import { cn } from "@/lib/utils";
 import { ShieldCheck, Users, ScrollText } from "lucide-react";
 
 const tabs = [
-  { to: "/admin/compliance/ffc", label: "FFC Register", icon: ShieldCheck },
-  { to: "/admin/compliance/fica", label: "FICA Register", icon: Users },
-  { to: "/admin/compliance/audit", label: "Audit Log", icon: ScrollText },
+  { to: "/compliance/ffc", label: "FFC Register", icon: ShieldCheck },
+  { to: "/compliance/fica", label: "FICA Register", icon: Users },
+  { to: "/compliance/audit", label: "Audit Log", icon: ScrollText },
 ] as const;
 
 export function ComplianceTabs() {
@@ -18,7 +18,7 @@ export function ComplianceTabs() {
         return (
           <Link
             key={t.to}
-            to={t.to}
+            to={t.to as any}
             className={cn(
               "flex items-center gap-1.5 rounded-t-lg border-b-2 px-3 py-2 text-sm font-medium transition-colors",
               active

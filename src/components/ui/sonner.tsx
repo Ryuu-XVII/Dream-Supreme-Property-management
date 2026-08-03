@@ -1,5 +1,4 @@
 import { Toaster as Sonner } from "sonner";
-import { playNotificationSound } from "@/lib/sound";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 

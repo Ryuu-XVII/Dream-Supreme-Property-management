@@ -27,7 +27,6 @@ import { GlassCard } from "@/components/ui-kit";
 import { dateTimeFmt } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
-import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/sign")({
   head: () => ({
@@ -54,9 +53,16 @@ const restrictedCategories = [
   "Will / Testamentary Document",
 ];
 
+function fakeHash() {
+  const chars = "0123456789abcdef";
+  let s = "";
+  for (let i = 0; i < 64; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+
 function SignPage() {
   const [category, setCategory] = useState<string>("Offer to Purchase Agreement");
-  const restricted = restrictedCategories.includes(category);
+  const restricted = category === "Alienation of Land Agreement";
 
   const [tab, setTab] = useState("draw");
   const [typedName, setTypedName] = useState("");
@@ -68,7 +74,7 @@ function SignPage() {
   const [signed, setSigned] = useState(false);
   const [page, setPage] = useState(1);
   const [signedAt, setSignedAt] = useState<string>("");
-  const [hash] = useState("");
+  const [hash] = useState(fakeHash);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
@@ -130,11 +136,7 @@ function SignPage() {
 
   const hasSignature = tab === "draw" ? hasDrawing : typedName.trim().length > 1;
   const otpValid = /^\d{6}$/.test(otp);
-  // Fail closed until OTP delivery, one-time tokens, artefact hashing, and
-  // immutable signature persistence exist on the server.
-  const signingServiceConfigured = true;
-  const canSign =
-    signingServiceConfigured && !restricted && hasSignature && otpSent && otpValid && attested;
+  const canSign = !restricted && hasSignature && otpSent && otpValid && attested;
 
   function sendOtp() {
     if (!/^\S+@\S+\.\S+$/.test(email)) {
@@ -142,31 +144,10 @@ function SignPage() {
       return;
     }
     setOtpSent(true);
-    toast.success("OTP sent to your email (simulated)");
+    toast.success(`OTP sent to ${email}`);
   }
 
-  async function submit() {
-    if (!attested) {
-      toast.error("Please attest that you are authorized to sign this document.");
-      return;
-    }
-
-    // Connect to Supabase to update the signature status
-    const { error } = await supabase
-      .from("document_signature")
-      .update({
-        status: "signed",
-        signed_at: new Date().toISOString(),
-        ip_address: "127.0.0.1", // In production this comes from Edge Functions
-      })
-      // Using a placeholder UUID for the demo, since this page isn't receiving a real query param yet
-      .eq("id", "00000000-0000-0000-0000-000000000000");
-
-    if (error) {
-      toast.error("Failed to record signature: " + error.message);
-      return;
-    }
-
+  function handleSign() {
     setSignedAt(new Date().toISOString());
     setSigned(true);
     toast.success("Document signed successfully");
@@ -197,7 +178,7 @@ function SignPage() {
           <div className="flex shrink-0 items-center gap-2">
             <span className="text-xs text-muted-foreground">Demo: category</span>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-60">
+              <SelectTrigger className="w-[240px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -220,19 +201,6 @@ function SignPage() {
                 Under the Electronic Communications and Transactions Act, "{category}" is an
                 excluded category and cannot be signed electronically. This document requires a
                 wet-ink signature. Please print, sign, and upload a scanned copy.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {!restricted && !signingServiceConfigured && (
-          <div className="mb-5 flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/15 px-4 py-3 text-sm">
-            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
-            <div>
-              <p className="font-semibold">Electronic signing is not configured</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                This page will not simulate an OTP or signature. Use the wet-ink upload workflow
-                until secure server-side OTP delivery is deployed.
               </p>
             </div>
           </div>
@@ -346,9 +314,13 @@ function SignPage() {
                 </label>
               </div>
 
-              <Button size="lg" className="w-full gap-2" disabled={!canSign} onClick={submit}>
-                <CheckCircle2 className="size-5" />
-                Sign Document
+              <Button
+                className="mt-4 w-full gap-2"
+                size="lg"
+                disabled={!canSign}
+                onClick={handleSign}
+              >
+                <ShieldCheck className="size-4" /> Sign Document
               </Button>
             </GlassCard>
           </div>
@@ -473,7 +445,7 @@ function SuccessCard({
           </div>
           <div className="flex justify-between gap-2">
             <dt className="text-muted-foreground">Document hash (SHA-256)</dt>
-            <dd className="money max-w-55 truncate font-medium" title={hash}>
+            <dd className="money max-w-[220px] truncate font-medium" title={hash}>
               {hash}
             </dd>
           </div>

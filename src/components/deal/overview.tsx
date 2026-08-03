@@ -1,32 +1,13 @@
 import { GlassCard } from "@/components/ui-kit";
 import { AgentAvatar, FicaBadge } from "@/components/badges";
-import { userById } from "@/data/state";
-import { type Deal } from "@/types";
+import { userById, propertyById, grossCommission, type Deal } from "@/data/mock";
 import { zar, pct, dateFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Home, Ruler, BedDouble, Bath, Car, Building2, ExternalLink } from "lucide-react";
 
-export function DealOverviewTab({ deal }: { deal: any }) {
-  const property = deal.property;
-  const mandate = Array.isArray(deal.mandate) ? deal.mandate[0] : deal.mandate;
-  const gross = Math.round((deal.sale_price_cents * (mandate?.commission_rate_bps ?? 0)) / 10000);
-
-  // Occupational interest accrual
-  let occupationalInterest = 0;
-  let occupationalDays = 0;
-  if (deal.occupation_date && deal.occupational_rent_cents && deal.occupational_rent_cents > 0) {
-    const occDate = new Date(deal.occupation_date).getTime();
-    const endDate = deal.registration_date
-      ? new Date(deal.registration_date).getTime()
-      : Date.now();
-
-    if (endDate > occDate) {
-      occupationalDays = Math.floor((endDate - occDate) / 86400000);
-      // Daily rent = monthly / (365 / 12) = monthly / 30.416
-      const dailyRent = deal.occupational_rent_cents / (365 / 12);
-      occupationalInterest = Math.round(occupationalDays * dailyRent);
-    }
-  }
+export function DealOverviewTab({ deal }: { deal: Deal }) {
+  const property = propertyById(deal.propertyId);
+  const gross = grossCommission(deal);
 
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -35,9 +16,9 @@ export function DealOverviewTab({ deal }: { deal: any }) {
           <h3 className="flex items-center gap-2 font-display text-base font-semibold">
             <Home className="size-4 text-primary" /> Property
           </h3>
-          <Badge variant="outline">{property?.property_type}</Badge>
+          <Badge variant="outline">{property?.type}</Badge>
         </div>
-        <p className="text-sm font-medium">{property?.address_line}</p>
+        <p className="text-sm font-medium">{property?.address}</p>
         <p className="mb-4 text-sm text-muted-foreground">
           {property?.suburb}, {property?.city}
         </p>
@@ -45,88 +26,54 @@ export function DealOverviewTab({ deal }: { deal: any }) {
           <p className="mb-4 text-xs text-muted-foreground">Scheme: {property.schemeName}</p>
         )}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat icon={BedDouble} label="Beds" value={property?.bedrooms} />
-          <Stat icon={Bath} label="Baths" value={property?.bathrooms} />
+          <Stat icon={BedDouble} label="Beds" value={property?.beds} />
+          <Stat icon={Bath} label="Baths" value={property?.baths} />
           <Stat icon={Car} label="Garages" value={property?.garages} />
-          <Stat icon={Ruler} label="Floor" value={`${property?.floor_size_sqm} m²`} />
+          <Stat icon={Ruler} label="Floor" value={`${property?.floorSize} m²`} />
         </div>
-        {property && property.erf_size_sqm > 0 && (
-          <p className="mt-3 text-xs text-muted-foreground">Erf size: {property.erf_size_sqm} m²</p>
-        )}
-        {(property?.erfNumber || property?.titleDeedNumber) && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            {property?.erfNumber ? `Erf: ${property.erfNumber}` : ""}
-            {property?.erfNumber && property?.titleDeedNumber ? " · " : ""}
-            {property?.titleDeedNumber ? `Title Deed: ${property.titleDeedNumber}` : ""}
-          </p>
+        {property && property.erfSize > 0 && (
+          <p className="mt-3 text-xs text-muted-foreground">Erf size: {property.erfSize} m²</p>
         )}
         <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-3">
           <Detail
             label="Sale price"
-            value={<span className="money">{zar(deal.sale_price_cents, { decimals: false })}</span>}
+            value={<span className="money">{zar(deal.salePrice, { decimals: false })}</span>}
           />
           <Detail
             label="Listing price"
-            value={
-              <span className="money">
-                {zar(mandate?.listing_price_cents ?? 0, { decimals: false })}
-              </span>
-            }
+            value={<span className="money">{zar(deal.listingPrice, { decimals: false })}</span>}
           />
-          <Detail label="Mandate type" value={mandate?.mandate_type} />
-          <Detail label="Mandate signed" value={dateFmt(mandate?.signed_on ?? deal.created_at)} />
-          <Detail label="Mandate expiry" value={dateFmt(mandate?.expires_on)} />
-          <Detail label="Conveyancer" value={deal.conveyancer?.name || "Unassigned"} />
+          <Detail label="Mandate type" value={deal.mandateType} />
+          <Detail label="Mandate signed" value={dateFmt(deal.mandateSigned)} />
+          <Detail label="Mandate expiry" value={dateFmt(deal.mandateExpiry)} />
+          <Detail label="Conveyancer" value={deal.conveyancer} />
         </div>
       </GlassCard>
 
       <GlassCard>
         <h3 className="mb-3 font-display text-base font-semibold">Financial summary</h3>
         <div className="space-y-3 text-sm">
-          <Row label="Sale price" value={zar(deal.sale_price_cents, { decimals: false })} />
-          <Row label="Commission rate" value={pct(mandate?.commission_rate_bps ?? 0)} />
+          <Row label="Sale price" value={zar(deal.salePrice, { decimals: false })} />
+          <Row label="Commission rate" value={pct(deal.commissionBps)} />
           <Row label="Gross commission" value={zar(gross, { decimals: false })} strong />
-          {deal.occupational_rent_cents && deal.occupational_rent_cents > 0 ? (
-            <>
-              <div className="my-2 border-t border-border/40" />
-              <Row
-                label="Occupational rent (mo)"
-                value={zar(deal.occupational_rent_cents, { decimals: false })}
-              />
-              {occupationalDays > 0 && (
-                <Row
-                  label={`Accrued (${occupationalDays} days)`}
-                  value={zar(occupationalInterest, { decimals: false })}
-                />
-              )}
-            </>
-          ) : null}
         </div>
       </GlassCard>
 
       <GlassCard className="lg:col-span-2">
         <h3 className="mb-3 font-display text-base font-semibold">Parties</h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {(deal.parties || []).map((p: any) => (
-            <div key={p.party?.id} className="rounded-lg border border-border p-3">
+          {deal.parties.map((party) => (
+            <div key={party.id} className="rounded-lg border border-border p-3">
               <div className="mb-1 flex items-center justify-between gap-2">
-                <Badge variant="outline" className="text-[10px] uppercase">
-                  {p.role}
+                <Badge variant="outline" className="text-[10px]">
+                  {party.side}
                 </Badge>
-                <FicaBadge
-                  status={p.party?.fica_status === "complete" ? "Complete" : "Not Started"}
-                />
+                <FicaBadge status={party.fica} />
               </div>
-              <p className="truncate text-sm font-medium">{p.party?.full_name}</p>
-              <p className="text-xs text-muted-foreground">
-                {p.party?.entity_type} {p.party?.maritalStatus ? `· ${p.party?.maritalStatus}` : ""}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                ID/Reg: {p.party?.id_or_reg_number || "N/A"}{" "}
-                {p.party?.isVatVendor ? "· VAT Vendor" : ""}
-              </p>
+              <p className="truncate text-sm font-medium">{party.name}</p>
+              <p className="text-xs text-muted-foreground">{party.entityType}</p>
               <p className="mt-1 truncate text-xs text-muted-foreground">
-                {p.party?.email} · {p.party?.mobile}
+                {party.email} · {party.mobile}
               </p>
             </div>
           ))}
@@ -138,23 +85,17 @@ export function DealOverviewTab({ deal }: { deal: any }) {
           <Building2 className="size-4 text-primary" /> Practitioners
         </h3>
         <div className="space-y-3">
-          {(deal.participants || []).map((p: any) => {
-            const user = userById(p.user?.id) ?? {
-              id: p.user?.id,
-              name: p.user?.full_name || "Practitioner",
-              colour: "#1f7a52",
-            };
+          {deal.practitioners.map((p) => {
+            const user = userById(p.userId);
             return (
-              <div key={p.user?.id || p.role} className="flex items-center justify-between gap-2">
-                <AgentAvatar user={user as any} showName size={7} />
+              <div key={p.userId} className="flex items-center justify-between gap-2">
+                <AgentAvatar user={user} showName size={7} />
                 <div className="flex shrink-0 items-center gap-2">
-                  <span className="text-xs text-muted-foreground capitalize">
-                    {p.role.replace("_", " ")}
-                  </span>
+                  <span className="text-xs text-muted-foreground">{p.role}</span>
                   <Badge variant="outline" className="font-mono text-[10px]">
-                    {p.split_value}%
+                    {p.splitPct}%
                   </Badge>
-                  {p.is_external && <ExternalLink className="size-3 text-muted-foreground" />}
+                  {p.external && <ExternalLink className="size-3 text-muted-foreground" />}
                 </div>
               </div>
             );
@@ -163,23 +104,6 @@ export function DealOverviewTab({ deal }: { deal: any }) {
       </GlassCard>
     </div>
   );
-}
-
-function propertyShape() {
-  return {
-    address: "",
-    suburb: "",
-    city: "",
-    type: "",
-    beds: 0,
-    baths: 0,
-    garages: 0,
-    floorSize: 0,
-    erfSize: 0,
-    schemeName: undefined as string | undefined,
-    erfNumber: undefined as string | undefined,
-    titleDeedNumber: undefined as string | undefined,
-  };
 }
 
 function Stat({

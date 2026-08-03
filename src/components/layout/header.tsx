@@ -1,8 +1,17 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Search, Sun, Moon, Monitor, LogOut, PlusCircle, Calculator } from "lucide-react";
+import {
+  Bell,
+  Search,
+  Sun,
+  Moon,
+  Monitor,
+  UserCog,
+  LogOut,
+  ChevronDown,
+  Calculator,
+  PlusCircle,
+} from "lucide-react";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { QuickDealModal } from "@/components/deal/quick-deal-modal";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,41 +33,21 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useApp } from "@/lib/app-state";
-import { useAuth } from "@/lib/auth";
-import { deals, agency } from "@/data/state";
-import { supabase } from "@/lib/supabase";
+import { deals, notifications, users, agency, type Role } from "@/data/mock";
 import { initials, zar, relative, dateFmt } from "@/lib/format";
-import { propertyById } from "@/data/state";
+import { propertyById } from "@/data/mock";
 import { navItems } from "./sidebar";
 import { cn } from "@/lib/utils";
 
+import { QuickDealModal } from "@/components/deal/quick-deal-modal";
+
+const roles: Role[] = ["Principal", "Agent", "Candidate", "Admin"];
+
 export function Header() {
   const [open, setOpen] = useState(false);
-  const [quickModalOpen, setQuickModalOpen] = useState(false);
+  const [openCapture, setOpenCapture] = useState(false);
   const navigate = useNavigate();
-  const { theme, setTheme, role, toggleCalculator } = useApp();
-  const { account, signOut } = useAuth();
-  const notificationQuery = useQuery({
-    queryKey: ["notifications", account?.id],
-    enabled: !!account,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("notification")
-        .select("id, subject, body, created_at, read_at")
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (error) throw error;
-      return (data || []).map((notification) => ({
-        id: notification.id,
-        title: notification.subject,
-        body: notification.body,
-        at: notification.created_at,
-        unread: !notification.read_at,
-        tone: notification.subject.toLowerCase().includes("overdue") ? "danger" : "info",
-      }));
-    },
-  });
-  const notifications = notificationQuery.data ?? [];
+  const { theme, setTheme, role, setRole } = useApp();
   const unread = notifications.filter((n) => n.unread).length;
 
   useEffect(() => {
@@ -72,15 +61,10 @@ export function Header() {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  const me = { name: account?.fullName ?? "Agent User", role };
-
-  const handleSignOut = async () => {
-    await signOut();
-    await navigate({ to: "/login", replace: true });
-  };
+  const me = users[0];
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-background/80 px-3 backdrop-blur-md sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-white/20 bg-background/50 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-6">
       <div className="flex min-w-0 items-center gap-3 md:hidden">
         <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary font-display text-xs font-bold text-primary-foreground">
           DS
@@ -89,7 +73,7 @@ export function Header() {
 
       <button
         onClick={() => setOpen(true)}
-        className="group ml-auto flex h-9 w-9 items-center justify-center gap-2 rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-accent md:mr-auto md:ml-0 md:w-80 md:justify-start md:px-3"
+        className="group glass-input ml-auto flex h-9 w-9 items-center justify-center gap-2 rounded-lg text-muted-foreground md:mr-auto md:ml-0 md:w-80 md:justify-start md:px-3"
       >
         <Search className="size-4 shrink-0" />
         <span className="hidden text-sm md:inline">Search deals, pages…</span>
@@ -98,23 +82,20 @@ export function Header() {
         </kbd>
       </button>
 
-      <div className="hidden items-center gap-2 lg:flex">
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1.5 text-xs"
-          onClick={() => toggleCalculator(true)}
-        >
-          <Calculator className="size-3.5 text-primary" /> Calculator
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" asChild className="hidden gap-1.5 sm:inline-flex">
+          <Link to="/calculators/bond">
+            <Calculator className="size-4" /> Calculator
+          </Link>
         </Button>
-        <Button
-          size="sm"
-          className="gap-1.5 text-xs font-semibold shadow-sm"
-          onClick={() => setQuickModalOpen(true)}
-        >
-          <PlusCircle className="size-3.5" /> New Deal
+        <Button size="sm" asChild className="gap-1.5 font-medium">
+          <Link to="/deals/new">
+            <PlusCircle className="size-4" /> New Deal
+          </Link>
         </Button>
       </div>
+
+      <QuickDealModal open={openCapture} onOpenChange={setOpenCapture} />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -141,16 +122,7 @@ export function Header() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Popover
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen || unread === 0) return;
-          void supabase
-            .from("notification")
-            .update({ read_at: new Date().toISOString() })
-            .is("read_at", null)
-            .then(() => notificationQuery.refetch());
-        }}
-      >
+      <Popover>
         <PopoverTrigger asChild>
           <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
             <Bell className="size-5" />
@@ -207,30 +179,20 @@ export function Header() {
             <p className="text-xs font-normal text-muted-foreground">{agency.name}</p>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {["Principal", "Admin"].includes(role) && (
-            <DropdownMenuItem asChild>
-              <Link to="/admin">Admin Dashboard</Link>
-            </DropdownMenuItem>
-          )}
           <DropdownMenuItem asChild>
-            <Link to="/settings/profile">My profile</Link>
+            <Link to={"/settings" as any}>Settings</Link>
           </DropdownMenuItem>
-          {["Principal", "Admin"].includes(role) && (
-            <DropdownMenuItem asChild>
-              <Link to="/admin/agency">Agency settings</Link>
-            </DropdownMenuItem>
-          )}
           <DropdownMenuItem asChild>
-            <Link to="/commission/earnings">My earnings</Link>
+            <Link to={"/commission/earnings" as any}>My earnings</Link>
           </DropdownMenuItem>
-          {["Principal", "Admin"].includes(role) && (
-            <DropdownMenuItem asChild>
-              <Link to="/register">Agent Registration</Link>
-            </DropdownMenuItem>
-          )}
+          <DropdownMenuItem asChild>
+            <Link to={"/setup" as any}>Setup wizard</Link>
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => void handleSignOut()}>
-            <LogOut className="size-4" /> Sign out
+          <DropdownMenuItem asChild>
+            <Link to={"/login" as any}>
+              <LogOut className="size-4" /> Sign out
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -240,13 +202,13 @@ export function Header() {
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Deals">
-            {deals.slice(0, 8).map((dl) => (
+            {deals.slice(0, 8).map((dl: any) => (
               <CommandItem
                 key={dl.id}
                 value={`${dl.ref} ${propertyById(dl.propertyId).address}`}
                 onSelect={() => {
                   setOpen(false);
-                  navigate({ to: "/deals/$dealId", params: { dealId: dl.id } });
+                  navigate({ to: "/pipeline" as any });
                 }}
               >
                 <span className="font-mono text-xs">{dl.ref}</span>
@@ -262,15 +224,11 @@ export function Header() {
           <CommandGroup heading="Pages">
             {navItems.map((item) => (
               <CommandItem
-                key={item.label}
+                key={item.to}
                 value={item.label}
                 onSelect={() => {
                   setOpen(false);
-                  if ("to" in item) {
-                    navigate({ to: item.to });
-                  } else if (item.label === "Calculators") {
-                    toggleCalculator(true);
-                  }
+                  navigate({ to: item.to as any });
                 }}
               >
                 <item.icon className="size-4" /> {item.label}
@@ -280,7 +238,7 @@ export function Header() {
               value="New deal"
               onSelect={() => {
                 setOpen(false);
-                navigate({ to: "/deals/new" });
+                navigate({ to: "/pipeline" as any });
               }}
             >
               Create new deal
@@ -288,12 +246,6 @@ export function Header() {
           </CommandGroup>
         </CommandList>
       </CommandDialog>
-
-      <QuickDealModal
-        open={quickModalOpen}
-        onOpenChange={setQuickModalOpen}
-        onSuccess={(dealId) => navigate({ to: "/deals/$dealId", params: { dealId } })}
-      />
     </header>
   );
 }

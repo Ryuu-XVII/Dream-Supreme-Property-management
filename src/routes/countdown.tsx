@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
-import { GlassCard, KpiCard, EmptyState, CardSkeleton } from "@/components/ui-kit";
+import { GlassCard, KpiCard, EmptyState, CardSkeleton, useFakeLoad } from "@/components/ui-kit";
 import { AgentAvatar } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,14 +28,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { dateFmt, daysUntil, urgencyOf, urgencyClass, type Urgency } from "@/lib/format";
 import {
+  openConditions,
   userById,
   propertyById,
+  users,
   type Condition,
   type ConditionType,
   type Deal,
-} from "@/data/state";
-import { useCountdownData } from "@/data/operations";
-import { supabase } from "@/lib/supabase";
+} from "@/data/mock";
 import {
   LayoutGrid,
   Rows3,
@@ -53,7 +53,6 @@ import {
   CalendarDays,
   Ban,
   MapPin,
-  MessageCircle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/countdown")({
@@ -245,15 +244,6 @@ function ActionButtons({
   ) => void;
 }) {
   const [extendOpen, setExtendOpen] = useState(false);
-
-  const handleWhatsApp = () => {
-    const text = encodeURIComponent(
-      `Hi there, this is Dream Supreme Properties following up regarding the ${row.type} condition for deal ${row.deal.ref}. The deadline is scheduled for ${dateFmt(row.dueDate)}. Please send through an update at your earliest convenience.`,
-    );
-    window.open(`https://wa.me/?text=${text}`, "_blank");
-    toast.success("Opening WhatsApp follow-up...");
-  };
-
   return (
     <div className="flex flex-wrap gap-1.5">
       <Button
@@ -269,14 +259,6 @@ function ActionButtons({
       </Button>
       <Button size="sm" variant="outline" className="h-7 gap-1" onClick={() => setExtendOpen(true)}>
         <CalendarClock className="size-3.5" /> Extend
-      </Button>
-      <Button
-        size="sm"
-        variant="outline"
-        className="h-7 gap-1 border-primary/30 text-primary hover:bg-primary/10"
-        onClick={handleWhatsApp}
-      >
-        <MessageCircle className="size-3.5" /> WhatsApp
       </Button>
       <Button
         size="sm"
@@ -325,8 +307,8 @@ function ConditionCard({
   const u = urgencyOf(days);
   const active = status === "Open" || status === "Extended";
   const Icon = typeIcon[row.type];
-  const agent = userById(row.responsibleUserId) ?? (row as any).agent;
-  const property = propertyById(row.deal?.propertyId) ?? (row.deal as any).property;
+  const agent = userById(row.responsibleUserId);
+  const property = propertyById(row.deal.propertyId);
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -360,8 +342,7 @@ function ConditionCard({
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{row.type}</p>
               <Link
-                to="/deals/$dealId"
-                params={{ dealId: row.deal.id }}
+                to={"/pipeline" as any}
                 className="money truncate text-xs text-primary hover:underline"
               >
                 {row.deal.ref}
@@ -427,8 +408,8 @@ function ConditionRowView({
   const u = urgencyOf(days);
   const active = status === "Open" || status === "Extended";
   const Icon = typeIcon[row.type];
-  const agent = userById(row.responsibleUserId) ?? (row as any).agent;
-  const property = propertyById(row.deal?.propertyId) ?? (row.deal as any).property;
+  const agent = userById(row.responsibleUserId);
+  const property = propertyById(row.deal.propertyId);
   return (
     <div
       className={cn(
@@ -453,11 +434,7 @@ function ConditionRowView({
         <p className="truncate text-sm font-semibold">{row.type}</p>
         <p className="truncate text-xs text-muted-foreground">{row.description}</p>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-          <Link
-            to="/deals/$dealId"
-            params={{ dealId: row.deal.id }}
-            className="money text-primary hover:underline"
-          >
+          <Link to={"/pipeline" as any} className="money text-primary hover:underline">
             {row.deal.ref}
           </Link>
           <span className="truncate text-muted-foreground">· {property?.address}</span>
@@ -476,23 +453,18 @@ function ConditionRowView({
 }
 
 function CountdownBoard() {
-  const { data, isLoading: loading } = useCountdownData();
-  const openConditions = useMemo(() => data?.conditions ?? [], [data?.conditions]);
-  const users = useMemo(() => data?.users ?? [], [data?.users]);
+  const loading = useFakeLoad(500);
   const [view, setView] = useState<"cards" | "rows">("cards");
   const [agentFilter, setAgentFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [overrides, setOverrides] = useState<Record<string, LocalOverride>>({});
 
-  const conditionTypes = useMemo(
-    () => Array.from(new Set(openConditions.map((c) => c.type))),
-    [openConditions],
-  );
+  const conditionTypes = useMemo(() => Array.from(new Set(openConditions.map((c) => c.type))), []);
   const responsibleAgents = useMemo(() => {
     const ids = new Set(openConditions.map((c) => c.responsibleUserId));
     return users.filter((u) => ids.has(u.id));
-  }, [openConditions, users]);
+  }, []);
 
   const rows = useMemo(() => {
     return (openConditions as ConditionRow[]).map((c) => {
@@ -503,7 +475,7 @@ function CountdownBoard() {
       const days = daysUntil(dueDate);
       return { row: c, status, dueDate, days };
     });
-  }, [openConditions, overrides]);
+  }, [overrides]);
 
   const filtered = useMemo(() => {
     return rows.filter(({ row, status }) => {
@@ -535,27 +507,11 @@ function CountdownBoard() {
 
   const mostUrgentId = sorted.find((r) => r.status === "Open" || r.status === "Extended")?.row.id;
 
-  async function handleAction(
+  function handleAction(
     id: string,
     status: LocalStatus,
     extra?: { dueDate?: string; reason?: string },
   ) {
-    const statusMap: Record<LocalStatus, string> = {
-      Open: "pending",
-      Fulfilled: "fulfilled",
-      Extended: "extended",
-      Waived: "waived",
-    };
-    const { error } = await supabase.rpc("set_condition_status", {
-      p_condition_id: id,
-      p_status: statusMap[status],
-      p_new_due_on: extra?.dueDate ?? null,
-      p_reason: extra?.reason ?? null,
-    });
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
     setOverrides((prev) => ({
       ...prev,
       [id]: { status, dueDate: extra?.dueDate, reason: extra?.reason },
@@ -615,7 +571,7 @@ function CountdownBoard() {
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <Select value={agentFilter} onValueChange={setAgentFilter}>
-          <SelectTrigger className="h-9 w-42.5">
+          <SelectTrigger className="h-9 w-44">
             <SelectValue placeholder="Agent" />
           </SelectTrigger>
           <SelectContent>
@@ -628,7 +584,7 @@ function CountdownBoard() {
           </SelectContent>
         </Select>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="h-9 w-47.5">
+          <SelectTrigger className="h-9 w-48">
             <SelectValue placeholder="Condition type" />
           </SelectTrigger>
           <SelectContent>
@@ -641,7 +597,7 @@ function CountdownBoard() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="h-9 w-37.5">
+          <SelectTrigger className="h-9 w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -692,7 +648,7 @@ function CountdownBoard() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(i * 0.02, 0.3), duration: 0.25 }}
-                  className="min-w-180"
+                  className="min-w-full"
                 >
                   <ConditionRowView
                     row={row}

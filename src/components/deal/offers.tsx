@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { GlassCard, EmptyState } from "@/components/ui-kit";
-import { type Deal } from "@/data/state";
+import { type Deal } from "@/data/mock";
 import { zar, dateFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,29 +15,11 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { GitCompareArrows, Presentation } from "lucide-react";
 
-export function DealOffersTab({ deal }: { deal: any }) {
+export function DealOffersTab({ deal }: { deal: Deal }) {
   const [compare, setCompare] = useState(false);
   const [presenting, setPresenting] = useState(false);
 
-  const offers = (deal.offers || []).map((o: any) => ({
-    id: o.id,
-    price: o.offer_price_cents,
-    deposit: o.deposit_cents,
-    bondAmount: o.bond_amount_cents,
-    expiry: o.expires_on,
-    purchaser: "Purchaser",
-    occupationDate: deal.occupation_date,
-    status:
-      o.status === "accepted"
-        ? "Accepted"
-        : o.status === "rejected"
-          ? "Rejected"
-          : o.status === "expired"
-            ? "Expired"
-            : "Pending",
-  }));
-
-  if (offers.length === 0) {
+  if (deal.offers.length === 0) {
     return (
       <EmptyState
         title="No offers received yet"
@@ -64,7 +46,7 @@ export function DealOffersTab({ deal }: { deal: any }) {
 
       {!compare ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {offers.map((o: any) => (
+          {deal.offers.map((o) => (
             <GlassCard key={o.id}>
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="truncate text-sm font-medium">{o.purchaser}</p>
@@ -88,7 +70,7 @@ export function DealOffersTab({ deal }: { deal: any }) {
           ))}
         </div>
       ) : (
-        <OfferComparisonTable offers={offers} />
+        <OfferComparisonTable deal={deal} />
       )}
 
       <Dialog open={presenting} onOpenChange={setPresenting}>
@@ -97,7 +79,7 @@ export function DealOffersTab({ deal }: { deal: any }) {
             <DialogTitle>Seller Presentation — Offer Comparison</DialogTitle>
           </DialogHeader>
           <div className="rounded-lg border border-border bg-card p-4">
-            <OfferComparisonTable offers={offers} />
+            <OfferComparisonTable deal={deal} />
           </div>
         </DialogContent>
       </Dialog>
@@ -105,7 +87,7 @@ export function DealOffersTab({ deal }: { deal: any }) {
   );
 }
 
-function OfferComparisonTable({ offers }: { offers: any[] }) {
+function OfferComparisonTable({ deal }: { deal: Deal }) {
   return (
     <div className="overflow-x-auto scrollbar-thin">
       <Table>
@@ -121,7 +103,7 @@ function OfferComparisonTable({ offers }: { offers: any[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {offers.map((o: any) => (
+          {deal.offers.map((o) => (
             <TableRow key={o.id}>
               <TableCell className="text-sm">{o.purchaser}</TableCell>
               <TableCell className="money">{zar(o.price, { decimals: false })}</TableCell>

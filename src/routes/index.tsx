@@ -2,12 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { motion } from "framer-motion";
-import { Activity, AlertTriangle, Banknote, Calendar } from "lucide-react";
+import { Activity, AlertTriangle, Banknote, Calendar, ShieldAlert } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
-import { GlassCard, KpiCard, CardSkeleton, EmptyState } from "@/components/ui-kit";
+import { GlassCard, KpiCard, CardSkeleton, EmptyState, useFakeLoad } from "@/components/ui-kit";
 import { UrgencyBadge, StatusDot } from "@/components/badges";
-import { agency, STAGES } from "@/data/state";
-import { useDashboardData } from "@/data/operations";
+import { agency, auditEvents, deals, forecast, openConditions, STAGES, users } from "@/data/mock";
 import {
   dateFmt,
   dateTimeFmt,
@@ -25,13 +24,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Agency-wide overview of pipeline, conditions, and commission for Dream Supreme Properties.",
+          "Agency-wide overview of pipeline, conditions, FFC compliance and commission for Dream Supreme Properties.",
       },
       { property: "og:title", content: "Dashboard | Dream Supreme Properties" },
       {
         property: "og:description",
         content:
-          "Agency-wide overview of pipeline, conditions, and commission for Dream Supreme Properties.",
+          "Agency-wide overview of pipeline, conditions, FFC compliance and commission for Dream Supreme Properties.",
       },
     ],
   }),
@@ -55,41 +54,22 @@ const shortStage: Record<string, string> = {
 };
 
 function Index() {
-  const { data, isLoading: loading } = useDashboardData();
-  const deals = useMemo(() => data?.deals ?? [], [data?.deals]);
-  const openConditions = useMemo(() => data?.openConditions ?? [], [data?.openConditions]);
-  const users = useMemo(() => data?.users ?? [], [data?.users]);
-  const auditEvents = useMemo(() => data?.auditEvents ?? [], [data?.auditEvents]);
-  const today = useMemo(() => new Date(), []);
-  const forecast = useMemo(() => {
-    const months = Array.from({ length: 6 }, (_, index) => {
-      const date = new Date(today.getFullYear(), today.getMonth() + index, 1);
-      return { month: date.toLocaleString("en-ZA", { month: "short" }), projected: 0 };
-    });
-    deals.forEach((deal) => {
-      const target = deal.registeredAt ? new Date(deal.registeredAt) : new Date(deal.stageSince);
-      const offset =
-        (target.getFullYear() - today.getFullYear()) * 12 + target.getMonth() - today.getMonth();
-      if (offset >= 0 && offset < months.length) {
-        months[offset].projected += Math.round((deal.salePrice * deal.commissionBps) / 10000);
-      }
-    });
-    return months;
-  }, [deals, today]);
+  const loading = useFakeLoad(600);
+  const today = new Date();
 
   const activeDeals = useMemo(
     () =>
       deals.filter(
         (d) => d.stage !== "Registered" && d.stage !== "Commission Released" && !d.cancelled,
       ),
-    [deals],
+    [],
   );
   const pipelineValue = useMemo(
     () =>
       deals
         .filter((d) => d.stage !== "Registered" && !d.cancelled)
         .reduce((s, d) => s + d.salePrice, 0),
-    [deals],
+    [],
   );
   const registeringThisMonth = useMemo(
     () =>
@@ -98,18 +78,18 @@ function Index() {
         const r = new Date(d.registeredAt);
         return r.getMonth() === today.getMonth() && r.getFullYear() === today.getFullYear();
       }).length,
-    [deals, today],
+    [],
   );
   const overdueConditions = useMemo(
     () => openConditions.filter((c) => daysUntil(c.dueDate) < 0).length,
-    [openConditions],
+    [],
   );
   const commissionMTD = useMemo(
     () =>
       deals
         .filter((d) => d.registeredAt && new Date(d.registeredAt).getMonth() === today.getMonth())
         .reduce((s, d) => s + Math.round((d.salePrice * d.commissionBps) / 10000), 0),
-    [deals, today],
+    [],
   );
 
   const stageCounts = useMemo(
@@ -118,16 +98,26 @@ function Index() {
         stage: shortStage[s] ?? s,
         count: deals.filter((d) => d.stage === s && !d.cancelled).length,
       })),
-    [deals],
+    [],
   );
 
   const urgentConditions = useMemo(
     () =>
       [...openConditions].sort((a, b) => daysUntil(a.dueDate) - daysUntil(b.dueDate)).slice(0, 5),
-    [openConditions],
+    [],
   );
 
-  const recentEvents = useMemo(() => [...auditEvents].slice(0, 10), [auditEvents]);
+  const ffcAlerts = useMemo(
+    () =>
+      users.filter((u) => {
+        if (!u.ffc) return true;
+        if (!u.ffc.expiry) return false;
+        return daysUntil(u.ffc.expiry) <= 30;
+      }),
+    [],
+  );
+
+  const recentEvents = useMemo(() => [...auditEvents].slice(0, 10), []);
 
   return (
     <AppShell title="Dashboard" description={`${agency.name} · ${dateFmt(today)}`}>
@@ -247,7 +237,7 @@ function Index() {
           </GlassCard>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <GlassCard>
             <h3 className="font-display text-base font-semibold">Urgent Conditions</h3>
             <p className="text-xs text-muted-foreground">Top 5 by days remaining</p>
@@ -267,8 +257,7 @@ function Index() {
                 {urgentConditions.map((c, i) => (
                   <Link
                     key={c.id}
-                    to="/deals/$dealId"
-                    params={{ dealId: c.deal.id }}
+                    to={"/pipeline" as any}
                     className="flex min-w-0 items-center gap-3 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-muted"
                   >
                     <StatusDot tone={urgencyOf(daysUntil(c.dueDate))} />
@@ -279,6 +268,56 @@ function Index() {
                     <UrgencyBadge dueDate={c.dueDate} status={c.status} />
                   </Link>
                 ))}
+              </div>
+            )}
+          </GlassCard>
+
+          <GlassCard>
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="size-4 text-warning" />
+              <h3 className="font-display text-base font-semibold">FFC Alerts</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">Missing or expiring within 30 days</p>
+            {loading ? (
+              <div className="mt-4 space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />
+                ))}
+              </div>
+            ) : ffcAlerts.length === 0 ? (
+              <EmptyState
+                title="All FFCs valid"
+                message="No agents have expiring or missing certificates."
+              />
+            ) : (
+              <div className="mt-4 space-y-2">
+                {ffcAlerts.map((u) => {
+                  const status = !u.ffc
+                    ? "Missing"
+                    : !u.ffc.expiry
+                      ? "Unknown"
+                      : daysUntil(u.ffc.expiry) < 0
+                        ? "Expired"
+                        : `Expires in ${daysUntil(u.ffc.expiry)}d`;
+                  return (
+                    <div
+                      key={u.id}
+                      className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-border/60 px-3 py-2"
+                    >
+                      <span className="min-w-0 truncate text-sm">{u.name}</span>
+                      <span
+                        className={
+                          "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium " +
+                          (status === "Missing" || status === "Expired"
+                            ? "border-destructive/30 bg-destructive/10 text-destructive"
+                            : "border-warning/40 bg-warning/15 text-warning")
+                        }
+                      >
+                        {status}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </GlassCard>

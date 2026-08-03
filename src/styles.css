@@ -1,17 +1,8 @@
-@import "tailwindcss";
-@source "../src";
+@import "tailwindcss" /* source(none) */;
+/* @source "../src"; */
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
-
-@media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -105,8 +96,12 @@
   --sidebar-accent-foreground: oklch(0.98 0.003 250);
   --sidebar-border: oklch(0.3 0.04 258);
   --sidebar-ring: oklch(0.67 0.17 152);
-  --glass-bg: oklch(1 0 0 / 65%);
-  --glass-border: oklch(1 0 0 / 60%);
+  --glass-bg: oklch(1 0 0 / 55%);
+  --glass-bg-soft: oklch(1 0 0 / 40%);
+  --glass-bg-strong: oklch(1 0 0 / 70%);
+  --glass-border: oklch(1 0 0 / 45%);
+  --glass-edge: oklch(1 0 0 / 75%);
+
   --shadow-soft: 0 1px 2px oklch(0.21 0.04 258 / 6%), 0 8px 24px -12px oklch(0.21 0.04 258 / 18%);
   --shadow-lift: 0 2px 6px oklch(0.21 0.04 258 / 8%), 0 18px 40px -16px oklch(0.21 0.04 258 / 28%);
   --gradient-hero: linear-gradient(
@@ -156,8 +151,12 @@
   --sidebar-accent-foreground: oklch(0.98 0.003 250);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.7 0.16 152);
-  --glass-bg: oklch(0.24 0.035 258 / 60%);
-  --glass-border: oklch(1 0 0 / 10%);
+  --glass-bg: oklch(0.26 0.035 258 / 55%);
+  --glass-bg-soft: oklch(0.26 0.035 258 / 38%);
+  --glass-bg-strong: oklch(0.28 0.04 258 / 72%);
+  --glass-border: oklch(1 0 0 / 14%);
+  --glass-edge: oklch(1 0 0 / 22%);
+
   --shadow-soft: 0 1px 2px oklch(0 0 0 / 30%), 0 8px 24px -12px oklch(0 0 0 / 60%);
   --shadow-lift: 0 2px 6px oklch(0 0 0 / 35%), 0 18px 40px -16px oklch(0 0 0 / 70%);
 }
@@ -185,10 +184,98 @@
 
 @utility glass {
   background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
   border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-soft);
+  border-top-color: var(--glass-edge);
+  border-left-color: var(--glass-edge);
+  box-shadow:
+    var(--shadow-soft),
+    inset 0 1px 0 0 var(--glass-edge);
+}
+
+@utility glass-panel {
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-edge);
+  border-left-color: var(--glass-edge);
+  box-shadow:
+    var(--shadow-soft),
+    inset 0 1px 0 0 var(--glass-edge);
+}
+
+@utility glass-input {
+  background: var(--glass-bg-soft);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid var(--glass-border);
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+  &:hover {
+    background: var(--glass-bg);
+  }
+  &:focus-visible,
+  &:focus-within {
+    border-color: var(--primary);
+    box-shadow:
+      0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent),
+      0 0 20px -4px color-mix(in oklab, var(--primary) 45%, transparent);
+    outline: none;
+  }
+}
+
+@utility glass-hover {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+  &:hover {
+    transform: translateY(-1px);
+    background: var(--glass-bg-strong);
+    box-shadow:
+      var(--shadow-lift),
+      0 0 24px -8px color-mix(in oklab, var(--primary) 50%, transparent);
+  }
+}
+
+/* Ambient mesh backdrop so frosted surfaces have something to refract */
+@utility ambient-mesh {
+  position: relative;
+  isolation: isolate;
+  &::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        48rem 34rem at 12% -8%,
+        color-mix(in oklab, var(--primary) 60%, transparent),
+        transparent 62%
+      ),
+      radial-gradient(
+        40rem 30rem at 92% 4%,
+        color-mix(in oklab, var(--info) 58%, transparent),
+        transparent 62%
+      ),
+      radial-gradient(
+        44rem 34rem at 78% 96%,
+        color-mix(in oklab, var(--success) 45%, transparent),
+        transparent 62%
+      ),
+      radial-gradient(
+        36rem 28rem at 20% 88%,
+        color-mix(in oklab, var(--warning) 45%, transparent),
+        transparent 62%
+      );
+    filter: blur(56px) saturate(160%);
+    opacity: 1;
+  }
 }
 
 @utility lift {
@@ -222,55 +309,12 @@
 }
 
 @utility scrollbar-thin {
-  @supports (scrollbar-width: thin) {
-    scrollbar-width: thin;
-    scrollbar-color: var(--glass-border) transparent;
-  }
   &::-webkit-scrollbar {
-    width: 14px;
-    height: 14px;
-  }
-  &::-webkit-scrollbar-track {
-    background: transparent;
+    height: 8px;
+    width: 8px;
   }
   &::-webkit-scrollbar-thumb {
-    background: var(--glass-bg);
-    background-clip: padding-box;
-    border: 4px solid transparent;
+    background: var(--color-border);
     border-radius: 999px;
-    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.4);
-  }
-  &::-webkit-scrollbar-thumb:hover {
-    background: oklch(1 0 0 / 40%);
-    background-clip: padding-box;
-    border: 4px solid transparent;
-  }
-}
-
-@layer base {
-  ::-webkit-scrollbar {
-    width: 14px;
-    height: 14px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: var(--glass-bg);
-    background-clip: padding-box;
-    border: 4px solid transparent;
-    border-radius: 999px;
-    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.4);
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: oklch(1 0 0 / 40%);
-    background-clip: padding-box;
-    border: 4px solid transparent;
-  }
-  @supports (scrollbar-width: thin) {
-    * {
-      scrollbar-width: thin;
-      scrollbar-color: var(--glass-bg) transparent;
-    }
   }
 }
