@@ -41,7 +41,7 @@ export function Header() {
   const me = users[0];
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-background/80 px-3 backdrop-blur-md sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-white/20 bg-background/50 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-6">
       <div className="flex min-w-0 items-center gap-3 md:hidden">
         <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary font-display text-xs font-bold text-primary-foreground">
           DS
@@ -50,7 +50,7 @@ export function Header() {
 
       <button
         onClick={() => setOpen(true)}
-        className="group ml-auto flex h-9 w-9 items-center justify-center gap-2 rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-accent md:mr-auto md:ml-0 md:w-80 md:justify-start md:px-3"
+        className="group glass-input ml-auto flex h-9 w-9 items-center justify-center gap-2 rounded-lg text-muted-foreground md:mr-auto md:ml-0 md:w-80 md:justify-start md:px-3"
       >
         <Search className="size-4 shrink-0" />
         <span className="hidden text-sm md:inline">Search deals, pages…</span>

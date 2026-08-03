@@ -60,7 +60,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-300 md:flex",
+        "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar/80 backdrop-blur-xl backdrop-saturate-150 transition-[width] duration-300 md:flex",
         sidebarCollapsed ? "w-[76px]" : "w-64",
       )}
     >
@@ -115,7 +115,7 @@ export function MobileNav() {
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-card/95 backdrop-blur-md md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-white/20 bg-card/60 backdrop-blur-xl backdrop-saturate-150 md:hidden">
         {primary.map((item) => {
           const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
           return (

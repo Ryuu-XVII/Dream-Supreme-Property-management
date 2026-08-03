@@ -60,8 +60,8 @@ export function CalculatorShell({
   });
 
   return (
-    <div className="min-h-screen bg-background text-foreground" style={{ background: "var(--gradient-hero)" }}>
-      <header className="border-b border-border/60 bg-background/70 backdrop-blur">
+    <div className="ambient-mesh min-h-screen bg-background text-foreground">
+      <header className="border-b border-white/20 bg-background/50 backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-4 sm:flex sm:flex-wrap sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
             <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary font-display text-sm font-bold text-primary-foreground">
@@ -79,7 +79,7 @@ export function CalculatorShell({
                 <Link
                   key={c.to}
                   to={c.to}
-                  className="rounded-md border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                  className="glass-input glass-hover rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
                 >
                   {c.label}
                 </Link>
@@ -151,7 +151,7 @@ export function CalculatorShell({
         </motion.div>
       </main>
 
-      <footer className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground">
+      <footer className="border-t border-white/20 py-6 text-center text-xs text-muted-foreground">
         Powered by <span className="font-medium text-foreground">Mandate</span>
       </footer>
     </div>
