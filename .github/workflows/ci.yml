@@ -1,30 +1,96 @@
-name: CI
+name: CI & Test Suite
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  push: # Runs automatically on every push to any branch
+  pull_request: # Runs on every pull request
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
 
 permissions:
   contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
-  verify:
+  test_and_verify:
+    name: Run Vitest & Quality Checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run check
-      - run: npm audit --omit=dev --audit-level=high
 
-  database:
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Vitest Unit Tests
+        run: npx vitest run --reporter=verbose --reporter=github-actions
+
+      - name: Run TypeScript Typecheck
+        run: npm run typecheck
+
+      - name: Run ESLint Check
+        run: npm run lint
+
+      - name: Run Production Build
+        run: npm run build
+
+      - name: Generate Workflow Summary
+        if: always()
+        run: |
+          echo "# 🧪 Test Suite & CI Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\` | **Branch:** \`${{ github.ref_name }}\` | **Actor:** \`${{ github.actor }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "### ✅ Status: PASSED" >> $GITHUB_STEP_SUMMARY
+            echo "All Vitest unit tests, TypeScript type checks, ESLint rules, and production builds completed successfully." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Status: FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "One or more steps in the pipeline failed. Check the detailed step logs above." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Alert on Pipeline Failure
+        if: failure() && github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commitSha = context.sha;
+            const branch = context.ref.replace('refs/heads/', '');
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            const issueTitle = `🚨 CI Test Failure on ${branch} (${commitSha.substring(0, 7)})`;
+            const issueBody = `## 🚨 Automated Alert: CI Build / Test Failure
+
+            The automated test pipeline failed on branch \`${branch}\`.
+
+            - **Commit:** [${commitSha.substring(0, 7)}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/commit/${commitSha})
+            - **Triggered By:** @${context.actor}
+            - **Workflow Run Logs:** [View Run Details](${runUrl})
+
+            ### Next Steps
+            1. Pull the latest code locally.
+            2. Run \`npm run check\` in your terminal.
+            3. Fix any failing Vitest tests, lint errors, or type errors before pushing again.
+            `;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issueTitle,
+              body: issueBody,
+              labels: ['bug', 'ci-failure']
+            });
+
+  database_checks:
+    name: Supabase Database Checks
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1

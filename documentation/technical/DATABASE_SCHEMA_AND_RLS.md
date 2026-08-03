@@ -33,7 +33,6 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 - **`commission_rule_set`**: Defines global agency rules (e.g., Office Share %, Franchise Fees, Marketing Deductions).
 - **`commission_calculation`**: Triggered when a deal registers. Calculates the gross commission, subtracts deductions, and allocates the remaining net commission to the agents (`commission_allocation`).
 
-
 ## 2. Row Level Security (RLS) Strategy
 
 All tables enforce RLS to guarantee data boundaries.
@@ -79,8 +78,6 @@ Executes server-side document merge substitution on template markdown, creates t
 Executes atomic lease onboarding, inserting the `lease` record, trust deposit ledger entries, initial pro-rata rent invoice, and ingoing inspection schedule in a single audited transaction.
 
 ### `admin_bulk_retire_users(p_user_ids)`
-
-
 
 Changes multiple users' statuses to `'archived'` securely in one transaction and automatically writes to the `audit_log`.
 
