@@ -132,7 +132,7 @@ alter table public.lead enable row level security;
 
 create policy "Anyone can insert a lead from public calculators"
   on public.lead for insert
-  with check (agency_id is not null and lead_name is not null);
+  with check (agency_id is not null and full_name is not null);
 
 create policy "Agency users can view agency leads"
   on public.lead for select
