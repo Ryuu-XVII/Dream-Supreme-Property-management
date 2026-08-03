@@ -180,7 +180,7 @@
 
 @utility glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(32px) saturate(140%);
   border: 1px solid var(--glass-border);
   border-top-color: var(--glass-edge);
   border-left-color: var(--glass-edge);
@@ -189,7 +189,7 @@
 
 @utility glass-panel {
   background: var(--glass-bg-strong);
-  backdrop-filter: blur(28px) saturate(160%);
+  backdrop-filter: blur(36px) saturate(140%);
   border: 1px solid var(--glass-border);
   border-top-color: var(--glass-edge);
   border-left-color: var(--glass-edge);
