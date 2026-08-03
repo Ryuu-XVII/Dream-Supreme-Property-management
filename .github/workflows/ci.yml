@@ -15,6 +15,9 @@ jobs:
     name: Run Vitest & Quality Checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      VITE_SUPABASE_URL: "https://placeholder-domain.supabase.co"
+      VITE_SUPABASE_ANON_KEY: "placeholder-anon-key-for-testing"
 
     steps:
       - name: Checkout Repository
