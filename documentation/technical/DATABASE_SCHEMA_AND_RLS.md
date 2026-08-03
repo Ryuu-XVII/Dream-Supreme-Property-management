@@ -56,6 +56,11 @@ High-cardinality multi-tenant composite B-tree indexes are implemented across co
 - `idx_lease_invoice_lease_due`: Rental invoice billing status (`lease_id`, `status`, `due_on`).
 - `idx_trust_ledger_agency_account`: Trust sub-ledger compliance (`agency_id`, `account_type`, `created_at DESC`).
 - `idx_email_queue_status_attempts`: Email queue dispatcher (`status`, `attempts`, `created_at`).
+- `idx_fica_verification_agency_status`: FICA compliance verification (`agency_id`, `verification_status`).
+- `idx_ffc_certificate_agency_status`: FFC certificate status & expiry (`agency_id`, `status`, `expiry_date`).
+- `idx_party_agency_type`: Party lookup by type (`agency_id`, `party_type`).
+- `idx_document_storage_agency_entity`: Document entity association (`agency_id`, `entity_type`, `entity_id`).
+- `idx_commission_split_deal_agent`: Commission split calculation (`deal_id`, `agent_id`).
 
 ## 4. Row Level Security (RLS) Strategy
 
