@@ -60,7 +60,7 @@ export function CalculatorShell({
   });
 
   return (
-    <div className="ambient-mesh min-h-screen bg-background text-foreground">
+    <div className="ambient-mesh min-h-screen text-foreground">
       <header className="border-b border-white/20 bg-background/50 backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-4 sm:flex sm:flex-wrap sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
