@@ -31,8 +31,8 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 ### `notification`, `notification_preference`, `user_notification_preference` & `email_queue` (System & User Alert Engine)
 
 - **`notification`**: In-app and agency-wide system alerts supporting user-specific (`user_id` / `user_account_id`) and broadcast channels.
-- **`notification_preference`**: Agency-wide settings defining the default channels (email vs. in-app) for different events (e.g., deal updates).
-- **`user_notification_preference`**: User-level overrides for the agency defaults. Allows individuals (e.g., Principals) to selectively toggle on/off emails or in-app alerts for specific event types.
+- **`notification_preference`**: Agency-wide settings defining the default channels (email vs. in-app) for different events (e.g., deal updates). Supports JSONB `condition_config` thresholds.
+- **`user_notification_preference`**: User-level overrides for the agency defaults. Allows individuals to toggle on/off emails/in-app alerts, define JSONB `condition_config`, and choose delivery `frequency` ('realtime' vs 'digest').
 - **`email_queue`**: Transactional email dispatch queue for automated compliance, deal updates, and task reminders.
 
 ### `commission_rule_set` & `commission_calculation`
@@ -139,6 +139,10 @@ Changes multiple users' statuses to `'archived'` securely in one transaction and
 ### `admin_bulk_reset_commission(p_user_ids)`
 
 Sets an array of users' `commission_pct` to `NULL`, forcing them to inherit the default agency rules again. Writes to the `audit_log`.
+
+### `generate_daily_notification_digests()`
+
+Aggregates all notifications with a `delivery_status` of `'pending_digest'` for users who have opted into digest frequency. Generates a combined HTML email and inserts it into `email_queue`. Scheduled via `pg_cron` at 08:00 UTC daily.
 
 ## 4. Triggers & Automation
 

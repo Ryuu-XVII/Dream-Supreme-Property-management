@@ -49,6 +49,7 @@ interface Pref {
   email: boolean;
   inApp: boolean;
   recipients: Recipient[];
+  conditions?: string;
 }
 
 function defaultRecipients(type: string): Recipient[] {
@@ -115,6 +116,7 @@ function NotificationsPage() {
       email: true,
       inApp: true,
       recipients: defaultRecipients(type),
+      conditions: "",
     })),
   );
   const preferenceQuery = useQuery({
@@ -141,6 +143,7 @@ function NotificationsPage() {
           recipients: row.recipient_roles.map(
             (role: string) => `${role.charAt(0).toUpperCase()}${role.slice(1)}` as Recipient,
           ),
+          conditions: row.condition_config ? JSON.stringify(row.condition_config) : "",
         };
       }),
     );
@@ -153,14 +156,27 @@ function NotificationsPage() {
   async function save() {
     if (!account) return;
     const { error } = await supabase.from("notification_preference").upsert(
-      prefs.map((preference) => ({
-        agency_id: account.agencyId,
-        event_type: preference.type,
-        email_enabled: preference.email,
-        in_app_enabled: preference.inApp,
-        recipient_roles: preference.recipients.map((recipient) => recipient.toLowerCase()),
-        updated_at: new Date().toISOString(),
-      })),
+      prefs.map((preference) => {
+        let parsedConditions = null;
+        if (preference.conditions) {
+          try {
+            parsedConditions = JSON.parse(preference.conditions);
+          } catch (e) {
+            console.error("Invalid JSON in conditions", e);
+            throw new Error(`Invalid JSON for condition in ${preference.type}`);
+          }
+        }
+
+        return {
+          agency_id: account.agencyId,
+          event_type: preference.type,
+          email_enabled: preference.email,
+          in_app_enabled: preference.inApp,
+          recipient_roles: preference.recipients.map((recipient) => recipient.toLowerCase()),
+          condition_config: parsedConditions,
+          updated_at: new Date().toISOString(),
+        };
+      }),
       { onConflict: "agency_id,event_type" },
     );
     if (error) return toast.error(error.message);
@@ -200,6 +216,7 @@ function NotificationsPage() {
                   <TableHead className="text-center">Email</TableHead>
                   <TableHead className="text-center">In-App</TableHead>
                   <TableHead>Recipients</TableHead>
+                  <TableHead>Conditions (JSON)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -222,6 +239,14 @@ function NotificationsPage() {
                       <RecipientPicker
                         value={p.recipients}
                         onChange={(r) => update(p.type, { recipients: r })}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <input
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder='e.g. {"min_price": 5000000}'
+                        value={p.conditions || ""}
+                        onChange={(e) => update(p.type, { conditions: e.target.value })}
                       />
                     </TableCell>
                   </TableRow>

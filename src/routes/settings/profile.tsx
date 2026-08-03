@@ -83,6 +83,7 @@ function ProfileSettings() {
   const [channelEmail, setChannelEmail] = useState(true);
   const [channelInApp, setChannelInApp] = useState(true);
   const [channelWhatsApp, setChannelWhatsApp] = useState(false);
+  const [frequency, setFrequency] = useState<"realtime" | "digest">("realtime");
   const [savingNotifications, setSavingNotifications] = useState(false);
 
   // Load preferences
@@ -128,6 +129,7 @@ function ProfileSettings() {
         const sampleRow = data[0];
         setChannelEmail(sampleRow.email_enabled);
         setChannelInApp(sampleRow.in_app_enabled);
+        setFrequency(sampleRow.frequency || "realtime");
       }
       return data;
     },
@@ -150,6 +152,7 @@ function ProfileSettings() {
         event_type: p.event_type,
         email_enabled: p.enabled && channelEmail,
         in_app_enabled: p.enabled && channelInApp,
+        frequency: frequency,
         updated_at: new Date().toISOString(),
       }));
 
@@ -818,6 +821,24 @@ function ProfileSettings() {
                       <span className="text-sm font-medium">WhatsApp Links</span>
                       <Switch checked={channelWhatsApp} onCheckedChange={setChannelWhatsApp} />
                     </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-4 border-t">
+                  <h4 className="text-sm font-medium text-primary">Delivery Frequency</h4>
+                  <div className="flex items-center gap-4 text-sm">
+                    <span className="text-muted-foreground w-1/3">
+                      How often should we send emails?
+                    </span>
+                    <Select value={frequency} onValueChange={(val: any) => setFrequency(val)}>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="realtime">Real-time (Instant)</SelectItem>
+                        <SelectItem value="digest">Daily Digest Summary</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
