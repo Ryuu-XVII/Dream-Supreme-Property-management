@@ -63,6 +63,7 @@ High-cardinality multi-tenant composite B-tree indexes are implemented across co
 - `idx_ffc_certificate_user_expires`: FFC certificate status & expiry (`user_account_id`, `expires_on DESC`).
 - `idx_party_agency_name`: Party search by name (`agency_id`, `full_name`).
 - `idx_document_agency_deal`: Document deal & category association (`agency_id`, `deal_id`, `category`).
+- `idx_document_maintenance_job`: Links photo evidence to a maintenance job (`maintenance_job_id`).
 - `idx_commission_allocation_calc_user`: Commission allocation payee (`calculation_id`, `user_account_id`).
 
 ## 4. Row Level Security (RLS) Strategy
