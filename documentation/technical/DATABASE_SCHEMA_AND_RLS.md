@@ -118,6 +118,10 @@ Calculates complex multi-tiered sliding scale commission splits, deducting SARS 
 
 Distributes incoming omnichannel leads dynamically among active agents using an automated round-robin algorithm based on current active lead count and creation timestamps.
 
+### `approve_maintenance_work_order(p_ticket_id, p_contractor_amount_cents)`
+
+Enforces agency principal approval for tenant maintenance work orders and contractor quotes, updating ticket status and auto-logging contractor invoice deductions for landlord trust disbursements.
+
 ### `generate_document_from_template(p_template_id, p_deal_id, p_lease_id)`
 
 Executes server-side document merge substitution on template markdown, creates the generated document entry in `public.document`, and logs an automated audit entry.
