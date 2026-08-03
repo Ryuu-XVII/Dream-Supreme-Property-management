@@ -232,7 +232,7 @@
 @utility ambient-mesh {
   position: relative;
   isolation: isolate;
-  background-color: oklch(0.13 0.004 260);
+  background-color: transparent;
   &::before {
     content: "";
     position: fixed;
