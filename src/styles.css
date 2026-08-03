@@ -266,6 +266,16 @@
   }
 }
 
+@utility lift {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+  }
+}
+
 
 @utility money {
   font-family: var(--font-mono);
