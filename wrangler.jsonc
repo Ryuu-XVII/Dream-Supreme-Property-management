@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dream-supreme-property-management",
+  "compatibility_date": "2026-08-03",
+  "r2_buckets": [
+    {
+      "binding": "DOCUMENTS_BUCKET",
+      "bucket_name": "dream-supreme-documents"
+    }
+  ]
+}

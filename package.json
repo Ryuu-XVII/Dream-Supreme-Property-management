@@ -14,7 +14,9 @@
     "test:coverage": "vitest run --coverage",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
     "format": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "r2:create": "wrangler r2 bucket create dream-supreme-documents",
+    "r2:list": "wrangler r2 bucket list"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -94,6 +96,7 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.0.16",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "wrangler": "^4.118.0"
   }
 }
