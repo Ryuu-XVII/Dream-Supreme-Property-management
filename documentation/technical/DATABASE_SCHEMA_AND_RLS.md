@@ -7,7 +7,8 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 ### `agency` & `user_account`
 
 - **`agency`**: The top-level tenant.
-- **`user_account`**: Links a Supabase Auth `user` to a specific `agency`. Contains the user's operational role (`principal`, `admin`, `agent`, `candidate`).
+- **`branch`**: Physical office locations belonging to an agency. Tracks granular operational settings like `lead_auto_assign`.
+- **`user_account`**: Links a Supabase Auth `user` to a specific `agency` and optionally a `branch`. Contains the user's operational role (`principal`, `admin`, `agent`, `candidate`).
 - **`commission_pct`**: (Recently added) Stores an agent's individual commission split. If `NULL`, the system falls back to the agency's default rules.
 
 ### `property`, `mandate`, & `deal`

@@ -8,6 +8,7 @@ import { zar } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -1173,24 +1174,21 @@ function NewDealPage() {
                   <div className="flex items-center gap-2 font-display text-sm font-semibold">
                     <ShieldCheck className="size-4 text-primary" /> FICA Clearance
                   </div>
-                  <Switch
-                    checked={formData.ficaRequired}
-                    onCheckedChange={(value) => updateForm("ficaRequired", value)}
-                  />
+                  <Badge variant="outline" className="border-primary/50 text-primary">
+                    Required by Law
+                  </Badge>
                 </div>
 
-                {formData.ficaRequired && (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="space-y-1.5 sm:col-span-2">
-                      <Label>FICA clearance deadline</Label>
-                      <Input
-                        type="date"
-                        value={formData.ficaDueDate}
-                        onChange={(e) => updateForm("ficaDueDate", e.target.value)}
-                      />
-                    </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>FICA clearance deadline</Label>
+                    <Input
+                      type="date"
+                      value={formData.ficaDueDate}
+                      onChange={(e) => updateForm("ficaDueDate", e.target.value)}
+                    />
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Subject to Sale Condition */}

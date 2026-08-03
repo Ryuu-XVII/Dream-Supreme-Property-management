@@ -106,25 +106,37 @@ function AdminSettings() {
             <GlassCard>
               <h3 className="font-display text-base font-semibold mb-4">Operational Settings</h3>
               <form onSubmit={handleSave} className="space-y-4">
-                <div className="flex items-center justify-between p-4 border border-border/50 rounded-lg bg-background/30">
-                  <div className="space-y-0.5">
-                    <Label className="text-base font-medium">
-                      Require identity documents for new deals
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Require identity and compliance documents before deals can be finalized.
+                <div className="flex items-center justify-between p-4 border border-indigo-200 dark:border-indigo-900/50 rounded-lg bg-indigo-50/50 dark:bg-indigo-950/20">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="size-4 text-indigo-600 dark:text-indigo-400" />
+                      <Label className="text-base font-medium text-indigo-900 dark:text-indigo-300">
+                        Identity and Compliance (FICA)
+                      </Label>
+                    </div>
+                    <p className="text-sm text-indigo-700/80 dark:text-indigo-400/80">
+                      Identity and compliance documents are strictly enforced across the agency for
+                      all new deals in accordance with South African FICA law. This cannot be
+                      bypassed.
                     </p>
                   </div>
-                  <Switch defaultChecked />
                 </div>
+
                 <div className="flex items-center justify-between p-4 border border-border/50 rounded-lg bg-background/30">
-                  <div className="space-y-0.5">
-                    <Label className="text-base font-medium">Auto-assign new leads</Label>
+                  <div className="space-y-1">
+                    <Label className="text-base font-medium">Lead Auto-Assignment</Label>
                     <p className="text-sm text-muted-foreground">
-                      Automatically assign new website leads to agents based on their area.
+                      Lead distribution is now managed at the Branch level. To enable round-robin
+                      auto-assignment, please edit the specific Branch settings in your Agency
+                      profile.
                     </p>
                   </div>
-                  <Switch defaultChecked={false} />
+                  <Link
+                    to="/admin/agency"
+                    className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                  >
+                    Manage Branches
+                  </Link>
                 </div>
 
                 <div className="pt-4 border-t border-border flex justify-end">

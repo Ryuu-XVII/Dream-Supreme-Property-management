@@ -100,6 +100,7 @@ interface Branch {
   id: string;
   name: string;
   address: string;
+  leadAutoAssign: boolean;
   archived?: boolean;
 }
 
@@ -123,7 +124,7 @@ function AgencyProfilePage() {
   const { account } = useAuth();
   const [logo, setLogo] = useState<string | null>(null);
   const [branchList, setBranchList] = useState<Branch[]>(
-    initialBranches.map((b) => ({ ...b, archived: false })),
+    initialBranches.map((b) => ({ ...b, leadAutoAssign: false, archived: false })),
   );
   const [firmList, setFirmList] = useState<Firm[]>(initialFirms);
   const [brackets, setBrackets] = useState<Bracket[]>(
@@ -198,6 +199,7 @@ function AgencyProfilePage() {
         id: branch.id,
         name: branch.name,
         address: branch.address || "",
+        leadAutoAssign: !!branch.lead_auto_assign,
         archived: !!branch.archived_at,
       })),
     );
@@ -448,17 +450,20 @@ function BranchSection({
   const [editing, setEditing] = useState<Branch | null>(null);
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
+  const [leadAutoAssign, setLeadAutoAssign] = useState(false);
 
   function startAdd() {
     setEditing(null);
     setName("");
     setAddress("");
+    setLeadAutoAssign(false);
     setOpen(true);
   }
   function startEdit(b: Branch) {
     setEditing(b);
     setName(b.name);
     setAddress(b.address);
+    setLeadAutoAssign(b.leadAutoAssign);
     setOpen(true);
   }
   async function save() {
@@ -470,19 +475,26 @@ function BranchSection({
     if (editing) {
       const { error } = await supabase
         .from("branch")
-        .update({ name: name.trim(), address: address.trim() })
+        .update({ name: name.trim(), address: address.trim(), lead_auto_assign: leadAutoAssign })
         .eq("id", editing.id);
       if (error) return toast.error(error.message);
-      setBranchList((prev) => prev.map((b) => (b.id === editing.id ? { ...b, name, address } : b)));
+      setBranchList((prev) =>
+        prev.map((b) => (b.id === editing.id ? { ...b, name, address, leadAutoAssign } : b)),
+      );
       toast.success("Branch updated", { description: name });
     } else {
       const { data, error } = await supabase
         .from("branch")
-        .insert({ agency_id: account.agencyId, name: name.trim(), address: address.trim() })
+        .insert({
+          agency_id: account.agencyId,
+          name: name.trim(),
+          address: address.trim(),
+          lead_auto_assign: leadAutoAssign,
+        })
         .select("id")
         .single();
       if (error) return toast.error(error.message);
-      setBranchList((prev) => [...prev, { id: data.id, name, address }]);
+      setBranchList((prev) => [...prev, { id: data.id, name, address, leadAutoAssign }]);
       toast.success("Branch added", { description: name });
     }
     setOpen(false);
@@ -524,6 +536,18 @@ function BranchSection({
                   <TableCell className="font-medium">{b.name}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{b.address}</TableCell>
                   <TableCell>
+                    {b.leadAutoAssign ? (
+                      <Badge
+                        variant="outline"
+                        className="border-indigo-500/30 text-indigo-600 bg-indigo-500/10 mr-2"
+                      >
+                        Auto-Assign
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-muted-foreground mr-2">
+                        Manual
+                      </Badge>
+                    )}
                     <Badge
                       variant="outline"
                       className={
@@ -567,6 +591,15 @@ function BranchSection({
                 rows={2}
                 className="mt-1"
               />
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-border p-3">
+              <div className="space-y-0.5">
+                <Label>Auto-assign Leads</Label>
+                <p className="text-xs text-muted-foreground">
+                  Round-robin assignment for this branch
+                </p>
+              </div>
+              <Switch checked={leadAutoAssign} onCheckedChange={setLeadAutoAssign} />
             </div>
           </div>
           <DialogFooter>
