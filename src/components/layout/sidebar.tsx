@@ -16,6 +16,7 @@ import {
   X,
   FileSignature,
   Home,
+  MessageSquare,
 } from "lucide-react";
 import { useApp } from "@/lib/app-state";
 import { cn } from "@/lib/utils";
@@ -136,6 +137,13 @@ export function Sidebar() {
           >
             <Calculator className="size-4.5 shrink-0" />
             {!sidebarCollapsed && <span className="truncate">Bank Recon</span>}
+          </Link>
+          <Link
+            to="/admin/whatsapp"
+            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
+          >
+            <MessageSquare className="size-4.5 shrink-0" />
+            {!sidebarCollapsed && <span className="truncate">WhatsApp Gateway</span>}
           </Link>
         </div>
       )}

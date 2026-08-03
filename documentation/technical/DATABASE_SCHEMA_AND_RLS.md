@@ -60,6 +60,7 @@ High-cardinality multi-tenant composite B-tree indexes are implemented across co
 - `idx_lease_payment_ref`: Auto-matching for bank feed reconciliations (`payment_reference`).
 - `idx_trust_ledger_agency_account`: Trust sub-ledger compliance (`agency_id`, `account_type`, `created_at DESC`).
 - `idx_email_queue_status_attempts`: Email queue dispatcher (`status`, `attempts`, `created_at`).
+- `idx_whatsapp_queue_status_attempts`: WhatsApp queue dispatcher (`status`, `attempts`, `created_at`).
 - `idx_party_agency_fica_status`: FICA compliance status (`agency_id`, `fica_status`, `party_type`).
 - `idx_ffc_certificate_user_expires`: FFC certificate status & expiry (`user_account_id`, `expires_on DESC`).
 - `idx_party_agency_name`: Party search by name (`agency_id`, `full_name`).

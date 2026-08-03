@@ -33,6 +33,7 @@ import { Route as AdminReconRouteImport } from './routes/admin/recon'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminTrustRouteImport } from './routes/admin/trust'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminWhatsappRouteImport } from './routes/admin/whatsapp'
 import { Route as CommissionIndexRouteImport } from './routes/commission/index'
 import { Route as CommissionEarningsRouteImport } from './routes/commission/earnings'
 import { Route as CommissionReconciliationRouteImport } from './routes/commission/reconciliation'
@@ -169,6 +170,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminWhatsappRoute = AdminWhatsappRouteImport.update({
+  id: '/whatsapp',
+  path: '/whatsapp',
+  getParentRoute: () => AdminRoute,
+} as any)
 const CommissionIndexRoute = CommissionIndexRouteImport.update({
   id: '/commission/',
   path: '/commission/',
@@ -270,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/trust': typeof AdminTrustRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/whatsapp': typeof AdminWhatsappRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
   '/deals/$dealId': typeof DealsDealIdRoute
@@ -310,6 +317,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/trust': typeof AdminTrustRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/whatsapp': typeof AdminWhatsappRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
   '/deals/$dealId': typeof DealsDealIdRoute
@@ -352,6 +360,7 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/trust': typeof AdminTrustRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/whatsapp': typeof AdminWhatsappRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
   '/deals/$dealId': typeof DealsDealIdRoute
@@ -395,6 +404,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/trust'
     | '/admin/users'
+    | '/admin/whatsapp'
     | '/commission/earnings'
     | '/commission/reconciliation'
     | '/deals/$dealId'
@@ -435,6 +445,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/trust'
     | '/admin/users'
+    | '/admin/whatsapp'
     | '/commission/earnings'
     | '/commission/reconciliation'
     | '/deals/$dealId'
@@ -476,6 +487,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/trust'
     | '/admin/users'
+    | '/admin/whatsapp'
     | '/commission/earnings'
     | '/commission/reconciliation'
     | '/deals/$dealId'
@@ -692,6 +704,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/whatsapp': {
+      id: '/admin/whatsapp'
+      path: '/whatsapp'
+      fullPath: '/admin/whatsapp'
+      preLoaderRoute: typeof AdminWhatsappRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/commission/': {
       id: '/commission/'
       path: '/commission'
@@ -811,6 +830,7 @@ interface AdminRouteChildren {
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminTrustRoute: typeof AdminTrustRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AdminWhatsappRoute: typeof AdminWhatsappRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminComplianceAuditRoute: typeof AdminComplianceAuditRoute
   AdminComplianceFfcRoute: typeof AdminComplianceFfcRoute
@@ -828,6 +848,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSettingsRoute: AdminSettingsRoute,
   AdminTrustRoute: AdminTrustRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AdminWhatsappRoute: AdminWhatsappRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminComplianceAuditRoute: AdminComplianceAuditRoute,
   AdminComplianceFfcRoute: AdminComplianceFfcRoute,
