@@ -13,26 +13,27 @@ create table if not exists public.notification (
 
 alter table public.notification enable row level security;
 
+-- fix: cast auth.uid() to uuid to match user.id / auth_user_id column type
 create policy "Users can view their notifications" on public.notification
 for select using (
-  (user_id = auth.uid() or user_id is null)
+  (user_id = auth.uid()::uuid or user_id is null)
   and exists (
     select 1 from public.user_account u 
-    where u.id = auth.uid() 
+    where u.auth_user_id = auth.uid()::uuid 
     and u.agency_id = notification.agency_id
   )
 );
 
 create policy "Users can mark notifications as read" on public.notification
 for update using (
-  (user_id = auth.uid() or user_id is null)
+  (user_id = auth.uid()::uuid or user_id is null)
   and exists (
     select 1 from public.user_account u 
-    where u.id = auth.uid() 
+    where u.auth_user_id = auth.uid()::uuid 
     and u.agency_id = notification.agency_id
   )
 ) with check (
-  (user_id = auth.uid() or user_id is null)
+  (user_id = auth.uid()::uuid or user_id is null)
 );
 
 -- Email queue table

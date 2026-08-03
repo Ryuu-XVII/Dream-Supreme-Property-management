@@ -13,13 +13,14 @@ create table if not exists public.bond_application (
 
 alter table public.bond_application enable row level security;
 
+-- fix: cast auth.uid() to uuid to match user_account.auth_user_id column type
 create policy "Users can view bond applications for their agency" on public.bond_application
 for select using (
   exists (
     select 1 from public.deal d
     join public.user_account u on d.agency_id = u.agency_id
     where d.id = bond_application.deal_id
-    and u.id = auth.uid()
+    and u.auth_user_id = auth.uid()::uuid
   )
 );
 
@@ -29,7 +30,7 @@ for insert with check (
     select 1 from public.deal d
     join public.user_account u on d.agency_id = u.agency_id
     where d.id = deal_id
-    and u.id = auth.uid()
+    and u.auth_user_id = auth.uid()::uuid
   )
 );
 
@@ -39,7 +40,7 @@ for update using (
     select 1 from public.deal d
     join public.user_account u on d.agency_id = u.agency_id
     where d.id = bond_application.deal_id
-    and u.id = auth.uid()
+    and u.auth_user_id = auth.uid()::uuid
   )
 );
 
@@ -49,7 +50,7 @@ for delete using (
     select 1 from public.deal d
     join public.user_account u on d.agency_id = u.agency_id
     where d.id = bond_application.deal_id
-    and u.id = auth.uid()
+    and u.auth_user_id = auth.uid()::uuid
   )
 );
 
@@ -67,7 +68,7 @@ as $$
 declare
   v_agency_id uuid;
 begin
-  select agency_id into v_agency_id from public.user_account where id = auth.uid();
+  select agency_id into v_agency_id from public.user_account where auth_user_id = auth.uid()::uuid;
   if v_agency_id is null then
     raise exception 'Not authorized';
   end if;
@@ -81,7 +82,7 @@ begin
     after_json
   ) values (
     v_agency_id,
-    auth.uid(),
+    auth.uid()::uuid,
     p_entity_type,
     p_entity_id,
     p_action,

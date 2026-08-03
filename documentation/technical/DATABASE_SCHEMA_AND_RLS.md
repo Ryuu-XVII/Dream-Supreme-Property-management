@@ -40,7 +40,7 @@ Migration timestamps are strictly unique to guarantee deterministic execution or
 
 ## 3. Row Level Security (RLS) Strategy
 
-All tables enforce RLS to guarantee data boundaries.
+All tables enforce RLS to guarantee data boundaries. All policy comparisons against `auth.uid()` enforce explicit `::uuid` type casting (`auth.uid()::uuid = auth_user_id`) to prevent PostgreSQL type mismatch errors.
 
 ### Multi-Tenant Isolation
 

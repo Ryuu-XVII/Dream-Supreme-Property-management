@@ -35,6 +35,7 @@ for each row execute function public.protect_user_account_sensitive_fields();
 
 -- 2. Add the RLS policy to allow users to update their own profile
 drop policy if exists "Users can update their own profile" on public.user_account;
+-- fix: cast auth.uid() to uuid to match auth_user_id column type
 create policy "Users can update their own profile" on public.user_account for update
-using (auth_user_id = auth.uid())
-with check (auth_user_id = auth.uid());
+using (auth_user_id = auth.uid()::uuid)
+with check (auth_user_id = auth.uid()::uuid);
