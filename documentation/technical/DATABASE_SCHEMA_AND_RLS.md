@@ -28,6 +28,11 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 - **`trust_account_ledger`**: Audited sub-ledger for Section 86(2) General and Section 86(4) Investment trust deposits, managing 95%/5% client vs PPRA statutory interest allocations and principal sign-offs.
 - **`document_template`**: Template repository for auto-generating ECTA-compliant mandates, lease agreements, and OTP legal documents.
 
+### `notification` & `email_queue` (System & User Alert Engine)
+
+- **`notification`**: In-app and agency-wide system alerts supporting user-specific (`user_id` / `user_account_id`) and broadcast channels.
+- **`email_queue`**: Transactional email dispatch queue for automated compliance, deal updates, and task reminders.
+
 ### `commission_rule_set` & `commission_calculation`
 
 - **`commission_rule_set`**: Defines global agency rules (e.g., Office Share %, Franchise Fees, Marketing Deductions).

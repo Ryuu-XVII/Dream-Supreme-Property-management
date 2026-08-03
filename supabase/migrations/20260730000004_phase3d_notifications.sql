@@ -3,7 +3,7 @@ create table if not exists public.notification (
   id uuid primary key default gen_random_uuid(),
   agency_id uuid not null,
   user_id uuid, -- if null, broadcast to agency
-  type text not null check (type in ('system', 'deal_update', 'task_reminder', 'commission_alert')),
+  type text check (type in ('system', 'deal_update', 'task_reminder', 'commission_alert')),
   subject text not null,
   body text not null,
   link text,
@@ -11,29 +11,40 @@ create table if not exists public.notification (
   created_at timestamptz not null default now()
 );
 
+alter table public.notification add column if not exists user_id uuid references public.user_account(id) on delete cascade;
+alter table public.notification add column if not exists type text check (type in ('system', 'deal_update', 'task_reminder', 'commission_alert'));
+alter table public.notification add column if not exists link text;
+
 alter table public.notification enable row level security;
 
--- fix: cast auth.uid() to uuid to match user.id / auth_user_id column type
+-- fix: cast auth.uid() to uuid and support both user_id and user_account_id
+drop policy if exists "Users can view their notifications" on public.notification;
 create policy "Users can view their notifications" on public.notification
 for select using (
-  (user_id = auth.uid()::uuid or user_id is null)
-  and exists (
+  exists (
     select 1 from public.user_account u 
     where u.auth_user_id = auth.uid()::uuid 
     and u.agency_id = notification.agency_id
+    and (user_id = u.id or user_account_id = u.id or user_id is null)
   )
 );
 
+drop policy if exists "Users can mark notifications as read" on public.notification;
 create policy "Users can mark notifications as read" on public.notification
 for update using (
-  (user_id = auth.uid()::uuid or user_id is null)
-  and exists (
+  exists (
     select 1 from public.user_account u 
     where u.auth_user_id = auth.uid()::uuid 
     and u.agency_id = notification.agency_id
+    and (user_id = u.id or user_account_id = u.id or user_id is null)
   )
 ) with check (
-  (user_id = auth.uid()::uuid or user_id is null)
+  exists (
+    select 1 from public.user_account u 
+    where u.auth_user_id = auth.uid()::uuid 
+    and u.agency_id = notification.agency_id
+    and (user_id = u.id or user_account_id = u.id or user_id is null)
+  )
 );
 
 -- Email queue table
