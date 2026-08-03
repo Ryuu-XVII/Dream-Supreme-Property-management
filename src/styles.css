@@ -1,4 +1,4 @@
-@import "tailwindcss" source(none);
+@import "tailwindcss";
 @source "../src";
 @import "tw-animate-css";
 
@@ -267,8 +267,10 @@
     background-clip: padding-box;
     border: 4px solid transparent;
   }
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: var(--glass-bg) transparent;
+  @supports (scrollbar-width: thin) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--glass-bg) transparent;
+    }
   }
 }
