@@ -187,7 +187,8 @@ function AuthGuard({ children }: { children: ReactNode }) {
     );
   }
 
-  const publicPath = isPublicPath(window.location.pathname);
+  const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+  const publicPath = isPublicPath(currentPath);
   if (!session && !publicPath) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
@@ -198,20 +199,24 @@ function AuthGuard({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+import { MotionConfig } from "framer-motion";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AppProvider>
-          <AuthGuard>
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
-          </AuthGuard>
-          <Toaster position="top-right" richColors closeButton />
-        </AppProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <MotionConfig reducedMotion="user">
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <AppProvider>
+            <AuthGuard>
+              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+              <Outlet />
+            </AuthGuard>
+            <Toaster position="top-right" richColors closeButton />
+          </AppProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </MotionConfig>
   );
 }

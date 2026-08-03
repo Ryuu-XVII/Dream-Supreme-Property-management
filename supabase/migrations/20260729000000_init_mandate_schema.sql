@@ -470,6 +470,11 @@ create table if not exists public.config_transfer_duty (
   created_at timestamptz not null default now()
 );
 
+alter table public.config_transfer_duty enable row level security;
+
+create policy "Transfer duty brackets viewable by authenticated users" on public.config_transfer_duty
+  for select using (auth.role() = 'authenticated');
+
 -- ─── 008 RLS POLICIES ──────────────────────────────────────────────────────
 create or replace function public.get_current_agency_id()
 returns uuid language sql stable security definer as $$

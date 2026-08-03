@@ -60,5 +60,10 @@ create table if not exists public.email_queue (
   sent_at timestamptz
 );
 
+alter table public.email_queue enable row level security;
+
+create policy "Email queue viewable by agency" on public.email_queue
+  for select using (agency_id = public.get_current_agency_id());
+
 -- To trigger emails we can just poll this table with a chron edge function, 
 -- or we can use pg_cron if available. For now we just implement the structure.
