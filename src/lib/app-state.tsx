@@ -22,7 +22,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [sidebarCollapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    const t = (localStorage.getItem("dsp-theme") as Theme) || "system";
+    const t = (localStorage.getItem("dsp-theme") as Theme) || "dark";
     setThemeState(t);
     const r = localStorage.getItem("dsp-role") as Role | null;
     if (r) setRoleState(r);
