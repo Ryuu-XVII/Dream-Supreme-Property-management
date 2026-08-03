@@ -57,6 +57,7 @@ High-cardinality multi-tenant composite B-tree indexes are implemented across co
 - `idx_audit_log_agency_occurred`: Audit log chronological query (`agency_id`, `occurred_at DESC`).
 - `idx_notification_user_read`: Notification feed (`agency_id`, `created_at DESC`).
 - `idx_lease_invoice_lease_due`: Rental invoice billing status (`lease_id`, `status`, `due_on`).
+- `idx_lease_payment_ref`: Auto-matching for bank feed reconciliations (`payment_reference`).
 - `idx_trust_ledger_agency_account`: Trust sub-ledger compliance (`agency_id`, `account_type`, `created_at DESC`).
 - `idx_email_queue_status_attempts`: Email queue dispatcher (`status`, `attempts`, `created_at`).
 - `idx_party_agency_fica_status`: FICA compliance status (`agency_id`, `fica_status`, `party_type`).
