@@ -12,9 +12,9 @@ create index if not exists idx_notification_user_read
 create index if not exists idx_lease_invoice_lease_due 
   on public.lease_invoice (lease_id, status, due_on);
 
--- 4. Trust Account Ledger Auditing Index (agency + section_type + created_at)
-create index if not exists idx_trust_ledger_agency_section 
-  on public.trust_account_ledger (agency_id, section_type, created_at desc);
+-- 4. Trust Account Ledger Auditing Index (agency + account_type + created_at)
+create index if not exists idx_trust_ledger_agency_account 
+  on public.trust_account_ledger (agency_id, account_type, created_at desc);
 
 -- 5. Email Queue Pending Dispatch Index
 create index if not exists idx_email_queue_status_attempts 
