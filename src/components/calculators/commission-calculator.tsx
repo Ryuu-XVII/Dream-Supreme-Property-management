@@ -40,6 +40,7 @@ export function CommissionCalculator() {
   const [commRate, setCommRate] = useState<number>(DEFAULT_COMMISSION_BPS / 100); // %
   const [isVatVendor, setIsVatVendor] = useState<boolean>(true);
   const [isVatInclusive, setIsVatInclusive] = useState<boolean>(true);
+  const [vatRate, setVatRate] = useState<number>(VAT_RATE);
   const [officeSharePct, setOfficeSharePct] = useState<number>(DEFAULT_OFFICE_SHARE_PCT); // %
   const [agentASplitPct, setAgentASplitPct] = useState<number>(60.0); // %
   const [agentBSplitPct, setAgentBSplitPct] = useState<number>(40.0); // %
@@ -68,32 +69,36 @@ export function CommissionCalculator() {
         )
         .eq("is_default", true)
         .order("effective_from", { ascending: false })
-        .limit(1)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      const { data: vatData } = await supabase.rpc("get_vat_rate");
+      return { rules: data, vatRate: vatData || 0.15 };
     },
   });
 
   useEffect(() => {
-    const rs = rulesQuery.data;
-    if (rs) {
-      setCommRate((rs.default_commission_rate_bps || 500) / 100);
-      setIsVatInclusive(rs.vat_treatment === "inclusive");
-      setOfficeSharePct((rs.office_share_bps || 5000) / 100);
-      if (rs.lines && rs.lines.length > 0) {
-        setLines(
-          rs.lines
-            .filter((l: any) => l.line_type !== "office_share")
-            .sort((a: any, b: any) => a.sequence - b.sequence)
-            .map((l: any) => ({
-              id: l.id,
-              type: l.line_type,
-              basis: l.calculation_basis,
-              bps: l.rate_bps || 0,
-              fixed: l.fixed_amount_cents || 0,
-            })),
-        );
+    if (rulesQuery.data) {
+      const { rules: rs, vatRate: fetchedVat } = rulesQuery.data;
+      if (fetchedVat) setVatRate(fetchedVat * 100);
+
+      if (rs) {
+        setCommRate((rs.default_commission_rate_bps || 500) / 100);
+        setIsVatInclusive(rs.vat_treatment === "inclusive");
+        setOfficeSharePct((rs.office_share_bps || 5000) / 100);
+        if (rs.lines && rs.lines.length > 0) {
+          setLines(
+            rs.lines
+              .filter((l: any) => l.line_type !== "office_share")
+              .sort((a: any, b: any) => a.sequence - b.sequence)
+              .map((l: any) => ({
+                id: l.id,
+                type: l.line_type,
+                basis: l.calculation_basis,
+                bps: l.rate_bps || 0,
+                fixed: l.fixed_amount_cents || 0,
+              })),
+          );
+        }
       }
     }
   }, [rulesQuery.data]);
@@ -108,10 +113,10 @@ export function CommissionCalculator() {
 
     if (isVatVendor) {
       if (isVatInclusive) {
-        netCommCents = Math.round(grossCommCents / (1 + VAT_RATE / 100));
+        netCommCents = Math.round(grossCommCents / (1 + vatRate / 100));
         vatCents = grossCommCents - netCommCents;
       } else {
-        vatCents = Math.round(grossCommCents * (VAT_RATE / 100));
+        vatCents = Math.round(grossCommCents * (vatRate / 100));
       }
     }
 
@@ -174,7 +179,7 @@ export function CommissionCalculator() {
 Property Sale Price: ${zar(salePrice * 100)}
 Commission Rate: ${commRate}% (${isVatInclusive ? "VAT-Inclusive" : "VAT-Exclusive"})
 Gross Commission: ${zar(calc.grossCommCents)}
-VAT Portion (${VAT_RATE}%): ${zar(calc.vatCents)}
+VAT Portion (${vatRate}%): ${zar(calc.vatCents)}
 Net Commission: ${zar(calc.netCommCents)}
 ------------------------------------------------------
 `;
@@ -271,7 +276,7 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
                 <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-card/40">
                   <div className="space-y-0.5">
                     <Label className="text-xs font-semibold">Agency VAT Vendor</Label>
-                    <p className="text-[11px] text-muted-foreground">Charge {VAT_RATE}% SA VAT</p>
+                    <p className="text-[11px] text-muted-foreground">Charge {vatRate}% SA VAT</p>
                   </div>
                   <Switch checked={isVatVendor} onCheckedChange={setIsVatVendor} />
                 </div>
@@ -433,7 +438,7 @@ ${advanceDeduction > 0 ? `Less Advance Recovery: -${zar(advanceDeduction * 100)}
                 {isVatVendor && (
                   <>
                     <div className="flex justify-between py-1 border-b border-border/50 text-muted-foreground">
-                      <span>Less SARS VAT ({VAT_RATE}%)</span>
+                      <span>Less SARS VAT ({vatRate}%)</span>
                       <span className="text-destructive">-{zar(calc.vatCents)}</span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-border/50 font-medium">

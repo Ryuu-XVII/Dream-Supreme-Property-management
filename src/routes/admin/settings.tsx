@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { GlassCard } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
@@ -146,35 +146,16 @@ function AdminSettings() {
                     <Input defaultValue="ZAR" disabled />
                   </div>
                   <div className="space-y-2">
-                    <Label>Tax Rate (%)</Label>
-                    <Input type="number" defaultValue="15" />
-                  </div>
-                </div>
-
-                <div className="space-y-2 pt-4 border-t border-border">
-                  <Label>Default Company Cut (%)</Label>
-                  <Input type="number" defaultValue="30" min="0" max="100" />
-                  <p className="text-xs text-muted-foreground">
-                    Default percentage the company retains before agent splits (if no tier rule
-                    applies).
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Franchise/Royalty Fee (%)</Label>
-                    <Input type="number" defaultValue="5" min="0" max="100" />
-                    <p className="text-xs text-muted-foreground">
-                      Global royalty fee deducted off the top before company/agent split.
+                    <Label>Global Commission Rules & Tax</Label>
+                    <p className="text-xs text-muted-foreground pb-2">
+                      Tax rates, desk fees, franchise fees, and default company cuts have been moved to the new centralized Rules Engine.
                     </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Default Desk Fee (ZAR/month)</Label>
-                    <Input type="number" defaultValue="2500" min="0" />
-                    <p className="text-xs text-muted-foreground">
-                      Monthly operational charge billed to agents.
-                    </p>
+                    <Link
+                      to="/admin/commission-rules"
+                      className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                    >
+                      Manage Commission Rules
+                    </Link>
                   </div>
                 </div>
 

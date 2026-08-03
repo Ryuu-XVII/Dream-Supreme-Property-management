@@ -114,7 +114,7 @@ Cross-references new property mandates against registered buyer criteria profile
 
 ### `calculate_tiered_commission_splits(p_deal_id)`
 
-Calculates complex multi-tiered sliding scale commission splits, deducting SARS 15% VAT, franchise royalty fees, and desk fees before outputting exact agent net payouts and agency retention balances.
+Calculates complex multi-tiered sliding scale commission splits. It dynamically fetches the agency's default commission rate from `commission_rule_set` and VAT rate from `get_vat_rate()`. Deducts VAT, franchise royalty fees, and desk fees before outputting exact agent net payouts and agency retention balances.
 
 ### `assign_lead_round_robin(p_lead_id)`
 
