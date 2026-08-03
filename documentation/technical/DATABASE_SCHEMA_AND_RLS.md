@@ -33,7 +33,12 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 - **`commission_rule_set`**: Defines global agency rules (e.g., Office Share %, Franchise Fees, Marketing Deductions).
 - **`commission_calculation`**: Triggered when a deal registers. Calculates the gross commission, subtracts deductions, and allocates the remaining net commission to the agents (`commission_allocation`).
 
-## 2. Row Level Security (RLS) Strategy
+## 2. Migration Ordering Strategy
+
+All Supabase schema migrations are stored sequentially in `supabase/migrations/` using 14-digit ISO-like UTC timestamps (`YYYYMMDDhhmmss_description.sql`).
+Migration timestamps are strictly unique to guarantee deterministic execution order during `supabase db reset` and automated CI database pipelines.
+
+## 3. Row Level Security (RLS) Strategy
 
 All tables enforce RLS to guarantee data boundaries.
 

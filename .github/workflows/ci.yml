@@ -104,6 +104,25 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+
+      - name: Fail if duplicate Supabase migration versions
+        run: |
+          if [ -d supabase/migrations ]; then
+            dupes=$(ls supabase/migrations | awk -F'_' '{print $1}' | sort | uniq -d)
+            if [ -n "$dupes" ]; then
+              echo "Duplicate supabase migration versions found:" >&2
+              echo "$dupes" >&2
+              echo "List of migration files:" >&2
+              ls -1 supabase/migrations | awk -F'_' '{print $1, $0}' | sort >&2
+              exit 1
+            fi
+          fi
+
+      - name: Ensure clean Supabase state
+        run: |
+          supabase stop || true
+          docker volume ls -q | grep supabase || true | xargs -r docker volume rm || true
+
       - uses: supabase/setup-cli@v1
         with:
           version: latest
