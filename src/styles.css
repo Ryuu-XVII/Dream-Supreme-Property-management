@@ -240,11 +240,12 @@
     z-index: -2;
     pointer-events: none;
     background:
-      radial-gradient(28rem 28rem at 22% 30%, oklch(0.98 0.005 250 / 55%), oklch(0.55 0.01 250 / 18%) 45%, transparent 70%),
-      radial-gradient(34rem 30rem at 72% 18%, oklch(0.95 0.008 200 / 45%), oklch(0.45 0.01 240 / 16%) 48%, transparent 72%),
-      radial-gradient(40rem 34rem at 62% 82%, oklch(0.9 0.02 150 / 38%), oklch(0.4 0.01 200 / 14%) 50%, transparent 74%),
-      radial-gradient(22rem 22rem at 90% 62%, oklch(0.92 0.03 90 / 32%), transparent 68%);
-    filter: blur(80px) saturate(115%);
+      radial-gradient(26rem 26rem at 18% 26%, oklch(0.99 0.004 250 / 95%), oklch(0.62 0.008 250 / 40%) 42%, transparent 68%),
+      radial-gradient(30rem 26rem at 74% 14%, oklch(0.97 0.008 200 / 85%), oklch(0.5 0.01 240 / 32%) 45%, transparent 70%),
+      radial-gradient(38rem 30rem at 58% 78%, oklch(0.94 0.03 150 / 80%), oklch(0.45 0.015 200 / 30%) 46%, transparent 72%),
+      radial-gradient(20rem 20rem at 92% 58%, oklch(0.95 0.05 90 / 70%), transparent 66%),
+      radial-gradient(24rem 22rem at 8% 88%, oklch(0.9 0.02 300 / 60%), transparent 68%);
+    filter: blur(70px) saturate(120%);
   }
   &::after {
     content: "";
@@ -252,8 +253,9 @@
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background: radial-gradient(120% 90% at 50% 40%, transparent 20%, oklch(0.1 0.004 260 / 70%) 100%);
+    background: radial-gradient(130% 100% at 50% 45%, transparent 45%, oklch(0.1 0.004 260 / 55%) 100%);
   }
+
 }
 
 
