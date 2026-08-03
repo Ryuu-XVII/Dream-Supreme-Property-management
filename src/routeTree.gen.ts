@@ -27,6 +27,7 @@ import { Route as AdminAgencyRouteImport } from './routes/admin/agency'
 import { Route as AdminCommissionRulesRouteImport } from './routes/admin/commission-rules'
 import { Route as AdminDealsRouteImport } from './routes/admin/deals'
 import { Route as AdminFinancialsRouteImport } from './routes/admin/financials'
+import { Route as AdminFranchiseRouteImport } from './routes/admin/franchise'
 import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminPropertiesRouteImport } from './routes/admin/properties'
 import { Route as AdminReconRouteImport } from './routes/admin/recon'
@@ -138,6 +139,11 @@ const AdminDealsRoute = AdminDealsRouteImport.update({
 const AdminFinancialsRoute = AdminFinancialsRouteImport.update({
   id: '/financials',
   path: '/financials',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFranchiseRoute = AdminFranchiseRouteImport.update({
+  id: '/franchise',
+  path: '/franchise',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
@@ -270,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/admin/commission-rules': typeof AdminCommissionRulesRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
+  '/admin/franchise': typeof AdminFranchiseRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/recon': typeof AdminReconRoute
@@ -311,6 +318,7 @@ export interface FileRoutesByTo {
   '/admin/commission-rules': typeof AdminCommissionRulesRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
+  '/admin/franchise': typeof AdminFranchiseRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/recon': typeof AdminReconRoute
@@ -354,6 +362,7 @@ export interface FileRoutesById {
   '/admin/commission-rules': typeof AdminCommissionRulesRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
+  '/admin/franchise': typeof AdminFranchiseRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/recon': typeof AdminReconRoute
@@ -398,6 +407,7 @@ export interface FileRouteTypes {
     | '/admin/commission-rules'
     | '/admin/deals'
     | '/admin/financials'
+    | '/admin/franchise'
     | '/admin/notifications'
     | '/admin/properties'
     | '/admin/recon'
@@ -439,6 +449,7 @@ export interface FileRouteTypes {
     | '/admin/commission-rules'
     | '/admin/deals'
     | '/admin/financials'
+    | '/admin/franchise'
     | '/admin/notifications'
     | '/admin/properties'
     | '/admin/recon'
@@ -481,6 +492,7 @@ export interface FileRouteTypes {
     | '/admin/commission-rules'
     | '/admin/deals'
     | '/admin/financials'
+    | '/admin/franchise'
     | '/admin/notifications'
     | '/admin/properties'
     | '/admin/recon'
@@ -662,6 +674,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFinancialsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/franchise': {
+      id: '/admin/franchise'
+      path: '/franchise'
+      fullPath: '/admin/franchise'
+      preLoaderRoute: typeof AdminFranchiseRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/notifications': {
       id: '/admin/notifications'
       path: '/notifications'
@@ -824,6 +843,7 @@ interface AdminRouteChildren {
   AdminCommissionRulesRoute: typeof AdminCommissionRulesRoute
   AdminDealsRoute: typeof AdminDealsRoute
   AdminFinancialsRoute: typeof AdminFinancialsRoute
+  AdminFranchiseRoute: typeof AdminFranchiseRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminPropertiesRoute: typeof AdminPropertiesRoute
   AdminReconRoute: typeof AdminReconRoute
@@ -842,6 +862,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCommissionRulesRoute: AdminCommissionRulesRoute,
   AdminDealsRoute: AdminDealsRoute,
   AdminFinancialsRoute: AdminFinancialsRoute,
+  AdminFranchiseRoute: AdminFranchiseRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminPropertiesRoute: AdminPropertiesRoute,
   AdminReconRoute: AdminReconRoute,
