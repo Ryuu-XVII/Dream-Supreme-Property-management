@@ -12,9 +12,9 @@ create index if not exists idx_ffc_certificate_user_expires
 create index if not exists idx_party_agency_name 
   on public.party (agency_id, full_name);
 
--- 4. Document Storage Entity Association Index (agency + entity_type + entity_id)
-create index if not exists idx_document_storage_agency_entity 
-  on public.document_storage (agency_id, entity_type, entity_id);
+-- 4. Document Storage Deal & Category Index (agency + deal_id + category)
+create index if not exists idx_document_agency_deal 
+  on public.document (agency_id, deal_id, category);
 
 -- 5. Commission Split Distribution Index (deal + agent)
 create index if not exists idx_commission_split_deal_agent 
