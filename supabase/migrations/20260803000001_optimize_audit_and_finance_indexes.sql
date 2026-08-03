@@ -10,7 +10,7 @@ create index if not exists idx_notification_user_read
 
 -- 3. Lease Invoice Due Date & Status Index
 create index if not exists idx_lease_invoice_lease_due 
-  on public.lease_invoice (lease_id, status, due_date);
+  on public.lease_invoice (lease_id, status, due_on);
 
 -- 4. Trust Account Ledger Auditing Index (agency + section_type + created_at)
 create index if not exists idx_trust_ledger_agency_section 
