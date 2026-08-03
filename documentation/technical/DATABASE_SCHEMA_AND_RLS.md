@@ -110,6 +110,10 @@ Enforces agency principal/admin approval or rejection of mandatory transaction c
 
 Cross-references new property mandates against registered buyer criteria profiles (budget ranges, preferred suburbs, property types, room counts) and calculates a 0-100% weighted match score.
 
+### `calculate_tiered_commission_splits(p_deal_id)`
+
+Calculates complex multi-tiered sliding scale commission splits, deducting SARS 15% VAT, franchise royalty fees, and desk fees before outputting exact agent net payouts and agency retention balances.
+
 ### `generate_document_from_template(p_template_id, p_deal_id, p_lease_id)`
 
 Executes server-side document merge substitution on template markdown, creates the generated document entry in `public.document`, and logs an automated audit entry.
