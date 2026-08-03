@@ -98,6 +98,10 @@ A central configuration function that returns the current VAT rate (`0.15`). Use
 
 Enforces single-principal approval for Section 86 trust sub-ledger transactions, automatically stamping approval metadata and writing structured records to `audit_log`.
 
+### `process_monthly_section_86_4_interest_allocation(p_agency_id, p_period_date)`
+
+Calculates statutory 95%/5% interest splits on Section 86(4) trust investment balances under the Property Practitioners Act. Automatically posts dual ledger transactions (`interest_credit` and `ppra_levy_deduction`), logs audit trail entries, and generates principal notifications. Scheduled via `pg_cron` (`0 1 1 * *`).
+
 ### `generate_document_from_template(p_template_id, p_deal_id, p_lease_id)`
 
 Executes server-side document merge substitution on template markdown, creates the generated document entry in `public.document`, and logs an automated audit entry.
