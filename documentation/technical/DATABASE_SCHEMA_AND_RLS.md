@@ -47,7 +47,7 @@ Migration timestamps are strictly unique to guarantee deterministic execution or
 
 High-cardinality multi-tenant composite B-tree indexes are implemented across core entities:
 - `idx_user_account_agency_auth`: Multi-tenant user auth resolution (`agency_id`, `auth_user_id`).
-- `idx_property_agency_status`: Property filtering & sorting (`agency_id`, `status`, `created_at DESC`).
+- `idx_property_agency_type`: Property filtering & sorting (`agency_id`, `property_type`, `created_at DESC`).
 - `idx_mandate_agency_property`: Listing lookup (`agency_id`, `property_id`, `status`).
 - `idx_deal_agency_stage`: Pipeline stage sorting (`agency_id`, `stage`, `created_at DESC`).
 - `idx_deal_participant_deal_user`: Deal participant lookup (`deal_id`, `user_account_id`).

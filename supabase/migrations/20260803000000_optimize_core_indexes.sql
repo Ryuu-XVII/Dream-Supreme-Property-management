@@ -4,9 +4,9 @@
 create index if not exists idx_user_account_agency_auth 
   on public.user_account (agency_id, auth_user_id);
 
--- 2. Property Status & Agency Filtering Index
-create index if not exists idx_property_agency_status 
-  on public.property (agency_id, status, created_at desc);
+-- 2. Property Type & Agency Filtering Index
+create index if not exists idx_property_agency_type 
+  on public.property (agency_id, property_type, created_at desc);
 
 -- 3. Mandate Lookup Index (agency + property + status)
 create index if not exists idx_mandate_agency_property 
