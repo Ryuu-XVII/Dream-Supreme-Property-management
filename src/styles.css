@@ -169,6 +169,11 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  .dark body {
+    background-color: oklch(0.13 0.004 260);
+  }
+
+
   h1,
   h2,
   h3,
