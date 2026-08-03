@@ -238,12 +238,12 @@
     z-index: -1;
     pointer-events: none;
     background:
-      radial-gradient(48rem 34rem at 12% -8%, color-mix(in oklab, var(--primary) 45%, transparent), transparent 65%),
-      radial-gradient(40rem 30rem at 92% 4%, color-mix(in oklab, var(--info) 42%, transparent), transparent 65%),
-      radial-gradient(44rem 34rem at 78% 96%, color-mix(in oklab, var(--success) 34%, transparent), transparent 65%),
-      radial-gradient(36rem 28rem at 20% 88%, color-mix(in oklab, var(--warning) 30%, transparent), transparent 65%);
-    filter: blur(64px) saturate(130%);
-    opacity: 0.75;
+      radial-gradient(48rem 34rem at 12% -8%, color-mix(in oklab, var(--primary) 60%, transparent), transparent 62%),
+      radial-gradient(40rem 30rem at 92% 4%, color-mix(in oklab, var(--info) 58%, transparent), transparent 62%),
+      radial-gradient(44rem 34rem at 78% 96%, color-mix(in oklab, var(--success) 45%, transparent), transparent 62%),
+      radial-gradient(36rem 28rem at 20% 88%, color-mix(in oklab, var(--warning) 45%, transparent), transparent 62%);
+    filter: blur(56px) saturate(160%);
+    opacity: 1;
   }
 }
 
