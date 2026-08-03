@@ -228,25 +228,34 @@
   }
 }
 
-/* Ambient mesh backdrop so frosted surfaces have something to refract */
+/* Dark studio backdrop with soft chrome orbs so frosted panels have something to refract */
 @utility ambient-mesh {
   position: relative;
   isolation: isolate;
+  background-color: oklch(0.13 0.004 260);
   &::before {
+    content: "";
+    position: fixed;
+    inset: -10%;
+    z-index: -2;
+    pointer-events: none;
+    background:
+      radial-gradient(28rem 28rem at 22% 30%, oklch(0.98 0.005 250 / 55%), oklch(0.55 0.01 250 / 18%) 45%, transparent 70%),
+      radial-gradient(34rem 30rem at 72% 18%, oklch(0.95 0.008 200 / 45%), oklch(0.45 0.01 240 / 16%) 48%, transparent 72%),
+      radial-gradient(40rem 34rem at 62% 82%, oklch(0.9 0.02 150 / 38%), oklch(0.4 0.01 200 / 14%) 50%, transparent 74%),
+      radial-gradient(22rem 22rem at 90% 62%, oklch(0.92 0.03 90 / 32%), transparent 68%);
+    filter: blur(80px) saturate(115%);
+  }
+  &::after {
     content: "";
     position: fixed;
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background:
-      radial-gradient(48rem 34rem at 12% -8%, color-mix(in oklab, var(--primary) 60%, transparent), transparent 62%),
-      radial-gradient(40rem 30rem at 92% 4%, color-mix(in oklab, var(--info) 58%, transparent), transparent 62%),
-      radial-gradient(44rem 34rem at 78% 96%, color-mix(in oklab, var(--success) 45%, transparent), transparent 62%),
-      radial-gradient(36rem 28rem at 20% 88%, color-mix(in oklab, var(--warning) 45%, transparent), transparent 62%);
-    filter: blur(56px) saturate(160%);
-    opacity: 1;
+    background: radial-gradient(120% 90% at 50% 40%, transparent 20%, oklch(0.1 0.004 260 / 70%) 100%);
   }
 }
+
 
 @utility lift {
   transition:
