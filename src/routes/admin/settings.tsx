@@ -148,7 +148,8 @@ function AdminSettings() {
                   <div className="space-y-2">
                     <Label>Global Commission Rules & Tax</Label>
                     <p className="text-xs text-muted-foreground pb-2">
-                      Tax rates, desk fees, franchise fees, and default company cuts have been moved to the new centralized Rules Engine.
+                      Tax rates, desk fees, franchise fees, and default company cuts have been moved
+                      to the new centralized Rules Engine.
                     </p>
                     <Link
                       to="/admin/commission-rules"

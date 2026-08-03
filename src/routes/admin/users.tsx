@@ -35,7 +35,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Search, Plus, UserPlus, Pencil, Trash2, Percent, Loader2, Eye } from "lucide-react";
+import {
+  Search,
+  Plus,
+  UserPlus,
+  Pencil,
+  Trash2,
+  Percent,
+  Loader2,
+  Eye,
+  Download,
+} from "lucide-react";
+import Papa from "papaparse";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/users")({
   component: AdminUsers,
@@ -100,6 +113,122 @@ function AdminUsers() {
       // In real app, perform bulk Supabase update
       setSelectedIds([]);
       // toast.success(`Commission reset for ${selectedIds.length} agents`);
+    }
+  };
+
+  const exportAgentTimeline = async (userId: string, userName: string) => {
+    try {
+      // Fetch deal timeline
+      const { data: deals, error: dErr } = await supabase
+        .from("deal_timeline")
+        .select(
+          `
+          occurred_at,
+          stage,
+          deal!inner(
+            title,
+            deal_participant!inner(user_account_id)
+          )
+        `,
+        )
+        .eq("deal.deal_participant.user_account_id", userId)
+        .order("occurred_at", { ascending: false });
+
+      if (dErr) throw dErr;
+
+      // Map to CSV structure
+      const exportData = (deals || []).map((d: any) => ({
+        Agent: userName,
+        Date: new Date(d.occurred_at).toLocaleString(),
+        Type: "Deal Stage Update",
+        Property: d.deal.title,
+        Detail: `Moved to ${d.stage}`,
+      }));
+
+      if (exportData.length === 0) {
+        toast.info("No timeline data found for this agent.");
+        return;
+      }
+
+      const csv = Papa.unparse(exportData);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `timeline_${userName.replace(/ /g, "_")}_${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success("Timeline data exported successfully.");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Failed to export timeline data.");
+    }
+  };
+
+  const bulkExportTimeline = async () => {
+    if (selectedIds.length === 0) return;
+    try {
+      const { data: deals, error: dErr } = await supabase
+        .from("deal_timeline")
+        .select(
+          `
+          occurred_at,
+          stage,
+          deal!inner(
+            title,
+            deal_participant!inner(
+              user_account_id,
+              user_account!inner(
+                user_metadata
+              )
+            )
+          )
+        `,
+        )
+        .in("deal.deal_participant.user_account_id", selectedIds)
+        .order("occurred_at", { ascending: false });
+
+      if (dErr) throw dErr;
+
+      const exportData = (deals || []).map((d: any) => {
+        // Find the matching participant to get their name
+        const participant = d.deal.deal_participant.find((p: any) =>
+          selectedIds.includes(p.user_account_id),
+        );
+        const agentName = participant
+          ? `${participant.user_account.user_metadata?.first_name || ""} ${participant.user_account.user_metadata?.last_name || ""}`.trim()
+          : "Unknown";
+
+        return {
+          Agent: agentName,
+          Date: new Date(d.occurred_at).toLocaleString(),
+          Type: "Deal Stage Update",
+          Property: d.deal.title,
+          Detail: `Moved to ${d.stage}`,
+        };
+      });
+
+      if (exportData.length === 0) {
+        toast.info("No timeline data found for selected agents.");
+        return;
+      }
+
+      const csv = Papa.unparse(exportData);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `bulk_timeline_export_${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success(`Exported data for ${selectedIds.length} agents.`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Failed to bulk export timeline data.");
     }
   };
 
@@ -169,6 +298,15 @@ function AdminUsers() {
                 <span className="text-sm font-medium text-muted-foreground mr-2">
                   {selectedIds.length} selected
                 </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={bulkExportTimeline}
+                  className="text-xs h-8"
+                >
+                  <Download className="size-3 mr-1" />
+                  Export Data
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -327,6 +465,15 @@ function AdminUsers() {
                             >
                               <Eye className="size-3 mr-1" />
                               View Portal
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => exportAgentTimeline(u.id, u.name)}
+                              className="text-xs mr-2"
+                            >
+                              <Download className="size-3 mr-1" />
+                              Export
                             </Button>
                             <Button
                               variant="outline"

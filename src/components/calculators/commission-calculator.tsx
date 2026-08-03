@@ -166,6 +166,7 @@ export function CommissionCalculator() {
     commRate,
     isVatVendor,
     isVatInclusive,
+    vatRate,
     lines,
     officeSharePct,
     agentASplitPct,

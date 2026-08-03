@@ -831,7 +831,7 @@ function ProfileSettings() {
                       How often should we send emails?
                     </span>
                     <Select value={frequency} onValueChange={(val: any) => setFrequency(val)}>
-                      <SelectTrigger className="w-[200px]">
+                      <SelectTrigger className="w-50">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
