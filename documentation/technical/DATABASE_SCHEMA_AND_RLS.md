@@ -106,6 +106,10 @@ Calculates statutory 95%/5% interest splits on Section 86(4) trust investment ba
 
 Enforces agency principal/admin approval or rejection of mandatory transaction compliance checklist items (FICA, PPA Section 67 disclosure, FFC validation), recording review status and audit timestamps.
 
+### `match_buyers_for_mandate(p_mandate_id)`
+
+Cross-references new property mandates against registered buyer criteria profiles (budget ranges, preferred suburbs, property types, room counts) and calculates a 0-100% weighted match score.
+
 ### `generate_document_from_template(p_template_id, p_deal_id, p_lease_id)`
 
 Executes server-side document merge substitution on template markdown, creates the generated document entry in `public.document`, and logs an automated audit entry.
