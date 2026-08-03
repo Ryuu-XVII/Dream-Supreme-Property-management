@@ -114,6 +114,10 @@ Cross-references new property mandates against registered buyer criteria profile
 
 Calculates complex multi-tiered sliding scale commission splits, deducting SARS 15% VAT, franchise royalty fees, and desk fees before outputting exact agent net payouts and agency retention balances.
 
+### `assign_lead_round_robin(p_lead_id)`
+
+Distributes incoming omnichannel leads dynamically among active agents using an automated round-robin algorithm based on current active lead count and creation timestamps.
+
 ### `generate_document_from_template(p_template_id, p_deal_id, p_lease_id)`
 
 Executes server-side document merge substitution on template markdown, creates the generated document entry in `public.document`, and logs an automated audit entry.
