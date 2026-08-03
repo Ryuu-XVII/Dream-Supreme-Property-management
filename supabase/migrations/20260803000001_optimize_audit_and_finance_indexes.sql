@@ -1,8 +1,8 @@
 -- Phase 2 Indexing Optimization: Audit, Operations & Financial Sub-Ledger Optimization
 
--- 1. Audit Log Timestamp Index (agency + created_at)
-create index if not exists idx_audit_log_agency_created 
-  on public.audit_log (agency_id, created_at desc);
+-- 1. Audit Log Timestamp Index (agency + occurred_at)
+create index if not exists idx_audit_log_agency_occurred 
+  on public.audit_log (agency_id, occurred_at desc);
 
 -- 2. Notification Read Status Index (user + read_at + created_at)
 create index if not exists idx_notification_user_read 

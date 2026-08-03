@@ -51,7 +51,7 @@ High-cardinality multi-tenant composite B-tree indexes are implemented across co
 - `idx_mandate_agency_property`: Listing lookup (`agency_id`, `property_id`, `status`).
 - `idx_deal_agency_stage`: Pipeline stage sorting (`agency_id`, `stage`, `created_at DESC`).
 - `idx_deal_participant_deal_user`: Deal participant lookup (`deal_id`, `user_account_id`).
-- `idx_audit_log_agency_created`: Audit log chronological query (`agency_id`, `created_at DESC`).
+- `idx_audit_log_agency_occurred`: Audit log chronological query (`agency_id`, `occurred_at DESC`).
 - `idx_notification_user_read`: Notification feed (`agency_id`, `created_at DESC`).
 - `idx_lease_invoice_lease_due`: Rental invoice billing status (`lease_id`, `status`, `due_date`).
 - `idx_trust_ledger_agency_section`: Trust sub-ledger compliance (`agency_id`, `section_type`, `created_at DESC`).
