@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { GlassCard } from "@/components/ui-kit";
 import { useAuth } from "@/lib/auth";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -82,6 +83,88 @@ function ProfileSettings() {
   const [channelEmail, setChannelEmail] = useState(true);
   const [channelInApp, setChannelInApp] = useState(true);
   const [channelWhatsApp, setChannelWhatsApp] = useState(false);
+  const [savingNotifications, setSavingNotifications] = useState(false);
+
+  // Load preferences
+  useQuery({
+    queryKey: ["user_notification_preference", account?.id],
+    enabled: !!account?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_notification_preference")
+        .select("*")
+        .eq("user_id", account!.id);
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        // Evaluate states based on the rows
+        // For simplicity, if they disabled it, we uncheck it
+        const dealUpdate = data.find((d) => d.event_type === "deal_update");
+        if (dealUpdate) setNotifyDealUpdates(dealUpdate.email_enabled || dealUpdate.in_app_enabled);
+
+        const conditionReminder = data.find((d) => d.event_type === "condition_reminder");
+        if (conditionReminder)
+          setNotifyConditionReminders(
+            conditionReminder.email_enabled || conditionReminder.in_app_enabled,
+          );
+
+        const leadAssignment = data.find((d) => d.event_type === "lead_assignment");
+        if (leadAssignment)
+          setNotifyLeadAssignments(leadAssignment.email_enabled || leadAssignment.in_app_enabled);
+
+        const leaseEscalation = data.find((d) => d.event_type === "lease_escalation");
+        if (leaseEscalation)
+          setNotifyLeaseEscalations(
+            leaseEscalation.email_enabled || leaseEscalation.in_app_enabled,
+          );
+
+        const commissionRelease = data.find((d) => d.event_type === "commission_alert");
+        if (commissionRelease)
+          setNotifyCommissionReleases(
+            commissionRelease.email_enabled || commissionRelease.in_app_enabled,
+          );
+
+        // Channels we base off the first valid row
+        const sampleRow = data[0];
+        setChannelEmail(sampleRow.email_enabled);
+        setChannelInApp(sampleRow.in_app_enabled);
+      }
+      return data;
+    },
+  });
+
+  const saveNotificationPreferences = async () => {
+    if (!account) return;
+    setSavingNotifications(true);
+    try {
+      const prefs = [
+        { event_type: "deal_update", enabled: notifyDealUpdates },
+        { event_type: "condition_reminder", enabled: notifyConditionReminders },
+        { event_type: "lead_assignment", enabled: notifyLeadAssignments },
+        { event_type: "lease_escalation", enabled: notifyLeaseEscalations },
+        { event_type: "commission_alert", enabled: notifyCommissionReleases },
+      ];
+
+      const upserts = prefs.map((p) => ({
+        user_id: account.id,
+        event_type: p.event_type,
+        email_enabled: p.enabled && channelEmail,
+        in_app_enabled: p.enabled && channelInApp,
+        updated_at: new Date().toISOString(),
+      }));
+
+      const { error } = await supabase
+        .from("user_notification_preference")
+        .upsert(upserts, { onConflict: "user_id,event_type" });
+
+      if (error) throw error;
+      toast.success("Notification preferences saved successfully.");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save notifications.");
+    } finally {
+      setSavingNotifications(false);
+    }
+  };
 
   // Tab 4: Email Signature State
   const [designation, setDesignation] = useState(
@@ -562,13 +645,23 @@ function ProfileSettings() {
           {/* TAB 3: NOTIFICATIONS */}
           <TabsContent value="notifications" className="space-y-6">
             <GlassCard>
-              <div className="mb-6">
-                <h3 className="font-display text-base font-semibold">
-                  Notification & Alert Preferences
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Control when and how you receive transaction, condition, and lead updates.
-                </p>
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <h3 className="font-display text-base font-semibold">
+                    Notification & Alert Preferences
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Control when and how you receive transaction, condition, and lead updates.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  disabled={savingNotifications}
+                  onClick={saveNotificationPreferences}
+                >
+                  <Save className="mr-2 size-4" />
+                  {savingNotifications ? "Saving..." : "Save Preferences"}
+                </Button>
               </div>
 
               <div className="space-y-6">
