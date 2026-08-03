@@ -130,11 +130,11 @@ begin
   if exists (select 1 from pg_extension where extname = 'pg_cron') then
     perform cron.schedule(
       'monthly-trust-interest-allocation',
-      '0 1 1 * *', -- 1st of every month at 01:00 AM UTC
-      $$select public.process_monthly_section_86_4_interest_allocation()$$
+      '0 1 1 * *',
+      'select public.process_monthly_section_86_4_interest_allocation()'
     );
   end if;
 exception
-  when undefined_table or invalid_schema_name then
+  when undefined_table or invalid_schema_name or undefined_function then
     null;
 end $$;
