@@ -279,6 +279,9 @@ function ProfileSettings() {
                           return;
                         }
                         setAvatarFile(file);
+                        if (avatarPreview) {
+                          URL.revokeObjectURL(avatarPreview);
+                        }
                         setAvatarPreview(URL.createObjectURL(file));
                       }
                     }}

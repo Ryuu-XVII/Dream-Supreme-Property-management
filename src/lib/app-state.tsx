@@ -71,11 +71,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // database profile remains the source of truth for authorization.
     if (!account) setRoleState(r);
   };
-  const toggleSidebar = () =>
-    setCollapsed((c) => {
-      localStorage.setItem("dsp-sidebar", c ? "0" : "1");
-      return !c;
-    });
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("dsp-sidebar", sidebarCollapsed ? "1" : "0");
+    }
+  }, [sidebarCollapsed]);
+
+  const toggleSidebar = () => setCollapsed((prev) => !prev);
 
   const toggleCalculator = (open?: boolean, context?: CalculatorContext | null) => {
     setCalculatorOpen((o) => open ?? !o);

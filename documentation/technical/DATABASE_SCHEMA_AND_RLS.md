@@ -1,6 +1,6 @@
 # Database Schema & RLS Policies
 
-Dream Supreme is a multi-tenant platform. Supabase handles authentication, and PostgreSQL Row Level Security (RLS) guarantees complete multi-tenant data isolation across all tables including `config_transfer_duty` and `email_queue`.
+Dream Supreme is a multi-tenant platform. Supabase handles authentication, and PostgreSQL Row Level Security (RLS) guarantees complete multi-tenant data isolation across all tables including `config_transfer_duty`, `email_queue`, and validated `lead` insertions.
 
 ## 1. Core Entity Schema
 

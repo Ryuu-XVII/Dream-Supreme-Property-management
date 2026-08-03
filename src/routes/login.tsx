@@ -48,43 +48,46 @@ function LoginPage() {
 
   const onSubmit = async (data: CredentialsForm) => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    });
-    setLoading(false);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      const pendingRaw = localStorage.getItem("dsp-pending-invitation");
-      if (pendingRaw) {
-        try {
-          const pending = JSON.parse(pendingRaw) as {
-            token: string;
-            fullName: string;
-            mobile: string;
-          };
-          const { error: acceptError } = await supabase.rpc("accept_user_invitation", {
-            p_token: pending.token,
-            p_full_name: pending.fullName,
-            p_mobile: pending.mobile,
-            p_avatar_key: null,
-          });
-          if (acceptError) throw acceptError;
-          localStorage.removeItem("dsp-pending-invitation");
-        } catch (invitationError) {
-          await supabase.auth.signOut();
-          toast.error(
-            invitationError instanceof Error
-              ? invitationError.message
-              : "Your company invitation could not be accepted.",
-          );
-          return;
+      if (error) {
+        toast.error(error.message);
+      } else {
+        const pendingRaw = localStorage.getItem("dsp-pending-invitation");
+        if (pendingRaw) {
+          try {
+            const pending = JSON.parse(pendingRaw) as {
+              token: string;
+              fullName: string;
+              mobile: string;
+            };
+            const { error: acceptError } = await supabase.rpc("accept_user_invitation", {
+              p_token: pending.token,
+              p_full_name: pending.fullName,
+              p_mobile: pending.mobile,
+              p_avatar_key: null,
+            });
+            if (acceptError) throw acceptError;
+            localStorage.removeItem("dsp-pending-invitation");
+          } catch (invitationError) {
+            await supabase.auth.signOut();
+            toast.error(
+              invitationError instanceof Error
+                ? invitationError.message
+                : "Your company invitation could not be accepted.",
+            );
+            return;
+          }
         }
+        toast.success("Signed in successfully");
+        navigate({ to: "/" });
       }
-      toast.success("Signed in successfully");
-      navigate({ to: "/" });
+    } finally {
+      setLoading(false);
     }
   };
 

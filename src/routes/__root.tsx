@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { AppProvider } from "@/lib/app-state";
 
@@ -117,6 +117,13 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 function AuthGuard({ children }: { children: ReactNode }) {
   const { session, account, loading, signOut } = useAuth();
   const router = useRouter();
+  const [currentPath, setCurrentPath] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setCurrentPath(window.location.pathname);
+    }
+  }, []);
 
   const isPublicPath = (path: string) =>
     path === "/login" ||
@@ -187,7 +194,6 @@ function AuthGuard({ children }: { children: ReactNode }) {
     );
   }
 
-  const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
   const publicPath = isPublicPath(currentPath);
   if (!session && !publicPath) {
     return (
