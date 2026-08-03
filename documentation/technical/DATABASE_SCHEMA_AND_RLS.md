@@ -102,6 +102,10 @@ Enforces single-principal approval for Section 86 trust sub-ledger transactions,
 
 Calculates statutory 95%/5% interest splits on Section 86(4) trust investment balances under the Property Practitioners Act 22 of 2019. Automatically posts dual ledger transactions (`interest_credit` and `ppra_levy_deduction`), logs audit trail entries, and generates principal notifications. Scheduled via `pg_cron` (`0 1 1 * *`).
 
+### `review_compliance_item(p_checklist_id, p_status, p_rejection_notes)`
+
+Enforces agency principal/admin approval or rejection of mandatory transaction compliance checklist items (FICA, PPA Section 67 disclosure, FFC validation), recording review status and audit timestamps.
+
 ### `generate_document_from_template(p_template_id, p_deal_id, p_lease_id)`
 
 Executes server-side document merge substitution on template markdown, creates the generated document entry in `public.document`, and logs an automated audit entry.
