@@ -25,7 +25,7 @@ interface AppState {
 const Ctx = createContext<AppState | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { account } = useAuth();
+  const { activeAccount } = useAuth();
   const [theme, setThemeState] = useState<Theme>("system");
   const [resolved, setResolved] = useState<"light" | "dark">("light");
   const [role, setRoleState] = useState<Role>("Principal");
@@ -40,15 +40,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!account) return;
-    const roleMap: Record<typeof account.role, Role> = {
+    if (!activeAccount) return;
+    const roleMap: Record<typeof activeAccount.role, Role> = {
       principal: "Principal",
       agent: "Agent",
       candidate: "Candidate",
       admin: "Admin",
     };
-    setRoleState(roleMap[account.role]);
-  }, [account]);
+    setRoleState(roleMap[activeAccount.role]);
+  }, [activeAccount]);
 
   useEffect(() => {
     const mql = window.matchMedia("(prefers-color-scheme: dark)");
@@ -69,7 +69,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const setRole = (r: Role) => {
     // Kept for API compatibility with existing components. The authenticated
     // database profile remains the source of truth for authorization.
-    if (!account) setRoleState(r);
+    if (!activeAccount) setRoleState(r);
   };
   useEffect(() => {
     if (typeof window !== "undefined") {

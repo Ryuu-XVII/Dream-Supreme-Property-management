@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 import {
   conditionStatusFromDb,
   conditionTypeFromDb,
@@ -29,8 +30,10 @@ export interface PipelineDeal {
 }
 
 export function usePipelineDeals() {
+  const { activeAccount } = useAuth();
+
   return useQuery({
-    queryKey: ["pipeline-deals"],
+    queryKey: ["pipeline-deals", activeAccount?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("deal")
@@ -56,7 +59,14 @@ export function usePipelineDeals() {
 
       if (error) throw error;
 
-      return (data as any[]).map((d): PipelineDeal => {
+      let filteredData = data as any[];
+      if (activeAccount && (activeAccount.role === "agent" || activeAccount.role === "candidate")) {
+        filteredData = filteredData.filter((d) =>
+          d.participants?.some((p: any) => p.user?.id === activeAccount.id),
+        );
+      }
+
+      return filteredData.map((d): PipelineDeal => {
         const agentParticipant =
           d.participants?.find((p: any) => p.role === "listing_agent") || d.participants?.[0];
         const agent = agentParticipant?.user || { id: "unknown", name: "Unassigned" };

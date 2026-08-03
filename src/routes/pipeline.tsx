@@ -31,8 +31,9 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LayoutGrid, List, SlidersHorizontal, ArrowUpDown, XCircle } from "lucide-react";
+import { LayoutGrid, List, SlidersHorizontal, ArrowUpDown, XCircle, Download } from "lucide-react";
 import { motion } from "framer-motion";
+import Papa from "papaparse";
 import { usePipelineDeals, type PipelineDeal } from "@/data/deals";
 import { useAgents, useBranches } from "@/data/reference";
 
@@ -533,23 +534,51 @@ function PipelinePage() {
   const { data: deals, isLoading } = usePipelineDeals();
   const filtered = useFilteredDeals(deals, filters);
 
+  const handleExport = () => {
+    const csvData = filtered.map((d) => ({
+      Reference: d.ref,
+      Property: d.property.address,
+      Suburb: d.property.suburb,
+      City: d.property.city,
+      SalePrice: d.salePrice / 100, // Convert from cents
+      Stage: d.stage,
+      Status: d.status,
+      DaysInStage: d.daysInStage,
+      Agent: d.agent.name,
+    }));
+    const csv = Papa.unparse(csvData);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `pipeline_export_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <AppShell
       title="Deal Pipeline"
       description="Track every deal from mandate to registration."
       actions={
-        <ToggleGroup
-          type="single"
-          value={view}
-          onValueChange={(v) => v && setView(v as "kanban" | "table")}
-        >
-          <ToggleGroupItem value="kanban" aria-label="Kanban view" className="gap-1.5">
-            <LayoutGrid className="size-4" /> Kanban
-          </ToggleGroupItem>
-          <ToggleGroupItem value="table" aria-label="Table view" className="gap-1.5">
-            <List className="size-4" /> Table
-          </ToggleGroupItem>
-        </ToggleGroup>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={handleExport} className="gap-1.5 h-9">
+            <Download className="size-4" /> Export CSV
+          </Button>
+          <ToggleGroup
+            type="single"
+            value={view}
+            onValueChange={(v) => v && setView(v as "kanban" | "table")}
+          >
+            <ToggleGroupItem value="kanban" aria-label="Kanban view" className="gap-1.5 h-9">
+              <LayoutGrid className="size-4" /> Kanban
+            </ToggleGroupItem>
+            <ToggleGroupItem value="table" aria-label="Table view" className="gap-1.5 h-9">
+              <List className="size-4" /> Table
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
       }
     >
       <FilterBar filters={filters} setFilters={setFilters} />

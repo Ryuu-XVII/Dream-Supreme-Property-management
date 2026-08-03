@@ -37,7 +37,7 @@ export function Header() {
   const [quickModalOpen, setQuickModalOpen] = useState(false);
   const navigate = useNavigate();
   const { theme, setTheme, role, toggleCalculator } = useApp();
-  const { account, signOut } = useAuth();
+  const { account, impersonatedAccount, stopImpersonating, signOut } = useAuth();
   const notificationQuery = useQuery({
     queryKey: ["notifications", account?.id],
     enabled: !!account,
@@ -80,221 +80,244 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-background/80 px-3 backdrop-blur-md sm:px-6">
-      <div className="flex min-w-0 items-center gap-3 md:hidden">
-        <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary font-display text-xs font-bold text-primary-foreground">
-          DS
+    <>
+      {impersonatedAccount && (
+        <div className="bg-indigo-600 px-4 py-2 flex items-center justify-between text-white text-sm">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">Viewing portal as:</span>
+            <span>
+              {impersonatedAccount.fullName} ({impersonatedAccount.role})
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-7 text-xs bg-white text-indigo-600 hover:bg-white/90"
+            onClick={() => {
+              stopImpersonating();
+              navigate({ to: "/admin/users" });
+            }}
+          >
+            Stop Impersonating
+          </Button>
         </div>
-      </div>
-
-      <button
-        onClick={() => setOpen(true)}
-        className="group ml-auto flex h-9 w-9 items-center justify-center gap-2 rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-accent md:mr-auto md:ml-0 md:w-80 md:justify-start md:px-3"
-      >
-        <Search className="size-4 shrink-0" />
-        <span className="hidden text-sm md:inline">Search deals, pages…</span>
-        <kbd className="ml-auto hidden rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] md:inline">
-          ⌘K
-        </kbd>
-      </button>
-
-      <div className="hidden items-center gap-2 lg:flex">
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1.5 text-xs"
-          onClick={() => toggleCalculator(true)}
-        >
-          <Calculator className="size-3.5 text-primary" /> Calculator
-        </Button>
-        <Button
-          size="sm"
-          className="gap-1.5 text-xs font-semibold shadow-sm"
-          onClick={() => setQuickModalOpen(true)}
-        >
-          <PlusCircle className="size-3.5" /> New Deal
-        </Button>
-      </div>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label="Theme">
-            {theme === "dark" ? (
-              <Moon className="size-5" />
-            ) : theme === "light" ? (
-              <Sun className="size-5" />
-            ) : (
-              <Monitor className="size-5" />
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={() => setTheme("light")}>
-            <Sun className="size-4" /> Light
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setTheme("dark")}>
-            <Moon className="size-4" /> Dark
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setTheme("system")}>
-            <Monitor className="size-4" /> System
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <Popover
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen || unread === 0) return;
-          void supabase
-            .from("notification")
-            .update({ read_at: new Date().toISOString() })
-            .is("read_at", null)
-            .then(() => notificationQuery.refetch());
-        }}
-      >
-        <PopoverTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
-            <Bell className="size-5" />
-            {unread > 0 && (
-              <span className="absolute right-1 top-1 grid size-4 place-items-center rounded-full bg-destructive font-mono text-[9px] font-bold text-destructive-foreground">
-                {unread}
-              </span>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-80 p-0">
-          <div className="border-b border-border px-4 py-3 font-display text-sm font-semibold">
-            Notifications
+      )}
+      <header className="sticky top-0 z-40 w-full border-b border-border bg-card/80 backdrop-blur-md supports-backdrop-filter:bg-card/60">
+        <div className="flex min-w-0 items-center gap-3 md:hidden">
+          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary font-display text-xs font-bold text-primary-foreground">
+            DS
           </div>
-          <div className="max-h-80 overflow-y-auto">
-            {notifications.map((n) => (
-              <div
-                key={n.id}
-                className="flex gap-3 border-b border-border/60 px-4 py-3 last:border-0"
-              >
-                <span
-                  className={cn(
-                    "mt-1.5 size-2 shrink-0 rounded-full",
-                    n.tone === "danger" && "bg-destructive",
-                    n.tone === "warning" && "bg-warning",
-                    n.tone === "success" && "bg-success",
-                    n.tone === "info" && "bg-info",
-                  )}
-                />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{n.title}</p>
-                  <p className="text-xs text-muted-foreground">{n.body}</p>
-                  <p className="mt-1 text-[10px] text-muted-foreground">{dateFmt(n.at)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </PopoverContent>
-      </Popover>
+        </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-2 rounded-full pl-1 pr-2 transition-colors hover:bg-accent">
-            <Avatar className="size-8">
-              <AvatarFallback className="bg-primary text-xs text-primary-foreground">
-                {initials(me.name)}
-              </AvatarFallback>
-            </Avatar>
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>
-            <p className="text-sm font-medium">{me.name}</p>
-            <p className="text-xs font-normal text-muted-foreground">{agency.name}</p>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {["Principal", "Admin"].includes(role) && (
-            <DropdownMenuItem asChild>
-              <Link to="/admin">Admin Dashboard</Link>
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem asChild>
-            <Link to="/settings/profile">My profile</Link>
-          </DropdownMenuItem>
-          {["Principal", "Admin"].includes(role) && (
-            <DropdownMenuItem asChild>
-              <Link to="/admin/agency">Agency settings</Link>
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem asChild>
-            <Link to="/commission/earnings">My earnings</Link>
-          </DropdownMenuItem>
-          {["Principal", "Admin"].includes(role) && (
-            <DropdownMenuItem asChild>
-              <Link to="/register">Agent Registration</Link>
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => void handleSignOut()}>
-            <LogOut className="size-4" /> Sign out
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        <button
+          onClick={() => setOpen(true)}
+          className="group ml-auto flex h-9 w-9 items-center justify-center gap-2 rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-accent md:mr-auto md:ml-0 md:w-80 md:justify-start md:px-3"
+        >
+          <Search className="size-4 shrink-0" />
+          <span className="hidden text-sm md:inline">Search deals, pages…</span>
+          <kbd className="ml-auto hidden rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] md:inline">
+            ⌘K
+          </kbd>
+        </button>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Search deals by reference or address, or jump to a page…" />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Deals">
-            {deals.slice(0, 8).map((dl) => (
-              <CommandItem
-                key={dl.id}
-                value={`${dl.ref} ${propertyById(dl.propertyId).address}`}
-                onSelect={() => {
-                  setOpen(false);
-                  navigate({ to: "/deals/$dealId", params: { dealId: dl.id } });
-                }}
-              >
-                <span className="font-mono text-xs">{dl.ref}</span>
-                <span className="truncate text-muted-foreground">
-                  {propertyById(dl.propertyId).address}
+        <div className="hidden items-center gap-2 lg:flex">
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-xs"
+            onClick={() => toggleCalculator(true)}
+          >
+            <Calculator className="size-3.5 text-primary" /> Calculator
+          </Button>
+          <Button
+            size="sm"
+            className="gap-1.5 text-xs font-semibold shadow-sm"
+            onClick={() => setQuickModalOpen(true)}
+          >
+            <PlusCircle className="size-3.5" /> New Deal
+          </Button>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Theme">
+              {theme === "dark" ? (
+                <Moon className="size-5" />
+              ) : theme === "light" ? (
+                <Sun className="size-5" />
+              ) : (
+                <Monitor className="size-5" />
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => setTheme("light")}>
+              <Sun className="size-4" /> Light
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setTheme("dark")}>
+              <Moon className="size-4" /> Dark
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setTheme("system")}>
+              <Monitor className="size-4" /> System
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Popover
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen || unread === 0) return;
+            void supabase
+              .from("notification")
+              .update({ read_at: new Date().toISOString() })
+              .is("read_at", null)
+              .then(() => notificationQuery.refetch());
+          }}
+        >
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
+              <Bell className="size-5" />
+              {unread > 0 && (
+                <span className="absolute right-1 top-1 grid size-4 place-items-center rounded-full bg-destructive font-mono text-[9px] font-bold text-destructive-foreground">
+                  {unread}
                 </span>
-                <Badge variant="outline" className="ml-auto money text-[10px]">
-                  {zar(dl.salePrice, { decimals: false })}
-                </Badge>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-          <CommandGroup heading="Pages">
-            {navItems.map((item) => (
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-80 p-0">
+            <div className="border-b border-border px-4 py-3 font-display text-sm font-semibold">
+              Notifications
+            </div>
+            <div className="max-h-80 overflow-y-auto">
+              {notifications.map((n) => (
+                <div
+                  key={n.id}
+                  className="flex gap-3 border-b border-border/60 px-4 py-3 last:border-0"
+                >
+                  <span
+                    className={cn(
+                      "mt-1.5 size-2 shrink-0 rounded-full",
+                      n.tone === "danger" && "bg-destructive",
+                      n.tone === "warning" && "bg-warning",
+                      n.tone === "success" && "bg-success",
+                      n.tone === "info" && "bg-info",
+                    )}
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{n.title}</p>
+                    <p className="text-xs text-muted-foreground">{n.body}</p>
+                    <p className="mt-1 text-[10px] text-muted-foreground">{dateFmt(n.at)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-2 rounded-full pl-1 pr-2 transition-colors hover:bg-accent">
+              <Avatar className="size-8">
+                <AvatarFallback className="bg-primary text-xs text-primary-foreground">
+                  {initials(me.name)}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              <p className="text-sm font-medium">{me.name}</p>
+              <p className="text-xs font-normal text-muted-foreground">{agency.name}</p>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {["Principal", "Admin"].includes(role) && (
+              <DropdownMenuItem asChild>
+                <Link to="/admin">Admin Dashboard</Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem asChild>
+              <Link to="/settings/profile">My profile</Link>
+            </DropdownMenuItem>
+            {["Principal", "Admin"].includes(role) && (
+              <DropdownMenuItem asChild>
+                <Link to="/admin/agency">Agency settings</Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem asChild>
+              <Link to="/commission/earnings">My earnings</Link>
+            </DropdownMenuItem>
+            {["Principal", "Admin"].includes(role) && (
+              <DropdownMenuItem asChild>
+                <Link to="/register">Agent Registration</Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => void handleSignOut()}>
+              <LogOut className="size-4" /> Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <CommandDialog open={open} onOpenChange={setOpen}>
+          <CommandInput placeholder="Search deals by reference or address, or jump to a page…" />
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandGroup heading="Deals">
+              {deals.slice(0, 8).map((dl) => (
+                <CommandItem
+                  key={dl.id}
+                  value={`${dl.ref} ${propertyById(dl.propertyId).address}`}
+                  onSelect={() => {
+                    setOpen(false);
+                    navigate({ to: "/deals/$dealId", params: { dealId: dl.id } });
+                  }}
+                >
+                  <span className="font-mono text-xs">{dl.ref}</span>
+                  <span className="truncate text-muted-foreground">
+                    {propertyById(dl.propertyId).address}
+                  </span>
+                  <Badge variant="outline" className="ml-auto money text-[10px]">
+                    {zar(dl.salePrice, { decimals: false })}
+                  </Badge>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandGroup heading="Pages">
+              {navItems.map((item) => (
+                <CommandItem
+                  key={item.label}
+                  value={item.label}
+                  onSelect={() => {
+                    setOpen(false);
+                    if ("to" in item) {
+                      navigate({ to: item.to });
+                    } else if (item.label === "Calculators") {
+                      toggleCalculator(true);
+                    }
+                  }}
+                >
+                  <item.icon className="size-4" /> {item.label}
+                </CommandItem>
+              ))}
               <CommandItem
-                key={item.label}
-                value={item.label}
+                value="New deal"
                 onSelect={() => {
                   setOpen(false);
-                  if ("to" in item) {
-                    navigate({ to: item.to });
-                  } else if (item.label === "Calculators") {
-                    toggleCalculator(true);
-                  }
+                  navigate({ to: "/deals/new" });
                 }}
               >
-                <item.icon className="size-4" /> {item.label}
+                Create new deal
               </CommandItem>
-            ))}
-            <CommandItem
-              value="New deal"
-              onSelect={() => {
-                setOpen(false);
-                navigate({ to: "/deals/new" });
-              }}
-            >
-              Create new deal
-            </CommandItem>
-          </CommandGroup>
-        </CommandList>
-      </CommandDialog>
+            </CommandGroup>
+          </CommandList>
+        </CommandDialog>
 
-      <QuickDealModal
-        open={quickModalOpen}
-        onOpenChange={setQuickModalOpen}
-        onSuccess={(dealId) => navigate({ to: "/deals/$dealId", params: { dealId } })}
-      />
-    </header>
+        <QuickDealModal
+          open={quickModalOpen}
+          onOpenChange={setQuickModalOpen}
+          onSuccess={(dealId) => navigate({ to: "/deals/$dealId", params: { dealId } })}
+        />
+      </header>
+    </>
   );
 }
 

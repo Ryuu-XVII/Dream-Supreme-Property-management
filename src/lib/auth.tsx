@@ -6,6 +6,10 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   account: UserAccount | null;
+  activeAccount: UserAccount | null;
+  impersonatedAccount: UserAccount | null;
+  startImpersonating: (user: UserAccount) => void;
+  stopImpersonating: () => void;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -25,6 +29,10 @@ const AuthContext = createContext<AuthState>({
   user: null,
   session: null,
   account: null,
+  activeAccount: null,
+  impersonatedAccount: null,
+  startImpersonating: () => {},
+  stopImpersonating: () => {},
   loading: true,
   signOut: async () => undefined,
 });
@@ -33,7 +41,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [account, setAccount] = useState<UserAccount | null>(null);
+  const [impersonatedAccount, setImpersonatedAccount] = useState<UserAccount | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const activeAccount = impersonatedAccount ?? account;
+
+  const startImpersonating = (user: UserAccount) => {
+    setImpersonatedAccount(user);
+  };
+
+  const stopImpersonating = () => {
+    setImpersonatedAccount(null);
+  };
 
   useEffect(() => {
     let active = true;
@@ -102,7 +121,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, account, loading, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        account,
+        activeAccount,
+        impersonatedAccount,
+        startImpersonating,
+        stopImpersonating,
+        loading,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

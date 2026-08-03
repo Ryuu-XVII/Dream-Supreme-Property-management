@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useAuth, type UserAccount } from "@/lib/auth";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { GlassCard, EmptyState } from "@/components/ui-kit";
 import { Input } from "@/components/ui/input";
@@ -34,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Search, Plus, UserPlus, Pencil, Trash2, Percent, Loader2 } from "lucide-react";
+import { Search, Plus, UserPlus, Pencil, Trash2, Percent, Loader2, Eye } from "lucide-react";
 
 export const Route = createFileRoute("/admin/users")({
   component: AdminUsers,
@@ -42,6 +43,8 @@ export const Route = createFileRoute("/admin/users")({
 
 function AdminUsers() {
   const { data: usersList = [], isLoading, refetch } = useAdminUsers();
+  const navigate = useNavigate();
+  const { startImpersonating } = useAuth();
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<Role | "All">("All");
@@ -304,15 +307,37 @@ function AdminUsers() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         {(u.role === "Agent" || u.role === "Candidate") && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => startEdit(u)}
-                            className="text-xs mr-2"
-                          >
-                            <Percent className="size-3 mr-1" />
-                            Adjust Split
-                          </Button>
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                startImpersonating({
+                                  id: u.id,
+                                  agencyId: "current", // Assuming this is fine for frontend impersonation
+                                  branchId: null,
+                                  fullName: u.name,
+                                  email: u.email,
+                                  role: u.role.toLowerCase() as "agent" | "candidate",
+                                  status: u.active ? "active" : "suspended",
+                                });
+                                navigate({ to: "/" });
+                              }}
+                              className="text-xs mr-2"
+                            >
+                              <Eye className="size-3 mr-1" />
+                              View Portal
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => startEdit(u)}
+                              className="text-xs mr-2"
+                            >
+                              <Percent className="size-3 mr-1" />
+                              Adjust Split
+                            </Button>
+                          </>
                         )}
                         <Button
                           variant="ghost"

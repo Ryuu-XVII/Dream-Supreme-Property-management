@@ -2,9 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { conditionStatusFromDb, conditionTypeFromDb, stageFromDb } from "@/lib/domain";
 
+import { useAuth } from "@/lib/auth";
+
 export function useDashboardData() {
+  const { activeAccount } = useAuth();
   return useQuery({
-    queryKey: ["dashboard"],
+    queryKey: ["dashboard", activeAccount?.id],
     queryFn: async () => {
       const [dealResult, userResult, auditResult] = await Promise.all([
         supabase.from("deal").select(`
@@ -30,7 +33,14 @@ export function useDashboardData() {
       if (dealResult.error) throw dealResult.error;
       if (userResult.error) throw userResult.error;
 
-      const deals = (dealResult.data || []).map((deal: any) => ({
+      let filteredDealsData = dealResult.data || [];
+      if (activeAccount && (activeAccount.role === "agent" || activeAccount.role === "candidate")) {
+        filteredDealsData = filteredDealsData.filter((d: any) =>
+          d.participants?.some((p: any) => p.user?.id === activeAccount.id),
+        );
+      }
+
+      const deals = filteredDealsData.map((deal: any) => ({
         id: deal.id,
         ref: deal.reference,
         propertyId: deal.property?.id,
@@ -49,7 +59,7 @@ export function useDashboardData() {
       }));
 
       const dealById = new Map(deals.map((deal) => [deal.id, deal]));
-      const openConditions = (dealResult.data || []).flatMap((deal: any) =>
+      const openConditions = filteredDealsData.flatMap((deal: any) =>
         (deal.conditions || [])
           .filter(
             (condition: any) => condition.status === "pending" || condition.status === "extended",
