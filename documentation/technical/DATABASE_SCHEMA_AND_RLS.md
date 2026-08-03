@@ -43,7 +43,16 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 All Supabase schema migrations are stored sequentially in `supabase/migrations/` using 14-digit ISO-like UTC timestamps (`YYYYMMDDhhmmss_description.sql`).
 Migration timestamps are strictly unique to guarantee deterministic execution order during `supabase db reset` and automated CI database pipelines.
 
-## 3. Row Level Security (RLS) Strategy
+## 3. Database Indexing & Performance Strategy
+
+High-cardinality multi-tenant composite B-tree indexes are implemented across core entities:
+- `idx_user_account_agency_auth`: Multi-tenant user auth resolution (`agency_id`, `auth_user_id`).
+- `idx_property_agency_status`: Property filtering & sorting (`agency_id`, `status`, `created_at DESC`).
+- `idx_mandate_agency_property`: Listing lookup (`agency_id`, `property_id`, `status`).
+- `idx_deal_agency_stage`: Pipeline stage sorting (`agency_id`, `stage`, `created_at DESC`).
+- `idx_deal_participant_deal_user`: Deal participant lookup (`deal_id`, `user_account_id`).
+
+## 4. Row Level Security (RLS) Strategy
 
 All tables enforce RLS to guarantee data boundaries. All policy comparisons against `auth.uid()` enforce explicit `::uuid` type casting (`auth.uid()::uuid = auth_user_id`) to prevent PostgreSQL type mismatch errors.
 
