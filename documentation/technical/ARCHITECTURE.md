@@ -15,9 +15,12 @@ This document outlines the core architecture of the Dream Supreme Property Manag
 
 The application operates as a **Monolith with Subdirectory Routing**, serving two distinct portals based on the user's authenticated role (`Principal`, `Admin`, `Agent`, `Candidate`):
 
-- **Agent Portal (Main App)**: Resides in the root (`/`, `/mandates`, `/rentals`, `/pipeline`, `/countdown`, `/commission`, `/clients`, `/compliance/ffc`, `/documents`, `/calculators/bond`, `/leads`, `/reports`, `/settings/agency`). Wrapped by `<AppShell>` which includes the full sidebar navigation (Dashboard, Mandates, Rentals, Pipeline, Countdown Board, Commission, Clients, Compliance, Documents, Calculators, Leads, Reports, Settings) and top header with quick action buttons (Quick Calculator link, New Deal modal trigger, Theme switcher, Notification popover, and User avatar menu). Restricted to Agents, Candidates, and Principals.
+- **Agent Portal (Main App)**: Resides in the root (`/`, `/mandates`, `/rentals`, `/pipeline`, `/countdown`, `/commission`, `/clients`, `/compliance/ffc`, `/documents`, `/leads`, `/reports`, `/settings/agency`). Wrapped by `<AppShell>` which includes the full sidebar navigation (Dashboard, Mandates, Rentals, Pipeline, Countdown Board, Commission, Clients, Compliance, Documents, Leads, Reports, Settings) and top header with quick action buttons (Quick Floating Calculator popup, New Deal modal trigger, Theme switcher, Notification popover, and User avatar menu). Restricted to Agents, Candidates, and Principals.
 - **Admin Portal**: Resides under `/admin/*`. Wrapped by `<AdminShell>` with its own dedicated sidebar and header. Restricted strictly to Admins and Principals.
 - **Conveyancer Portal (Public Links)**: Resides under `/conveyancer`. This is a standalone, public-facing portal accessed via secure "magic links" (URL tokens). Conveyancers do NOT require user accounts and do not use the standard login flow.
+
+**Testing & Calculation Engine**:
+- Spreadsheet multi-tier commission waterfall formulas (Royalty, Franchise, Office Split, Desk Fee) are unit tested in [`tests/agent-commission-spreadsheet.test.ts`](file:///c:/Personal%20Projects/FOCI%20PROJECTS/Dream-Supreme-Property-management/tests/agent-commission-spreadsheet.test.ts).
 
 **Enforcement Strategy**:
 Role-Based Access Control (RBAC) is enforced client-side via the `<AuthGuard>` in `src/routes/__root.tsx`.

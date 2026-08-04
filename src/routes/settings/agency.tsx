@@ -184,13 +184,24 @@ function AgencyProfilePage() {
                       <Label htmlFor="logo-upload" className="text-xs font-medium">
                         Agency Logo
                       </Label>
-                      <Input
-                        id="logo-upload"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleLogo}
-                        className="mt-1 max-w-xs"
-                      />
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <label
+                          htmlFor="logo-upload"
+                          className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-input bg-background/50 px-3.5 text-xs font-medium backdrop-blur-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          Choose file
+                        </label>
+                        <span className="text-xs text-muted-foreground">
+                          {logo ? "Logo selected" : "No file chosen"}
+                        </span>
+                        <input
+                          id="logo-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogo}
+                          className="sr-only"
+                        />
+                      </div>
                     </div>
                   </div>
                   <FormField

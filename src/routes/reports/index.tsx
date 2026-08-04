@@ -26,7 +26,7 @@ export const Route = createFileRoute("/reports/")({
 
 const totalCancellations = fallThroughReasons.reduce((a, r) => a + r.count, 0);
 const activeDeals = deals.filter((d) => !d.cancelled).length;
-const lastMonth = monthlyCommission[monthlyCommission.length - 1];
+const lastMonth = monthlyCommission[monthlyCommission.length - 1] ?? { gross: 0 };
 const compliantUsers = users.filter(
   (u) => u.ffc && new Date(u.ffc.expiry ?? 0) > new Date(),
 ).length;
@@ -64,7 +64,7 @@ const reportCards = [
     title: "Compliance Report",
     description: "FFC status across agents and FICA completion rates by party type.",
     icon: ShieldCheck,
-    stat: `${pct(Math.round((compliantUsers / users.length) * 10000))} agents FFC current`,
+    stat: `${pct(users.length ? Math.round((compliantUsers / users.length) * 10000) : 0)} agents FFC current`,
     tone: "bg-warning/15 text-warning",
   },
 ] as const;

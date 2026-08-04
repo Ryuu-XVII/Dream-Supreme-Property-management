@@ -71,16 +71,15 @@ function MandatesRegister() {
       title="Mandate Register"
       description="View and manage all active property mandates."
       actions={
-        <Button asChild>
-          <Link to="/mandates/new">
-            <PlusCircle className="mr-2 size-4" /> New Mandate
-          </Link>
+        <Button onClick={() => setOpenCapture(true)}>
+          <PlusCircle className="mr-2 size-4" /> New Mandate
         </Button>
       }
     >
       <QuickDealModal
         open={openCapture}
         onOpenChange={setOpenCapture}
+        initialType="mandate"
         onSuccess={() => mandatesQuery.refetch()}
       />
       <GlassCard className="p-0">

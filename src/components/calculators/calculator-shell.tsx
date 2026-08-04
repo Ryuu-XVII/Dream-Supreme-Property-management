@@ -174,7 +174,7 @@ export function CalculatorShell({
       </main>
 
       <footer className="border-t border-white/20 py-6 text-center text-xs text-muted-foreground">
-        Powered by <span className="font-medium text-foreground">Mandate</span>
+        Powered by <span className="font-medium text-foreground">Dream Supreme Properties</span>
       </footer>
     </div>
   );

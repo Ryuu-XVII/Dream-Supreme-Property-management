@@ -130,7 +130,6 @@ function Index() {
               <KpiCard
                 label="Active Deals"
                 value={activeDeals.length}
-                trend={8}
                 sub="vs. last month"
                 icon={Activity}
                 delay={0}
@@ -160,7 +159,6 @@ function Index() {
               <KpiCard
                 label="Commission MTD"
                 value={zarCompact(commissionMTD)}
-                trend={12}
                 sub="Gross, registered deals"
                 icon={Banknote}
                 delay={0.2}
@@ -209,6 +207,11 @@ function Index() {
             <p className="text-xs text-muted-foreground">Projected gross commission</p>
             {loading ? (
               <div className="mt-4 h-64 animate-pulse rounded-lg bg-muted" />
+            ) : forecast.length === 0 ? (
+              <EmptyState
+                title="No forecast data"
+                message="No projected deals in the current forecast timeline."
+              />
             ) : (
               <div className="mt-4 h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -331,6 +334,11 @@ function Index() {
                   <div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />
                 ))}
               </div>
+            ) : recentEvents.length === 0 ? (
+              <EmptyState
+                title="No recent activity"
+                message="No recent system actions or audit logs recorded."
+              />
             ) : (
               <ol className="mt-4 space-y-0 border-l border-border pl-4">
                 {recentEvents.map((e, i) => (

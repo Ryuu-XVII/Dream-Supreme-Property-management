@@ -23,6 +23,7 @@ import {
   userById,
   netPayable,
 } from "@/data/mock";
+import { useAuth } from "@/lib/auth";
 import { dateFmt, zar } from "@/lib/format";
 
 export const Route = createFileRoute("/commission/earnings")({
@@ -32,20 +33,18 @@ export const Route = createFileRoute("/commission/earnings")({
       {
         name: "description",
         content:
-          "Riaan van Niekerk's year-to-date commission earnings, deal breakdown, advances and tier progress.",
+          "Agent year-to-date commission earnings, deal breakdown, advances and tier progress.",
       },
       { property: "og:title", content: "Agent Earnings | Dream Supreme Properties" },
       {
         property: "og:description",
         content:
-          "Riaan van Niekerk's year-to-date commission earnings, deal breakdown, advances and tier progress.",
+          "Agent year-to-date commission earnings, deal breakdown, advances and tier progress.",
       },
     ],
   }),
   component: EarningsPage,
 });
-
-const AGENT_ID = "u2"; // Riaan van Niekerk
 
 const TIERS = [
   { threshold: 0, split: 45 },
@@ -56,23 +55,34 @@ const TIERS = [
 
 function EarningsPage() {
   const loading = useFakeLoad(500);
-  const agent = userById(AGENT_ID);
+  const { account } = useAuth();
+  const currentAgentId = account?.id ?? "u2";
+  const agent = userById(currentAgentId) ?? {
+    name: account?.fullName ?? "Agent User",
+    role: account?.role ?? "Broker / Practitioner",
+  };
 
   const myRegisteredDeals = useMemo(
-    () => deals.filter((d) => d.registeredAt && d.practitioners.some((p) => p.userId === AGENT_ID)),
-    [],
+    () =>
+      deals.filter(
+        (d) => d.registeredAt && d.practitioners.some((p) => p.userId === currentAgentId),
+      ),
+    [currentAgentId],
   );
 
-  const myAdvances = useMemo(() => advances.filter((a) => a.userId === AGENT_ID), []);
+  const myAdvances = useMemo(
+    () => advances.filter((a) => a.userId === currentAgentId),
+    [currentAgentId],
+  );
 
   const dealRows = useMemo(
     () =>
       myRegisteredDeals.map((dl) => {
-        const pr = dl.practitioners.find((p) => p.userId === AGENT_ID)!;
-        const commission = Math.round((netPayable(dl) * pr.splitPct) / 100);
+        const pr = dl.practitioners.find((p) => p.userId === currentAgentId)!;
+        const commission = Math.round((netPayable(dl) * (pr?.splitPct ?? 50)) / 100);
         return { deal: dl, property: propertyById(dl.propertyId), commission };
       }),
-    [myRegisteredDeals],
+    [myRegisteredDeals, currentAgentId],
   );
 
   const ytdEarnings = dealRows.reduce((s, r) => s + r.commission, 0);
@@ -84,14 +94,16 @@ function EarningsPage() {
       deals
         .filter(
           (d) =>
-            !d.registeredAt && !d.cancelled && d.practitioners.some((p) => p.userId === AGENT_ID),
+            !d.registeredAt &&
+            !d.cancelled &&
+            d.practitioners.some((p) => p.userId === currentAgentId),
         )
         .reduce((s, d) => {
-          const pr = d.practitioners.find((p) => p.userId === AGENT_ID)!;
+          const pr = d.practitioners.find((p) => p.userId === currentAgentId)!;
           const gross = Math.round((d.salePrice * d.commissionBps) / 10000);
-          return s + Math.round(((gross * pr.splitPct) / 100) * 0.5);
+          return s + Math.round(((gross * (pr?.splitPct ?? 50)) / 100) * 0.5);
         }, 0),
-    [],
+    [currentAgentId],
   );
 
   const currentTierIndex = TIERS.reduce((acc, t, i) => (ytdEarnings >= t.threshold ? i : acc), 0);
@@ -117,7 +129,7 @@ function EarningsPage() {
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr]">
         <div className="glass lift relative overflow-hidden rounded-xl p-6">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-success/10" />
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/15 via-transparent to-success/10" />
           <div className="relative">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               YTD Total Earnings
@@ -217,7 +229,7 @@ function EarningsPage() {
                     <TableCell className="whitespace-nowrap">
                       {deal.registeredAt ? dateFmt(deal.registeredAt) : "—"}
                     </TableCell>
-                    <TableCell className="min-w-0 max-w-[240px] truncate">
+                    <TableCell className="min-w-0 max-w-60 truncate">
                       {property.address}, {property.suburb}
                     </TableCell>
                     <TableCell className="money text-right whitespace-nowrap">

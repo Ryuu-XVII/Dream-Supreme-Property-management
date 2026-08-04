@@ -337,40 +337,6 @@ function CommissionRulesPage() {
         )}
       </GlassCard>
 
-      <GlassCard>
-        <h2 className="mb-1 font-display text-lg font-semibold">Template Rule Sets</h2>
-        <p className="mb-4 text-sm text-muted-foreground">
-          Start from a well-known franchise commission model.
-        </p>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {ruleTemplates.map((t, i) => (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-            >
-              <button
-                onClick={() => openFromTemplate(t)}
-                className="lift flex h-full w-full flex-col items-start gap-2 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/40"
-              >
-                <span className="flex items-center gap-2 font-display text-sm font-semibold">
-                  <Sparkles className="size-4 text-primary" /> {t.name}
-                </span>
-                <p className="text-xs text-muted-foreground">{t.blurb}</p>
-                <div className="mt-auto flex flex-wrap gap-1.5 pt-2">
-                  <Badge variant="outline">{(t.bps / 100).toFixed(1)}% comm.</Badge>
-                  <Badge variant="outline">{t.office}% office</Badge>
-                  {t.franchise > 0 && (
-                    <Badge variant="outline">{(t.franchise / 100).toFixed(1)}% franchise</Badge>
-                  )}
-                </div>
-              </button>
-            </motion.div>
-          ))}
-        </div>
-      </GlassCard>
-
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
         <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto scrollbar-thin">
           {editing && (

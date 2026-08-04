@@ -2,13 +2,13 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
-  FileSignature,
+  FileText,
   Home,
   KanbanSquare,
   Timer,
   Coins,
-  ShieldCheck,
   Users,
+  ShieldCheck,
   FolderOpen,
   Calculator,
   Users2,
@@ -24,7 +24,7 @@ import { useState } from "react";
 
 export const navItems = [
   { label: "Dashboard", to: "/", icon: LayoutDashboard },
-  { label: "Mandates", to: "/mandates", icon: FileSignature },
+  { label: "Mandates", to: "/mandates", icon: FileText },
   { label: "Rentals", to: "/rentals", icon: Home },
   { label: "Pipeline", to: "/pipeline", icon: KanbanSquare },
   { label: "Countdown Board", to: "/countdown", icon: Timer },
@@ -32,7 +32,6 @@ export const navItems = [
   { label: "Clients", to: "/clients", icon: Users },
   { label: "Compliance", to: "/compliance/ffc", icon: ShieldCheck },
   { label: "Documents", to: "/documents", icon: FolderOpen },
-  { label: "Calculators", to: "/calculators/bond", icon: Calculator },
   { label: "Leads", to: "/leads", icon: Users2 },
   { label: "Reports", to: "/reports", icon: BarChart3 },
   { label: "Settings", to: "/settings/agency", icon: Settings },
@@ -49,8 +48,8 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
             : pathname.startsWith(item.to.split("/").slice(0, 2).join("/"));
         return (
           <Link
-            key={item.to}
-            to={item.to as any}
+            key={item.label}
+            to={item.to}
             onClick={onNavigate}
             title={item.label}
             className={cn(
@@ -66,7 +65,7 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
                 className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-sidebar-primary"
               />
             )}
-            <item.icon className="size-[18px] shrink-0" />
+            <item.icon className="size-4.5 shrink-0" />
             {!collapsed && <span className="truncate">{item.label}</span>}
           </Link>
         );
@@ -81,7 +80,7 @@ export function Sidebar() {
     <aside
       className={cn(
         "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar/80 backdrop-blur-xl backdrop-saturate-150 transition-[width] duration-300 md:flex",
-        sidebarCollapsed ? "w-[76px]" : "w-64",
+        sidebarCollapsed ? "w-19" : "w-64",
       )}
     >
       <div className="flex h-16 items-center gap-3 px-5">
@@ -147,7 +146,7 @@ export function MobileNav() {
           return (
             <Link
               key={item.label}
-              to={item.to as any}
+              to={item.to}
               className={cn(
                 "flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium",
                 active ? "text-primary" : "text-muted-foreground",

@@ -1,16 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import {
-  Bell,
-  Search,
-  Sun,
-  Moon,
-  Monitor,
-  UserCog,
-  LogOut,
-  ChevronDown,
-  Calculator,
-  PlusCircle,
-} from "lucide-react";
+import { Bell, Search, Sun, Moon, Monitor, LogOut, Calculator, PlusCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +22,7 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useApp } from "@/lib/app-state";
+import { useAuth } from "@/lib/auth";
 import { deals, notifications, users, agency, type Role } from "@/data/mock";
 import { initials, zar, relative, dateFmt } from "@/lib/format";
 import { propertyById } from "@/data/mock";
@@ -41,13 +31,17 @@ import { cn } from "@/lib/utils";
 
 import { QuickDealModal } from "@/components/deal/quick-deal-modal";
 
+import { FloatingCalculatorModal } from "@/components/calculators/floating-calculator-modal";
+
 const roles: Role[] = ["Principal", "Agent", "Candidate", "Admin"];
 
 export function Header() {
   const [open, setOpen] = useState(false);
   const [openCapture, setOpenCapture] = useState(false);
+  const [calcOpen, setCalcOpen] = useState(false);
   const navigate = useNavigate();
   const { theme, setTheme, role, setRole } = useApp();
+  const { account } = useAuth();
   const unread = notifications.filter((n) => n.unread).length;
 
   useEffect(() => {
@@ -61,7 +55,9 @@ export function Header() {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  const me = users[0];
+  const me = account
+    ? { name: account.fullName, email: account.email }
+    : (users[0] ?? { name: "Agent User", email: "agent@dreamsupreme.co.za" });
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-white/20 bg-background/50 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-6">
@@ -83,10 +79,13 @@ export function Header() {
       </button>
 
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" asChild className="hidden gap-1.5 sm:inline-flex">
-          <Link to="/calculators/bond">
-            <Calculator className="size-4" /> Calculator
-          </Link>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCalcOpen(true)}
+          className="hidden gap-1.5 sm:inline-flex"
+        >
+          <Calculator className="size-4" /> Calculator
         </Button>
         <Button size="sm" asChild className="gap-1.5 font-medium">
           <Link to="/deals/new">
@@ -96,6 +95,7 @@ export function Header() {
       </div>
 
       <QuickDealModal open={openCapture} onOpenChange={setOpenCapture} />
+      <FloatingCalculatorModal open={calcOpen} onOpenChange={setCalcOpen} />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
