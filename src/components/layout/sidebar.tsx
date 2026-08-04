@@ -24,7 +24,7 @@ import { useState } from "react";
 
 export const navItems = [
   { label: "Dashboard", to: "/", icon: LayoutDashboard },
-  { label: "Mandates", to: "/mandates", icon: FileText },
+  { label: "Listings", to: "/mandates", icon: FileText },
   { label: "Rentals", to: "/rentals", icon: Home },
   { label: "Pipeline", to: "/pipeline", icon: KanbanSquare },
   { label: "Countdown Board", to: "/countdown", icon: Timer },
