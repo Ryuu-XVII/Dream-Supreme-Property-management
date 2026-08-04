@@ -172,31 +172,107 @@ function AdminSettings() {
 
           <TabsContent value="financial" className="space-y-6">
             <GlassCard>
-              <h3 className="font-display text-base font-semibold mb-4">Financial & Defaults</h3>
-              <form onSubmit={handleSave} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Default Currency</Label>
-                    <Input defaultValue="ZAR" disabled />
+              <div className="flex items-center gap-2 mb-4">
+                <Wallet className="size-5 text-indigo-500" />
+                <h3 className="font-display text-base font-semibold">
+                  Financial & Accounting Controls
+                </h3>
+              </div>
+              <form onSubmit={handleSave} className="space-y-8">
+                {/* Core Financial Settings */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-muted-foreground border-b border-border pb-2">
+                    Core Settings
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <Label>Default Currency</Label>
+                      <Select defaultValue="ZAR">
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ZAR">ZAR - South African Rand</SelectItem>
+                          <SelectItem value="USD">USD - US Dollar</SelectItem>
+                          <SelectItem value="EUR">EUR - Euro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Default VAT Rate (%)</Label>
+                      <Input type="number" defaultValue="15" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Agency VAT Registration Number</Label>
+                      <Input defaultValue="4123456789" />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Global Commission Rules & Tax</Label>
-                    <p className="text-xs text-muted-foreground pb-2">
-                      Tax rates, desk fees, franchise fees, and default company cuts have been moved
-                      to the new centralized Rules Engine.
-                    </p>
-                    <Link
-                      to="/admin/commission-rules"
-                      className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-                    >
-                      Manage Commission Rules
-                    </Link>
+                </div>
+
+                {/* Trust Accounting */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-muted-foreground border-b border-border pb-2">
+                    Trust Accounting (Section 86)
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label>Interest Distribution to Fidelity Fund (%)</Label>
+                      <Input type="number" defaultValue="50" max="100" />
+                      <p className="text-xs text-muted-foreground">
+                        Statutory requirement for Section 86(1) accounts.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Interest Distribution to Agency (%)</Label>
+                      <Input type="number" defaultValue="50" max="100" />
+                    </div>
+                    <div className="space-y-2 flex flex-col justify-end">
+                      <div className="flex items-center justify-between">
+                        <Label>Require Principal Approval for Trust Payouts</Label>
+                        <Switch defaultChecked />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reporting & Compliance */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-muted-foreground border-b border-border pb-2">
+                    Reporting & Commission
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label>Financial Year End</Label>
+                      <Select defaultValue="feb">
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="feb">February (Standard SA)</SelectItem>
+                          <SelectItem value="dec">December</SelectItem>
+                          <SelectItem value="jun">June</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Global Commission Rules</Label>
+                      <p className="text-xs text-muted-foreground pb-2">
+                        Tax rates, desk fees, franchise fees, and default company cuts are managed
+                        in the centralized Rules Engine.
+                      </p>
+                      <Link
+                        to="/admin/commission-rules"
+                        className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground w-full"
+                      >
+                        Manage Commission Rules
+                      </Link>
+                    </div>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-border flex justify-end">
                   <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                    <Save className="size-4 mr-2" /> Save Settings
+                    <Save className="size-4 mr-2" /> Save Financial Settings
                   </Button>
                 </div>
               </form>
