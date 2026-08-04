@@ -1,5 +1,9 @@
 # Dream Supreme Property Management
 
+> **Live Portals**:
+> - 🏢 **Agent Portal**: [https://dream-supreme-property-management.vercel.app](https://dream-supreme-property-management.vercel.app)
+> - 🛡️ **Admin Portal**: [https://admin-dreamsupreme.vercel.app](https://admin-dreamsupreme.vercel.app)
+
 Welcome to the **Dream Supreme** internal operations platform.
 
 Dream Supreme is a modern, next-generation web application designed to handle the end-to-end lifecycle of South African real estate operations. It operates as a secure, multi-tenant portal that enables property practitioners, principals, admins, and conveyancing attorneys to collaborate seamlessly.
