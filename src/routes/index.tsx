@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { motion } from "framer-motion";
 import { Activity, AlertTriangle, Banknote, Calendar, ShieldAlert } from "lucide-react";
@@ -54,6 +54,22 @@ const shortStage: Record<string, string> = {
 };
 
 function Index() {
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hostname = window.location.hostname;
+      const isAdminDomain =
+        hostname.startsWith("admin.") ||
+        hostname.startsWith("admin-") ||
+        hostname === "admin.localhost" ||
+        (import.meta.env.VITE_ADMIN_DOMAIN &&
+          (window.location.origin === import.meta.env.VITE_ADMIN_DOMAIN ||
+            window.location.hostname === import.meta.env.VITE_ADMIN_DOMAIN));
+      if (isAdminDomain) {
+        window.location.replace("/admin");
+      }
+    }
+  }, []);
+
   const loading = useFakeLoad(600);
   const today = new Date();
 
