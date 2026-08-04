@@ -7,11 +7,12 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { AppProvider } from "@/lib/app-state";
 
 import appCss from "../styles.css?url";
+import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
   return (
@@ -45,6 +46,9 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  useEffect(() => {
+    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -99,9 +103,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap",
       },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
-      { rel: "shortcut icon", href: "/favicon.ico" },
+      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
   shellComponent: RootShell,
@@ -114,117 +116,16 @@ function RootShell({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-import { AuthProvider, useAuth } from "@/lib/auth";
-
-function AuthGuard({ children }: { children: ReactNode }) {
-  const { session, account, loading, signOut } = useAuth();
-  const router = useRouter();
-  const [currentPath, setCurrentPath] = useState("");
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setCurrentPath(window.location.pathname);
-    }
-  }, []);
-
-  const isPublicPath = (path: string) =>
-    path === "/login" ||
-    path === "/register" ||
-    path === "/sitemap.xml" ||
-    path.startsWith("/calculators/") ||
-    path.startsWith("/sign") ||
-    path.startsWith("/conveyancer");
-
-  useEffect(() => {
-    if (!loading && !session) {
-      const path = window.location.pathname;
-      if (!isPublicPath(path)) {
-        router.navigate({ to: "/login", replace: true });
-      }
-    } else if (!loading && session && account) {
-      const path = window.location.pathname;
-      const isAdminPath = path.startsWith("/admin");
-
-      // Admins are locked strictly to the admin portal
-      if (account.role === "admin" && !isAdminPath && !isPublicPath(path)) {
-        router.navigate({ to: "/admin", replace: true });
-      }
-      // Agents and Candidates are locked strictly to the main app
-      else if ((account.role === "agent" || account.role === "candidate") && isAdminPath) {
-        router.navigate({ to: "/", replace: true });
-      }
-      // Principals have access to both, so no restrictive redirect needed for them
-    }
-  }, [session, account, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-        Loading secure session…
-      </div>
-    );
-  }
-
-  if (session && !account) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-center px-4">
-        <div className="max-w-sm space-y-2">
-          <h2 className="text-lg font-semibold text-foreground">Account Not Found</h2>
-          <p className="text-sm text-muted-foreground">
-            We found your login session, but your agency profile is missing. This usually happens if
-            the database was reset.
-          </p>
-        </div>
-        <button
-          onClick={async () => {
-            try {
-              await signOut();
-            } catch (e) {
-              console.error(e);
-              // Force clear everything if supabase signout fails
-              localStorage.clear();
-              sessionStorage.clear();
-            } finally {
-              window.location.href = "/login";
-            }
-          }}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          Clear Session & Sign In Again
-        </button>
-      </div>
-    );
-  }
-
-  const publicPath = isPublicPath(currentPath);
-  if (!session && !publicPath) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-        Redirecting to sign in…
-      </div>
-    );
-  }
-  return <>{children}</>;
-}
-
-import { MotionConfig } from "framer-motion";
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
-    <MotionConfig reducedMotion="user">
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <AppProvider>
-            <AuthGuard>
-              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-              <Outlet />
-            </AuthGuard>
-            <Toaster position="top-right" richColors closeButton />
-          </AppProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </MotionConfig>
+    <QueryClientProvider client={queryClient}>
+      <AppProvider>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <Toaster position="top-right" richColors closeButton />
+      </AppProvider>
+    </QueryClientProvider>
   );
 }

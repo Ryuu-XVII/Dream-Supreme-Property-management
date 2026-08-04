@@ -30,8 +30,9 @@ function RentalsDashboard() {
 
   const leasesQuery = useQuery({
     queryKey: ["leases", account?.agencyId],
-    enabled: !!account,
+    enabled: !!account?.agencyId || !!account,
     queryFn: async () => {
+      if (!account?.agencyId) return [];
       const { data, error } = await supabase
         .from("lease")
         .select(

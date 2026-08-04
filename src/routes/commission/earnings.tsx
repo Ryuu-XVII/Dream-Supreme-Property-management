@@ -15,10 +15,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { monthlyCommission, advances } from "@/data/state";
+import {
+  deals,
+  propertyById,
+  monthlyCommission,
+  advances,
+  userById,
+  netPayable,
+} from "@/data/mock";
+import { useAuth } from "@/lib/auth";
 import { dateFmt, zar } from "@/lib/format";
-
-import { useMyEarnings } from "@/data/deals";
 
 export const Route = createFileRoute("/commission/earnings")({
   head: () => ({
@@ -26,12 +32,14 @@ export const Route = createFileRoute("/commission/earnings")({
       { title: "Agent Earnings | Dream Supreme Properties" },
       {
         name: "description",
-        content: "Year-to-date commission earnings, deal breakdown, advances and tier progress.",
+        content:
+          "Agent year-to-date commission earnings, deal breakdown, advances and tier progress.",
       },
       { property: "og:title", content: "Agent Earnings | Dream Supreme Properties" },
       {
         property: "og:description",
-        content: "Year-to-date commission earnings, deal breakdown, advances and tier progress.",
+        content:
+          "Agent year-to-date commission earnings, deal breakdown, advances and tier progress.",
       },
     ],
   }),
@@ -46,16 +54,57 @@ const TIERS = [
 ];
 
 function EarningsPage() {
-  const { data: earnings, isLoading } = useMyEarnings();
+  const loading = useFakeLoad(500);
+  const { account } = useAuth();
+  const currentAgentId = account?.id ?? "u2";
+  const agent = userById(currentAgentId) ?? {
+    name: account?.fullName ?? "Agent User",
+    role: account?.role ?? "Broker / Practitioner",
+  };
 
-  const ytdEarnings = earnings?.ytdEarnings || 0;
-  const pendingPipeline = earnings?.pendingPipeline || 0;
-  const dealsYtd = earnings?.dealsYtd || 0;
-  const avgPerDeal = earnings?.avgPerDeal || 0;
-  const dealRows = earnings?.dealRows || [];
-  const agentName = earnings?.agentName || "Agent";
-  const loading = isLoading;
-  const myAdvances = advances;
+  const myRegisteredDeals = useMemo(
+    () =>
+      deals.filter(
+        (d) => d.registeredAt && d.practitioners.some((p) => p.userId === currentAgentId),
+      ),
+    [currentAgentId],
+  );
+
+  const myAdvances = useMemo(
+    () => advances.filter((a) => a.userId === currentAgentId),
+    [currentAgentId],
+  );
+
+  const dealRows = useMemo(
+    () =>
+      myRegisteredDeals.map((dl) => {
+        const pr = dl.practitioners.find((p) => p.userId === currentAgentId)!;
+        const commission = Math.round((netPayable(dl) * (pr?.splitPct ?? 50)) / 100);
+        return { deal: dl, property: propertyById(dl.propertyId), commission };
+      }),
+    [myRegisteredDeals, currentAgentId],
+  );
+
+  const ytdEarnings = dealRows.reduce((s, r) => s + r.commission, 0);
+  const dealsYtd = dealRows.length;
+  const avgPerDeal = dealsYtd > 0 ? Math.round(ytdEarnings / dealsYtd) : 0;
+
+  const pendingPipeline = useMemo(
+    () =>
+      deals
+        .filter(
+          (d) =>
+            !d.registeredAt &&
+            !d.cancelled &&
+            d.practitioners.some((p) => p.userId === currentAgentId),
+        )
+        .reduce((s, d) => {
+          const pr = d.practitioners.find((p) => p.userId === currentAgentId)!;
+          const gross = Math.round((d.salePrice * d.commissionBps) / 10000);
+          return s + Math.round(((gross * (pr?.splitPct ?? 50)) / 100) * 0.5);
+        }, 0),
+    [currentAgentId],
+  );
 
   const currentTierIndex = TIERS.reduce((acc, t, i) => (ytdEarnings >= t.threshold ? i : acc), 0);
   const currentTier = TIERS[currentTierIndex];
@@ -73,7 +122,7 @@ function EarningsPage() {
   return (
     <AppShell
       title="Agent Earnings"
-      description={`Year-to-date commission earnings for ${agentName}.`}
+      description={`Year-to-date commission earnings for ${agent.name}.`}
       crumbs={[{ label: "Commission", to: "/commission" }, { label: "Earnings" }]}
     >
       <CommissionTabs />

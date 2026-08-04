@@ -35,16 +35,26 @@ import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminTrustRouteImport } from './routes/admin/trust'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminWhatsappRouteImport } from './routes/admin/whatsapp'
+import { Route as CalculatorsAffordabilityRouteImport } from './routes/calculators/affordability'
+import { Route as CalculatorsBondRouteImport } from './routes/calculators/bond'
+import { Route as CalculatorsTransferRouteImport } from './routes/calculators/transfer'
+import { Route as CalculatorsYieldRouteImport } from './routes/calculators/yield'
 import { Route as CommissionIndexRouteImport } from './routes/commission/index'
 import { Route as CommissionEarningsRouteImport } from './routes/commission/earnings'
 import { Route as CommissionReconciliationRouteImport } from './routes/commission/reconciliation'
+import { Route as ComplianceAuditRouteImport } from './routes/compliance/audit'
+import { Route as ComplianceFfcRouteImport } from './routes/compliance/ffc'
+import { Route as ComplianceFicaRouteImport } from './routes/compliance/fica'
 import { Route as DealsDealIdRouteImport } from './routes/deals/$dealId'
 import { Route as DealsNewRouteImport } from './routes/deals/new'
+import { Route as MandatesNewRouteImport } from './routes/mandates/new'
 import { Route as RentalsIndexRouteImport } from './routes/rentals/index'
 import { Route as RentalsLeaseIdRouteImport } from './routes/rentals/$leaseId'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as ReportsReportRouteImport } from './routes/reports/$report'
-import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
+import { Route as SettingsAgencyRouteImport } from './routes/settings/agency'
+import { Route as SettingsNotificationsRouteImport } from './routes/settings/notifications'
+import { Route as SettingsUsersRouteImport } from './routes/settings/users'
 import { Route as SetupIndexRouteImport } from './routes/setup/index'
 import { Route as SetupImportRouteImport } from './routes/setup/import'
 import { Route as AdminComplianceAuditRouteImport } from './routes/admin/compliance/audit'
@@ -181,6 +191,27 @@ const AdminWhatsappRoute = AdminWhatsappRouteImport.update({
   path: '/whatsapp',
   getParentRoute: () => AdminRoute,
 } as any)
+const CalculatorsAffordabilityRoute =
+  CalculatorsAffordabilityRouteImport.update({
+    id: '/calculators/affordability',
+    path: '/calculators/affordability',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CalculatorsBondRoute = CalculatorsBondRouteImport.update({
+  id: '/calculators/bond',
+  path: '/calculators/bond',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalculatorsTransferRoute = CalculatorsTransferRouteImport.update({
+  id: '/calculators/transfer',
+  path: '/calculators/transfer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalculatorsYieldRoute = CalculatorsYieldRouteImport.update({
+  id: '/calculators/yield',
+  path: '/calculators/yield',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CommissionIndexRoute = CommissionIndexRouteImport.update({
   id: '/commission/',
   path: '/commission/',
@@ -197,6 +228,21 @@ const CommissionReconciliationRoute =
     path: '/commission/reconciliation',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ComplianceAuditRoute = ComplianceAuditRouteImport.update({
+  id: '/compliance/audit',
+  path: '/compliance/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComplianceFfcRoute = ComplianceFfcRouteImport.update({
+  id: '/compliance/ffc',
+  path: '/compliance/ffc',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComplianceFicaRoute = ComplianceFicaRouteImport.update({
+  id: '/compliance/fica',
+  path: '/compliance/fica',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DealsDealIdRoute = DealsDealIdRouteImport.update({
   id: '/deals/$dealId',
   path: '/deals/$dealId',
@@ -206,6 +252,11 @@ const DealsNewRoute = DealsNewRouteImport.update({
   id: '/deals/new',
   path: '/deals/new',
   getParentRoute: () => rootRouteImport,
+} as any)
+const MandatesNewRoute = MandatesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => MandatesRoute,
 } as any)
 const RentalsIndexRoute = RentalsIndexRouteImport.update({
   id: '/rentals/',
@@ -227,9 +278,19 @@ const ReportsReportRoute = ReportsReportRouteImport.update({
   path: '/reports/$report',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsProfileRoute = SettingsProfileRouteImport.update({
-  id: '/settings/profile',
-  path: '/settings/profile',
+const SettingsAgencyRoute = SettingsAgencyRouteImport.update({
+  id: '/settings/agency',
+  path: '/settings/agency',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
+  id: '/settings/notifications',
+  path: '/settings/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsUsersRoute = SettingsUsersRouteImport.update({
+  id: '/settings/users',
+  path: '/settings/users',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SetupIndexRoute = SetupIndexRouteImport.update({
@@ -267,7 +328,7 @@ export interface FileRoutesByFullPath {
   '/documents': typeof DocumentsRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
-  '/mandates': typeof MandatesRoute
+  '/mandates': typeof MandatesRouteWithChildren
   '/pipeline': typeof PipelineRoute
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
@@ -284,13 +345,23 @@ export interface FileRoutesByFullPath {
   '/admin/trust': typeof AdminTrustRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/whatsapp': typeof AdminWhatsappRoute
+  '/calculators/affordability': typeof CalculatorsAffordabilityRoute
+  '/calculators/bond': typeof CalculatorsBondRoute
+  '/calculators/transfer': typeof CalculatorsTransferRoute
+  '/calculators/yield': typeof CalculatorsYieldRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
+  '/compliance/audit': typeof ComplianceAuditRoute
+  '/compliance/ffc': typeof ComplianceFfcRoute
+  '/compliance/fica': typeof ComplianceFicaRoute
   '/deals/$dealId': typeof DealsDealIdRoute
   '/deals/new': typeof DealsNewRoute
+  '/mandates/new': typeof MandatesNewRoute
   '/rentals/$leaseId': typeof RentalsLeaseIdRoute
   '/reports/$report': typeof ReportsReportRoute
-  '/settings/profile': typeof SettingsProfileRoute
+  '/settings/agency': typeof SettingsAgencyRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/users': typeof SettingsUsersRoute
   '/setup/import': typeof SetupImportRoute
   '/admin/': typeof AdminIndexRoute
   '/commission/': typeof CommissionIndexRoute
@@ -309,7 +380,7 @@ export interface FileRoutesByTo {
   '/documents': typeof DocumentsRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
-  '/mandates': typeof MandatesRoute
+  '/mandates': typeof MandatesRouteWithChildren
   '/pipeline': typeof PipelineRoute
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
@@ -326,13 +397,23 @@ export interface FileRoutesByTo {
   '/admin/trust': typeof AdminTrustRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/whatsapp': typeof AdminWhatsappRoute
+  '/calculators/affordability': typeof CalculatorsAffordabilityRoute
+  '/calculators/bond': typeof CalculatorsBondRoute
+  '/calculators/transfer': typeof CalculatorsTransferRoute
+  '/calculators/yield': typeof CalculatorsYieldRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
+  '/compliance/audit': typeof ComplianceAuditRoute
+  '/compliance/ffc': typeof ComplianceFfcRoute
+  '/compliance/fica': typeof ComplianceFicaRoute
   '/deals/$dealId': typeof DealsDealIdRoute
   '/deals/new': typeof DealsNewRoute
+  '/mandates/new': typeof MandatesNewRoute
   '/rentals/$leaseId': typeof RentalsLeaseIdRoute
   '/reports/$report': typeof ReportsReportRoute
-  '/settings/profile': typeof SettingsProfileRoute
+  '/settings/agency': typeof SettingsAgencyRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/users': typeof SettingsUsersRoute
   '/setup/import': typeof SetupImportRoute
   '/admin': typeof AdminIndexRoute
   '/commission': typeof CommissionIndexRoute
@@ -353,7 +434,7 @@ export interface FileRoutesById {
   '/documents': typeof DocumentsRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
-  '/mandates': typeof MandatesRoute
+  '/mandates': typeof MandatesRouteWithChildren
   '/pipeline': typeof PipelineRoute
   '/register': typeof RegisterRoute
   '/sign': typeof SignRoute
@@ -370,13 +451,23 @@ export interface FileRoutesById {
   '/admin/trust': typeof AdminTrustRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/whatsapp': typeof AdminWhatsappRoute
+  '/calculators/affordability': typeof CalculatorsAffordabilityRoute
+  '/calculators/bond': typeof CalculatorsBondRoute
+  '/calculators/transfer': typeof CalculatorsTransferRoute
+  '/calculators/yield': typeof CalculatorsYieldRoute
   '/commission/earnings': typeof CommissionEarningsRoute
   '/commission/reconciliation': typeof CommissionReconciliationRoute
+  '/compliance/audit': typeof ComplianceAuditRoute
+  '/compliance/ffc': typeof ComplianceFfcRoute
+  '/compliance/fica': typeof ComplianceFicaRoute
   '/deals/$dealId': typeof DealsDealIdRoute
   '/deals/new': typeof DealsNewRoute
+  '/mandates/new': typeof MandatesNewRoute
   '/rentals/$leaseId': typeof RentalsLeaseIdRoute
   '/reports/$report': typeof ReportsReportRoute
-  '/settings/profile': typeof SettingsProfileRoute
+  '/settings/agency': typeof SettingsAgencyRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/users': typeof SettingsUsersRoute
   '/setup/import': typeof SetupImportRoute
   '/admin/': typeof AdminIndexRoute
   '/commission/': typeof CommissionIndexRoute
@@ -415,13 +506,23 @@ export interface FileRouteTypes {
     | '/admin/trust'
     | '/admin/users'
     | '/admin/whatsapp'
+    | '/calculators/affordability'
+    | '/calculators/bond'
+    | '/calculators/transfer'
+    | '/calculators/yield'
     | '/commission/earnings'
     | '/commission/reconciliation'
+    | '/compliance/audit'
+    | '/compliance/ffc'
+    | '/compliance/fica'
     | '/deals/$dealId'
     | '/deals/new'
+    | '/mandates/new'
     | '/rentals/$leaseId'
     | '/reports/$report'
-    | '/settings/profile'
+    | '/settings/agency'
+    | '/settings/notifications'
+    | '/settings/users'
     | '/setup/import'
     | '/admin/'
     | '/commission/'
@@ -457,13 +558,23 @@ export interface FileRouteTypes {
     | '/admin/trust'
     | '/admin/users'
     | '/admin/whatsapp'
+    | '/calculators/affordability'
+    | '/calculators/bond'
+    | '/calculators/transfer'
+    | '/calculators/yield'
     | '/commission/earnings'
     | '/commission/reconciliation'
+    | '/compliance/audit'
+    | '/compliance/ffc'
+    | '/compliance/fica'
     | '/deals/$dealId'
     | '/deals/new'
+    | '/mandates/new'
     | '/rentals/$leaseId'
     | '/reports/$report'
-    | '/settings/profile'
+    | '/settings/agency'
+    | '/settings/notifications'
+    | '/settings/users'
     | '/setup/import'
     | '/admin'
     | '/commission'
@@ -500,13 +611,23 @@ export interface FileRouteTypes {
     | '/admin/trust'
     | '/admin/users'
     | '/admin/whatsapp'
+    | '/calculators/affordability'
+    | '/calculators/bond'
+    | '/calculators/transfer'
+    | '/calculators/yield'
     | '/commission/earnings'
     | '/commission/reconciliation'
+    | '/compliance/audit'
+    | '/compliance/ffc'
+    | '/compliance/fica'
     | '/deals/$dealId'
     | '/deals/new'
+    | '/mandates/new'
     | '/rentals/$leaseId'
     | '/reports/$report'
-    | '/settings/profile'
+    | '/settings/agency'
+    | '/settings/notifications'
+    | '/settings/users'
     | '/setup/import'
     | '/admin/'
     | '/commission/'
@@ -527,18 +648,27 @@ export interface RootRouteChildren {
   DocumentsRoute: typeof DocumentsRoute
   LeadsRoute: typeof LeadsRoute
   LoginRoute: typeof LoginRoute
-  MandatesRoute: typeof MandatesRoute
+  MandatesRoute: typeof MandatesRouteWithChildren
   PipelineRoute: typeof PipelineRoute
   RegisterRoute: typeof RegisterRoute
   SignRoute: typeof SignRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  CalculatorsAffordabilityRoute: typeof CalculatorsAffordabilityRoute
+  CalculatorsBondRoute: typeof CalculatorsBondRoute
+  CalculatorsTransferRoute: typeof CalculatorsTransferRoute
+  CalculatorsYieldRoute: typeof CalculatorsYieldRoute
   CommissionEarningsRoute: typeof CommissionEarningsRoute
   CommissionReconciliationRoute: typeof CommissionReconciliationRoute
+  ComplianceAuditRoute: typeof ComplianceAuditRoute
+  ComplianceFfcRoute: typeof ComplianceFfcRoute
+  ComplianceFicaRoute: typeof ComplianceFicaRoute
   DealsDealIdRoute: typeof DealsDealIdRoute
   DealsNewRoute: typeof DealsNewRoute
   RentalsLeaseIdRoute: typeof RentalsLeaseIdRoute
   ReportsReportRoute: typeof ReportsReportRoute
-  SettingsProfileRoute: typeof SettingsProfileRoute
+  SettingsAgencyRoute: typeof SettingsAgencyRoute
+  SettingsNotificationsRoute: typeof SettingsNotificationsRoute
+  SettingsUsersRoute: typeof SettingsUsersRoute
   SetupImportRoute: typeof SetupImportRoute
   CommissionIndexRoute: typeof CommissionIndexRoute
   RentalsIndexRoute: typeof RentalsIndexRoute
@@ -730,6 +860,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminWhatsappRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/calculators/affordability': {
+      id: '/calculators/affordability'
+      path: '/calculators/affordability'
+      fullPath: '/calculators/affordability'
+      preLoaderRoute: typeof CalculatorsAffordabilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calculators/bond': {
+      id: '/calculators/bond'
+      path: '/calculators/bond'
+      fullPath: '/calculators/bond'
+      preLoaderRoute: typeof CalculatorsBondRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calculators/transfer': {
+      id: '/calculators/transfer'
+      path: '/calculators/transfer'
+      fullPath: '/calculators/transfer'
+      preLoaderRoute: typeof CalculatorsTransferRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calculators/yield': {
+      id: '/calculators/yield'
+      path: '/calculators/yield'
+      fullPath: '/calculators/yield'
+      preLoaderRoute: typeof CalculatorsYieldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/commission/': {
       id: '/commission/'
       path: '/commission'
@@ -751,6 +909,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommissionReconciliationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/compliance/audit': {
+      id: '/compliance/audit'
+      path: '/compliance/audit'
+      fullPath: '/compliance/audit'
+      preLoaderRoute: typeof ComplianceAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compliance/ffc': {
+      id: '/compliance/ffc'
+      path: '/compliance/ffc'
+      fullPath: '/compliance/ffc'
+      preLoaderRoute: typeof ComplianceFfcRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compliance/fica': {
+      id: '/compliance/fica'
+      path: '/compliance/fica'
+      fullPath: '/compliance/fica'
+      preLoaderRoute: typeof ComplianceFicaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/deals/$dealId': {
       id: '/deals/$dealId'
       path: '/deals/$dealId'
@@ -764,6 +943,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/deals/new'
       preLoaderRoute: typeof DealsNewRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/mandates/new': {
+      id: '/mandates/new'
+      path: '/new'
+      fullPath: '/mandates/new'
+      preLoaderRoute: typeof MandatesNewRouteImport
+      parentRoute: typeof MandatesRoute
     }
     '/rentals/': {
       id: '/rentals/'
@@ -793,11 +979,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsReportRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/profile': {
-      id: '/settings/profile'
-      path: '/settings/profile'
-      fullPath: '/settings/profile'
-      preLoaderRoute: typeof SettingsProfileRouteImport
+    '/settings/agency': {
+      id: '/settings/agency'
+      path: '/settings/agency'
+      fullPath: '/settings/agency'
+      preLoaderRoute: typeof SettingsAgencyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/notifications': {
+      id: '/settings/notifications'
+      path: '/settings/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof SettingsNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/users': {
+      id: '/settings/users'
+      path: '/settings/users'
+      fullPath: '/settings/users'
+      preLoaderRoute: typeof SettingsUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/setup/': {
@@ -878,6 +1078,18 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface MandatesRouteChildren {
+  MandatesNewRoute: typeof MandatesNewRoute
+}
+
+const MandatesRouteChildren: MandatesRouteChildren = {
+  MandatesNewRoute: MandatesNewRoute,
+}
+
+const MandatesRouteWithChildren = MandatesRoute._addFileChildren(
+  MandatesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
@@ -887,18 +1099,27 @@ const rootRouteChildren: RootRouteChildren = {
   DocumentsRoute: DocumentsRoute,
   LeadsRoute: LeadsRoute,
   LoginRoute: LoginRoute,
-  MandatesRoute: MandatesRoute,
+  MandatesRoute: MandatesRouteWithChildren,
   PipelineRoute: PipelineRoute,
   RegisterRoute: RegisterRoute,
   SignRoute: SignRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  CalculatorsAffordabilityRoute: CalculatorsAffordabilityRoute,
+  CalculatorsBondRoute: CalculatorsBondRoute,
+  CalculatorsTransferRoute: CalculatorsTransferRoute,
+  CalculatorsYieldRoute: CalculatorsYieldRoute,
   CommissionEarningsRoute: CommissionEarningsRoute,
   CommissionReconciliationRoute: CommissionReconciliationRoute,
+  ComplianceAuditRoute: ComplianceAuditRoute,
+  ComplianceFfcRoute: ComplianceFfcRoute,
+  ComplianceFicaRoute: ComplianceFicaRoute,
   DealsDealIdRoute: DealsDealIdRoute,
   DealsNewRoute: DealsNewRoute,
   RentalsLeaseIdRoute: RentalsLeaseIdRoute,
   ReportsReportRoute: ReportsReportRoute,
-  SettingsProfileRoute: SettingsProfileRoute,
+  SettingsAgencyRoute: SettingsAgencyRoute,
+  SettingsNotificationsRoute: SettingsNotificationsRoute,
+  SettingsUsersRoute: SettingsUsersRoute,
   SetupImportRoute: SetupImportRoute,
   CommissionIndexRoute: CommissionIndexRoute,
   RentalsIndexRoute: RentalsIndexRoute,

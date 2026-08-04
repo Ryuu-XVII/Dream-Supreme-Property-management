@@ -34,7 +34,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [calculatorContext, setCalculatorContext] = useState<CalculatorContext | null>(null);
 
   useEffect(() => {
-    const t = (localStorage.getItem("dsp-theme") as Theme) || "system";
+    const t = (localStorage.getItem("dsp-theme") as Theme) || "dark";
     setThemeState(t);
     setCollapsed(localStorage.getItem("dsp-sidebar") === "1");
   }, []);

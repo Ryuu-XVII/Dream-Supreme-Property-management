@@ -4,10 +4,10 @@ This document outlines the core architecture of the Dream Supreme Property Manag
 
 ## 1. Technology Stack
 
-- **Frontend Framework**: React 18, Vite, TypeScript
-- **Routing**: `@tanstack/react-router` (File-based routing)
+- **Frontend Framework**: React 19, Vite 8, TypeScript 5
+- **Routing**: `@tanstack/react-router` (File-based routing with automatic route tree generation)
 - **Data Fetching/Caching**: `@tanstack/react-query`
-- **Styling & Audio**: Tailwind CSS, `lucide-react` (icons), `framer-motion` (animations), `shadcn/ui` (accessible components), Web Audio API Synthesizer (`src/lib/sound.ts`)
+- **Styling & Audio**: Tailwind CSS v4 (`@import "tailwindcss"` with inline theme definitions and OKLCH color palettes), `lucide-react`, `framer-motion` (animations), `shadcn/ui` (accessible components), Web Audio API Synthesizer (`src/lib/sound.ts`)
 - **PDF Generation**: Client-side `jspdf` & `jspdf-autotable` B2B document builder (`src/lib/pdf-generator.ts`)
 - **Backend / Database**: Supabase (PostgreSQL, Auth, RLS), Cloudflare R2 Storage adapter (`src/lib/storage.ts`)
 
@@ -15,9 +15,12 @@ This document outlines the core architecture of the Dream Supreme Property Manag
 
 The application operates as a **Monolith with Subdirectory Routing**, serving two distinct portals based on the user's authenticated role (`Principal`, `Admin`, `Agent`, `Candidate`):
 
-- **Agent Portal (Main App)**: Resides in the root (`/`, `/deals`, `/pipeline`, `/leads`, `/rentals`, `/mandates`). Wrapped by `<AppShell>` which includes the main sidebar and header. Restricted to Agents, Candidates, and Principals.
+- **Agent Portal (Main App)**: Resides in the root (`/`, `/mandates`, `/rentals`, `/pipeline`, `/countdown`, `/commission`, `/clients`, `/compliance/ffc`, `/documents`, `/leads`, `/reports`, `/settings/agency`). Wrapped by `<AppShell>` which includes the full sidebar navigation (Dashboard, Mandates, Rentals, Pipeline, Countdown Board, Commission, Clients, Compliance, Documents, Leads, Reports, Settings) and top header with quick action buttons (Quick Floating Calculator popup, New Deal modal trigger, Theme switcher, Notification popover, and User avatar menu). Restricted to Agents, Candidates, and Principals.
 - **Admin Portal**: Resides under `/admin/*`. Wrapped by `<AdminShell>` with its own dedicated sidebar and header. Restricted strictly to Admins and Principals.
 - **Conveyancer Portal (Public Links)**: Resides under `/conveyancer`. This is a standalone, public-facing portal accessed via secure "magic links" (URL tokens). Conveyancers do NOT require user accounts and do not use the standard login flow.
+
+**Testing & Calculation Engine**:
+- Spreadsheet multi-tier commission waterfall formulas (Royalty, Franchise, Office Split, Desk Fee) are unit tested in [`tests/agent-commission-spreadsheet.test.ts`](file:///c:/Personal%20Projects/FOCI%20PROJECTS/Dream-Supreme-Property-management/tests/agent-commission-spreadsheet.test.ts).
 
 **Enforcement Strategy**:
 Role-Based Access Control (RBAC) is enforced client-side via the `<AuthGuard>` in `src/routes/__root.tsx`.
@@ -44,9 +47,9 @@ State is separated into three distinct domains:
 /src
   /components
     /admin         # Admin Portal specific components (AdminShell, Charts, Global Config)
-    /deal          # Deal-specific components (QuickDealModal)
-    /layout        # Main Agent Portal shell (AppShell, Sidebar, Header)
-    /ui            # Shadcn UI primitives (Buttons, Inputs, Dialogs)
+    /deal          # Deal & Mandate components (QuickDealModal - EAAB/FICA Mandate Capture & Signed OTP Modal)
+    /layout        # Main Agent Portal shell (AppShell, Sidebar with Mandates/Rentals/Clients, Header)
+    /ui            # Shadcn UI primitives (Buttons, Inputs, Dialogs, Selects)
   /data            # TanStack Query hooks and mock data fallbacks
   /lib             # Core utilities (Auth, Supabase client, Formatting, State)
   /routes          # TanStack Router file-based route definitions

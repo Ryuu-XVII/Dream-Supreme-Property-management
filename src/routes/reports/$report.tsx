@@ -18,7 +18,6 @@ import {
   YAxis,
 } from "recharts";
 import { AppShell } from "@/components/layout/app-shell";
-import { generateProfessionalPdf } from "@/lib/pdf-generator";
 import { GlassCard } from "@/components/ui-kit";
 import {
   deals,
@@ -29,7 +28,7 @@ import {
   monthlyCommission,
   forecast,
   type Stage,
-} from "@/data/state";
+} from "@/data/mock";
 import { zar, zarCompact, dateFmt, pct } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -133,23 +132,6 @@ function ReportChrome({
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const meta = REPORT_META[reportKey];
-  const handleExportPdf = () => {
-    const headers = csvRows.length > 0 ? csvRows[0].map(String) : ["Data Column"];
-    const rows =
-      csvRows.length > 1
-        ? csvRows.slice(1)
-        : [["No active data records matching selected filter."]];
-
-    generateProfessionalPdf({
-      title: meta.title,
-      subtitle: meta.description,
-      headers,
-      rows,
-      filename: `${reportKey}-report-${new Date().toISOString().slice(0, 10)}.pdf`,
-    });
-
-    toast.success(`${meta.title} PDF Document generated.`);
-  };
 
   return (
     <AppShell
@@ -166,7 +148,16 @@ function ReportChrome({
           >
             <Download className="size-3.5" /> Export CSV
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleExportPdf}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() =>
+              toast.success("PDF export queued", {
+                description: "Your report will be emailed shortly.",
+              })
+            }
+          >
             <FileText className="size-3.5" /> Export PDF
           </Button>
         </>
@@ -288,7 +279,7 @@ function PipelineReport() {
     <ReportChrome reportKey="pipeline" csvRows={csvRows} csvFilename="pipeline-report.csv">
       <GlassCard>
         <h3 className="mb-4 text-sm font-semibold">Deals by stage &amp; branch</h3>
-        <div className="h-85 w-full">
+        <div className="h-[340px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={byStageBranch} margin={{ left: 0, right: 12 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -327,7 +318,7 @@ function PipelineReport() {
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <GlassCard>
           <h3 className="mb-4 text-sm font-semibold">Average days in stage</h3>
-          <div className="h-95 w-full">
+          <div className="h-[380px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={avgDaysInStage} layout="vertical" margin={{ left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -399,7 +390,7 @@ function PipelineReport() {
             <TableBody>
               {STAGES.map((stage, i) => (
                 <TableRow key={stage}>
-                  <TableCell className="max-w-50 truncate">{stage}</TableCell>
+                  <TableCell className="max-w-[200px] truncate">{stage}</TableCell>
                   {branches.map((b) => (
                     <TableCell key={b.id} className="text-right">
                       {activeDeals.filter((d) => d.stage === stage && d.branch === b.name).length}
@@ -441,7 +432,7 @@ function FallThroughReport() {
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <GlassCard>
           <h3 className="mb-4 text-sm font-semibold">Cancellations by reason</h3>
-          <div className="h-80 w-full">
+          <div className="h-[320px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -472,7 +463,7 @@ function FallThroughReport() {
 
         <GlassCard>
           <h3 className="mb-4 text-sm font-semibold">Monthly fall-through trend</h3>
-          <div className="h-80 w-full">
+          <div className="h-[320px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -548,15 +539,11 @@ function CommissionReport() {
   }, []);
 
   const totalGross = monthlyCommission.reduce((a, m) => a + m.gross, 0);
-  const nextForecast = forecast[0] ?? { projected: 0 };
+  const nextForecast = forecast[0];
 
   const csvRows: (string | number)[][] = [
     ["Month", "Agency gross (ZAR)", "Cumulative YTD (ZAR)"],
-    ...monthlyCommission.map((m, i) => [
-      m.month,
-      m.gross / 100,
-      cumulative[i]?.cumulative ? cumulative[i].cumulative / 100 : 0,
-    ]),
+    ...monthlyCommission.map((m, i) => [m.month, m.gross / 100, cumulative[i].cumulative / 100]),
   ];
 
   return (
@@ -573,7 +560,7 @@ function CommissionReport() {
         <GlassCard>
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Last month gross</p>
           <p className="money mt-2 text-2xl font-semibold">
-            {zar(monthlyCommission[monthlyCommission.length - 1]?.gross ?? 0, { decimals: false })}
+            {zar(monthlyCommission[monthlyCommission.length - 1].gross, { decimals: false })}
           </p>
         </GlassCard>
         <GlassCard>
@@ -581,14 +568,14 @@ function CommissionReport() {
             Next month forecast
           </p>
           <p className="money mt-2 text-2xl font-semibold text-info">
-            {zar(nextForecast?.projected ?? 0, { decimals: false })}
+            {zar(nextForecast.projected, { decimals: false })}
           </p>
         </GlassCard>
       </div>
 
       <GlassCard>
         <h3 className="mb-4 text-sm font-semibold">Monthly earnings by agent</h3>
-        <div className="h-85 w-full">
+        <div className="h-[340px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={byAgent}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -619,7 +606,7 @@ function CommissionReport() {
 
       <GlassCard>
         <h3 className="mb-4 text-sm font-semibold">Cumulative YTD agency commission</h3>
-        <div className="h-75 w-full">
+        <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={cumulative}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -713,7 +700,7 @@ function ComplianceReport() {
   const ficaByPartyType = useMemo(() => {
     const map = new Map<string, { total: number; complete: number }>();
     deals.forEach((d) => {
-      d.parties.forEach((p: any) => {
+      d.parties.forEach((p) => {
         const entry = map.get(p.entityType) ?? { total: 0, complete: 0 };
         entry.total++;
         if (p.fica === "Complete") entry.complete++;
@@ -742,7 +729,7 @@ function ComplianceReport() {
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <GlassCard>
           <h3 className="mb-4 text-sm font-semibold">FFC status summary</h3>
-          <div className="h-75 w-full">
+          <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -818,7 +805,7 @@ function ComplianceReport() {
                         : "Current";
                 return (
                   <TableRow key={u.id}>
-                    <TableCell className="max-w-40 truncate">{u.name}</TableCell>
+                    <TableCell className="max-w-[160px] truncate">{u.name}</TableCell>
                     <TableCell>{u.branch}</TableCell>
                     <TableCell className="font-mono text-xs">{u.ffc?.number ?? "—"}</TableCell>
                     <TableCell>{u.ffc?.expiry ? dateFmt(u.ffc.expiry) : "—"}</TableCell>

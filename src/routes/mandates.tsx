@@ -1,7 +1,9 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { GlassCard } from "@/components/ui-kit";
+import { QuickDealModal } from "@/components/deal/quick-deal-modal";
 import { StageBadge } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +27,7 @@ export const Route = createFileRoute("/mandates")({
 function MandatesRegister() {
   const { account } = useAuth();
   const navigate = useNavigate();
+  const [openCapture, setOpenCapture] = useState(false);
 
   const mandatesQuery = useQuery({
     queryKey: ["mandates", account?.agencyId],
@@ -68,11 +71,17 @@ function MandatesRegister() {
       title="Mandate Register"
       description="View and manage all active property mandates."
       actions={
-        <Button onClick={() => navigate({ to: "/deals/new" })}>
+        <Button onClick={() => setOpenCapture(true)}>
           <PlusCircle className="mr-2 size-4" /> New Mandate
         </Button>
       }
     >
+      <QuickDealModal
+        open={openCapture}
+        onOpenChange={setOpenCapture}
+        initialType="mandate"
+        onSuccess={() => mandatesQuery.refetch()}
+      />
       <GlassCard className="p-0">
         <Table>
           <TableHeader>

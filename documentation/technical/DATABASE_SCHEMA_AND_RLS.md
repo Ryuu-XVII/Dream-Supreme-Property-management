@@ -49,6 +49,7 @@ Migration timestamps are strictly unique to guarantee deterministic execution or
 ## 3. Database Indexing & Performance Strategy
 
 High-cardinality multi-tenant composite B-tree indexes are implemented across core entities:
+
 - `idx_user_account_agency_auth`: Multi-tenant user auth resolution (`agency_id`, `auth_user_id`).
 - `idx_property_agency_type`: Property filtering & sorting (`agency_id`, `property_type`, `created_at DESC`).
 - `idx_mandate_agency_property`: Listing lookup (`agency_id`, `property_id`, `status`).

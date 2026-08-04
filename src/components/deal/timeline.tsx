@@ -1,37 +1,26 @@
 import { GlassCard, EmptyState } from "@/components/ui-kit";
+import { auditEvents, type Deal } from "@/data/mock";
 import { dateTimeFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, History } from "lucide-react";
-import { auditEvents } from "@/data/state";
-import { stageFromDb } from "@/lib/domain";
 
-export function DealTimelineTab({ deal }: { deal: any }) {
-  const relatedAudit = auditEvents.filter((a) => a.entityRef === deal.reference);
-
-  const timeline = (deal.timeline || []).map((t: any) => ({
-    id: t.id,
-    at: t.occurred_at,
-    from: t.from_stage ? stageFromDb[t.from_stage] : undefined,
-    to: stageFromDb[t.to_stage],
-    actor: t.user?.full_name || t.changed_by_external_email || "System",
-    action: `Stage changed to ${stageFromDb[t.to_stage] ?? t.to_stage}`,
-    reason: t.reason,
-  }));
+export function DealTimelineTab({ deal }: { deal: Deal }) {
+  const relatedAudit = auditEvents.filter((a) => a.entityRef === deal.ref);
 
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       <GlassCard>
         <h3 className="mb-4 font-display text-base font-semibold">Stage timeline</h3>
-        {timeline.length === 0 ? (
+        {deal.timeline.length === 0 ? (
           <EmptyState
             title="No timeline events"
             message="This deal has no recorded stage transitions yet."
           />
         ) : (
           <ol className="relative space-y-5 border-l border-border pl-5">
-            {timeline.map((t: any) => (
+            {deal.timeline.map((t) => (
               <li key={t.id} className="relative">
-                <span className="absolute -left-6.5 top-1 size-2.5 rounded-full bg-primary" />
+                <span className="absolute -left-[26px] top-1 size-2.5 rounded-full bg-primary" />
                 <p className="text-xs text-muted-foreground">{dateTimeFmt(t.at)}</p>
                 <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm font-medium">
                   {t.from && (

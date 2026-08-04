@@ -1,15 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/app-shell";
-import { GlassCard, EmptyState, TableSkeleton } from "@/components/ui-kit";
+import { GlassCard, EmptyState, TableSkeleton, useFakeLoad } from "@/components/ui-kit";
 import { AgentAvatar } from "@/components/badges";
-import { leads as seedLeads, type Lead, type User } from "@/data/state";
+import { leads as seedLeads, users, userById, type Lead } from "@/data/mock";
 import { dateFmt, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -134,13 +132,11 @@ function LeadSheet({
   open,
   onOpenChange,
   onSave,
-  practitioners,
 }: {
   lead: Lead | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onSave: (lead: Lead) => void;
-  practitioners: User[];
 }) {
   const [draft, setDraft] = useState<Lead | null>(lead);
 
@@ -207,7 +203,7 @@ function LeadSheet({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="unassigned">Unassigned</SelectItem>
-                {practitioners
+                {users
                   .filter((u) => u.role === "Agent" || u.role === "Candidate")
                   .map((u) => (
                     <SelectItem key={u.id} value={u.id}>
@@ -274,13 +270,11 @@ function LeadsTable({
   onOpen,
   onQuickAssign,
   onQuickStatus,
-  practitioners,
 }: {
   rows: Lead[];
   onOpen: (l: Lead) => void;
   onQuickAssign: (id: string, agent: string) => void;
   onQuickStatus: (id: string, status: Lead["status"]) => void;
-  practitioners: User[];
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<1 | -1>(-1);
@@ -299,9 +293,7 @@ function LeadsTable({
   const sorted = useMemo(() => {
     const withMeta = rows.map((l) => ({
       lead: l,
-      agent: l.assignedTo
-        ? practitioners.find((user) => user.id === l.assignedTo)?.name || "Unassigned"
-        : "",
+      agent: l.assignedTo ? userById(l.assignedTo).name : "",
     }));
     withMeta.sort((a, b) => {
       let cmp = 0;
@@ -331,7 +323,7 @@ function LeadsTable({
       return cmp * sortDir;
     });
     return withMeta;
-  }, [rows, practitioners, sortKey, sortDir]);
+  }, [rows, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const pageRows = sorted.slice(page * pageSize, page * pageSize + pageSize);
@@ -415,10 +407,10 @@ function LeadsTable({
             {pageRows.map(({ lead }) => (
               <TableRow key={lead.id} className="cursor-pointer" onClick={() => onOpen(lead)}>
                 {visibleCols.name && (
-                  <TableCell className="max-w-40 truncate font-medium">{lead.name}</TableCell>
+                  <TableCell className="max-w-[160px] truncate font-medium">{lead.name}</TableCell>
                 )}
                 {visibleCols.email && (
-                  <TableCell className="max-w-50 truncate text-muted-foreground">
+                  <TableCell className="max-w-[200px] truncate text-muted-foreground">
                     {lead.email}
                   </TableCell>
                 )}
@@ -436,21 +428,16 @@ function LeadsTable({
                       value={lead.assignedTo ?? "unassigned"}
                       onValueChange={(v) => onQuickAssign(lead.id, v)}
                     >
-                      <SelectTrigger className="h-8 w-40 text-xs">
-                        {lead.assignedTo &&
-                        practitioners.find((user) => user.id === lead.assignedTo) ? (
-                          <AgentAvatar
-                            user={practitioners.find((user) => user.id === lead.assignedTo)!}
-                            showName
-                            size={5}
-                          />
+                      <SelectTrigger className="h-8 w-[160px] text-xs">
+                        {lead.assignedTo ? (
+                          <AgentAvatar user={userById(lead.assignedTo)} showName size={5} />
                         ) : (
                           <SelectValue placeholder="Assign..." />
                         )}
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="unassigned">Unassigned</SelectItem>
-                        {practitioners
+                        {users
                           .filter((u) => u.role === "Agent" || u.role === "Candidate")
                           .map((u) => (
                             <SelectItem key={u.id} value={u.id}>
@@ -467,7 +454,7 @@ function LeadsTable({
                       value={lead.status}
                       onValueChange={(v) => onQuickStatus(lead.id, v as Lead["status"])}
                     >
-                      <SelectTrigger className="h-8 w-32.5 text-xs">
+                      <SelectTrigger className="h-8 w-[130px] text-xs">
                         <StatusBadge status={lead.status} />
                       </SelectTrigger>
                       <SelectContent>
@@ -485,19 +472,6 @@ function LeadsTable({
                     {dateFmt(lead.createdAt)}
                   </TableCell>
                 )}
-                <TableCell onClick={(e) => e.stopPropagation()} className="text-right">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-xs gap-1 text-primary border-primary/30 hover:bg-primary/10"
-                    onClick={() => {
-                      toast.success(`Converting lead ${lead.name} to deal...`);
-                      onOpen(lead);
-                    }}
-                  >
-                    Convert
-                  </Button>
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -533,11 +507,9 @@ function LeadsTable({
 function FilterBar({
   filters,
   setFilters,
-  practitioners,
 }: {
   filters: Filters;
   setFilters: (f: Filters) => void;
-  practitioners: User[];
 }) {
   return (
     <GlassCard className="mb-5">
@@ -589,7 +561,7 @@ function FilterBar({
             <SelectContent>
               <SelectItem value="all">All agents</SelectItem>
               <SelectItem value="unassigned">Unassigned</SelectItem>
-              {practitioners
+              {users
                 .filter((u) => u.role === "Agent" || u.role === "Candidate")
                 .map((u) => (
                   <SelectItem key={u.id} value={u.id}>
@@ -635,65 +607,7 @@ function LeadsPage() {
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const leadQuery = useQuery({
-    queryKey: ["leads"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lead")
-        .select(
-          "id, full_name, email, mobile, source, assigned_to, status, created_at, calculator_payload_json, message",
-        )
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data || []).map((lead: any): Lead => ({
-        id: lead.id,
-        name: lead.full_name,
-        email: lead.email || "",
-        mobile: lead.mobile || "",
-        source: String(lead.source).toLowerCase().includes("transfer")
-          ? "Transfer"
-          : String(lead.source).toLowerCase().includes("afford")
-            ? "Affordability"
-            : String(lead.source).toLowerCase().includes("yield")
-              ? "Yield"
-              : "Bond",
-        assignedTo: lead.assigned_to || undefined,
-        status:
-          `${String(lead.status).charAt(0).toUpperCase()}${String(lead.status).slice(1)}` as Lead["status"],
-        createdAt: lead.created_at,
-        payload: JSON.stringify(lead.calculator_payload_json || {}),
-        notes: lead.message || "",
-      }));
-    },
-  });
-  const practitionerQuery = useQuery({
-    queryKey: ["lead-practitioners"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_account")
-        .select("id, full_name, email, role")
-        .eq("status", "active")
-        .in("role", ["agent", "candidate"])
-        .order("full_name");
-      if (error) throw error;
-      return (data || []).map(
-        (user: any) =>
-          ({
-            id: user.id,
-            name: user.full_name,
-            email: user.email,
-            role: user.role === "candidate" ? "Candidate" : "Agent",
-            colour: "#1f7a52",
-          }) as User,
-      );
-    },
-  });
-  const practitioners = practitionerQuery.data || [];
-  const loading = leadQuery.isLoading;
-
-  useEffect(() => {
-    if (leadQuery.data) setLeads(leadQuery.data);
-  }, [leadQuery.data]);
+  const loading = useFakeLoad(400);
 
   const filtered = useMemo(() => {
     return leads.filter((l) => {
@@ -714,15 +628,6 @@ function LeadsPage() {
 
   const updateLead = (updated: Lead) => {
     setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
-    void supabase
-      .from("lead")
-      .update({
-        assigned_to: updated.assignedTo || null,
-        status: updated.status.toLowerCase(),
-        message: updated.notes,
-      })
-      .eq("id", updated.id)
-      .then(({ error }) => error && toast.error(error.message));
   };
 
   const quickAssign = (id: string, agent: string) => {
@@ -731,19 +636,14 @@ function LeadsPage() {
         l.id === id ? { ...l, assignedTo: agent === "unassigned" ? undefined : agent } : l,
       ),
     );
-    void supabase
-      .from("lead")
-      .update({ assigned_to: agent === "unassigned" ? null : agent })
-      .eq("id", id);
     toast.success("Lead assigned", {
       description:
-        agent === "unassigned" ? "Lead is now unassigned." : "Lead assigned to the selected agent.",
+        agent === "unassigned" ? "Lead is now unassigned." : `Assigned to ${userById(agent).name}.`,
     });
   };
 
   const quickStatus = (id: string, status: Lead["status"]) => {
     setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
-    void supabase.from("lead").update({ status: status.toLowerCase() }).eq("id", id);
     toast.success("Status updated", { description: `Lead marked as ${status}.` });
   };
 
@@ -752,7 +652,7 @@ function LeadsPage() {
       title="Leads"
       description="Leads captured from the public calculators, ready to assign and convert."
     >
-      <FilterBar filters={filters} setFilters={setFilters} practitioners={practitioners} />
+      <FilterBar filters={filters} setFilters={setFilters} />
       {loading ? (
         <TableSkeleton rows={8} cols={7} />
       ) : (
@@ -769,7 +669,6 @@ function LeadsPage() {
             }}
             onQuickAssign={quickAssign}
             onQuickStatus={quickStatus}
-            practitioners={practitioners}
           />
         </motion.div>
       )}
@@ -778,7 +677,6 @@ function LeadsPage() {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         onSave={updateLead}
-        practitioners={practitioners}
       />
     </AppShell>
   );

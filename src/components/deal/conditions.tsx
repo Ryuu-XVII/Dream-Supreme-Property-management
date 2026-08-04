@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { GlassCard } from "@/components/ui-kit";
 import { UrgencyBadge } from "@/components/badges";
-import { userById, type Deal, type Condition, type ConditionStatus } from "@/data/state";
+import { userById, type Deal, type Condition, type ConditionStatus } from "@/data/mock";
 import { dateFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/supabase";
 import {
   Select,
   SelectContent,
@@ -55,97 +54,22 @@ const typeIcons: Record<Condition["type"], React.ComponentType<{ className?: str
   "Electrical Compliance": Zap,
 };
 
-import { conditionStatusFromDb, conditionTypeFromDb } from "@/lib/domain";
-
-export function DealConditionsTab({ deal }: { deal: any }) {
-  const bond = Array.isArray(deal.bond) ? deal.bond[0] : deal.bond;
-
-  const mappedConditions = (deal.conditions || []).map((c: any) => ({
-    id: c.id,
-    type: conditionTypeFromDb[c.condition_type] ?? "Due Diligence",
-    description: c.description,
-    dueDate: c.due_on,
-    originalDueDate: c.original_due_on,
-    status: conditionStatusFromDb[c.status] ?? "Open",
-    responsibleParty: c.responsible_party || "Purchaser",
-    responsibleUserId: c.responsible_user_id || "",
-  }));
-
-  const [conditions, setConditions] = useState<any[]>(mappedConditions);
-  const [extendTarget, setExtendTarget] = useState<any | null>(null);
+export function DealConditionsTab({ deal }: { deal: Deal }) {
+  const [conditions, setConditions] = useState<Condition[]>(deal.conditions);
+  const [extendTarget, setExtendTarget] = useState<Condition | null>(null);
   const [newDate, setNewDate] = useState("");
   const [reason, setReason] = useState("");
+  const [bondStatus, setBondStatus] = useState(deal.bond.status);
 
-  const rawBondStatus =
-    bond?.status === "approved_in_principle"
-      ? "Approved in principle"
-      : bond?.status === "formally_granted"
-        ? "Formally granted"
-        : bond?.status === "submitted"
-          ? "Submitted"
-          : bond?.status === "declined"
-            ? "Declined"
-            : "Not applied";
-
-  const [bondStatus, setBondStatus] = useState(rawBondStatus);
-
-  const updateBondStatus = async (value: Deal["bond"]["status"]) => {
-    const statusMap: Record<Deal["bond"]["status"], string> = {
-      "Not applied": "not_applied",
-      Submitted: "submitted",
-      Declined: "declined",
-      "Approved in principle": "approved_in_principle",
-      "Formally granted": "formally_granted",
-    };
-    const { error } = await supabase.rpc("set_bond_status", {
-      p_deal_id: deal.id,
-      p_status: statusMap[value as keyof typeof statusMap],
-      p_institution: bond?.institution === "—" ? null : bond?.institution,
-    });
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    setBondStatus(value);
-    toast.success("Bond status updated");
-  };
-
-  const setStatus = async (id: string, status: string) => {
-    const statusMap: Record<string, string> = {
-      Open: "pending",
-      Fulfilled: "fulfilled",
-      Extended: "extended",
-      Waived: "waived",
-      Failed: "failed",
-    };
-    const { error } = await supabase.rpc("set_condition_status", {
-      p_condition_id: id,
-      p_status: statusMap[status],
-      p_new_due_on: null,
-      p_reason: null,
-    });
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
+  const setStatus = (id: string, status: ConditionStatus) => {
     setConditions((cs) => cs.map((c) => (c.id === id ? { ...c, status } : c)));
     toast.success(`Condition marked as ${status}`);
   };
 
-  const submitExtension = async () => {
+  const submitExtension = () => {
     if (!extendTarget) return;
     if (!newDate || !reason.trim()) {
       toast.error("Please provide a new date and a reason for the extension.");
-      return;
-    }
-    const { error } = await supabase.rpc("set_condition_status", {
-      p_condition_id: extendTarget.id,
-      p_status: "extended",
-      p_new_due_on: newDate,
-      p_reason: reason,
-    });
-    if (error) {
-      toast.error(error.message);
       return;
     }
     setConditions((cs) =>
@@ -190,7 +114,7 @@ export function DealConditionsTab({ deal }: { deal: any }) {
               </TableHeader>
               <TableBody>
                 {conditions.map((c) => {
-                  const Icon = typeIcons[c.type as keyof typeof typeIcons] || SearchCheck;
+                  const Icon = typeIcons[c.type];
                   const isOpen = c.status === "Open" || c.status === "Extended";
                   return (
                     <TableRow key={c.id}>
@@ -199,7 +123,9 @@ export function DealConditionsTab({ deal }: { deal: any }) {
                           <Icon className="size-4 text-primary" /> {c.type}
                         </span>
                       </TableCell>
-                      <TableCell className="max-w-60 truncate text-sm">{c.description}</TableCell>
+                      <TableCell className="max-w-[240px] truncate text-sm">
+                        {c.description}
+                      </TableCell>
                       <TableCell className="text-xs">{dateFmt(c.dueDate)}</TableCell>
                       <TableCell>
                         <UrgencyBadge dueDate={c.dueDate} status={c.status} />
@@ -273,7 +199,10 @@ export function DealConditionsTab({ deal }: { deal: any }) {
             <Label className="mb-1 block text-xs text-muted-foreground">Status</Label>
             <Select
               value={bondStatus}
-              onValueChange={(v) => void updateBondStatus(v as Deal["bond"]["status"])}
+              onValueChange={(v) => {
+                setBondStatus(v as Deal["bond"]["status"]);
+                toast.success("Bond status updated");
+              }}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -293,11 +222,14 @@ export function DealConditionsTab({ deal }: { deal: any }) {
               </SelectContent>
             </Select>
           </div>
-          <Detail label="Institution" value={bond?.institution || "—"} />
-          <Detail label="Applied" value={bond?.applied_on ? dateFmt(bond.applied_on) : "—"} />
+          <Detail label="Institution" value={deal.bond.institution} />
+          <Detail
+            label="Applied"
+            value={deal.bond.appliedAt ? dateFmt(deal.bond.appliedAt) : "—"}
+          />
           <Detail
             label="Decided"
-            value={bond?.status_updated_on ? dateFmt(bond.status_updated_on) : "—"}
+            value={deal.bond.decidedAt ? dateFmt(deal.bond.decidedAt) : "—"}
           />
         </div>
       </GlassCard>
