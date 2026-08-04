@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 import {
   Save,
   Building2,
@@ -33,46 +34,67 @@ export const Route = createFileRoute("/admin/settings")({
 });
 
 function AdminSettings() {
+  const { account } = useAuth();
+  const [loading, setLoading] = useState<string | null>(null);
+
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
     toast.success("System settings updated successfully.");
   }
 
   async function handleArchiveDeals() {
+    if (!account) return;
     if (confirm("Are you sure you want to archive old deals?")) {
-      const { error } = await supabase
-        .from("deal")
-        .update({ status: "archived" })
-        .lt("updated_at", new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString());
+      setLoading("archive");
+      const { data, error } = await supabase.rpc("admin_archive_old_deals", {
+        p_agency_id: account.agencyId,
+      });
 
       if (error) {
         toast.error("Failed to archive deals: " + error.message);
       } else {
-        toast.success("Old deals have been archived.");
+        toast.success(`${data} old deals have been archived.`);
       }
+      setLoading(null);
     }
   }
 
   async function handleDeactivateAgents() {
+    if (!account) return;
     if (confirm("Are you sure you want to deactivate idle agents?")) {
-      const { error } = await supabase
-        .from("user_account")
-        .update({ is_active: false })
-        .lt("last_login_at", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString());
+      setLoading("deactivate");
+      const { data, error } = await supabase.rpc("admin_deactivate_idle_agents", {
+        p_agency_id: account.agencyId,
+      });
 
       if (error) {
         toast.error("Failed to deactivate agents: " + error.message);
       } else {
-        toast.success("Idle agents have been deactivated.");
+        toast.success(`${data} idle agents have been deactivated.`);
       }
+      setLoading(null);
     }
   }
 
   async function handleEmptyTrash() {
+    if (!account) return;
     if (
       confirm("Are you absolutely sure you want to empty the recycle bin? This cannot be undone.")
     ) {
-      toast.success("Recycle bin emptied (simulated - soft delete cleanup).");
+      setLoading("trash");
+      const { data, error } = await supabase.rpc("admin_empty_recycle_bin", {
+        p_agency_id: account.agencyId,
+      });
+
+      if (error) {
+        toast.error("Failed to empty trash: " + error.message);
+      } else {
+        const d = data as any;
+        toast.success(
+          `Trash emptied: ${d.deals} deals, ${d.properties} properties, ${d.parties} clients deleted.`,
+        );
+      }
+      setLoading(null);
     }
   }
 
@@ -255,8 +277,12 @@ function AdminSettings() {
                       optimize performance.
                     </p>
                   </div>
-                  <Button variant="destructive" onClick={handleArchiveDeals}>
-                    Archive Deals
+                  <Button
+                    variant="destructive"
+                    onClick={handleArchiveDeals}
+                    disabled={loading !== null}
+                  >
+                    {loading === "archive" ? "Archiving..." : "Archive Deals"}
                   </Button>
                 </div>
 
@@ -269,8 +295,12 @@ function AdminSettings() {
                       Suspend agent accounts that have been inactive for more than 90 days.
                     </p>
                   </div>
-                  <Button variant="destructive" onClick={handleDeactivateAgents}>
-                    Deactivate Agents
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeactivateAgents}
+                    disabled={loading !== null}
+                  >
+                    {loading === "deactivate" ? "Deactivating..." : "Deactivate Agents"}
                   </Button>
                 </div>
 
@@ -284,8 +314,12 @@ function AdminSettings() {
                       and listings.
                     </p>
                   </div>
-                  <Button variant="destructive" onClick={handleEmptyTrash}>
-                    Empty Trash
+                  <Button
+                    variant="destructive"
+                    onClick={handleEmptyTrash}
+                    disabled={loading !== null}
+                  >
+                    {loading === "trash" ? "Emptying..." : "Empty Trash"}
                   </Button>
                 </div>
               </div>

@@ -8,14 +8,14 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 
 - **`agency`**: The top-level tenant.
 - **`branch`**: Physical office locations belonging to an agency. Tracks granular operational settings like `lead_auto_assign`.
-- **`user_account`**: Links a Supabase Auth `user` to a specific `agency` and optionally a `branch`. Contains the user's operational role (`principal`, `admin`, `agent`, `candidate`).
+- **`user_account`**: Links a Supabase Auth `user` to a specific `agency` and optionally a `branch`. Contains the user's operational role (`principal`, `admin`, `agent`, `candidate`) and `last_login_at` for idle agent tracking.
 - **`commission_pct`**: (Recently added) Stores an agent's individual commission split. If `NULL`, the system falls back to the agency's default rules.
 
 ### `property`, `mandate`, & `deal`
 
 - **`property`**: The physical real estate asset. Independent of the transaction.
 - **`mandate`**: The exclusive or open listing agreement to sell/rent a `property`. Tracks listing price and expiry.
-- **`deal`**: The transactional workflow. Links a `property` (and optionally a `mandate`) to `user_account`s (via `deal_participant`). Moves through strict stages (e.g., `Mandate Signed` -> `OTP Signed` -> `Registered`).
+- **`deal`**: The transactional workflow. Links a `property` (and optionally a `mandate`) to `user_account`s (via `deal_participant`). Moves through strict stages (e.g., `Mandate Signed` -> `OTP Signed` -> `Registered`). Deals can now be put into an `'archived'` status when older than 3 years.
 
 ### `lease`, `lease_invoice`, `lease_escalation_schedule` & `maintenance_job` (Rentals Module)
 
