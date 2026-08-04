@@ -232,19 +232,47 @@ function AdminSettings() {
                 <div className="space-y-4 pt-4 border-t border-border">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="size-5 text-emerald-500" />
-                    <h4 className="font-medium">Website Leads Integration</h4>
+                    <h4 className="font-medium">WhatsApp Business API</h4>
                   </div>
                   <div className="pl-7 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Enable Automated WhatsApp Notifications</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Automatically send bond updates and rent reminders to clients via
+                          WhatsApp.
+                        </p>
+                      </div>
+                      <Switch defaultChecked />
+                    </div>
                     <div className="space-y-2">
-                      <Label>Website Integration Link</Label>
-                      <Input
-                        defaultValue="https://api.dreamsupreme.co.za/v1/leads/webhook"
-                        disabled
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Share this link with your web developer to connect your website and receive
-                        leads automatically.
-                      </p>
+                      <Label>WhatsApp Phone Number ID</Label>
+                      <Input defaultValue="27820001111" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-border">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="size-5 text-blue-500" />
+                    <h4 className="font-medium">Accounting Integration (Xero)</h4>
+                  </div>
+                  <div className="pl-7 space-y-4">
+                    <div className="flex items-center justify-between p-4 border border-blue-200 dark:border-blue-900/50 rounded-lg bg-blue-50 dark:bg-blue-950/20">
+                      <div className="space-y-1">
+                        <Label className="text-blue-900 dark:text-blue-300">Xero Connection</Label>
+                        <p className="text-xs text-blue-700/80 dark:text-blue-400/80">
+                          Sync your Section 86 Trust Ledger automatically with your Xero accounting
+                          suite.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="bg-white dark:bg-background"
+                      >
+                        Connect to Xero
+                      </Button>
                     </div>
                   </div>
                 </div>
