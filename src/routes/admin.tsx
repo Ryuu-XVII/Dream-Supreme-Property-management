@@ -10,8 +10,15 @@ export const Route = createFileRoute("/admin")({
 
 function AdminLayout() {
   const { account, loading } = useAuth();
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const isAdminDomain =
+    hostname.startsWith("admin.") ||
+    hostname === "admin.localhost" ||
+    (import.meta.env.VITE_ADMIN_DOMAIN &&
+      window.location.origin === import.meta.env.VITE_ADMIN_DOMAIN);
 
-  const isAllowed = account && (account.role === "principal" || account.role === "admin");
+  const isAllowed =
+    isAdminDomain || (account && (account.role === "principal" || account.role === "admin"));
 
   useEffect(() => {
     if (!loading && !isAllowed) {
@@ -19,15 +26,9 @@ function AdminLayout() {
     }
   }, [loading, isAllowed]);
 
-  if (loading) return null;
+  if (loading && !isAdminDomain) return null;
 
   if (!isAllowed) {
-    // If agent tries to access admin portal, redirect back to main agent portal / domain
-    const agentHost = import.meta.env.VITE_AGENT_DOMAIN || window.location.origin;
-    if (window.location.origin !== agentHost) {
-      window.location.href = agentHost;
-      return null;
-    }
     return <Navigate to="/" replace />;
   }
 
