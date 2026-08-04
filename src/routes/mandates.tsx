@@ -72,7 +72,7 @@ function MandatesRegister() {
       description="View and manage all active property mandates."
       actions={
         <Button onClick={() => setOpenCapture(true)}>
-          <PlusCircle className="mr-2 size-4" /> New Mandate
+          <PlusCircle className="mr-2 size-4" /> New Listing
         </Button>
       }
     >

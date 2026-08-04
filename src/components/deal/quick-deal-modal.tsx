@@ -139,17 +139,19 @@ export function QuickDealModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display text-xl">
             <PlusCircle className="size-5 text-primary" />
-            {entryType === "mandate" ? "Register Property Mandate" : "Quick Deal & OTP Capture"}
+            {entryType === "mandate"
+              ? "Register Property Listing / Mandate"
+              : "Quick Deal & OTP Capture"}
           </DialogTitle>
           <DialogDescription>
-            South African Estate Agency Affairs Board (EAAB) & FICA compliant mandate registration.
+            South African Estate Agency Affairs Board (EAAB) & FICA compliant listing registration.
           </DialogDescription>
         </DialogHeader>
 
         <div className="my-2">
           <Tabs value={entryType} onValueChange={(v) => setEntryType(v as "deal" | "mandate")}>
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="mandate">Property Mandate (Listing Agreement)</TabsTrigger>
+              <TabsTrigger value="mandate">Property Listing (Mandate Agreement)</TabsTrigger>
               <TabsTrigger value="deal">Full Deal (Signed OTP)</TabsTrigger>
             </TabsList>
           </Tabs>
