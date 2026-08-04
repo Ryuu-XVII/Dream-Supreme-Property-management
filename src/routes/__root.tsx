@@ -119,6 +119,20 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    const hostname = window.location.hostname;
+    const pathname = window.location.pathname;
+    const isAdminDomain =
+      hostname.startsWith("admin.") ||
+      hostname === "admin.localhost" ||
+      (import.meta.env.VITE_ADMIN_DOMAIN &&
+        window.location.origin === import.meta.env.VITE_ADMIN_DOMAIN);
+
+    if (isAdminDomain && !pathname.startsWith("/admin")) {
+      window.location.replace("/admin" + (pathname === "/" ? "" : pathname));
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AppProvider>
