@@ -21,7 +21,18 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createDeal } from "@/data/deals";
 import { users } from "@/data/mock";
-import { Home, User, DollarSign, Calendar, ShieldCheck, FileCheck, PlusCircle } from "lucide-react";
+import {
+  Home,
+  User,
+  DollarSign,
+  Calendar,
+  ShieldCheck,
+  FileCheck,
+  PlusCircle,
+  Image as ImageIcon,
+  Upload,
+  X,
+} from "lucide-react";
 
 interface QuickDealModalProps {
   open: boolean;
@@ -38,6 +49,26 @@ export function QuickDealModal({
 }: QuickDealModalProps) {
   const [entryType, setEntryType] = useState<"deal" | "mandate">(initialType);
   const [loading, setLoading] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newPhotos: string[] = [];
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result) {
+          setPhotos((prev) => [...prev, reader.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const [form, setForm] = useState({
     // Property Details
@@ -217,6 +248,42 @@ export function QuickDealModal({
                   onChange={(e) => update("listingPrice", e.target.value)}
                   required
                 />
+              </div>
+
+              <div className="col-span-2 space-y-1.5">
+                <Label className="text-xs font-semibold">Property Photos</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {photos.map((url, i) => (
+                    <div
+                      key={i}
+                      className="group relative size-16 overflow-hidden rounded-lg border border-border"
+                    >
+                      <img
+                        src={url}
+                        alt={`Property photo ${i + 1}`}
+                        className="size-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(i)}
+                        className="absolute top-1 right-1 grid size-4 place-items-center rounded-full bg-black/70 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="flex size-16 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-input bg-background/50 text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+                    <Upload className="size-4" />
+                    <span className="mt-1 text-[9px] font-medium">Add Photo</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePhotoUpload}
+                      className="sr-only"
+                    />
+                  </label>
+                </div>
               </div>
             </div>
           </div>
