@@ -13,9 +13,11 @@ function AdminLayout() {
   const hostname = typeof window !== "undefined" ? window.location.hostname : "";
   const isAdminDomain =
     hostname.startsWith("admin.") ||
+    hostname.startsWith("admin-") ||
     hostname === "admin.localhost" ||
     (import.meta.env.VITE_ADMIN_DOMAIN &&
-      window.location.origin === import.meta.env.VITE_ADMIN_DOMAIN);
+      (window.location.origin === import.meta.env.VITE_ADMIN_DOMAIN ||
+        window.location.hostname === import.meta.env.VITE_ADMIN_DOMAIN));
 
   const isAllowed =
     isAdminDomain || (account && (account.role === "principal" || account.role === "admin"));
