@@ -22,6 +22,12 @@ function AdminLayout() {
   if (loading) return null;
 
   if (!isAllowed) {
+    // If agent tries to access admin portal, redirect back to main agent portal / domain
+    const agentHost = import.meta.env.VITE_AGENT_DOMAIN || window.location.origin;
+    if (window.location.origin !== agentHost) {
+      window.location.href = agentHost;
+      return null;
+    }
     return <Navigate to="/" replace />;
   }
 
