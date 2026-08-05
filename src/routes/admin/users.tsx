@@ -306,13 +306,14 @@ function AdminUsers() {
         const directRegisterUrl = `${window.location.origin}/register?token=${inviteToken}&email=${encodeURIComponent(email)}`;
         setGeneratedLink(directRegisterUrl);
 
-        // Step 4: Dispatch invitation email via Supabase Auth reset password / magic link
-        const { error: inviteError } = await supabase.auth.resetPasswordForEmail(
-          email.toLowerCase(),
-          {
-            redirectTo: directRegisterUrl,
+        // Step 4: Dispatch magic link invitation email via Supabase Auth
+        const { error: inviteError } = await supabase.auth.signInWithOtp({
+          email: email.toLowerCase(),
+          options: {
+            emailRedirectTo: directRegisterUrl,
+            shouldCreateUser: true,
           },
-        );
+        });
 
         // Step 5: Render React Email template for local database audit history
         const emailBodyHtml = await render(
