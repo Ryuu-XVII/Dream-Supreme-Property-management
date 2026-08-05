@@ -302,8 +302,9 @@ function AdminUsers() {
 
         if (rpcErr) throw rpcErr;
 
-        // Step 3: Construct direct registration link for registration page
-        const directRegisterUrl = `${window.location.origin}/register?token=${inviteToken}&email=${encodeURIComponent(email)}`;
+        // Step 3: Construct direct registration link for registration page on main app domain
+        const appBaseUrl = window.location.origin.replace(/^http:\/\/(admin\.|admin-)/, "http://");
+        const directRegisterUrl = `${appBaseUrl}/register?token=${inviteToken}&email=${encodeURIComponent(email)}`;
         setGeneratedLink(directRegisterUrl);
 
         // Step 4: Dispatch magic link invitation email via Supabase Auth
