@@ -103,16 +103,42 @@ function RegisterPage() {
       // Upload only after authentication so storage policies can scope the file
       // to this user. Object-store credentials never reach the browser.
       let avatarKey: string | null = null;
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // 2. Register user or update password if auth user was pre-created during invitation dispatch
+      let authData: { user: any; session: any } | null = null;
+      const { data: signUpData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
       });
 
       if (authError) {
-        throw new Error(authError.message);
+        if (authError.message.toLowerCase().includes("already registered")) {
+          // If the user was pre-created in auth by Supabase OTP, update their password directly
+          const { data: updateData, error: updateError } = await supabase.auth.updateUser({
+            password: data.password,
+          });
+          if (updateError) {
+            // Fallback: Sign in with password if already configured, or throw error
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword(
+              {
+                email: data.email,
+                password: data.password,
+              },
+            );
+            if (signInError) {
+              throw new Error("This email is already registered. Please log in directly.");
+            }
+            authData = signInData;
+          } else {
+            authData = { user: updateData.user, session: null };
+          }
+        } else {
+          throw new Error(authError.message);
+        }
+      } else {
+        authData = signUpData;
       }
 
-      if (!authData.user) {
+      if (!authData?.user) {
         throw new Error("Registration failed. Please try again.");
       }
 
