@@ -180,7 +180,7 @@ export function Header() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link to={"/settings" as any}>Settings</Link>
+            <Link to="/settings/profile">Settings</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link to={"/commission/earnings" as any}>My earnings</Link>

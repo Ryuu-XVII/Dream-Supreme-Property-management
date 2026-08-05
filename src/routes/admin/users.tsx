@@ -255,18 +255,87 @@ function AdminUsers() {
     setDialogOpen(true);
   };
 
-  const save = () => {
-    // In a real app, this would mutate via Supabase/React Query
-    setDialogOpen(false);
-    refetch(); // placeholder for actual mutation logic
+  const save = async () => {
+    const name = draft.name?.trim() ?? "";
+    const email = draft.email?.trim() ?? "";
+    const role = (draft.role ?? "Agent") as Role;
+
+    if (!name || !email) {
+      toast.error("Full name and email address are required.");
+      return;
+    }
+
+    try {
+      if (editing) {
+        // Update existing user_account record
+        const { error } = await supabase
+          .from("user_account")
+          .update({
+            full_name: name,
+            email: email,
+            role: role.toLowerCase() as "agent" | "admin",
+            status: draft.active ? "active" : "suspended",
+          })
+          .eq("id", editing.id);
+
+        if (error) throw error;
+        toast.success("User updated successfully", { description: name });
+      } else {
+        // Step 1: Clean up any prior unaccepted invitations for this email
+        await supabase
+          .from("user_invitation")
+          .delete()
+          .eq("email", email.toLowerCase())
+          .is("accepted_at", null);
+
+        // Step 2: Generate new invitation token via RPC
+        const { data: inviteToken } = await supabase.rpc("create_user_invitation", {
+          p_email: email,
+          p_role: role.toLowerCase() as "agent" | "admin",
+        });
+
+        // Step 3: Dispatch invitation magic link using current origin
+        const redirectTo = `${window.location.origin}/register?token=${inviteToken ?? ""}&email=${encodeURIComponent(email)}`;
+        const { error: inviteError } = await supabase.auth.signInWithOtp({
+          email: email,
+          options: {
+            emailRedirectTo: redirectTo,
+            data: { full_name: name, role: role, invite_token: inviteToken },
+          },
+        });
+
+        if (inviteError) {
+          toast.error("Failed to send invitation email: " + inviteError.message);
+        } else {
+          toast.success("Invitation sent!", {
+            description: `An invitation link has been dispatched to ${email}.`,
+          });
+        }
+      }
+
+      setDialogOpen(false);
+      refetch();
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Action failed: " + (err.message || "Could not save user"));
+    }
   };
 
-  const retireUser = (id: string) => {
+  const retireUser = async (id: string) => {
     if (
       confirm("Are you sure you want to retire this agent? They will lose access to the system.")
     ) {
-      // Logic to deactivate user via Supabase
-      refetch(); // Placeholder
+      try {
+        const { error } = await supabase
+          .from("user_account")
+          .update({ status: "suspended" })
+          .eq("id", id);
+        if (error) throw error;
+        toast.success("Agent retired successfully");
+        refetch();
+      } catch (err: any) {
+        toast.error("Failed to retire agent: " + err.message);
+      }
     }
   };
 

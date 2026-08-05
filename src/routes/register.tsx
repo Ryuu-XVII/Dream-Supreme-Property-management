@@ -39,16 +39,28 @@ function RegisterPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Extract URL parameters passed in invitation link
+  const urlParams =
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const initialEmail = urlParams?.get("email") || "";
+  const initialToken = urlParams?.get("token") || "";
+
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       firstName: "",
       lastName: "",
-      email: "",
+      email: initialEmail,
       phone: "",
       password: "",
     },
   });
+
+  useEffect(() => {
+    // If the magic link auto-authenticated a session, sign out immediately
+    // so the new user can fill in their registration details and choose a password
+    void supabase.auth.signOut();
+  }, []);
 
   useEffect(() => {
     return () => {

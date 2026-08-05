@@ -1,11 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import { Building2, Bell, Users } from "lucide-react";
+import { User, Coins, PenTool, Bell } from "lucide-react";
 
 const tabs = [
-  { to: "/settings/agency" as const, label: "Agency Profile", icon: Building2 },
+  { to: "/settings/profile" as const, label: "My Profile", icon: User },
+  { to: "/settings/financials" as const, label: "Financials & Goals", icon: Coins },
+  { to: "/settings/preferences" as const, label: "Signing & Presets", icon: PenTool },
   { to: "/settings/notifications" as const, label: "Notifications", icon: Bell },
-  { to: "/settings/users" as const, label: "Users", icon: Users },
 ];
 
 export function SettingsTabs() {

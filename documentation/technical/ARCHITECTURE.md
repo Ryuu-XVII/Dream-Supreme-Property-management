@@ -13,10 +13,10 @@ This document outlines the core architecture of the Dream Supreme Property Manag
 
 ## 2. Portal Separation (RBAC)
 
-The application operates as a **Monolith with Subdirectory Routing**, serving two distinct portals based on the user's authenticated role (`Principal`, `Admin`, `Agent`, `Candidate`):
+The application operates as a **Monolith with Subdirectory Routing**, serving two distinct portals based on the user's authenticated role (`Agent`, `Admin`):
 
-- **Agent Portal (Main App / Subdomain)**: Hosted on the practitioner domain (e.g., `app.dreamsupreme.co.za` or `agent.dreamsupreme.co.za`). Wrapped by `<AppShell>` for daily practitioner operations (Listings, Rentals, Pipeline, Countdown, Commission, Clients, Documents, Leads, Reports). Restricted to Agents, Candidates, and Principals.
-- **Admin Portal (Management Subdomain)**: Hosted on the administrative domain (e.g., `admin.dreamsupreme.co.za`). Wrapped by `<AdminShell>` with dedicated controls. Shares the exact same ambient mesh background, glassmorphic sidebar, and design system aesthetics as the Agent Portal. Restricted strictly to Admins and Principals.
+- **Agent Portal (Main App / Subdomain)**: Hosted on the practitioner domain (e.g., `app.dreamsupreme.co.za` or `agent.dreamsupreme.co.za`). Wrapped by `<AppShell>` for daily practitioner operations (Listings, Rentals, Pipeline, Countdown, Commission, Clients, Documents, Leads, Reports, and a 4-tab Settings Hub for Profile & Security, Financials & Goals, Signing Presets, and Notifications). Restricted to Agents and Admins.
+- **Admin Portal (Management Subdomain)**: Hosted on the administrative domain (e.g., `admin.dreamsupreme.co.za`). Wrapped by `<AdminShell>` with dedicated controls. Shares the exact same ambient mesh background, glassmorphic sidebar, and design system aesthetics as the Agent Portal. Restricted strictly to Admins.
 - **Conveyancer Portal (Public Links)**: Resides under `/conveyancer`. This is a standalone, public-facing portal accessed via secure "magic links" (URL tokens). Conveyancers do NOT require user accounts.
 
 **Design System & Typography**:
@@ -29,8 +29,8 @@ The application operates as a **Monolith with Subdirectory Routing**, serving tw
 - Spreadsheet multi-tier commission waterfall formulas (Royalty, Franchise, Office Split, Desk Fee) are unit tested in [`tests/agent-commission-spreadsheet.test.ts`](file:///c:/Personal%20Projects/FOCI%20PROJECTS/Dream-Supreme-Property-management/tests/agent-commission-spreadsheet.test.ts).
 
 **Domain & RBAC Enforcement Strategy**:
-1. **Domain Isolation**: Route guards check `window.location.origin` against `VITE_AGENT_DOMAIN` and `VITE_ADMIN_DOMAIN`. If an Agent attempts to access `/admin` or load the Admin domain, they are bounced back to the Agent domain.
-2. **Unified Supabase RLS Authority**: Both domains share the single Supabase PostgreSQL backend. Principals and Admins retain full administrative power over agent records, FFC approvals, commission waterfalls, and impersonation across domains via Row-Level Security (RLS) policies.
+1. **Domain Isolation**: Route guards check `window.location.origin` against `VITE_AGENT_DOMAIN` and `VITE_ADMIN_DOMAIN`. If an Agent attempts to access `/admin` or load the Admin domain, they are redirected back to the Agent Portal.
+2. **Unified Supabase RLS Authority**: Both domains share the single Supabase PostgreSQL backend. Admins retain full administrative control over agent records, FFC approvals, commission waterfalls, and impersonation across domains via Row-Level Security (RLS) policies.
 
 ## 3. State Management
 
