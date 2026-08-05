@@ -20,8 +20,8 @@ begin
 
   -- Auto-create default agency if new project has no agency records yet
   if v_agency_id is null then
-    insert into public.agency (name, slug, email)
-    values ('Dream Supreme Properties', 'dream-supreme-properties', 'admin@dreamsupreme.co.za')
+    insert into public.agency (name)
+    values ('Dream Supreme Properties')
     returning id into v_agency_id;
   end if;
 

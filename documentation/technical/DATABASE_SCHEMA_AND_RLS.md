@@ -156,5 +156,5 @@ Aggregates all notifications with a `delivery_status` of `'pending_digest'` for 
 
 ## 5. User Invitations & Security Functions
 
-- **`create_user_invitation(text, user_role)`**: Generates secure invite token, cleans unaccepted invitations, auto-provisions default agency if missing on new database projects, and grants `EXECUTE` to `anon`, `authenticated`, and `service_role`.
+- **`create_user_invitation(text, user_role)`**: Generates secure invite token, cleans unaccepted invitations, auto-provisions default agency (populating valid columns: `name`) if missing on new database projects, and grants `EXECUTE` to `anon`, `authenticated`, and `service_role`.
 - **`validate_user_invitation(text, text)`**: Validates invite token and email pairing with `EXECUTE` granted to `anon`, `authenticated`, and `service_role`.
