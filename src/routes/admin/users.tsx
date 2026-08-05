@@ -1,3 +1,5 @@
+import { render } from "@react-email/render";
+import { InvitationEmailTemplate } from "@/emails/invitation";
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth, type UserAccount } from "@/lib/auth";
@@ -304,20 +306,15 @@ function AdminUsers() {
         const directRegisterUrl = `${window.location.origin}/register?token=${inviteToken}&email=${encodeURIComponent(email)}`;
         setGeneratedLink(directRegisterUrl);
 
-        // Step 4: Dispatch custom registration invitation email into email_queue
+        // Step 4: Dispatch custom React Email invitation template into email_queue
         const emailSubject = "You've been invited to join Dream Supreme Properties";
-        const emailBodyHtml = `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <h2 style="color: #0f172a;">Team Invitation</h2>
-            <p>Hello ${name},</p>
-            <p>You have been invited to join Dream Supreme Properties as an <strong>${role}</strong>.</p>
-            <p>Please click the link below to complete your registration and set up your account password:</p>
-            <div style="margin: 24px 0;">
-              <a href="${directRegisterUrl}" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Complete Registration</a>
-            </div>
-            <p style="color: #64748b; font-size: 14px;">Or copy and paste this URL into your browser:<br/><a href="${directRegisterUrl}" style="color: #2563eb;">${directRegisterUrl}</a></p>
-          </div>
-        `;
+        const emailBodyHtml = await render(
+          InvitationEmailTemplate({
+            name,
+            role,
+            inviteUrl: directRegisterUrl,
+          }),
+        );
 
         let agencyId = account?.agencyId;
         if (!agencyId) {
