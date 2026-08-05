@@ -321,8 +321,8 @@ function AdminUsers() {
 
         let agencyId = account?.agencyId;
         if (!agencyId) {
-          const { data: ag } = await supabase.from("agency").select("id").limit(1).single();
-          agencyId = ag?.id;
+          const { data: agList } = await supabase.from("agency").select("id").limit(1);
+          agencyId = agList?.[0]?.id;
         }
 
         if (agencyId) {
