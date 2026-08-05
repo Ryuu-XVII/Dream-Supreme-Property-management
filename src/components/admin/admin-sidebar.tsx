@@ -68,28 +68,30 @@ export function AdminSidebar() {
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-slate-950 text-slate-50 transition-[width] duration-300 md:flex",
+        "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar/80 backdrop-blur-xl backdrop-saturate-150 transition-[width] duration-300 md:flex",
         sidebarCollapsed ? "w-19" : "w-64",
       )}
     >
       <div className="flex h-16 items-center gap-3 px-5">
-        <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-indigo-600 font-display text-sm font-bold text-white">
+        <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-sidebar-primary font-display text-sm font-bold text-sidebar-primary-foreground">
           AD
         </div>
         {!sidebarCollapsed && (
           <div className="min-w-0">
-            <p className="truncate font-display text-sm font-semibold text-white">Admin Console</p>
-            <p className="truncate text-[11px] text-slate-400">Dream Supreme</p>
+            <p className="truncate font-display text-sm font-semibold text-sidebar-accent-foreground">
+              Admin Console
+            </p>
+            <p className="truncate text-[11px] text-sidebar-foreground/60">Dream Supreme</p>
           </div>
         )}
       </div>
       <div className="mt-2 flex-1 overflow-y-auto scrollbar-thin">
         <AdminNavList collapsed={sidebarCollapsed} />
       </div>
-      <div className="mt-auto border-t border-slate-800 p-3">
+      <div className="mt-auto border-t border-sidebar-border p-3">
         <Link
           to="/"
-          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
         >
           <LayoutDashboard className="size-4.5 shrink-0" />
           {!sidebarCollapsed && <span className="truncate">Agent Portal</span>}
@@ -111,11 +113,13 @@ export function AdminMobileNav() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-50 bg-sidebar/95 backdrop-blur-sm md:hidden"
           >
             <div className="flex h-16 items-center justify-between px-5">
-              <span className="font-display font-semibold text-white">Admin Menu</span>
-              <button onClick={() => setOpen(false)} className="text-slate-400">
+              <span className="font-display font-semibold text-sidebar-accent-foreground">
+                Admin Menu
+              </span>
+              <button onClick={() => setOpen(false)} className="text-sidebar-foreground">
                 <X className="size-5" />
               </button>
             </div>
@@ -125,7 +129,7 @@ export function AdminMobileNav() {
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-slate-800 bg-slate-950 md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-sidebar-border bg-sidebar/90 backdrop-blur-lg md:hidden">
         {primary.map((item) => {
           const active =
             item.to === "/admin" ? pathname === "/admin" : pathname.startsWith(item.to);
@@ -135,7 +139,7 @@ export function AdminMobileNav() {
               to={item.to}
               className={cn(
                 "flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium",
-                active ? "text-indigo-400" : "text-slate-400",
+                active ? "text-sidebar-primary font-semibold" : "text-sidebar-foreground/70",
               )}
             >
               <item.icon className="size-5" />
@@ -145,10 +149,10 @@ export function AdminMobileNav() {
         })}
         <button
           onClick={() => setOpen(true)}
-          className="flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium text-slate-400"
+          className="flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium text-sidebar-foreground/70"
         >
           <Menu className="size-5" />
-          More
+          <span>More</span>
         </button>
       </div>
     </>

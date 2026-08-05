@@ -30,7 +30,7 @@ export function AdminHeader() {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-background/80 px-3 backdrop-blur-md sm:px-6">
       <div className="flex min-w-0 items-center gap-3 md:hidden">
-        <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-indigo-600 font-display text-xs font-bold text-white">
+        <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-sidebar-primary font-display text-xs font-bold text-sidebar-primary-foreground">
           AD
         </div>
       </div>

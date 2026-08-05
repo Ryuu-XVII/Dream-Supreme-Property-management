@@ -7,7 +7,7 @@ import { ChevronRight } from "lucide-react";
 
 export function AdminShell({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="ambient-mesh flex min-h-screen">
       <AdminSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AdminHeader />
