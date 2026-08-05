@@ -306,7 +306,16 @@ function AdminUsers() {
         const directRegisterUrl = `${window.location.origin}/register?token=${inviteToken}&email=${encodeURIComponent(email)}`;
         setGeneratedLink(directRegisterUrl);
 
-        // Step 4: Dispatch custom React Email invitation template into email_queue
+        // Step 4: Dispatch direct email delivery via Supabase Auth
+        const { error: inviteError } = await supabase.auth.signInWithOtp({
+          email: email.toLowerCase(),
+          options: {
+            emailRedirectTo: directRegisterUrl,
+            data: { full_name: name, role: role, invite_token: inviteToken },
+          },
+        });
+
+        // Step 5: Render custom React Email template & log to email_queue for audit
         const emailSubject = "You've been invited to join Dream Supreme Properties";
         const emailBodyHtml = await render(
           InvitationEmailTemplate({
@@ -323,22 +332,23 @@ function AdminUsers() {
         }
 
         if (agencyId) {
-          const { error: queueErr } = await supabase.from("email_queue").insert({
+          await supabase.from("email_queue").insert({
             agency_id: agencyId,
             recipient_email: email.toLowerCase(),
             subject: emailSubject,
             body_html: emailBodyHtml,
-            status: "pending",
+            status: inviteError ? "failed" : "sent",
           });
-
-          if (queueErr) {
-            console.warn("Could not queue invitation email:", queueErr.message);
-          }
         }
 
-        toast.success("Invitation generated & email queued!", {
-          description: `Custom registration email dispatched to ${email}.`,
-        });
+        if (inviteError) {
+          toast.warning("Sign-up link created, but email send failed: " + inviteError.message);
+        } else {
+          toast.success("Invitation email dispatched & sign-up link ready!", {
+            description: `An email has been sent to ${email}.`,
+          });
+        }
+
         refetch();
         return; // Keep dialog open so admin can copy the link
       }
