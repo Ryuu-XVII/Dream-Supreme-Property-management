@@ -306,12 +306,11 @@ function AdminUsers() {
         const directRegisterUrl = `${window.location.origin}/register?token=${inviteToken}&email=${encodeURIComponent(email)}`;
         setGeneratedLink(directRegisterUrl);
 
-        // Step 4: Dispatch official invitation email via Supabase Auth admin API
-        const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
+        // Step 4: Dispatch invitation email via Supabase Auth reset password / magic link
+        const { error: inviteError } = await supabase.auth.resetPasswordForEmail(
           email.toLowerCase(),
           {
             redirectTo: directRegisterUrl,
-            data: { full_name: name, role: role, invite_token: inviteToken },
           },
         );
 
