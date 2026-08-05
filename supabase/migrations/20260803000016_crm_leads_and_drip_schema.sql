@@ -19,11 +19,8 @@ create table if not exists public.lead_capture (
 
 alter table public.lead_capture enable row level security;
 
-create policy "Leads viewable by agency" on public.lead_capture
-  for select using (agency_id = public.get_current_agency_id());
-
-create policy "Leads manageable by agency users" on public.lead_capture
-  for all using (agency_id = public.get_current_agency_id());
+do $$ begin create policy "Leads viewable by agency" on public.lead_capture for select using (agency_id = public.get_current_agency_id()); exception when duplicate_object then null; end $$;
+do $$ begin create policy "Leads manageable by agency users" on public.lead_capture for all using (agency_id = public.get_current_agency_id()); exception when duplicate_object then null; end $$;
 
 -- 2. Drip Nurturing Campaign Tables
 create table if not exists public.drip_campaign (
@@ -36,11 +33,8 @@ create table if not exists public.drip_campaign (
 
 alter table public.drip_campaign enable row level security;
 
-create policy "Drip campaign viewable by agency" on public.drip_campaign
-  for select using (agency_id = public.get_current_agency_id());
-
-create policy "Drip campaign manageable by agency admins" on public.drip_campaign
-  for all using (agency_id = public.get_current_agency_id() and public.get_current_role() in ('principal', 'admin'));
+do $$ begin create policy "Drip campaign viewable by agency" on public.drip_campaign for select using (agency_id = public.get_current_agency_id()); exception when duplicate_object then null; end $$;
+do $$ begin create policy "Drip campaign manageable by agency admins" on public.drip_campaign for all using (agency_id = public.get_current_agency_id() and public.get_current_role() in ('principal', 'admin')); exception when duplicate_object then null; end $$;
 
 create table if not exists public.drip_campaign_step (
   id uuid primary key default gen_random_uuid(),
@@ -55,14 +49,7 @@ create table if not exists public.drip_campaign_step (
 
 alter table public.drip_campaign_step enable row level security;
 
-create policy "Drip step viewable by agency" on public.drip_campaign_step
-  for select using (
-    exists (
-      select 1 from public.drip_campaign c
-      where c.id = drip_campaign_step.campaign_id
-        and c.agency_id = public.get_current_agency_id()
-    )
-  );
+do $$ begin create policy "Drip step viewable by agency" on public.drip_campaign_step for select using (exists (select 1 from public.drip_campaign c where c.id = drip_campaign_step.campaign_id and c.agency_id = public.get_current_agency_id())); exception when duplicate_object then null; end $$;
 
 -- 3. Centralized Contact Activity Timeline
 create table if not exists public.contact_activity_timeline (
@@ -78,11 +65,8 @@ create table if not exists public.contact_activity_timeline (
 
 alter table public.contact_activity_timeline enable row level security;
 
-create policy "Activity timeline viewable by agency" on public.contact_activity_timeline
-  for select using (agency_id = public.get_current_agency_id());
-
-create policy "Activity timeline insertable by agency users" on public.contact_activity_timeline
-  for insert with check (agency_id = public.get_current_agency_id());
+do $$ begin create policy "Activity timeline viewable by agency" on public.contact_activity_timeline for select using (agency_id = public.get_current_agency_id()); exception when duplicate_object then null; end $$;
+do $$ begin create policy "Activity timeline insertable by agency users" on public.contact_activity_timeline for insert with check (agency_id = public.get_current_agency_id()); exception when duplicate_object then null; end $$;
 
 -- 4. Round-Robin Lead Assignment RPC Procedure
 create or replace function public.assign_lead_round_robin(

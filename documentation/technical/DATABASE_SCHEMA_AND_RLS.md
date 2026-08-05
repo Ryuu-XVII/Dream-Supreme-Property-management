@@ -154,3 +154,8 @@ Aggregates all notifications with a `delivery_status` of `'pending_digest'` for 
 - **`deal_stage_history`**: A Postgres trigger automatically records an entry in `deal_timeline` whenever a deal's `stage` column is updated.
 - **`audit_log`**: Crucial actions (like commission finalization, user archival, entity updates) write to `audit_log` for complete financial transparency.
 - **`pg_cron` (Scheduled Jobs)**: Used for automated daily background tasks. For example, `run_daily_sweeps()` runs every night at midnight to check all FFC certificates and automatically suspends accounts if their FFC has expired.
+
+## 5. User Invitations & Security Functions
+
+- **`create_user_invitation(text, user_role)`**: Generates secure invite token, cleans unaccepted invitations, and grants `EXECUTE` to `anon`, `authenticated`, and `service_role`.
+- **`validate_user_invitation(text, text)`**: Validates invite token and email pairing with `EXECUTE` granted to `anon`, `authenticated`, and `service_role`.

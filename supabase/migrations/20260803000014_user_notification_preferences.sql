@@ -13,4 +13,4 @@ alter table public.user_notification_preference enable row level security;
 
 create policy "Users manage their own notification preferences" 
   on public.user_notification_preference 
-  for all using (user_id = public.get_current_user_id());
+  for all using (user_id = public.get_current_user_account_id());
