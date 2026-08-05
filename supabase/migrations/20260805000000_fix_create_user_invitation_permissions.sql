@@ -2,7 +2,7 @@
 grant execute on function public.create_user_invitation(text, public.user_role) to anon, authenticated, service_role;
 grant execute on function public.validate_user_invitation(text, text) to anon, authenticated, service_role;
 
--- Update create_user_invitation to gracefully handle mock/dev sessions when get_current_agency_id() is null
+-- Update create_user_invitation to gracefully handle missing agency or session
 create or replace function public.create_user_invitation(p_email text, p_role public.user_role default 'agent')
 returns text
 language plpgsql security definer
@@ -16,6 +16,13 @@ begin
   -- Fallback to default agency if no active session
   if v_agency_id is null then
     select id into v_agency_id from public.agency limit 1;
+  end if;
+
+  -- Auto-create default agency if new project has no agency records yet
+  if v_agency_id is null then
+    insert into public.agency (name, slug, email)
+    values ('Dream Supreme Properties', 'dream-supreme-properties', 'admin@dreamsupreme.co.za')
+    returning id into v_agency_id;
   end if;
 
   insert into public.user_invitation(agency_id, email, role, token_hash, invited_by)
