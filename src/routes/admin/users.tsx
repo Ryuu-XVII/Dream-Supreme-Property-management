@@ -322,18 +322,22 @@ function AdminUsers() {
           agencyId = agList?.[0]?.id;
         }
 
+        let queueSuccess = false;
         if (agencyId) {
-          await supabase.from("email_queue").insert({
+          const { error: queueErr } = await supabase.from("email_queue").insert({
             agency_id: agencyId,
             recipient_email: email.toLowerCase(),
             subject: emailSubject,
             body_html: emailBodyHtml,
             status: "pending",
           });
+          if (!queueErr) queueSuccess = true;
         }
 
-        toast.success("Invitation link created!", {
-          description: `Direct sign-up link ready for ${email}.`,
+        toast.success("Sign-Up Link Generated", {
+          description: queueSuccess
+            ? `Sign-up link ready. Email queued in database for ${email}.`
+            : `Sign-up link ready for ${email}. Copy and send the link below.`,
         });
         refetch();
         return; // Keep dialog open so admin can copy the link
@@ -640,8 +644,8 @@ function AdminUsers() {
           <div className="space-y-4 py-4">
             {!editing && (
               <div className="bg-indigo-50 dark:bg-indigo-950/30 text-indigo-800 dark:text-indigo-300 p-3 rounded-lg text-sm mb-2 border border-indigo-100 dark:border-indigo-900/50">
-                New team members register through an invitation from the principal or administrator.
-                An invitation email will be sent containing instructions to set their password.
+                New team members register via an invitation token link. Generating an invitation
+                creates a direct sign-up link for the agent to set their password.
               </div>
             )}
             {!editing && generatedLink && (
