@@ -45,6 +45,7 @@ import {
   Loader2,
   Eye,
   Download,
+  CheckCircle2,
 } from "lucide-react";
 import Papa from "papaparse";
 import { supabase } from "@/lib/supabase";
@@ -65,6 +66,7 @@ function AdminUsers() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AdminUser | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<AdminUser>>({
     name: "",
     email: "",
@@ -246,12 +248,14 @@ function AdminUsers() {
   const startEdit = (u: AdminUser) => {
     setEditing(u);
     setDraft(u);
+    setGeneratedLink(null);
     setDialogOpen(true);
   };
 
   const startNew = () => {
     setEditing(null);
     setDraft({ name: "", email: "", role: "Agent", active: true, commissionPct: 50 });
+    setGeneratedLink(null);
     setDialogOpen(true);
   };
 
@@ -289,28 +293,22 @@ function AdminUsers() {
           .is("accepted_at", null);
 
         // Step 2: Generate new invitation token via RPC
-        const { data: inviteToken } = await supabase.rpc("create_user_invitation", {
+        const { data: inviteToken, error: rpcErr } = await supabase.rpc("create_user_invitation", {
           p_email: email,
           p_role: role.toLowerCase() as "agent" | "admin",
         });
 
-        // Step 3: Dispatch invitation magic link using current origin
-        const redirectTo = `${window.location.origin}/register?token=${inviteToken ?? ""}&email=${encodeURIComponent(email)}`;
-        const { error: inviteError } = await supabase.auth.signInWithOtp({
-          email: email,
-          options: {
-            emailRedirectTo: redirectTo,
-            data: { full_name: name, role: role, invite_token: inviteToken },
-          },
-        });
+        if (rpcErr) throw rpcErr;
 
-        if (inviteError) {
-          toast.error("Failed to send invitation email: " + inviteError.message);
-        } else {
-          toast.success("Invitation sent!", {
-            description: `An invitation link has been dispatched to ${email}.`,
-          });
-        }
+        // Step 3: Construct direct registration link
+        const directRegisterUrl = `${window.location.origin}/register?token=${inviteToken}&email=${encodeURIComponent(email)}`;
+        setGeneratedLink(directRegisterUrl);
+
+        toast.success("Invitation generated!", {
+          description: `Direct sign-up link ready for ${email}.`,
+        });
+        refetch();
+        return; // Keep dialog open so admin can copy the link
       }
 
       setDialogOpen(false);
@@ -618,6 +616,36 @@ function AdminUsers() {
                 An invitation email will be sent containing instructions to set their password.
               </div>
             )}
+            {!editing && generatedLink && (
+              <div className="rounded-lg border border-success/40 bg-success/10 p-3.5 space-y-2">
+                <p className="text-xs font-semibold text-success flex items-center gap-1.5">
+                  <CheckCircle2 className="size-4" /> Agent Sign-Up Link Created
+                </p>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={generatedLink}
+                    readOnly
+                    className="text-xs bg-background/80 font-mono"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="shrink-0 gap-1 text-xs"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedLink);
+                      toast.success("Sign-up link copied to clipboard!");
+                    }}
+                  >
+                    Copy Link
+                  </Button>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Send this registration link directly to the agent. They will set their own
+                  password upon opening it.
+                </p>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label>Full Name</Label>
               <Input
