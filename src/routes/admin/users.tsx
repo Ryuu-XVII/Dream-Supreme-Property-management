@@ -306,7 +306,16 @@ function AdminUsers() {
         const directRegisterUrl = `${window.location.origin}/register?token=${inviteToken}&email=${encodeURIComponent(email)}`;
         setGeneratedLink(directRegisterUrl);
 
-        // Step 4: Render custom React Email template & store in email_queue for record keeping
+        // Step 4: Dispatch invitation email to recipient via Supabase Auth
+        const { error: inviteError } = await supabase.auth.signInWithOtp({
+          email: email.toLowerCase(),
+          options: {
+            emailRedirectTo: directRegisterUrl,
+            data: { full_name: name, role: role, invite_token: inviteToken },
+          },
+        });
+
+        // Step 5: Render custom React Email template & store in email_queue for record keeping
         const emailSubject = "You've been invited to join Dream Supreme Properties";
         const emailBodyHtml = await render(
           InvitationEmailTemplate({
@@ -322,23 +331,26 @@ function AdminUsers() {
           agencyId = agList?.[0]?.id;
         }
 
-        let queueSuccess = false;
         if (agencyId) {
-          const { error: queueErr } = await supabase.from("email_queue").insert({
+          await supabase.from("email_queue").insert({
             agency_id: agencyId,
             recipient_email: email.toLowerCase(),
             subject: emailSubject,
             body_html: emailBodyHtml,
-            status: "pending",
+            status: inviteError ? "failed" : "sent",
           });
-          if (!queueErr) queueSuccess = true;
         }
 
-        toast.success("Sign-Up Link Generated", {
-          description: queueSuccess
-            ? `Sign-up link ready. Email queued in database for ${email}.`
-            : `Sign-up link ready for ${email}. Copy and send the link below.`,
-        });
+        if (inviteError) {
+          toast.error("Email Dispatch Error: " + inviteError.message, {
+            description: "You can still copy and send the sign-up link directly.",
+          });
+        } else {
+          toast.success("Invitation Email Dispatched!", {
+            description: `An email containing the registration link was sent to ${email}.`,
+          });
+        }
+
         refetch();
         return; // Keep dialog open so admin can copy the link
       }
