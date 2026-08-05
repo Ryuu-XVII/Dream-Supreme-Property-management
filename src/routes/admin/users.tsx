@@ -304,26 +304,11 @@ function AdminUsers() {
         const directRegisterUrl = `${window.location.origin}/register?token=${inviteToken}&email=${encodeURIComponent(email)}`;
         setGeneratedLink(directRegisterUrl);
 
-        // Step 4: Dispatch invitation email to the user's inbox
-        const { error: inviteError } = await supabase.auth.signInWithOtp({
-          email: email,
-          options: {
-            emailRedirectTo: directRegisterUrl,
-            data: { full_name: name, role: role, invite_token: inviteToken },
-          },
+        toast.success("Invitation generated!", {
+          description: `Direct sign-up link ready for ${email}.`,
         });
-
-        if (inviteError) {
-          toast.info(
-            "Registration link created, but email dispatch failed: " + inviteError.message,
-          );
-        } else {
-          toast.success("Invitation email dispatched & sign-up link ready!", {
-            description: `An email has been sent to ${email}.`,
-          });
-        }
         refetch();
-        return; // Keep dialog open so admin can also copy the link manually
+        return; // Keep dialog open so admin can copy the link
       }
 
       setDialogOpen(false);
