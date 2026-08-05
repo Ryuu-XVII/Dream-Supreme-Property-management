@@ -58,7 +58,7 @@ export const Route = createFileRoute("/admin/users")({
 function AdminUsers() {
   const { data: usersList = [], isLoading, refetch } = useAdminUsers();
   const navigate = useNavigate();
-  const { startImpersonating } = useAuth();
+  const { account, startImpersonating } = useAuth();
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<Role | "All">("All");
@@ -319,16 +319,24 @@ function AdminUsers() {
           </div>
         `;
 
-        const { error: queueErr } = await supabase.from("email_queue").insert({
-          agency_id: (await supabase.rpc("get_current_agency_id")).data || undefined,
-          recipient_email: email.toLowerCase(),
-          subject: emailSubject,
-          body_html: emailBodyHtml,
-          status: "pending",
-        });
+        let agencyId = account?.agencyId;
+        if (!agencyId) {
+          const { data: ag } = await supabase.from("agency").select("id").limit(1).single();
+          agencyId = ag?.id;
+        }
 
-        if (queueErr) {
-          console.warn("Could not queue invitation email:", queueErr.message);
+        if (agencyId) {
+          const { error: queueErr } = await supabase.from("email_queue").insert({
+            agency_id: agencyId,
+            recipient_email: email.toLowerCase(),
+            subject: emailSubject,
+            body_html: emailBodyHtml,
+            status: "pending",
+          });
+
+          if (queueErr) {
+            console.warn("Could not queue invitation email:", queueErr.message);
+          }
         }
 
         toast.success("Invitation generated & email queued!", {
