@@ -340,12 +340,13 @@ function AdminUsers() {
         }
 
         if (inviteError) {
-          toast.error(`Email Dispatch Failed: ${inviteError.message}`, {
-            description: "You can copy and send the sign-up link directly using the button below.",
+          toast.error(`Email Not Delivered by Provider: ${inviteError.message}`, {
+            description:
+              "Please copy and send the sign-up link directly using the Copy Link button.",
           });
         } else {
-          toast.success("Invitation Email Dispatched!", {
-            description: `Supabase default email dispatched to ${email}.`,
+          toast.success("Invitation Link Generated!", {
+            description: `Invitation link generated. If email does not arrive in ${email}, click Copy Link to send it directly.`,
           });
         }
 
