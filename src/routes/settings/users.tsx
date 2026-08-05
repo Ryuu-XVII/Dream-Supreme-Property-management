@@ -66,7 +66,7 @@ export const Route = createFileRoute("/settings/users")({
   component: UsersPage,
 });
 
-const ROLES: Role[] = ["Principal", "Agent", "Candidate", "Admin"];
+const ROLES: Role[] = ["Agent", "Admin"];
 
 interface Draft {
   name: string;
@@ -75,7 +75,6 @@ interface Draft {
   role: Role;
   branch: string;
   ppra: string;
-  candidate: boolean;
   supervisor: string;
 }
 
@@ -87,21 +86,16 @@ function emptyDraft(): Draft {
     role: "Agent",
     branch: branches[0].name,
     ppra: "",
-    candidate: false,
     supervisor: "",
   };
 }
 
 function roleTone(role: Role) {
   switch (role) {
-    case "Principal":
-      return "border-primary/30 bg-primary/10 text-primary";
     case "Admin":
       return "border-info/30 bg-info/10 text-info";
     case "Agent":
       return "border-success/30 bg-success/10 text-success";
-    case "Candidate":
-      return "border-warning/40 bg-warning/15 text-warning";
   }
 }
 
@@ -143,7 +137,6 @@ function UsersPage() {
       role: u.role,
       branch: u.branch,
       ppra: u.ppra,
-      candidate: u.role === "Candidate",
       supervisor: u.supervisor ?? "",
     });
     setDialogOpen(true);
@@ -154,7 +147,7 @@ function UsersPage() {
       toast.error("Full name and email are required.");
       return;
     }
-    const role: Role = draft.candidate ? "Candidate" : draft.role;
+    const role: Role = draft.role;
     if (editing) {
       setUserList((prev) =>
         prev.map((u) =>
@@ -167,7 +160,6 @@ function UsersPage() {
                 role,
                 branch: draft.branch,
                 ppra: draft.ppra,
-                supervisor: draft.candidate ? draft.supervisor : undefined,
               }
             : u,
         ),
@@ -180,11 +172,10 @@ function UsersPage() {
         email: draft.email,
         mobile: draft.mobile,
         role,
-        seniority: role === "Candidate" ? "Candidate" : "Mid-level",
+        seniority: role === "Admin" ? "Admin" : "Mid-level",
         branch: draft.branch,
         ppra: draft.ppra || "—",
         ffc: null,
-        supervisor: draft.candidate ? draft.supervisor : undefined,
         active: true,
         colour: "#5a6b8f",
       };
@@ -205,7 +196,7 @@ function UsersPage() {
     setArchiveTarget(null);
   }
 
-  const potentialSupervisors = userList.filter((u) => u.role === "Agent" || u.role === "Principal");
+  const potentialSupervisors = userList.filter((u) => u.role === "Agent");
 
   return (
     <AppShell
@@ -342,10 +333,8 @@ function UsersPage() {
               <div>
                 <Label>Role</Label>
                 <Select
-                  value={draft.candidate ? "Candidate" : draft.role}
-                  onValueChange={(v) =>
-                    setDraft((d) => ({ ...d, role: v as Role, candidate: v === "Candidate" }))
-                  }
+                  value={draft.role}
+                  onValueChange={(v) => setDraft((d) => ({ ...d, role: v as Role }))}
                 >
                   <SelectTrigger className="mt-1">
                     <SelectValue />
@@ -386,35 +375,6 @@ function UsersPage() {
                 className="mt-1 money"
               />
             </div>
-            <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
-              <Label className="mb-0">Candidate Practitioner</Label>
-              <Switch
-                checked={draft.candidate}
-                onCheckedChange={(v) =>
-                  setDraft((d) => ({ ...d, candidate: v, role: v ? "Candidate" : "Agent" }))
-                }
-              />
-            </div>
-            {draft.candidate && (
-              <div>
-                <Label>Supervisor</Label>
-                <Select
-                  value={draft.supervisor}
-                  onValueChange={(v) => setDraft((d) => ({ ...d, supervisor: v }))}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select supervisor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {potentialSupervisors.map((u) => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>

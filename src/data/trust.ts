@@ -8,7 +8,7 @@ export function useTrustLedger(dealId?: string, leaseId?: string) {
 
   return useQuery({
     queryKey: ["trust-ledger", account?.agencyId, dealId, leaseId],
-    enabled: !!account && (account.role === "principal" || account.role === "admin"),
+    enabled: !!account && account.role === "admin",
     queryFn: async (): Promise<TrustLedgerEntry[]> => {
       let query = supabase
         .from("trust_account_ledger")

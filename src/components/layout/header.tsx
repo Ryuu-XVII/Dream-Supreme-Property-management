@@ -33,7 +33,7 @@ import { QuickDealModal } from "@/components/deal/quick-deal-modal";
 
 import { FloatingCalculatorModal } from "@/components/calculators/floating-calculator-modal";
 
-const roles: Role[] = ["Principal", "Agent", "Candidate", "Admin"];
+const roles: Role[] = ["Agent", "Admin"];
 
 export function Header() {
   const [open, setOpen] = useState(false);

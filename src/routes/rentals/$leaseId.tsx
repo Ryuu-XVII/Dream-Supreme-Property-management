@@ -63,7 +63,7 @@ function LeaseDetail() {
   }
 
   const { lease, invoices, maintenance } = leaseQuery.data!;
-  const isManager = lease.managed_by === account?.id || account?.role === "principal";
+  const isManager = lease.managed_by === account?.id || account?.role === "admin";
 
   return (
     <AppShell title={`Lease: ${lease.tenant_name}`} description={(lease.property as any)?.address}>

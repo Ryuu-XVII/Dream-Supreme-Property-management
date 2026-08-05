@@ -145,7 +145,7 @@ function ClientsPage() {
           .from("user_account")
           .select("id, full_name")
           .eq("status", "active")
-          .in("role", ["principal", "admin", "agent", "candidate"])
+          .in("role", ["admin", "agent"])
           .order("full_name"),
       ]);
       if (clientsResult.error) throw clientsResult.error;

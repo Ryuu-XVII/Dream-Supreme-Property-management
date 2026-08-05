@@ -77,7 +77,7 @@ export function AdminHeader() {
               <p className="text-xs font-normal text-muted-foreground">{agency.name}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {role === "Principal" && (
+            {role === "Admin" && (
               <>
                 <DropdownMenuItem asChild>
                   <Link to="/">Agent Portal</Link>

@@ -50,10 +50,8 @@ interface Pref {
 }
 
 function defaultRecipients(type: string): Recipient[] {
-  if (type.includes("FFC") || type.includes("Mandate")) return ["Agent", "Admin"];
-  if (type.includes("Commission")) return ["Principal", "Admin"];
-  if (type.includes("lead")) return ["Agent"];
-  return ["Agent", "Principal"];
+  if (type.includes("Commission")) return ["Admin"];
+  return ["Agent"];
 }
 
 function RecipientPicker({

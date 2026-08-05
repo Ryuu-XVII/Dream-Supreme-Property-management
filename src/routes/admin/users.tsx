@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { type Role } from "@/types";
 import { useAdminUsers, type AdminUser } from "@/data/users";
 
-const ROLES: Role[] = ["Principal", "Admin", "Agent", "Candidate"];
+const ROLES: Role[] = ["Agent", "Admin"];
 import {
   Table,
   TableBody,
@@ -234,14 +234,10 @@ function AdminUsers() {
 
   const roleTone = (r: Role) => {
     switch (r) {
-      case "Principal":
-        return "border-purple-500/30 text-purple-600 bg-purple-500/10";
       case "Admin":
         return "border-slate-500/30 text-slate-600 bg-slate-500/10";
       case "Agent":
         return "border-indigo-500/30 text-indigo-600 bg-indigo-500/10";
-      case "Candidate":
-        return "border-sky-500/30 text-sky-600 bg-sky-500/10";
       default:
         return "";
     }
@@ -422,7 +418,7 @@ function AdminUsers() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {u.role === "Agent" || u.role === "Candidate" ? (
+                      {u.role === "Agent" ? (
                         <div className="text-sm">
                           <div>
                             <span className="font-medium">{u.activeDeals || 0}</span> active deals
@@ -444,7 +440,7 @@ function AdminUsers() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {(u.role === "Agent" || u.role === "Candidate") && (
+                        {u.role === "Agent" && (
                           <>
                             <Button
                               variant="outline"
@@ -456,7 +452,7 @@ function AdminUsers() {
                                   branchId: null,
                                   fullName: u.name,
                                   email: u.email,
-                                  role: u.role.toLowerCase() as "agent" | "candidate",
+                                  role: "agent",
                                   status: u.active ? "active" : "suspended",
                                 });
                                 navigate({ to: "/" });
@@ -604,7 +600,7 @@ function AdminUsers() {
               </div>
             </div>
 
-            {(draft.role === "Agent" || draft.role === "Candidate") && (
+            {draft.role === "Agent" && (
               <div className="space-y-2">
                 <Label>Commission Split (%)</Label>
                 <Input

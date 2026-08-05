@@ -34,7 +34,7 @@ export function useDashboardData() {
       if (userResult.error) throw userResult.error;
 
       let filteredDealsData = dealResult.data || [];
-      if (activeAccount && (activeAccount.role === "agent" || activeAccount.role === "candidate")) {
+      if (activeAccount && activeAccount.role === "agent") {
         filteredDealsData = filteredDealsData.filter((d: any) =>
           d.participants?.some((p: any) => p.user?.id === activeAccount.id),
         );
@@ -83,38 +83,30 @@ export function useDashboardData() {
           })),
       );
 
-      const users = (userResult.data || []).map((user: any) => ({
-        id: user.id,
-        name: user.full_name,
-        email: user.email,
-        role:
-          user.role === "principal"
-            ? "Principal"
-            : user.role === "admin"
-              ? "Admin"
-              : user.role === "candidate"
-                ? "Candidate"
-                : "Agent",
-        colour: "#1f7a52",
-        ppra: user.ppra_reference || "Not captured",
-        seniority:
-          user.role === "principal"
-            ? "Principal"
-            : user.role === "admin"
-              ? "Admin"
-              : user.is_candidate || user.role === "candidate"
-                ? "Candidate"
-                : "Agent",
-        ffc: user.ffc?.[0]
-          ? {
-              id: user.ffc[0].id,
-              number: user.ffc[0].certificate_number,
-              issued: user.ffc[0].issued_on,
-              expiry: user.ffc[0].expires_on,
-              storageKey: user.ffc[0].document?.storage_key,
-            }
-          : null,
-      }));
+      const rawUsers = userResult.data || [];
+      const users = rawUsers.map((user: any) => {
+        const primaryFfc = Array.isArray(user.ffc) ? user.ffc[0] : user.ffc;
+        const role = user.role === "admin" ? "Admin" : "Agent";
+        return {
+          id: user.id,
+          name: user.full_name,
+          email: user.email,
+          role: role as "Agent" | "Admin",
+          seniority: (user.role === "admin" ? "Admin" : "Senior") as
+            "Senior" | "Mid-level" | "Admin",
+          colour: "#1f7a52",
+          ppra: user.ppra_reference || "Not captured",
+          ffc: primaryFfc
+            ? {
+                id: primaryFfc.id,
+                number: primaryFfc.certificate_number,
+                issued: primaryFfc.issued_on,
+                expiry: primaryFfc.expires_on,
+                storageKey: primaryFfc.document?.storage_key,
+              }
+            : null,
+        };
+      });
 
       const auditEvents = auditResult.error
         ? []

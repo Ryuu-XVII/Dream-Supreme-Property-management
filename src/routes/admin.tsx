@@ -19,8 +19,7 @@ function AdminLayout() {
       (window.location.origin === import.meta.env.VITE_ADMIN_DOMAIN ||
         window.location.hostname === import.meta.env.VITE_ADMIN_DOMAIN));
 
-  const isAllowed =
-    isAdminDomain || (account && (account.role === "principal" || account.role === "admin"));
+  const isAllowed = isAdminDomain || (account && account.role === "admin");
 
   useEffect(() => {
     if (!loading && !isAllowed) {

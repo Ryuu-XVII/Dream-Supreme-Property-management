@@ -370,7 +370,7 @@ function NewDealPage() {
           .from("user_account")
           .select("id, full_name, role, branch:branch_id(name)")
           .eq("status", "active")
-          .in("role", ["principal", "agent", "candidate"])
+          .in("role", ["admin", "agent"])
           .order("full_name"),
         supabase.from("conveyancer_firm").select("id, name").order("name"),
       ]);

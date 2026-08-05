@@ -5,7 +5,7 @@ const iso = (d: Date) => format(d, "yyyy-MM-dd");
 const d = (n: number) => iso(addDays(today, n));
 const past = (n: number) => iso(subDays(today, n));
 
-export type Role = "Principal" | "Agent" | "Candidate" | "Admin";
+export type Role = "Agent" | "Admin";
 
 export interface User {
   id: string;
@@ -13,7 +13,7 @@ export interface User {
   email: string;
   mobile: string;
   role: Role;
-  seniority: "Principal" | "Senior" | "Mid-level" | "Candidate" | "Admin";
+  seniority: "Senior" | "Mid-level" | "Admin";
   branch: string;
   ppra: string;
   ffc: {

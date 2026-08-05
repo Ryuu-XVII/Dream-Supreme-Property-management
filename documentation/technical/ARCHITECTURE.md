@@ -16,8 +16,14 @@ This document outlines the core architecture of the Dream Supreme Property Manag
 The application operates as a **Monolith with Subdirectory Routing**, serving two distinct portals based on the user's authenticated role (`Principal`, `Admin`, `Agent`, `Candidate`):
 
 - **Agent Portal (Main App / Subdomain)**: Hosted on the practitioner domain (e.g., `app.dreamsupreme.co.za` or `agent.dreamsupreme.co.za`). Wrapped by `<AppShell>` for daily practitioner operations (Listings, Rentals, Pipeline, Countdown, Commission, Clients, Documents, Leads, Reports). Restricted to Agents, Candidates, and Principals.
-- **Admin Portal (Management Subdomain)**: Hosted on the administrative domain (e.g., `admin.dreamsupreme.co.za`). Wrapped by `<AdminShell>` with dedicated controls. Restricted strictly to Admins and Principals.
+- **Admin Portal (Management Subdomain)**: Hosted on the administrative domain (e.g., `admin.dreamsupreme.co.za`). Wrapped by `<AdminShell>` with dedicated controls. Shares the exact same ambient mesh background, glassmorphic sidebar, and design system aesthetics as the Agent Portal. Restricted strictly to Admins and Principals.
 - **Conveyancer Portal (Public Links)**: Resides under `/conveyancer`. This is a standalone, public-facing portal accessed via secure "magic links" (URL tokens). Conveyancers do NOT require user accounts.
+
+**Design System & Typography**:
+- **Google Fonts CDN**: Platform typography relies on Google Fonts loaded via `<link>` tags in `index.html` and preconnected to `https://fonts.googleapis.com`.
+  - **Inter**: Primary sans-serif font for body text, tables, forms, and general UI (`--font-sans`).
+  - **Outfit**: Display font for page titles, headings, and branding elements (`--font-display`).
+  - **JetBrains Mono**: Monospace font for financial values, deal numbers, and system logs (`--font-mono`).
 
 **Testing & Calculation Engine**:
 - Spreadsheet multi-tier commission waterfall formulas (Royalty, Franchise, Office Split, Desk Fee) are unit tested in [`tests/agent-commission-spreadsheet.test.ts`](file:///c:/Personal%20Projects/FOCI%20PROJECTS/Dream-Supreme-Property-management/tests/agent-commission-spreadsheet.test.ts).

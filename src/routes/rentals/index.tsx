@@ -122,7 +122,7 @@ function RentalsDashboard() {
               </TableRow>
             ) : (
               leasesQuery.data?.map((lease) => {
-                const isManager = lease.managed_by === account?.id || account?.role === "principal";
+                const isManager = lease.managed_by === account?.id || account?.role === "admin";
 
                 return (
                   <TableRow key={lease.id}>

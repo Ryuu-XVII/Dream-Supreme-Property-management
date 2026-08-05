@@ -21,7 +21,7 @@ export interface UserAccount {
   fullName: string;
   email: string;
   telephone?: string | null;
-  role: "principal" | "agent" | "candidate" | "admin";
+  role: "agent" | "admin";
   status: "active" | "suspended" | "archived";
 }
 
@@ -80,17 +80,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               fullName: data.full_name,
               email: data.email,
               telephone: data.mobile,
-              role: data.role,
+              role: data.role as "agent" | "admin",
               status: data.status,
             }
           : {
               id: "u1",
               agencyId: "ag1",
               branchId: "b1",
-              fullName: "Admin Principal",
+              fullName: "Admin User",
               email: "admin@dreamsupreme.co.za",
               telephone: "+27 82 000 0000",
-              role: "principal",
+              role: "admin",
               status: "active",
             },
       );

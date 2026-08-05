@@ -28,7 +28,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { activeAccount } = useAuth();
   const [theme, setThemeState] = useState<Theme>("system");
   const [resolved, setResolved] = useState<"light" | "dark">("light");
-  const [role, setRoleState] = useState<Role>("Principal");
+  const [role, setRoleState] = useState<Role>("Admin");
   const [sidebarCollapsed, setCollapsed] = useState(false);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [calculatorContext, setCalculatorContext] = useState<CalculatorContext | null>(null);
@@ -42,12 +42,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!activeAccount) return;
     const roleMap: Record<typeof activeAccount.role, Role> = {
-      principal: "Principal",
       agent: "Agent",
-      candidate: "Candidate",
       admin: "Admin",
     };
-    setRoleState(roleMap[activeAccount.role]);
+    setRoleState(roleMap[activeAccount.role] || "Agent");
   }, [activeAccount]);
 
   useEffect(() => {
@@ -113,10 +111,8 @@ export function useApp() {
 }
 
 export const permissions: Record<Role, string[]> = {
-  Principal: ["view.all", "commission.approve", "settings.manage", "users.manage", "reports.all"],
   Agent: ["view.own", "reports.all"],
-  Candidate: ["view.own"],
-  Admin: ["view.all", "settings.manage", "users.manage", "reports.all"],
+  Admin: ["view.all", "commission.approve", "settings.manage", "users.manage", "reports.all"],
 };
 
 export function useCan(perm: string) {

@@ -60,7 +60,7 @@ export function usePipelineDeals() {
       if (error) throw error;
 
       let filteredData = data as any[];
-      if (activeAccount && (activeAccount.role === "agent" || activeAccount.role === "candidate")) {
+      if (activeAccount && activeAccount.role === "agent") {
         filteredData = filteredData.filter((d) =>
           d.participants?.some((p: any) => p.user?.id === activeAccount.id),
         );
