@@ -17,12 +17,11 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 - **`mandate`**: The exclusive or open listing agreement to sell/rent a `property`. Tracks listing price and expiry.
 - **`deal`**: The transactional workflow. Links a `property` (and optionally a `mandate`) to `user_account`s (via `deal_participant`). Moves through strict stages (e.g., `Mandate Signed` -> `OTP Signed` -> `Registered`). Deals can now be put into an `'archived'` status when older than 3 years.
 
-### `lease`, `lease_invoice`, `lease_escalation_schedule` & `maintenance_job` (Rentals Module)
+### `user_notification_preference` & `notification` (Notification System)
 
-- **`lease`**: The core rentals agreement linking a tenant to a property. Owned by a specific `managed_by` rental agent.
-- **`lease_invoice`**: Financial tracking for rent, utilities, and deposits against a lease.
-- **`lease_escalation_schedule`**: Tracks scheduled annual CPI/fixed rent escalations.
-- **`maintenance_job`**: Tracks property repairs, linked to a lease and requiring principal/agent approval.
+- **`user_notification_preference`**: Tracks user-level event notification preferences, frequency ('realtime' vs 'digest'), and custom condition configurations.
+- **`notification`**: Stores in-app and email notifications with delivery statuses ('sent', 'pending_digest', 'digest_queued').
+
 
 ### `trust_account_ledger` & `document_template` (Trust & Compliance Operations)
 

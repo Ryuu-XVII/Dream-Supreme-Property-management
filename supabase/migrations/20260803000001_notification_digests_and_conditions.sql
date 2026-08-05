@@ -1,5 +1,16 @@
 -- Phase 4B: Notification Digests & Smart Alerts
 
+-- 0. Create table if not exists
+create table if not exists public.user_notification_preference (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.user_account(id) on delete cascade,
+  event_type text not null,
+  email_enabled boolean not null default true,
+  in_app_enabled boolean not null default true,
+  updated_at timestamptz not null default now(),
+  unique(user_id, event_type)
+);
+
 -- 1. Add frequency and conditions to user preferences
 alter table public.user_notification_preference 
 add column if not exists frequency text not null default 'realtime' check (frequency in ('realtime', 'digest')),
