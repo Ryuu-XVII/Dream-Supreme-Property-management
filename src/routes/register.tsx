@@ -103,21 +103,42 @@ function RegisterPage() {
       // Upload only after authentication so storage policies can scope the file
       // to this user. Object-store credentials never reach the browser.
       let avatarKey: string | null = null;
+      let authUser: any = null;
+      let session: any = null;
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
       });
 
       if (authError) {
-        throw new Error(authError.message);
+        if (authError.message.toLowerCase().includes("already registered")) {
+          // Attempt to sign in with the provided password if user already exists
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: data.email,
+            password: data.password,
+          });
+
+          if (signInError) {
+            throw new Error(
+              "An account with this email address already exists. Please log in with your password or request a password reset.",
+            );
+          }
+          authUser = signInData.user;
+          session = signInData.session;
+        } else {
+          throw new Error(authError.message);
+        }
+      } else {
+        authUser = authData.user;
+        session = authData.session;
       }
 
-      if (!authData.user) {
+      if (!authUser) {
         throw new Error("Registration failed. Please try again.");
       }
 
       // 3. Ensure session is active or sign in
-      let session = authData.session;
       if (!session) {
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email: data.email,
@@ -143,7 +164,7 @@ function RegisterPage() {
 
       if (avatarFile && session) {
         const fileExt = avatarFile.name.split(".").pop();
-        const storagePath = `${authData.user.id}/avatars/${crypto.randomUUID()}.${fileExt}`;
+        const storagePath = `${authUser.id}/avatars/${crypto.randomUUID()}.${fileExt}`;
         avatarKey = await uploadFileToR2(avatarFile, storagePath);
       }
 
