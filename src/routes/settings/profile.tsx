@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
@@ -42,14 +42,23 @@ export const Route = createFileRoute("/settings/profile")({
 
 function ProfilePage() {
   const { account } = useAuth();
-  const [fullName, setFullName] = useState(account?.fullName ?? "Agent User");
-  const [email, setEmail] = useState(account?.email ?? "agent@dreamsupreme.co.za");
-  const [telephone, setTelephone] = useState(account?.telephone ?? "+27 82 555 0199");
+  const [fullName, setFullName] = useState(account?.fullName ?? "");
+  const [email, setEmail] = useState(account?.email ?? "");
+  const [telephone, setTelephone] = useState(account?.telephone ?? "");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [ffcDocumentName, setFfcDocumentName] = useState<string | null>("FFC_Certificate_2026.pdf");
   const [saving, setSaving] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const ffcInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync profile fields whenever the authenticated account loads/changes
+  useEffect(() => {
+    if (account) {
+      setFullName(account.fullName);
+      setEmail(account.email);
+      setTelephone(account.telephone ?? "");
+    }
+  }, [account]);
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
