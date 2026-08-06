@@ -13,6 +13,8 @@ import {
   Bell,
 } from "lucide-react";
 import { useApp } from "@/lib/app-state";
+import { useAuth } from "@/lib/auth";
+import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -65,6 +67,7 @@ function AdminNavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigat
 
 export function AdminSidebar() {
   const { sidebarCollapsed } = useApp();
+  const { account } = useAuth();
   return (
     <aside
       className={cn(
@@ -74,7 +77,7 @@ export function AdminSidebar() {
     >
       <div className="flex h-16 items-center gap-3 px-5">
         <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-sidebar-primary font-display text-sm font-bold text-sidebar-primary-foreground">
-          AD
+          {initials(account?.fullName || "Admin User")}
         </div>
         {!sidebarCollapsed && (
           <div className="min-w-0">
