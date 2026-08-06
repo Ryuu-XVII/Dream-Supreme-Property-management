@@ -27,15 +27,21 @@ export function useAdminUsers() {
         return [];
       }
 
-      return data.map((u: Record<string, unknown>): AdminUser => ({
-        id: String(u.id),
-        name: typeof u.full_name === "string" ? u.full_name : "Unknown",
-        email: typeof u.email === "string" ? u.email : "unknown@example.com",
-        role: (typeof u.system_role === "string" ? u.system_role : "Agent") as Role,
-        active: u.status === "active",
-        colour: "#4f46e5",
-        commissionPct: 50,
-      }));
+      return data.map((u: Record<string, unknown>): AdminUser => {
+        const rawRole = (typeof u.role === "string" ? u.role : "agent").toLowerCase();
+        const formattedRole: Role =
+          rawRole === "admin" || rawRole === "principal" ? "Admin" : "Agent";
+
+        return {
+          id: String(u.id),
+          name: typeof u.full_name === "string" ? u.full_name : "Unknown",
+          email: typeof u.email === "string" ? u.email : "unknown@example.com",
+          role: formattedRole,
+          active: u.status === "active",
+          colour: "#4f46e5",
+          commissionPct: typeof u.commission_pct === "number" ? u.commission_pct : 50,
+        };
+      });
     },
   });
 }
