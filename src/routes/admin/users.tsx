@@ -48,6 +48,7 @@ import {
   Eye,
   Download,
   CheckCircle2,
+  Send,
 } from "lucide-react";
 import Papa from "papaparse";
 import { supabase } from "@/lib/supabase";
@@ -355,6 +356,54 @@ function AdminUsers() {
     }
   };
 
+  const resendInvitation = async (user: AdminUser) => {
+    try {
+      const inviteId = user.id.replace("invite-", "");
+      // Fetch or re-generate token for invitation
+      const { data: invData, error: fetchErr } = await supabase
+        .from("user_invitation")
+        .select("token_hash, email, role")
+        .eq("id", inviteId)
+        .maybeSingle();
+
+      if (fetchErr || !invData) {
+        toast.error("Could not find invitation details.");
+        return;
+      }
+
+      const inviteToken = invData.token_hash;
+      const appBaseUrl = window.location.origin;
+      const directRegisterUrl = `${appBaseUrl}/register?token=${inviteToken}&email=${encodeURIComponent(user.email)}`;
+
+      // Re-trigger Supabase Auth OTP email
+      await supabase.auth.signInWithOtp({
+        email: user.email.toLowerCase(),
+        options: {
+          emailRedirectTo: directRegisterUrl,
+          shouldCreateUser: true,
+        },
+      });
+
+      // Show dialog with generated invitation link to copy
+      setGeneratedLink(directRegisterUrl);
+      setDraft({
+        name: user.name.replace(" (Pending Invite)", ""),
+        email: user.email,
+        role: user.role,
+        active: false,
+        commissionPct: 50,
+      });
+      setEditing(null);
+      setDialogOpen(true);
+
+      toast.success(`Invitation resent to ${user.email}!`, {
+        description: "Invitation email dispatched and sign-up link ready.",
+      });
+    } catch (err: any) {
+      toast.error("Failed to resend invitation: " + err.message);
+    }
+  };
+
   const retireUser = async (id: string) => {
     if (
       confirm("Are you sure you want to retire this member? They will be removed from the team.")
@@ -549,7 +598,18 @@ function AdminUsers() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {u.role === "Agent" && (
+                        {u.id.startsWith("invite-") && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => void resendInvitation(u)}
+                            className="text-xs mr-2 text-indigo-600 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950"
+                          >
+                            <Send className="size-3 mr-1" />
+                            Resend Invite
+                          </Button>
+                        )}
+                        {u.role === "Agent" && !u.id.startsWith("invite-") && (
                           <>
                             <Button
                               variant="outline"
