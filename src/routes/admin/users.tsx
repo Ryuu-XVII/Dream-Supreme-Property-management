@@ -357,18 +357,24 @@ function AdminUsers() {
 
   const retireUser = async (id: string) => {
     if (
-      confirm("Are you sure you want to retire this agent? They will lose access to the system.")
+      confirm("Are you sure you want to retire this member? They will be removed from the team.")
     ) {
       try {
-        const { error } = await supabase
-          .from("user_account")
-          .update({ status: "suspended" })
-          .eq("id", id);
-        if (error) throw error;
-        toast.success("Agent retired successfully");
+        if (id.startsWith("invite-")) {
+          const inviteId = id.replace("invite-", "");
+          const { error } = await supabase.from("user_invitation").delete().eq("id", inviteId);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from("user_account")
+            .update({ status: "archived", archived_at: new Date().toISOString() })
+            .eq("id", id);
+          if (error) throw error;
+        }
+        toast.success("Team member removed successfully");
         refetch();
       } catch (err: any) {
-        toast.error("Failed to retire agent: " + err.message);
+        toast.error("Failed to remove member: " + err.message);
       }
     }
   };

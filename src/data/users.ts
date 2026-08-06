@@ -19,7 +19,11 @@ export function useAdminUsers() {
     queryKey: ["admin-users"],
     queryFn: async () => {
       // 1. Fetch active registered user accounts from PostgreSQL migration schema (public.user_account)
-      const { data: accounts, error: accountErr } = await supabase.from("user_account").select("*");
+      const { data: accounts, error: accountErr } = await supabase
+        .from("user_account")
+        .select("*")
+        .neq("status", "archived")
+        .neq("status", "suspended");
       if (accountErr) console.error("Error fetching user_account:", accountErr);
 
       // 2. Fetch pending invitations from PostgreSQL migration schema (public.user_invitation)
