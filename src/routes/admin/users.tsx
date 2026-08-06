@@ -316,13 +316,26 @@ function AdminUsers() {
           agencyId = agList?.[0]?.id;
         }
 
+        // Step 4: Dispatch invitation email via Supabase Auth mailer
+        const { error: authInviteErr } = await supabase.auth.signInWithOtp({
+          email: email.toLowerCase(),
+          options: {
+            emailRedirectTo: directRegisterUrl,
+            shouldCreateUser: true,
+          },
+        });
+
+        if (authInviteErr) {
+          console.warn("Supabase Auth invite error (link still generated):", authInviteErr.message);
+        }
+
         if (agencyId) {
           await supabase.from("email_queue").insert({
             agency_id: agencyId,
             recipient_email: email.toLowerCase(),
             subject: "You've been invited to join Dream Supreme Properties",
             body_html: emailBodyHtml,
-            status: "sent",
+            status: authInviteErr ? "failed" : "sent",
           });
         }
 
