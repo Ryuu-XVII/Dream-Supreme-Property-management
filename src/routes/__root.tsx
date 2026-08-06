@@ -6,10 +6,14 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  Navigate,
+  useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { AppProvider } from "@/lib/app-state";
+import { AuthProvider, useAuth } from "@/lib/auth";
+import { isActiveAccount, isPublicPathname } from "@/lib/auth-routing";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -131,8 +135,7 @@ function RootComponent() {
           window.location.hostname === import.meta.env.VITE_ADMIN_DOMAIN));
 
     // Public paths that must NOT be redirected to /admin (e.g. invitation registration)
-    const publicPaths = ["/register", "/login"];
-    const isPublicPath = publicPaths.some((p) => pathname.startsWith(p));
+    const isPublicPath = isPublicPathname(pathname);
 
     if (isAdminDomain && !pathname.startsWith("/admin") && !isPublicPath) {
       window.location.replace("/admin" + (pathname === "/" ? "" : pathname));
@@ -141,11 +144,33 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <Toaster position="top-right" richColors closeButton />
-      </AppProvider>
+      <AuthProvider>
+        <AppProvider>
+          <AuthenticatedOutlet />
+          <Toaster position="top-right" richColors closeButton />
+        </AppProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+function AuthenticatedOutlet() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const { session, account, loading } = useAuth();
+
+  if (isPublicPathname(pathname)) return <Outlet />;
+
+  if (loading) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background text-sm text-muted-foreground">
+        Verifying your session…
+      </div>
+    );
+  }
+
+  if (!session || !isActiveAccount(account)) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
 }

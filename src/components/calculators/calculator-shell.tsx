@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { agency } from "@/data/mock";
+import { supabase } from "@/lib/supabase";
 
 const calculators = [
   { to: "/calculators/bond", label: "Bond Repayment" },
@@ -51,9 +51,21 @@ export function CalculatorShell({
     defaultValues: { name: "", email: "", telephone: "" },
   });
 
-  const onSubmit = form.handleSubmit((values) => {
-    toast.success(`Results sent to ${values.email}`, {
-      description: "You'll receive a detailed breakdown shortly.",
+  const onSubmit = form.handleSubmit(async (values) => {
+    const { error } = await supabase.rpc("submit_public_lead", {
+      p_agency_slug: import.meta.env.VITE_AGENCY_SLUG || "dream-supreme",
+      p_source: currentPath.split("/").pop() || "calculator",
+      p_full_name: values.name,
+      p_email: values.email,
+      p_mobile: values.telephone,
+      p_payload: { calculator: name, requestedResults: true },
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Request received", {
+      description: "An agent can now follow up with your calculation details.",
     });
     form.reset();
     setOpen(false);
@@ -69,7 +81,7 @@ export function CalculatorShell({
             </div>
             <div className="min-w-0">
               <p className="truncate font-display text-sm font-semibold sm:text-base">
-                {agency.name}
+                Dream Supreme Properties
               </p>
               <p className="truncate text-xs text-muted-foreground">{name}</p>
             </div>

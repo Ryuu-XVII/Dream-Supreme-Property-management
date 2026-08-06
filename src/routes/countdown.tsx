@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
-import { GlassCard, KpiCard, EmptyState, CardSkeleton, useFakeLoad } from "@/components/ui-kit";
+import { GlassCard, KpiCard, EmptyState, CardSkeleton } from "@/components/ui-kit";
 import { AgentAvatar } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,15 +27,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { dateFmt, daysUntil, urgencyOf, urgencyClass, type Urgency } from "@/lib/format";
-import {
-  openConditions,
-  userById,
-  propertyById,
-  users,
-  type Condition,
-  type ConditionType,
-  type Deal,
-} from "@/data/mock";
+import type { Condition, ConditionType, Deal, User } from "@/types";
+import { useCountdownData } from "@/data/operations";
+import { supabase } from "@/lib/supabase";
 import {
   LayoutGrid,
   Rows3,
@@ -84,13 +78,7 @@ const typeIcon: Record<ConditionType, React.ComponentType<{ className?: string }
 
 type LocalStatus = "Open" | "Fulfilled" | "Extended" | "Waived";
 
-interface LocalOverride {
-  status: LocalStatus;
-  dueDate?: string;
-  reason?: string;
-}
-
-type ConditionRow = Condition & { deal: Deal };
+type ConditionRow = Condition & { deal: Deal & { property?: { address?: string } }; agent?: User };
 
 function urgencyTone(u: Urgency) {
   if (u === "lapsed" || u === "critical") return "danger" as const;
@@ -251,8 +239,7 @@ function ActionButtons({
         variant="outline"
         className="h-7 gap-1 border-success/30 text-success hover:bg-success/10"
         onClick={() => {
-          onAction(row.id, "Fulfilled");
-          toast.success(`Condition marked fulfilled`, { description: row.description });
+          void onAction(row.id, "Fulfilled");
         }}
       >
         <CheckCircle2 className="size-3.5" /> Fulfilled
@@ -265,8 +252,7 @@ function ActionButtons({
         variant="outline"
         className="h-7 gap-1 text-muted-foreground"
         onClick={() => {
-          onAction(row.id, "Waived");
-          toast(`Condition waived`, { description: row.description });
+          void onAction(row.id, "Waived");
         }}
       >
         <Ban className="size-3.5" /> Waive
@@ -275,8 +261,7 @@ function ActionButtons({
         open={extendOpen}
         onOpenChange={setExtendOpen}
         onConfirm={(date, reason) => {
-          onAction(row.id, "Extended", { dueDate: date, reason });
-          toast.success(`Deadline extended to ${dateFmt(date)}`, { description: reason });
+          void onAction(row.id, "Extended", { dueDate: date, reason });
         }}
       />
     </div>
@@ -307,8 +292,20 @@ function ConditionCard({
   const u = urgencyOf(days);
   const active = status === "Open" || status === "Extended";
   const Icon = typeIcon[row.type];
-  const agent = userById(row.responsibleUserId);
-  const property = propertyById(row.deal.propertyId);
+  const agent = row.agent ?? {
+    id: "",
+    name: "Unassigned",
+    email: "",
+    mobile: "",
+    branch: "",
+    active: false,
+    role: "Agent" as const,
+    seniority: "Mid-level" as const,
+    colour: "#64748b",
+    ppra: "",
+    ffc: null,
+  };
+  const property = row.deal.property;
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -408,8 +405,20 @@ function ConditionRowView({
   const u = urgencyOf(days);
   const active = status === "Open" || status === "Extended";
   const Icon = typeIcon[row.type];
-  const agent = userById(row.responsibleUserId);
-  const property = propertyById(row.deal.propertyId);
+  const agent = row.agent ?? {
+    id: "",
+    name: "Unassigned",
+    email: "",
+    mobile: "",
+    branch: "",
+    active: false,
+    role: "Agent" as const,
+    seniority: "Mid-level" as const,
+    colour: "#64748b",
+    ppra: "",
+    ffc: null,
+  };
+  const property = row.deal.property;
   return (
     <div
       className={cn(
@@ -453,29 +462,34 @@ function ConditionRowView({
 }
 
 function CountdownBoard() {
-  const loading = useFakeLoad(500);
+  const countdown = useCountdownData();
+  const loading = countdown.isLoading;
+  const openConditions = useMemo(
+    () => (countdown.data?.conditions ?? []) as ConditionRow[],
+    [countdown.data?.conditions],
+  );
+  const users = useMemo(() => countdown.data?.users ?? [], [countdown.data?.users]);
   const [view, setView] = useState<"cards" | "rows">("cards");
   const [agentFilter, setAgentFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [overrides, setOverrides] = useState<Record<string, LocalOverride>>({});
-
-  const conditionTypes = useMemo(() => Array.from(new Set(openConditions.map((c) => c.type))), []);
+  const conditionTypes = useMemo(
+    () => Array.from(new Set(openConditions.map((c) => c.type))),
+    [openConditions],
+  );
   const responsibleAgents = useMemo(() => {
     const ids = new Set(openConditions.map((c) => c.responsibleUserId));
     return users.filter((u) => ids.has(u.id));
-  }, []);
+  }, [openConditions, users]);
 
   const rows = useMemo(() => {
-    return (openConditions as ConditionRow[]).map((c) => {
-      const ov = overrides[c.id];
-      const status: LocalStatus =
-        ov?.status ?? (c.status === "Failed" ? "Open" : (c.status as LocalStatus));
-      const dueDate = ov?.dueDate ?? c.dueDate;
+    return openConditions.map((c) => {
+      const status: LocalStatus = c.status === "Failed" ? "Open" : (c.status as LocalStatus);
+      const dueDate = c.dueDate;
       const days = daysUntil(dueDate);
       return { row: c, status, dueDate, days };
     });
-  }, [overrides]);
+  }, [openConditions]);
 
   const filtered = useMemo(() => {
     return rows.filter(({ row, status }) => {
@@ -507,15 +521,33 @@ function CountdownBoard() {
 
   const mostUrgentId = sorted.find((r) => r.status === "Open" || r.status === "Extended")?.row.id;
 
-  function handleAction(
+  async function handleAction(
     id: string,
     status: LocalStatus,
     extra?: { dueDate?: string; reason?: string },
   ) {
-    setOverrides((prev) => ({
-      ...prev,
-      [id]: { status, dueDate: extra?.dueDate, reason: extra?.reason },
-    }));
+    const statusMap: Record<LocalStatus, string> = {
+      Open: "pending",
+      Fulfilled: "fulfilled",
+      Extended: "extended",
+      Waived: "waived",
+    };
+    const { error } = await supabase.rpc("set_condition_status", {
+      p_condition_id: id,
+      p_status: statusMap[status],
+      p_new_due_on: extra?.dueDate ?? null,
+      p_reason: extra?.reason ?? null,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await countdown.refetch();
+    toast.success(
+      status === "Extended"
+        ? `Deadline extended to ${dateFmt(extra?.dueDate ?? "")}`
+        : `Condition marked ${status.toLowerCase()}`,
+    );
   }
 
   return (

@@ -1,118 +1,139 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Download, FileText, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
-import { GlassCard } from "@/components/ui-kit";
-import { propertyById, type Deal } from "@/data/mock";
-import { dateFmt } from "@/lib/format";
-import { Checkbox } from "@/components/ui/checkbox";
+import { GlassCard, EmptyState } from "@/components/ui-kit";
 import { Badge } from "@/components/ui/badge";
-import { UploadCloud, FileText, File } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { Deal } from "@/types";
+import { useDocuments, useUploadDocument } from "@/data/documents";
+import { useAuth } from "@/lib/auth";
+import { getR2FileUrl } from "@/lib/storage";
+import { dateFmt } from "@/lib/format";
 
-const BASE_CHECKLIST = [
-  "Signed mandate agreement",
-  "Signed offer to purchase",
-  "FICA — seller",
-  "FICA — purchaser",
-  "Compliance certificates (electrical, gas, plumbing)",
-  "Rates & taxes clearance certificate",
-  "Transfer duty receipt / exemption",
-  "Bond guarantee (if applicable)",
-];
-
-const SECTIONAL_EXTRAS = [
-  "Body corporate consent to transfer",
-  "Levy clearance certificate",
-  "Conduct rules acknowledgement",
+const categories = [
+  "mandate",
+  "otp",
+  "fica_id",
+  "fica_proof_of_address",
+  "title_deed",
+  "municipal_account",
+  "bond_grant_letter",
+  "compliance_electrical",
+  "other",
 ];
 
 export function DealDocumentsTab({ deal }: { deal: Deal }) {
-  const property = propertyById(deal.propertyId);
-  const checklist =
-    property?.type === "Sectional Title"
-      ? [...BASE_CHECKLIST, ...SECTIONAL_EXTRAS]
-      : BASE_CHECKLIST;
-  const [checked, setChecked] = useState<Record<string, boolean>>(
-    Object.fromEntries(checklist.map((item, i) => [item, i < 3])),
-  );
-  const [dragOver, setDragOver] = useState(false);
-
+  const { account } = useAuth();
+  const documents = useDocuments(deal.id);
+  const upload = useUploadDocument();
+  const [category, setCategory] = useState("other");
+  const input = useRef<HTMLInputElement>(null);
+  async function uploadFile(file: File) {
+    if (!account) return;
+    try {
+      await upload.mutateAsync({ file, dealId: deal.id, category, agencyId: account.agencyId });
+      toast.success(`${file.name} uploaded`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Upload failed");
+    }
+  }
+  async function download(key: string, filename: string) {
+    try {
+      const url = await getR2FileUrl(key);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      anchor.rel = "noopener";
+      anchor.click();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Download failed");
+    }
+  }
+  const rows = documents.data ?? [];
   return (
-    <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-      <GlassCard>
-        <h3 className="mb-3 font-display text-base font-semibold">Document checklist</h3>
-        <div className="space-y-2.5">
-          {checklist.map((item) => (
-            <label key={item} className="flex cursor-pointer items-start gap-2.5 text-sm">
-              <Checkbox
-                checked={!!checked[item]}
-                onCheckedChange={(v) => setChecked((c) => ({ ...c, [item]: !!v }))}
-                className="mt-0.5"
-              />
-              <span className={checked[item] ? "text-muted-foreground line-through" : ""}>
-                {item}
-              </span>
-            </label>
-          ))}
-        </div>
-      </GlassCard>
-
-      <GlassCard className="lg:col-span-2">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <h3 className="font-display text-base font-semibold">Uploaded documents</h3>
-          <Badge variant="outline">{deal.documents.length} files</Badge>
-        </div>
-        <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragOver(true);
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragOver(false);
-            toast.success(`${e.dataTransfer.files?.length || 1} file(s) queued for upload`);
-          }}
-          className={`mb-4 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors ${
-            dragOver ? "border-primary bg-primary/5" : "border-border"
-          }`}
-        >
-          <UploadCloud className="size-8 text-muted-foreground" />
-          <p className="text-sm font-medium">Drag & drop documents here</p>
+    <GlassCard>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="font-display text-base font-semibold">Deal documents</h3>
           <p className="text-xs text-muted-foreground">
-            or click to browse — PDF, DOCX, JPG up to 20MB
+            Files are uploaded to private storage and recorded against this deal.
           </p>
         </div>
+        <Badge variant="outline">{rows.length} files</Badge>
+      </div>
+      <div className="mb-5 grid gap-2 sm:grid-cols-[220px_auto]">
+        <Select value={category} onValueChange={setCategory}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((item) => (
+              <SelectItem key={item} value={item}>
+                {item.replaceAll("_", " ")}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <input
+          ref={input}
+          type="file"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void uploadFile(file);
+            event.target.value = "";
+          }}
+        />
+        <Button disabled={upload.isPending} onClick={() => input.current?.click()}>
+          <UploadCloud className="size-4" /> {upload.isPending ? "Uploading…" : "Upload document"}
+        </Button>
+      </div>
+      {documents.isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading documents…</p>
+      ) : documents.isError ? (
+        <EmptyState
+          title="Documents unavailable"
+          message={
+            documents.error instanceof Error ? documents.error.message : "Could not load documents."
+          }
+        />
+      ) : rows.length === 0 ? (
+        <EmptyState title="No documents" message="Upload the first document for this deal." />
+      ) : (
         <div className="space-y-2">
-          {deal.documents.map((doc) => (
+          {rows.map((item: any) => (
             <div
-              key={doc.id}
-              className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2"
+              key={item.id}
+              className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2"
             >
-              <span className="flex min-w-0 items-center gap-2.5">
-                <FileText className="size-4 shrink-0 text-primary" />
-                <span className="min-w-0">
-                  <p className="truncate text-sm font-medium">{doc.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {doc.category} · v{doc.version} · {doc.uploadedBy} · {dateFmt(doc.uploadedAt)}
-                  </p>
-                </span>
-              </span>
-              <span className="shrink-0 text-xs text-muted-foreground">{doc.sizeKb} KB</span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">
+                  <FileText className="mr-2 inline size-4 text-primary" />
+                  {item.name}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {item.category.replaceAll("_", " ")} · v{item.version} ·{" "}
+                  {dateFmt(item.uploadedAt)}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void download(item.storageKey, item.name)}
+              >
+                <Download className="size-4" /> Download
+              </Button>
             </div>
           ))}
         </div>
-      </GlassCard>
-
-      <GlassCard className="lg:col-span-3">
-        <h3 className="mb-3 font-display text-base font-semibold">Preview</h3>
-        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-border bg-muted/30 py-16 text-center">
-          <File className="size-12 text-muted-foreground" />
-          <p className="text-sm font-medium">{deal.documents[0]?.name ?? "No document selected"}</p>
-          <p className="max-w-xs text-xs text-muted-foreground">
-            Select a document from the list above to preview it here. PDF rendering is simulated in
-            this demo environment.
-          </p>
-        </div>
-      </GlassCard>
-    </div>
+      )}
+    </GlassCard>
   );
 }

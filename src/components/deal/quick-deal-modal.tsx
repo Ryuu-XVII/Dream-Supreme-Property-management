@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createDeal } from "@/data/deals";
-import { users } from "@/data/mock";
+import { useAgents } from "@/data/reference";
 import {
   Home,
   User,
@@ -47,6 +47,7 @@ export function QuickDealModal({
   onSuccess,
   initialType = "deal",
 }: QuickDealModalProps) {
+  const { data: agents = [] } = useAgents();
   const [entryType, setEntryType] = useState<"deal" | "mandate">(initialType);
   const [loading, setLoading] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -90,7 +91,7 @@ export function QuickDealModal({
     agreedCommissionPct: "5.0",
     mandateStartDate: new Date().toISOString().split("T")[0],
     mandateExpiryDate: new Date(Date.now() + 90 * 86400000).toISOString().split("T")[0],
-    agentId: users[0]?.id || "",
+    agentId: "",
 
     // Seller (Mandator) Details & FICA
     sellerName: "",
@@ -326,9 +327,9 @@ export function QuickDealModal({
                     <SelectValue placeholder="Select Agent" />
                   </SelectTrigger>
                   <SelectContent>
-                    {users.map((u) => (
+                    {agents.map((u) => (
                       <SelectItem key={u.id} value={u.id}>
-                        {u.name} ({u.role})
+                        {u.full_name}
                       </SelectItem>
                     ))}
                   </SelectContent>

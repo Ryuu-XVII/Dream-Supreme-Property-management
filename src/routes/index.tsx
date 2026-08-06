@@ -4,9 +4,10 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { motion } from "framer-motion";
 import { Activity, AlertTriangle, Banknote, Calendar, ShieldAlert } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
-import { GlassCard, KpiCard, CardSkeleton, EmptyState, useFakeLoad } from "@/components/ui-kit";
+import { GlassCard, KpiCard, CardSkeleton, EmptyState } from "@/components/ui-kit";
 import { UrgencyBadge, StatusDot } from "@/components/badges";
-import { agency, auditEvents, deals, forecast, openConditions, STAGES, users } from "@/data/mock";
+import { STAGES } from "@/types";
+import { useDashboardData } from "@/data/operations";
 import {
   dateFmt,
   dateTimeFmt,
@@ -70,22 +71,34 @@ function Index() {
     }
   }, []);
 
-  const loading = useFakeLoad(600);
-  const today = new Date();
+  const dashboard = useDashboardData();
+  const loading = dashboard.isLoading;
+  const deals = useMemo(() => dashboard.data?.deals ?? [], [dashboard.data?.deals]);
+  const openConditions = useMemo(
+    () => dashboard.data?.openConditions ?? [],
+    [dashboard.data?.openConditions],
+  );
+  const users = useMemo(() => dashboard.data?.users ?? [], [dashboard.data?.users]);
+  const auditEvents = useMemo(
+    () => dashboard.data?.auditEvents ?? [],
+    [dashboard.data?.auditEvents],
+  );
+  const forecast: Array<{ month: string; projected: number }> = [];
+  const today = useMemo(() => new Date(), []);
 
   const activeDeals = useMemo(
     () =>
       deals.filter(
         (d) => d.stage !== "Registered" && d.stage !== "Commission Released" && !d.cancelled,
       ),
-    [],
+    [deals],
   );
   const pipelineValue = useMemo(
     () =>
       deals
         .filter((d) => d.stage !== "Registered" && !d.cancelled)
         .reduce((s, d) => s + d.salePrice, 0),
-    [],
+    [deals],
   );
   const registeringThisMonth = useMemo(
     () =>
@@ -94,18 +107,18 @@ function Index() {
         const r = new Date(d.registeredAt);
         return r.getMonth() === today.getMonth() && r.getFullYear() === today.getFullYear();
       }).length,
-    [],
+    [deals, today],
   );
   const overdueConditions = useMemo(
     () => openConditions.filter((c) => daysUntil(c.dueDate) < 0).length,
-    [],
+    [openConditions],
   );
   const commissionMTD = useMemo(
     () =>
       deals
         .filter((d) => d.registeredAt && new Date(d.registeredAt).getMonth() === today.getMonth())
         .reduce((s, d) => s + Math.round((d.salePrice * d.commissionBps) / 10000), 0),
-    [],
+    [deals, today],
   );
 
   const stageCounts = useMemo(
@@ -114,13 +127,13 @@ function Index() {
         stage: shortStage[s] ?? s,
         count: deals.filter((d) => d.stage === s && !d.cancelled).length,
       })),
-    [],
+    [deals],
   );
 
   const urgentConditions = useMemo(
     () =>
       [...openConditions].sort((a, b) => daysUntil(a.dueDate) - daysUntil(b.dueDate)).slice(0, 5),
-    [],
+    [openConditions],
   );
 
   const ffcAlerts = useMemo(
@@ -130,13 +143,13 @@ function Index() {
         if (!u.ffc.expiry) return false;
         return daysUntil(u.ffc.expiry) <= 30;
       }),
-    [],
+    [users],
   );
 
-  const recentEvents = useMemo(() => [...auditEvents].slice(0, 10), []);
+  const recentEvents = useMemo(() => [...auditEvents].slice(0, 10), [auditEvents]);
 
   return (
-    <AppShell title="Dashboard" description={`${agency.name} · ${dateFmt(today)}`}>
+    <AppShell title="Dashboard" description={`Dream Supreme Properties · ${dateFmt(today)}`}>
       <div className="space-y-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {loading ? (

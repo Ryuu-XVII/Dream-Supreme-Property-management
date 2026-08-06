@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Bell, Search, Sun, Moon, Monitor, LogOut, Calculator, PlusCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,26 +24,38 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useApp } from "@/lib/app-state";
 import { useAuth } from "@/lib/auth";
-import { deals, notifications, users, agency, type Role } from "@/data/mock";
 import { initials, zar, relative, dateFmt } from "@/lib/format";
-import { propertyById } from "@/data/mock";
+import { usePipelineDeals } from "@/data/deals";
+import { supabase } from "@/lib/supabase";
 import { navItems } from "./sidebar";
 import { cn } from "@/lib/utils";
 
-import { QuickDealModal } from "@/components/deal/quick-deal-modal";
-
 import { FloatingCalculatorModal } from "@/components/calculators/floating-calculator-modal";
-
-const roles: Role[] = ["Agent", "Admin"];
 
 export function Header() {
   const [open, setOpen] = useState(false);
-  const [openCapture, setOpenCapture] = useState(false);
   const [calcOpen, setCalcOpen] = useState(false);
   const navigate = useNavigate();
-  const { theme, setTheme, role, setRole } = useApp();
-  const { account } = useAuth();
-  const unread = notifications.filter((n) => n.unread).length;
+  const { theme, setTheme } = useApp();
+  const { account, signOut } = useAuth();
+  const pipeline = usePipelineDeals();
+  const deals = pipeline.data ?? [];
+  const notificationQuery = useQuery({
+    queryKey: ["header-notifications", account?.id],
+    enabled: !!account,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("notification")
+        .select("id, subject, body, created_at, read_at")
+        .eq("user_account_id", account!.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const notifications = notificationQuery.data ?? [];
+  const unread = notifications.filter((n) => !n.read_at).length;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -57,7 +70,7 @@ export function Header() {
 
   const me = account
     ? { name: account.fullName, email: account.email }
-    : (users[0] ?? { name: "Agent User", email: "agent@dreamsupreme.co.za" });
+    : { name: "Signed out", email: "" };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-white/20 bg-background/50 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-6">
@@ -94,7 +107,6 @@ export function Header() {
         </Button>
       </div>
 
-      <QuickDealModal open={openCapture} onOpenChange={setOpenCapture} />
       <FloatingCalculatorModal open={calcOpen} onOpenChange={setCalcOpen} />
 
       <DropdownMenu>
@@ -146,16 +158,13 @@ export function Header() {
                 <span
                   className={cn(
                     "mt-1.5 size-2 shrink-0 rounded-full",
-                    n.tone === "danger" && "bg-destructive",
-                    n.tone === "warning" && "bg-warning",
-                    n.tone === "success" && "bg-success",
-                    n.tone === "info" && "bg-info",
+                    n.read_at ? "bg-muted-foreground" : "bg-primary",
                   )}
                 />
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{n.title}</p>
+                  <p className="truncate text-sm font-medium">{n.subject}</p>
                   <p className="text-xs text-muted-foreground">{n.body}</p>
-                  <p className="mt-1 text-[10px] text-muted-foreground">{dateFmt(n.at)}</p>
+                  <p className="mt-1 text-[10px] text-muted-foreground">{dateFmt(n.created_at)}</p>
                 </div>
               </div>
             ))}
@@ -176,7 +185,7 @@ export function Header() {
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel>
             <p className="text-sm font-medium">{me.name}</p>
-            <p className="text-xs font-normal text-muted-foreground">{agency.name}</p>
+            <p className="text-xs font-normal text-muted-foreground">Dream Supreme Properties</p>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
@@ -189,10 +198,8 @@ export function Header() {
             <Link to={"/setup" as any}>Setup wizard</Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link to={"/login" as any}>
-              <LogOut className="size-4" /> Sign out
-            </Link>
+          <DropdownMenuItem onSelect={() => void signOut()}>
+            <LogOut className="size-4" /> Sign out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -202,19 +209,17 @@ export function Header() {
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Deals">
-            {deals.slice(0, 8).map((dl: any) => (
+            {deals.slice(0, 8).map((dl) => (
               <CommandItem
                 key={dl.id}
-                value={`${dl.ref} ${propertyById(dl.propertyId).address}`}
+                value={`${dl.ref} ${dl.property.address}`}
                 onSelect={() => {
                   setOpen(false);
-                  navigate({ to: "/pipeline" as any });
+                  navigate({ to: "/deals/$dealId", params: { dealId: dl.id } });
                 }}
               >
                 <span className="font-mono text-xs">{dl.ref}</span>
-                <span className="truncate text-muted-foreground">
-                  {propertyById(dl.propertyId).address}
-                </span>
+                <span className="truncate text-muted-foreground">{dl.property.address}</span>
                 <Badge variant="outline" className="ml-auto money text-[10px]">
                   {zar(dl.salePrice, { decimals: false })}
                 </Badge>

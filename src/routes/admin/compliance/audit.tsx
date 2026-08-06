@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { dateTimeFmt } from "@/lib/format";
-import type { AuditEvent } from "@/data/state";
+import type { AuditEvent } from "@/types";
 import { useAuditData } from "@/data/operations";
 import {
   Search,

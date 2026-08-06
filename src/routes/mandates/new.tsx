@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createDeal } from "@/data/deals";
-import { users } from "@/data/mock";
+import { useAgents } from "@/data/reference";
 import {
   Home,
   User,
@@ -48,6 +48,7 @@ const STEPS = [
 
 function NewMandatePage() {
   const navigate = useNavigate();
+  const { data: agents = [] } = useAgents();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -73,7 +74,7 @@ function NewMandatePage() {
     agreedCommissionPct: "5.0",
     mandateStartDate: new Date().toISOString().split("T")[0],
     mandateExpiryDate: new Date(Date.now() + 90 * 86400000).toISOString().split("T")[0],
-    agentId: users[0]?.id || "",
+    agentId: "",
 
     // Seller Info & FICA
     sellerName: "",
@@ -327,9 +328,9 @@ function NewMandatePage() {
                       <SelectValue placeholder="Select Agent" />
                     </SelectTrigger>
                     <SelectContent>
-                      {users.map((u) => (
+                      {agents.map((u) => (
                         <SelectItem key={u.id} value={u.id}>
-                          {u.name} ({u.role})
+                          {u.full_name}
                         </SelectItem>
                       ))}
                     </SelectContent>

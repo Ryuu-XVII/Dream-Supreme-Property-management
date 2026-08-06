@@ -1,388 +1,203 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { Mail, Phone, ShieldCheck, User } from "lucide-react";
 import { toast } from "sonner";
-import {
-  User,
-  Mail,
-  Phone,
-  ShieldCheck,
-  Building,
-  BadgeCheck,
-  FileText,
-  Upload,
-  Camera,
-  Download,
-  FileCheck,
-} from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { SettingsTabs } from "@/components/settings/settings-tabs";
 import { GlassCard } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
-import { agency } from "@/data/mock";
-import { dateFmt, initials } from "@/lib/format";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/settings/profile")({
-  head: () => ({
-    meta: [
-      { title: "My Profile | Dream Supreme Properties" },
-      {
-        name: "description",
-        content:
-          "Manage your personal agent profile, contact information and FFC compliance details.",
-      },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "My Profile | Dream Supreme Properties" }] }),
   component: ProfilePage,
 });
 
 function ProfilePage() {
-  const { account } = useAuth();
-  const [fullName, setFullName] = useState(account?.fullName ?? "");
-  const [email, setEmail] = useState(account?.email ?? "");
-  const [telephone, setTelephone] = useState(account?.telephone ?? "");
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [ffcDocumentName, setFfcDocumentName] = useState<string | null>("FFC_Certificate_2026.pdf");
+  const { account, refreshAccount } = useAuth();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
   const [saving, setSaving] = useState(false);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
-  const ffcInputRef = useRef<HTMLInputElement>(null);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordSaving, setPasswordSaving] = useState(false);
 
-  // Sync profile fields whenever the authenticated account loads/changes
   useEffect(() => {
-    if (account) {
-      setFullName(account.fullName);
-      setEmail(account.email);
-      setTelephone(account.telephone ?? "");
-    }
+    if (!account) return;
+    setFullName(account.fullName);
+    setEmail(account.email);
+    setMobile(account.telephone ?? "");
   }, [account]);
 
-  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setAvatarUrl(url);
-      toast.success("Profile photo updated");
-    }
-  }
-
-  function handleFfcUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFfcDocumentName(file.name);
-      toast.success("FFC Document uploaded", { description: file.name });
-    }
-  }
-
-  function handleSave(e: React.FormEvent) {
-    e.preventDefault();
+  async function saveProfile(event: React.FormEvent) {
+    event.preventDefault();
+    if (!account || !fullName.trim() || !email.trim())
+      return toast.error("Name and email are required.");
     setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
-      toast.success("Profile details updated successfully");
-    }, 400);
+    const normalizedEmail = email.trim().toLowerCase();
+    const { error } = await supabase
+      .from("user_account")
+      .update({ full_name: fullName.trim(), email: normalizedEmail, mobile: mobile.trim() || null })
+      .eq("id", account.id);
+    if (!error && normalizedEmail !== account.email) {
+      const authResult = await supabase.auth.updateUser({ email: normalizedEmail });
+      if (authResult.error) {
+        setSaving(false);
+        return toast.error(authResult.error.message);
+      }
+    }
+    setSaving(false);
+    if (error) toast.error(error.message);
+    else {
+      await refreshAccount();
+      toast.success(
+        normalizedEmail !== account.email
+          ? "Profile saved. Confirm the new email from your inbox."
+          : "Profile saved",
+      );
+    }
   }
 
-  const ffcExpiry = "2026-12-31";
+  async function updatePassword(event: React.FormEvent) {
+    event.preventDefault();
+    if (newPassword.length < 8) return toast.error("New password must be at least 8 characters.");
+    if (newPassword !== confirmPassword) return toast.error("Passwords do not match.");
+    if (!currentPassword || !account?.email) return toast.error("Enter your current password.");
+    setPasswordSaving(true);
+    const verified = await supabase.auth.signInWithPassword({
+      email: account.email,
+      password: currentPassword,
+    });
+    if (verified.error) {
+      setPasswordSaving(false);
+      return toast.error("Current password is incorrect.");
+    }
+    const result = await supabase.auth.updateUser({ password: newPassword });
+    setPasswordSaving(false);
+    if (result.error) toast.error(result.error.message);
+    else {
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      toast.success("Password updated");
+    }
+  }
 
   return (
-    <AppShell title="Settings" description="Manage your account profile and preferences.">
+    <AppShell title="Settings" description="Manage your persisted account information.">
       <SettingsTabs />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3">
         <GlassCard className="lg:col-span-2">
-          <h3 className="font-display text-base font-semibold flex items-center gap-2">
-            <User className="size-4 text-primary" /> Personal Information
-          </h3>
-          <p className="text-xs text-muted-foreground mb-6">
-            Update your contact details displayed across deal documents and client messages.
+          <h2 className="mb-1 flex items-center gap-2 font-display text-base font-semibold">
+            <User className="size-4 text-primary" /> Personal information
+          </h2>
+          <p className="mb-6 text-xs text-muted-foreground">
+            Changes are saved to your user account.
           </p>
-
-          <form onSubmit={handleSave} className="space-y-6">
-            {/* Avatar Upload Header */}
-            <div className="flex items-center gap-4 rounded-xl border border-border/60 bg-muted/30 p-4">
-              <div className="relative group">
-                <Avatar className="size-20 border-2 border-primary/40 shadow-md">
-                  <AvatarImage src={avatarUrl ?? undefined} />
-                  <AvatarFallback className="bg-primary text-xl font-bold text-primary-foreground">
-                    {initials(fullName)}
-                  </AvatarFallback>
-                </Avatar>
-                <button
-                  type="button"
-                  onClick={() => avatarInputRef.current?.click()}
-                  className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity text-white"
-                  title="Change Profile Photo"
-                >
-                  <Camera className="size-5" />
-                </button>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm font-semibold">Profile Photo</p>
-                <p className="text-xs text-muted-foreground">JPG, PNG or WEBP. Max size 5MB.</p>
-                <div className="flex gap-2 pt-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs gap-1.5"
-                    onClick={() => avatarInputRef.current?.click()}
-                  >
-                    <Upload className="size-3.5" /> Upload Photo
-                  </Button>
-                  {avatarUrl && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-xs text-destructive hover:text-destructive"
-                      onClick={() => setAvatarUrl(null)}
-                    >
-                      Remove
-                    </Button>
-                  )}
-                </div>
-                <input
-                  ref={avatarInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarChange}
+          <form onSubmit={saveProfile} className="space-y-4">
+            <div>
+              <Label htmlFor="full-name">Full name</Label>
+              <div className="relative mt-1">
+                <User className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="full-name"
+                  className="pl-9"
+                  value={fullName}
+                  onChange={(event) => setFullName(event.target.value)}
                 />
               </div>
             </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="fullName">Full Name</Label>
-                <div className="relative">
-                  <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="fullName"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="email">Email Address</Label>
-                <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="telephone">Mobile Number</Label>
-                <div className="relative">
-                  <Phone className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="telephone"
-                    value={telephone}
-                    onChange={(e) => setTelephone(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>Role</Label>
-                <div className="flex h-9 items-center rounded-md border border-input bg-muted/50 px-3 text-sm font-medium capitalize">
-                  {account?.role ?? "Agent"}
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <Button type="submit" disabled={saving}>
-                {saving ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
-          </form>
-        </GlassCard>
-
-        <div className="space-y-6">
-          {/* FFC Compliance & Document Upload Card */}
-          <GlassCard>
-            <h3 className="font-display text-base font-semibold flex items-center gap-2">
-              <ShieldCheck className="size-4 text-success" /> FFC Compliance
-            </h3>
-            <p className="text-xs text-muted-foreground mb-4">Fidelity Fund Certificate status</p>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center text-sm border-b border-border/60 pb-2">
-                <span className="text-muted-foreground">Status</span>
-                <Badge
-                  variant="outline"
-                  className="border-success/30 bg-success/10 text-success gap-1"
-                >
-                  <BadgeCheck className="size-3" /> Valid
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center text-sm border-b border-border/60 pb-2">
-                <span className="text-muted-foreground">FFC Number</span>
-                <span className="font-mono font-medium">FFC-2026-8891</span>
-              </div>
-              <div className="flex justify-between items-center text-sm border-b border-border/60 pb-2">
-                <span className="text-muted-foreground">Expiry Date</span>
-                <span className="font-medium">{dateFmt(ffcExpiry)}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm border-b border-border/60 pb-2">
-                <span className="text-muted-foreground">PPRA Ref</span>
-                <span className="font-mono font-medium">PPRA-ZA-7721</span>
-              </div>
-
-              {/* FFC Certificate PDF Document Box */}
-              <div className="pt-2">
-                <p className="text-xs font-semibold text-muted-foreground mb-2">
-                  FFC Certificate Document
-                </p>
-                {ffcDocumentName ? (
-                  <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 p-2.5 text-xs">
-                    <div className="flex items-center gap-2 truncate">
-                      <FileCheck className="size-4 shrink-0 text-success" />
-                      <span className="truncate font-medium">{ffcDocumentName}</span>
-                    </div>
-                    <div className="flex gap-1 shrink-0">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-7 text-muted-foreground hover:text-foreground"
-                        onClick={() => toast.info("Downloading FFC certificate...")}
-                        title="Download Document"
-                      >
-                        <Download className="size-3.5" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-7 text-muted-foreground hover:text-primary"
-                        onClick={() => ffcInputRef.current?.click()}
-                        title="Replace Document"
-                      >
-                        <Upload className="size-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-xs gap-1.5"
-                    onClick={() => ffcInputRef.current?.click()}
-                  >
-                    <Upload className="size-3.5" /> Upload FFC PDF
-                  </Button>
-                )}
-                <input
-                  ref={ffcInputRef}
-                  type="file"
-                  accept=".pdf,image/*"
-                  className="hidden"
-                  onChange={handleFfcUpload}
+            <div>
+              <Label htmlFor="profile-email">Email</Label>
+              <div className="relative mt-1">
+                <Mail className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="profile-email"
+                  type="email"
+                  className="pl-9"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                 />
               </div>
             </div>
-          </GlassCard>
-
-          <GlassCard>
-            <h3 className="font-display text-base font-semibold flex items-center gap-2">
-              <Building className="size-4 text-primary" /> Agency Affiliation
-            </h3>
-            <p className="text-xs text-muted-foreground mb-4">Assigned agency & office</p>
-            <div className="space-y-2 text-sm">
-              <div>
-                <p className="font-semibold">{agency.name}</p>
-                <p className="text-xs text-muted-foreground">Head Office · Sandton, GP</p>
-              </div>
-              <div className="pt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                <FileText className="size-3.5" /> FICA Registered Agency
+            <div>
+              <Label htmlFor="mobile">Mobile</Label>
+              <div className="relative mt-1">
+                <Phone className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="mobile"
+                  className="pl-9"
+                  value={mobile}
+                  onChange={(event) => setMobile(event.target.value)}
+                />
               </div>
             </div>
-          </GlassCard>
-        </div>
-
-        {/* Security & Password Card */}
-        <GlassCard className="lg:col-span-2">
-          <h3 className="font-display text-base font-semibold flex items-center gap-2">
-            <ShieldCheck className="size-4 text-primary" /> Security & Authentication
-          </h3>
-          <p className="text-xs text-muted-foreground mb-6">
-            Update your account password and security settings.
-          </p>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              toast.success("Password updated successfully");
-            }}
-            className="space-y-4"
-          >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="currPass">Current Password</Label>
-                <Input id="currPass" type="password" placeholder="••••••••" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="newPass">New Password</Label>
-                <Input id="newPass" type="password" placeholder="••••••••" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="confirmPass">Confirm New Password</Label>
-                <Input id="confirmPass" type="password" placeholder="••••••••" />
-              </div>
+            <Button disabled={saving}>{saving ? "Saving…" : "Save profile"}</Button>
+          </form>
+        </GlassCard>
+        <GlassCard>
+          <h2 className="font-display text-base font-semibold">Account</h2>
+          <dl className="mt-4 space-y-3 text-sm">
+            <div>
+              <dt className="text-muted-foreground">Role</dt>
+              <dd className="capitalize">{account?.role ?? "—"}</dd>
             </div>
-            <div className="flex justify-between items-center pt-2">
-              <div className="flex items-center gap-3">
-                <Badge variant="outline" className="border-info/30 bg-info/10 text-info">
-                  2FA Active
-                </Badge>
-                <span className="text-xs text-muted-foreground">Authenticator App linked</span>
-              </div>
-              <Button type="submit" variant="outline" size="sm">
-                Update Password
+            <div>
+              <dt className="text-muted-foreground">Branch</dt>
+              <dd>{account?.branchId ?? "Not assigned"}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Status</dt>
+              <dd className="capitalize">{account?.status ?? "—"}</dd>
+            </div>
+          </dl>
+        </GlassCard>
+        <GlassCard className="lg:col-span-3">
+          <h2 className="mb-1 flex items-center gap-2 font-display text-base font-semibold">
+            <ShieldCheck className="size-4 text-primary" /> Password
+          </h2>
+          <form onSubmit={updatePassword} className="mt-4 grid gap-4 sm:grid-cols-3">
+            <div>
+              <Label htmlFor="current-password">Current password</Label>
+              <Input
+                id="current-password"
+                type="password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="new-password">New password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="confirm-password">Confirm new password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+              />
+            </div>
+            <div className="sm:col-span-3">
+              <Button variant="outline" disabled={passwordSaving}>
+                {passwordSaving ? "Updating…" : "Update password"}
               </Button>
             </div>
           </form>
-        </GlassCard>
-
-        {/* Property Portals Card */}
-        <GlassCard className="lg:col-span-1">
-          <h3 className="font-display text-base font-semibold flex items-center gap-2">
-            <FileText className="size-4 text-primary" /> Property Portal IDs
-          </h3>
-          <p className="text-xs text-muted-foreground mb-4">
-            Link listings to portal agent profiles
-          </p>
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <Label className="text-xs">Property24 Agent ID</Label>
-              <Input defaultValue="P24-AGT-9021" className="h-8 font-mono text-xs" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Private Property Code</Label>
-              <Input defaultValue="PP-AG-4412" className="h-8 font-mono text-xs" />
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-xs mt-2"
-              onClick={() => toast.success("Portal IDs saved")}
-            >
-              Save Portal IDs
-            </Button>
-          </div>
         </GlassCard>
       </div>
     </AppShell>

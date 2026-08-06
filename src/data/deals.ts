@@ -45,6 +45,7 @@ export function usePipelineDeals() {
           status,
           sale_price_cents,
           updated_at,
+          branch:branch_id ( name ),
           cancellation_reason,
           cancelled_on,
           property:property_id ( address_line, suburb, city ),
@@ -133,7 +134,7 @@ export function useDealDetail(dealId: string) {
             role, 
             split_value,
             is_external,
-            user:user_account_id ( id, full_name, email, mobile ) 
+            user:user_account_id ( id, full_name, email, mobile, ffc:ffc_certificate(expires_on) )
           ),
           parties:deal_party (
             role,
@@ -151,7 +152,135 @@ export function useDealDetail(dealId: string) {
         .single();
 
       if (error) throw error;
-      return d;
+      const bond = Array.isArray((d as any).bond) ? (d as any).bond[0] : (d as any).bond;
+      const bondStatus: Record<string, string> = {
+        not_applied: "Not applied",
+        submitted: "Submitted",
+        declined: "Declined",
+        approved_in_principle: "Approved in principle",
+        formally_granted: "Formally granted",
+      };
+      const ficaStatus: Record<string, string> = {
+        complete: "Complete",
+        partial: "Partial",
+        not_started: "Not Started",
+        expired: "Not Started",
+      };
+      const roleNames: Record<string, string> = {
+        listing_agent: "Listing Agent",
+        selling_agent: "Selling Agent",
+        referrer: "Referral",
+        co_agent: "Co-mandate",
+      };
+      return {
+        id: (d as any).id,
+        ref: (d as any).reference,
+        propertyId: (d as any).property?.id,
+        property: {
+          address: (d as any).property?.address_line || "Unknown property",
+          suburb: (d as any).property?.suburb || "",
+          city: (d as any).property?.city || "",
+          type: (d as any).property?.property_type?.replaceAll("_", " ") || "other",
+          beds: (d as any).property?.bedrooms || 0,
+          baths: (d as any).property?.bathrooms || 0,
+          garages: (d as any).property?.garages || 0,
+          erfSize: (d as any).property?.erf_size_sqm || 0,
+          floorSize: (d as any).property?.floor_size_sqm || 0,
+        },
+        stage: stageFromDb[(d as any).stage] ?? (d as any).stage,
+        cancelled:
+          (d as any).status === "cancelled"
+            ? { reason: (d as any).cancellation_reason || "Cancelled", at: (d as any).cancelled_on }
+            : undefined,
+        salePrice: (d as any).sale_price_cents || 0,
+        listingPrice: (d as any).mandate?.listing_price_cents || 0,
+        commissionBps: (d as any).mandate?.commission_rate_bps || 0,
+        mandateType: ((d as any).mandate?.mandate_type || "sole").replace(/^./, (value: string) =>
+          value.toUpperCase(),
+        ),
+        mandateSigned: (d as any).mandate?.signed_on,
+        mandateExpiry: (d as any).mandate?.expires_on,
+        otpSigned: (d as any).otp_signed_on,
+        occupationDate: (d as any).occupation_date,
+        registeredAt: (d as any).registration_date,
+        branch: (d as any).branch?.name || "Unassigned",
+        stageSince: (d as any).updated_at,
+        bond: {
+          status: bondStatus[bond?.status] || "Not applied",
+          institution: bond?.institution || "",
+          appliedAt: bond?.applied_on,
+          decidedAt: bond?.status_updated_on,
+        },
+        conveyancer: (d as any).conveyancer?.name || "Not appointed",
+        practitioners: ((d as any).participants || []).map((participant: any) => ({
+          userId: participant.user?.id || "",
+          name: participant.user?.full_name || "Unassigned",
+          email: participant.user?.email || "",
+          mobile: participant.user?.mobile || "",
+          ffc: Array.isArray(participant.user?.ffc)
+            ? participant.user.ffc[0]
+            : participant.user?.ffc,
+          role: roleNames[participant.role] || participant.role,
+          splitPct: Number(participant.split_value) || 0,
+          external: !!participant.is_external,
+        })),
+        parties: ((d as any).parties || []).map((entry: any) => ({
+          id: entry.party?.id,
+          dealId: (d as any).id,
+          name: entry.party?.full_name || "Unknown",
+          side: entry.role === "seller" ? "Seller" : "Purchaser",
+          entityType: entityTypeFromDb[entry.party?.entity_type] || "Natural Person",
+          email: entry.party?.email || "",
+          mobile: entry.party?.mobile || "",
+          idNumber: entry.party?.id_or_reg_number || "",
+          fica: ficaStatus[entry.party?.fica_status] || "Not Started",
+          popia: !!entry.party?.popia_consent_at,
+          popiaAt: entry.party?.popia_consent_at,
+          checklist: [],
+        })),
+        conditions: ((d as any).conditions || []).map((condition: any) => ({
+          id: condition.id,
+          dealId: (d as any).id,
+          type: conditionTypeFromDb[condition.condition_type] || "Due Diligence",
+          description: condition.description,
+          dueDate: condition.due_on,
+          originalDueDate: condition.original_due_on,
+          status: conditionStatusFromDb[condition.status] || "Open",
+          responsibleUserId: "",
+          responsibleParty: condition.responsible_party || "Purchaser",
+        })),
+        offers: ((d as any).offers || []).map((offer: any) => ({
+          id: offer.id,
+          price: offer.offer_price_cents || 0,
+          deposit: offer.deposit_cents || 0,
+          bondAmount: offer.bond_amount_cents || 0,
+          expiry: offer.expires_on,
+          purchaser: offer.purchaser_party_id || "",
+          occupationDate: (d as any).occupation_date,
+          status: offer.status?.replace(/^./, (value: string) => value.toUpperCase()) || "Pending",
+        })),
+        timeline: ((d as any).timeline || []).map((event: any) => ({
+          id: event.id,
+          at: event.occurred_at,
+          from: event.from_stage ? stageFromDb[event.from_stage] : undefined,
+          to: event.to_stage ? stageFromDb[event.to_stage] : undefined,
+          actor: event.user?.full_name || event.changed_by_external_email || "System",
+          action: event.to_stage
+            ? `Stage changed to ${stageFromDb[event.to_stage] || event.to_stage}`
+            : "Deal updated",
+          reason: event.reason,
+        })),
+        documents: ((d as any).documents || []).map((document: any) => ({
+          id: document.id,
+          name: document.filename,
+          category: document.category,
+          version: document.version,
+          uploadedBy: document.user?.full_name || "Unknown",
+          uploadedAt: document.uploaded_at,
+          sizeKb: Math.round((document.size_bytes || 0) / 1024),
+          storageKey: document.storage_key,
+        })),
+      };
     },
     enabled: !!dealId,
   });

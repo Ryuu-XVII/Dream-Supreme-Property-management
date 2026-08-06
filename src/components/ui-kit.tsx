@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -134,13 +134,4 @@ export function CardSkeleton() {
       <Skeleton className="mt-3 h-3 w-32" />
     </Card>
   );
-}
-
-export function useFakeLoad(ms = 450) {
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), ms);
-    return () => clearTimeout(t);
-  }, [ms]);
-  return loading;
 }

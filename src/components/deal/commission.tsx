@@ -1,6 +1,6 @@
 import { GlassCard } from "@/components/ui-kit";
 import { AgentAvatar } from "@/components/badges";
-import { userById, commissionWaterfall, type Deal } from "@/data/mock";
+import type { Deal, User } from "@/types";
 import { zar, dateFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -16,12 +16,42 @@ import { AlertTriangle, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function DealCommissionTab({ deal }: { deal: Deal }) {
-  const steps = commissionWaterfall(deal);
+  const gross = Math.round((deal.salePrice * deal.commissionBps) / 10000);
+  const steps: Array<{
+    label: string;
+    formula: string;
+    amount: number;
+    kind: "subtotal" | "final";
+  }> = [
+    {
+      label: "Gross commission",
+      formula: `${(deal.commissionBps / 100).toFixed(2)}% of sale price`,
+      amount: gross,
+      kind: "final",
+    },
+  ];
   const totalSplit = deal.practitioners.reduce((sum, p) => sum + p.splitPct, 0);
   const netPayable = steps[steps.length - 1].amount;
 
   const expiredFFC = deal.practitioners
-    .map((p) => userById(p.userId))
+    .map(
+      (p) =>
+        ({
+          id: p.userId,
+          name: (p as any).name || "Unassigned",
+          email: (p as any).email || "",
+          mobile: (p as any).mobile || "",
+          branch: deal.branch,
+          active: true,
+          role: "Agent",
+          seniority: "Mid-level",
+          colour: "#1f7a52",
+          ppra: "",
+          ffc: (p as any).ffc
+            ? { id: "", number: "", issued: "", expiry: (p as any).ffc.expires_on }
+            : null,
+        }) as User,
+    )
     .filter((u) => !u.ffc || (u.ffc.expiry && new Date(u.ffc.expiry) < new Date()));
 
   return (
@@ -96,7 +126,21 @@ export function DealCommissionTab({ deal }: { deal: Deal }) {
             </TableHeader>
             <TableBody>
               {deal.practitioners.map((p) => {
-                const user = userById(p.userId);
+                const user = {
+                  id: p.userId,
+                  name: (p as any).name || "Unassigned",
+                  email: (p as any).email || "",
+                  mobile: (p as any).mobile || "",
+                  branch: deal.branch,
+                  active: true,
+                  role: "Agent",
+                  seniority: "Mid-level",
+                  colour: "#1f7a52",
+                  ppra: "",
+                  ffc: (p as any).ffc
+                    ? { id: "", number: "", issued: "", expiry: (p as any).ffc.expires_on }
+                    : null,
+                } as User;
                 const expired =
                   !user.ffc || (user.ffc.expiry && new Date(user.ffc.expiry) < new Date());
                 return (

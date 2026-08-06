@@ -1,11 +1,15 @@
 import { GlassCard, EmptyState } from "@/components/ui-kit";
-import { auditEvents, type Deal } from "@/data/mock";
+import type { Deal } from "@/types";
+import { useAuditData } from "@/data/operations";
 import { dateTimeFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, History } from "lucide-react";
 
 export function DealTimelineTab({ deal }: { deal: Deal }) {
-  const relatedAudit = auditEvents.filter((a) => a.entityRef === deal.ref);
+  const audit = useAuditData();
+  const relatedAudit = (audit.data?.events ?? []).filter(
+    (event) => event.entityRef === deal.id || event.entityRef === deal.ref,
+  );
 
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">

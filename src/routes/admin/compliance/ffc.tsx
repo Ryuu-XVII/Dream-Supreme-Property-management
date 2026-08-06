@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { dateFmt, daysUntil } from "@/lib/format";
-import { agency } from "@/data/state";
 import { useDashboardData } from "@/data/operations";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -106,8 +105,7 @@ function CertificateDialog({
         </DialogHeader>
         <div className="glass rounded-xl border-2 border-dashed border-primary/30 p-6 text-center">
           <Award className="mx-auto size-10 text-primary" />
-          <p className="mt-3 font-display text-lg font-semibold">{agency.name}</p>
-          <p className="text-xs text-muted-foreground">{agency.address}</p>
+          <p className="mt-3 font-display text-lg font-semibold">Dream Supreme Properties</p>
           <div className="my-4 border-t border-border" />
           <p className="text-sm text-muted-foreground">This certifies that</p>
           <p className="mt-1 font-display text-xl font-bold">{user.name}</p>

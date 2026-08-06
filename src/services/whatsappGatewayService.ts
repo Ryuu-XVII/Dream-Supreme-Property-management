@@ -22,21 +22,30 @@ export function formatE164Phone(phone: string): string {
  */
 export async function sendWhatsAppMessage(payload: WhatsAppMessagePayload) {
   const formattedPhone = formatE164Phone(payload.phone);
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) throw new Error("Authentication required to queue a WhatsApp message.");
+  const { data: account, error: accountError } = await supabase
+    .from("user_account")
+    .select("agency_id")
+    .eq("auth_user_id", auth.user.id)
+    .single();
+  if (accountError || !account)
+    throw new Error(accountError?.message || "Agency account not found.");
 
   const { data, error } = await supabase
-    .from("whatsapp_message_log")
+    .from("whatsapp_queue")
     .insert({
+      agency_id: account.agency_id,
       recipient_phone: formattedPhone,
       template_name: payload.templateName,
-      payload: payload.params,
-      status: "sent",
-      provider_message_id: `wa_${Date.now()}`,
+      template_data: payload.params,
+      status: "pending",
     })
     .select()
     .single();
 
   if (error) {
-    throw new Error(`Failed to log WhatsApp message: ${error.message}`);
+    throw new Error(`Failed to queue WhatsApp message: ${error.message}`);
   }
 
   return data;

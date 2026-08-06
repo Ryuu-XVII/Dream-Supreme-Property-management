@@ -3,7 +3,7 @@ const zarFmt = (n: number) =>
 
 // brackets are stored in cents
 function calcDuty(priceCents: number) {
-  return calculateTransferDutyCents(priceCents, transferDutyBrackets);
+  return calculateTransferDutyCents(priceCents, TRANSFER_DUTY_FALLBACK);
 }
 
 function conveyancingFee(priceRands: number) {
@@ -37,7 +37,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { transferDutyBrackets } from "@/data/state";
+import { TRANSFER_DUTY_FALLBACK } from "@/lib/financial-config";
 import { calculateTransferDutyCents } from "@/lib/domain";
 import { useApp } from "@/lib/app-state";
 
@@ -145,7 +145,7 @@ export function TransferCalculator() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transferDutyBrackets.map((b, i) => {
+              {TRANSFER_DUTY_FALLBACK.map((b, i) => {
                 const applied = !vatVendor && b === bracket;
                 return (
                   <TableRow key={i} className={cn(applied && "bg-primary/5")}>

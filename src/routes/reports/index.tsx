@@ -1,109 +1,93 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { motion } from "framer-motion";
+import { BarChart3, GitBranch, ShieldCheck, Wallet } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
-import { GlassCard } from "@/components/ui-kit";
-import { deals, fallThroughReasons, monthlyCommission, users } from "@/data/mock";
-import { zarCompact, pct } from "@/lib/format";
-import { ArrowRight, GitBranch, AlertTriangle, Wallet, ShieldCheck } from "lucide-react";
+import { EmptyState, GlassCard, KpiCard } from "@/components/ui-kit";
+import { useDashboardData } from "@/data/operations";
+import { zarCompact } from "@/lib/format";
 
 export const Route = createFileRoute("/reports/")({
-  head: () => ({
-    meta: [
-      { title: "Reports | Dream Supreme Properties" },
-      {
-        name: "description",
-        content: "Pipeline, fall-through, commission and compliance reporting for the agency.",
-      },
-      { property: "og:title", content: "Reports | Dream Supreme Properties" },
-      {
-        property: "og:description",
-        content: "Pipeline, fall-through, commission and compliance reporting for the agency.",
-      },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Reports | Dream Supreme Properties" }] }),
   component: ReportsHub,
 });
 
-const totalCancellations = fallThroughReasons.reduce((a, r) => a + r.count, 0);
-const activeDeals = deals.filter((d) => !d.cancelled).length;
-const lastMonth = monthlyCommission[monthlyCommission.length - 1] ?? { gross: 0 };
-const compliantUsers = users.filter(
-  (u) => u.ffc && new Date(u.ffc.expiry ?? 0) > new Date(),
-).length;
-
-const reportCards = [
-  {
-    key: "pipeline",
-    title: "Pipeline Report",
-    description:
-      "Deals by stage across branches, average days-in-stage, and stage-to-stage conversion funnel.",
-    icon: GitBranch,
-    stat: `${activeDeals} active deals`,
-    tone: "bg-info/10 text-info",
-  },
-  {
-    key: "fall-through",
-    title: "Fall-Through Report",
-    description:
-      "Cancellation reasons breakdown and the monthly fall-through trend across the agency.",
-    icon: AlertTriangle,
-    stat: `${totalCancellations} cancellations YTD`,
-    tone: "bg-destructive/10 text-destructive",
-  },
-  {
-    key: "commission",
-    title: "Commission Report",
-    description:
-      "Monthly earnings by agent, cumulative year-to-date commission, and total agency payouts.",
-    icon: Wallet,
-    stat: `${zarCompact(lastMonth.gross)} gross last month`,
-    tone: "bg-success/10 text-success",
-  },
-  {
-    key: "compliance",
-    title: "Compliance Report",
-    description: "FFC status across agents and FICA completion rates by party type.",
-    icon: ShieldCheck,
-    stat: `${pct(users.length ? Math.round((compliantUsers / users.length) * 10000) : 0)} agents FFC current`,
-    tone: "bg-warning/15 text-warning",
-  },
-] as const;
-
 function ReportsHub() {
+  const dashboard = useDashboardData();
+  const deals = dashboard.data?.deals ?? [];
+  const users = dashboard.data?.users ?? [];
+  const active = deals.filter(
+    (deal) =>
+      !deal.cancelled && deal.stage !== "Registered" && deal.stage !== "Commission Released",
+  );
+  const pipelineValue = active.reduce((sum, deal) => sum + deal.salePrice, 0);
+  const cancelled = deals.filter((deal) => !!deal.cancelled).length;
+  const ffcIssues = users.filter(
+    (user) => !user.ffc || !user.ffc.expiry || new Date(user.ffc.expiry) <= new Date(),
+  ).length;
+  const cards = [
+    {
+      key: "pipeline",
+      title: "Pipeline",
+      description: "Live active deals by stage and value.",
+      icon: GitBranch,
+    },
+    {
+      key: "fall-through",
+      title: "Fall-through",
+      description: "Cancelled deals and recorded reasons.",
+      icon: BarChart3,
+    },
+    {
+      key: "commission",
+      title: "Commission",
+      description: "Live deal commission exposure.",
+      icon: Wallet,
+    },
+    {
+      key: "compliance",
+      title: "Compliance",
+      description: "Current FFC coverage across visible users.",
+      icon: ShieldCheck,
+    },
+  ];
   return (
-    <AppShell
-      title="Reports"
-      description="Agency-wide performance and compliance reporting."
-      crumbs={[{ label: "Reports" }]}
-    >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {reportCards.map((r, i) => (
-          <motion.div
-            key={r.key}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06, duration: 0.3 }}
-          >
-            <Link to="/reports/$report" params={{ report: r.key }} className="block h-full">
-              <GlassCard className="flex h-full flex-col justify-between">
-                <div>
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <span
-                      className={`grid size-10 shrink-0 place-items-center rounded-xl ${r.tone}`}
-                    >
-                      <r.icon className="size-5" />
-                    </span>
-                    <ArrowRight className="size-4 text-muted-foreground" />
-                  </div>
-                  <h3 className="mb-1.5 truncate text-base font-semibold">{r.title}</h3>
-                  <p className="text-sm text-muted-foreground">{r.description}</p>
-                </div>
-                <p className="money mt-5 text-sm font-semibold text-foreground">{r.stat}</p>
+    <AppShell title="Reports" description="Reports calculated from live agency records.">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <KpiCard label="Active deals" value={active.length} icon={GitBranch} />
+        <KpiCard label="Pipeline value" value={zarCompact(pipelineValue)} icon={Wallet} />
+        <KpiCard
+          label="FFC issues"
+          value={ffcIssues}
+          icon={ShieldCheck}
+          tone={ffcIssues ? "danger" : "success"}
+        />
+      </div>
+      {dashboard.isError ? (
+        <GlassCard className="mt-6">
+          <EmptyState
+            title="Reports unavailable"
+            message={
+              dashboard.error instanceof Error
+                ? dashboard.error.message
+                : "Could not load report data."
+            }
+          />
+        </GlassCard>
+      ) : (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          {cards.map(({ key, title, description, icon: Icon }) => (
+            <Link key={key} to="/reports/$report" params={{ report: key }}>
+              <GlassCard className="h-full transition-colors hover:border-primary/40">
+                <Icon className="size-5 text-primary" />
+                <h2 className="mt-3 font-display font-semibold">{title}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+                {key === "fall-through" && (
+                  <p className="mt-3 text-sm font-medium">{cancelled} cancelled deals</p>
+                )}
               </GlassCard>
             </Link>
-          </motion.div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </AppShell>
   );
 }

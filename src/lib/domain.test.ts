@@ -7,7 +7,7 @@ import {
   stageToDb,
 } from "./domain";
 import { STAGES } from "@/types";
-import { transferDutyBrackets } from "@/data/state";
+import { TRANSFER_DUTY_FALLBACK } from "@/lib/financial-config";
 
 describe("database domain mapping", () => {
   it("round-trips every deal stage", () => {
@@ -26,14 +26,16 @@ describe("database domain mapping", () => {
 
 describe("SARS transfer duty", () => {
   it("charges no duty at the exemption threshold", () => {
-    expect(calculateTransferDutyCents(121_000_000, transferDutyBrackets).duty).toBe(0);
+    expect(calculateTransferDutyCents(121_000_000, TRANSFER_DUTY_FALLBACK).duty).toBe(0);
   });
 
   it("uses the published base and marginal rate above R2,329,300", () => {
-    expect(calculateTransferDutyCents(250_000_000, transferDutyBrackets).duty).toBe(6_720_000);
+    expect(calculateTransferDutyCents(250_000_000, TRANSFER_DUTY_FALLBACK).duty).toBe(6_720_000);
   });
 
   it("uses the top bracket above R13,310,000", () => {
-    expect(calculateTransferDutyCents(1_500_000_000, transferDutyBrackets).duty).toBe(146_115_600);
+    expect(calculateTransferDutyCents(1_500_000_000, TRANSFER_DUTY_FALLBACK).duty).toBe(
+      146_115_600,
+    );
   });
 });

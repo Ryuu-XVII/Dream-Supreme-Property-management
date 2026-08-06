@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { CalculatorShell } from "@/components/calculators/calculator-shell";
 import { SliderInput } from "@/components/calculators/slider-input";
 import { GlassCard } from "@/components/ui-kit";
@@ -14,7 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { transferDutyBrackets } from "@/data/mock";
+import { supabase } from "@/lib/supabase";
+import type { TransferDutyBracket } from "@/lib/domain";
 
 export const Route = createFileRoute("/calculators/transfer")({
   head: () => ({
@@ -40,12 +42,11 @@ const zarFmt = (n: number) =>
   `R ${n.toLocaleString("en-ZA", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
 // brackets are stored in cents
-function calcDuty(priceCents: number) {
-  const bracket = transferDutyBrackets.find(
+function calcDuty(priceCents: number, brackets: TransferDutyBracket[]) {
+  const bracket = brackets.find(
     (b) => priceCents > b.from && (b.to === null || priceCents <= b.to),
   );
-  if (!bracket || bracket.rate === 0)
-    return { duty: 0, bracket: bracket ?? transferDutyBrackets[0] };
+  if (!bracket || bracket.rate === 0) return { duty: 0, bracket: bracket ?? brackets[0] };
   const duty = bracket.base + ((priceCents - bracket.from) * bracket.rate) / 100;
   return { duty, bracket };
 }
@@ -68,12 +69,24 @@ function bondRegistrationCost(bondRands: number) {
 }
 
 function TransferCalculatorPage() {
+  const bracketQuery = useQuery({
+    queryKey: ["public-transfer-duty-brackets"],
+    queryFn: async (): Promise<TransferDutyBracket[]> => {
+      const { data, error } = await supabase.rpc("get_current_transfer_duty_brackets");
+      if (error) throw error;
+      return Array.isArray(data) ? (data as unknown as TransferDutyBracket[]) : [];
+    },
+  });
+  const transferDutyBrackets = useMemo(() => bracketQuery.data ?? [], [bracketQuery.data]);
   const [price, setPrice] = useState(1_800_000);
   const [bondAmount, setBondAmount] = useState(1_400_000);
   const [vatVendor, setVatVendor] = useState(false);
 
   const priceCents = price * 100;
-  const { duty: dutyCents, bracket } = useMemo(() => calcDuty(priceCents), [priceCents]);
+  const { duty: dutyCents, bracket } = useMemo(
+    () => calcDuty(priceCents, transferDutyBrackets),
+    [priceCents, transferDutyBrackets],
+  );
   const duty = vatVendor ? 0 : dutyCents / 100;
 
   const conveyancing = useMemo(() => conveyancingFee(price), [price]);

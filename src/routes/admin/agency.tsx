@@ -8,12 +8,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { GlassCard, EmptyState } from "@/components/ui-kit";
-import {
-  agency,
-  branches as initialBranches,
-  conveyancerFirms as initialFirms,
-  transferDutyBrackets as initialBrackets,
-} from "@/data/state";
+import { TRANSFER_DUTY_FALLBACK } from "@/lib/financial-config";
 import { dateFmt } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,12 +118,10 @@ interface Bracket {
 function AgencyProfilePage() {
   const { account } = useAuth();
   const [logo, setLogo] = useState<string | null>(null);
-  const [branchList, setBranchList] = useState<Branch[]>(
-    initialBranches.map((b) => ({ ...b, leadAutoAssign: false, archived: false })),
-  );
-  const [firmList, setFirmList] = useState<Firm[]>(initialFirms);
+  const [branchList, setBranchList] = useState<Branch[]>([]);
+  const [firmList, setFirmList] = useState<Firm[]>([]);
   const [brackets, setBrackets] = useState<Bracket[]>(
-    initialBrackets.map((b, i) => ({ id: `br${i}`, from: b.from, to: b.to, rate: b.rate })),
+    TRANSFER_DUTY_FALLBACK.map((b, i) => ({ id: `br${i}`, from: b.from, to: b.to, rate: b.rate })),
   );
   const [effectiveDate, setEffectiveDate] = useState("2026-04-01");
   const settingsQuery = useQuery({
@@ -162,12 +155,12 @@ function AgencyProfilePage() {
   const form = useForm<AgencyForm>({
     resolver: zodResolver(agencySchema),
     defaultValues: {
-      name: agency.name,
-      registration: agency.registration,
-      ppra: agency.ppra,
-      vatNumber: agency.vatNumber,
-      vatVendor: agency.vatVendor,
-      address: agency.address,
+      name: "",
+      registration: "",
+      ppra: "",
+      vatNumber: "",
+      vatVendor: false,
+      address: "",
     },
   });
 

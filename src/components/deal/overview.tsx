@@ -1,13 +1,13 @@
 import { GlassCard } from "@/components/ui-kit";
 import { AgentAvatar, FicaBadge } from "@/components/badges";
-import { userById, propertyById, grossCommission, type Deal } from "@/data/mock";
+import type { Deal, User } from "@/types";
 import { zar, pct, dateFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Home, Ruler, BedDouble, Bath, Car, Building2, ExternalLink } from "lucide-react";
 
 export function DealOverviewTab({ deal }: { deal: Deal }) {
-  const property = propertyById(deal.propertyId);
-  const gross = grossCommission(deal);
+  const property = (deal as Deal & { property?: any }).property;
+  const gross = Math.round((deal.salePrice * deal.commissionBps) / 10000);
 
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -86,7 +86,20 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
         </h3>
         <div className="space-y-3">
           {deal.practitioners.map((p) => {
-            const user = userById(p.userId);
+            const participant = p as typeof p & { name?: string; email?: string; mobile?: string };
+            const user = {
+              id: p.userId,
+              name: participant.name || "Unassigned",
+              email: participant.email || "",
+              mobile: participant.mobile || "",
+              branch: deal.branch,
+              active: true,
+              role: "Agent",
+              seniority: "Mid-level",
+              colour: "#1f7a52",
+              ppra: "",
+              ffc: null,
+            } as User;
             return (
               <div key={p.userId} className="flex items-center justify-between gap-2">
                 <AgentAvatar user={user} showName size={7} />

@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { uploadFileToR2 } from "@/lib/storage";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -27,13 +28,14 @@ const registerSchema = z.object({
   lastName: z.string().min(1, "Surname is required"),
   email: z.string().min(1, "Email is required").email("Enter a valid email address"),
   phone: z.string().min(10, "Enter a valid phone number"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 type RegisterForm = z.infer<typeof registerSchema>;
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const { refreshAccount } = useAuth();
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -164,6 +166,12 @@ function RegisterPage() {
 
       if (rpcError) throw rpcError;
       localStorage.removeItem("dsp-pending-invitation");
+      const createdAccount = await refreshAccount();
+      if (!createdAccount || createdAccount.status !== "active") {
+        throw new Error(
+          "Your profile was created but could not be activated. Please sign in again.",
+        );
+      }
 
       toast.success("Welcome to Dream Supreme Properties!", { id: "register" });
       navigate({ to: "/" });

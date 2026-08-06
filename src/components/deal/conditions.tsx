@@ -2,7 +2,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { GlassCard } from "@/components/ui-kit";
 import { UrgencyBadge } from "@/components/badges";
-import { userById, type Deal, type Condition, type ConditionStatus } from "@/data/mock";
+import type { Deal, Condition, ConditionStatus } from "@/types";
+import { supabase } from "@/lib/supabase";
 import { dateFmt } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,17 +62,38 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
   const [reason, setReason] = useState("");
   const [bondStatus, setBondStatus] = useState(deal.bond.status);
 
-  const setStatus = (id: string, status: ConditionStatus) => {
+  const setStatus = async (id: string, status: ConditionStatus) => {
+    const statusMap: Record<ConditionStatus, string> = {
+      Open: "pending",
+      Fulfilled: "fulfilled",
+      Extended: "extended",
+      Waived: "waived",
+      Failed: "failed",
+    };
+    const { error } = await supabase.rpc("set_condition_status", {
+      p_condition_id: id,
+      p_status: statusMap[status],
+      p_new_due_on: null,
+      p_reason: null,
+    });
+    if (error) return toast.error(error.message);
     setConditions((cs) => cs.map((c) => (c.id === id ? { ...c, status } : c)));
     toast.success(`Condition marked as ${status}`);
   };
 
-  const submitExtension = () => {
+  const submitExtension = async () => {
     if (!extendTarget) return;
     if (!newDate || !reason.trim()) {
       toast.error("Please provide a new date and a reason for the extension.");
       return;
     }
+    const { error } = await supabase.rpc("set_condition_status", {
+      p_condition_id: extendTarget.id,
+      p_status: "extended",
+      p_new_due_on: newDate,
+      p_reason: reason.trim(),
+    });
+    if (error) return toast.error(error.message);
     setConditions((cs) =>
       cs.map((c) =>
         c.id === extendTarget.id
@@ -137,7 +159,7 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
                         {c.responsibleParty}
                         <br />
                         <span className="text-muted-foreground">
-                          {userById(c.responsibleUserId)?.name}
+                          {c.responsibleUserId ? "Assigned practitioner" : ""}
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
@@ -147,7 +169,7 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
                               size="sm"
                               variant="outline"
                               className="h-7 gap-1 px-2 text-[11px]"
-                              onClick={() => setStatus(c.id, "Fulfilled")}
+                              onClick={() => void setStatus(c.id, "Fulfilled")}
                             >
                               <CheckCircle2 className="size-3" /> Fulfil
                             </Button>
@@ -166,7 +188,7 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
                               size="sm"
                               variant="outline"
                               className="h-7 gap-1 px-2 text-[11px]"
-                              onClick={() => setStatus(c.id, "Waived")}
+                              onClick={() => void setStatus(c.id, "Waived")}
                             >
                               <Ban className="size-3" /> Waive
                             </Button>
@@ -174,7 +196,7 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
                               size="sm"
                               variant="outline"
                               className="h-7 gap-1 px-2 text-[11px] text-destructive"
-                              onClick={() => setStatus(c.id, "Failed")}
+                              onClick={() => void setStatus(c.id, "Failed")}
                             >
                               <XOctagon className="size-3" /> Fail
                             </Button>
@@ -199,7 +221,20 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
             <Label className="mb-1 block text-xs text-muted-foreground">Status</Label>
             <Select
               value={bondStatus}
-              onValueChange={(v) => {
+              onValueChange={async (v) => {
+                const statusMap: Record<string, string> = {
+                  "Not applied": "not_applied",
+                  Submitted: "submitted",
+                  Declined: "declined",
+                  "Approved in principle": "approved_in_principle",
+                  "Formally granted": "formally_granted",
+                };
+                const { error } = await supabase.rpc("set_bond_status", {
+                  p_deal_id: deal.id,
+                  p_status: statusMap[v],
+                  p_institution: deal.bond.institution || null,
+                });
+                if (error) return toast.error(error.message);
                 setBondStatus(v as Deal["bond"]["status"]);
                 toast.success("Bond status updated");
               }}

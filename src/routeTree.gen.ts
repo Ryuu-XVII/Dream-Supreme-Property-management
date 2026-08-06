@@ -20,6 +20,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as MandatesRouteImport } from './routes/mandates'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignRouteImport } from './routes/sign'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
@@ -115,6 +116,11 @@ const PipelineRoute = PipelineRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignRoute = SignRouteImport.update({
@@ -337,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/mandates': typeof MandatesRouteWithChildren
   '/pipeline': typeof PipelineRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/agency': typeof AdminAgencyRoute
@@ -390,6 +397,7 @@ export interface FileRoutesByTo {
   '/mandates': typeof MandatesRouteWithChildren
   '/pipeline': typeof PipelineRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/agency': typeof AdminAgencyRoute
@@ -445,6 +453,7 @@ export interface FileRoutesById {
   '/mandates': typeof MandatesRouteWithChildren
   '/pipeline': typeof PipelineRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sign': typeof SignRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/agency': typeof AdminAgencyRoute
@@ -501,6 +510,7 @@ export interface FileRouteTypes {
     | '/mandates'
     | '/pipeline'
     | '/register'
+    | '/reset-password'
     | '/sign'
     | '/sitemap.xml'
     | '/admin/agency'
@@ -554,6 +564,7 @@ export interface FileRouteTypes {
     | '/mandates'
     | '/pipeline'
     | '/register'
+    | '/reset-password'
     | '/sign'
     | '/sitemap.xml'
     | '/admin/agency'
@@ -608,6 +619,7 @@ export interface FileRouteTypes {
     | '/mandates'
     | '/pipeline'
     | '/register'
+    | '/reset-password'
     | '/sign'
     | '/sitemap.xml'
     | '/admin/agency'
@@ -663,6 +675,7 @@ export interface RootRouteChildren {
   MandatesRoute: typeof MandatesRouteWithChildren
   PipelineRoute: typeof PipelineRoute
   RegisterRoute: typeof RegisterRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SignRoute: typeof SignRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CalculatorsAffordabilityRoute: typeof CalculatorsAffordabilityRoute
@@ -766,6 +779,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sign': {
@@ -1122,6 +1142,7 @@ const rootRouteChildren: RootRouteChildren = {
   MandatesRoute: MandatesRouteWithChildren,
   PipelineRoute: PipelineRoute,
   RegisterRoute: RegisterRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SignRoute: SignRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   CalculatorsAffordabilityRoute: CalculatorsAffordabilityRoute,

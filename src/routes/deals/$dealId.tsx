@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { StageBadge, StatusDot } from "@/components/badges";
-import { STAGES, propertyById, type Stage } from "@/data/state";
+import { STAGES, type Stage } from "@/types";
 import { zar, urgencyOf } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -79,9 +79,11 @@ function DealDetailPage() {
     );
   }
 
-  const property = deal.property ?? { address_line: "Address not available", suburb: "", city: "" };
+  const property = deal.property ?? { address: "Address not available", suburb: "", city: "" };
 
-  const humanStage = stageFromDb[deal.stage] || "Mandate Signed";
+  const humanStage = STAGES.includes(deal.stage)
+    ? deal.stage
+    : stageFromDb[deal.stage] || "Mandate Signed";
   const currentStageIdx = STAGES.findIndex((s) => s === humanStage);
 
   const handleAdvanceStage = async () => {

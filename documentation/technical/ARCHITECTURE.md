@@ -16,21 +16,25 @@ This document outlines the core architecture of the Dream Supreme Property Manag
 The application operates as a **Monolith with Subdirectory Routing**, serving two distinct portals based on the user's authenticated role (`Agent`, `Admin`):
 
 - **Agent Portal (Main App / Subdomain)**: Hosted on the practitioner domain (e.g., `app.dreamsupreme.co.za` or `agent.dreamsupreme.co.za`). Wrapped by `<AppShell>` for daily practitioner operations (Listings, Rentals, Pipeline, Countdown, Commission, Clients, Documents, Leads, Reports, and a 4-tab Settings Hub for Profile & Security, Financials & Goals, Signing Presets, and Notifications). Restricted to Agents and Admins.
-- **Admin Portal (Management Subdomain)**: Hosted on the administrative domain (e.g., `admin.dreamsupreme.co.za`). Wrapped by `<AdminShell>` with dedicated controls. Shares the exact same ambient mesh background, glassmorphic sidebar, and design system aesthetics as the Agent Portal. Restricted strictly to Admins.
-- **Conveyancer Portal (Public Links)**: Resides under `/conveyancer`. This is a standalone, public-facing portal accessed via secure "magic links" (URL tokens). Conveyancers do NOT require user accounts.
+- **Admin Portal (Management Subdomain)**: Hosted on the administrative domain (e.g., `admin.dreamsupreme.co.za`). Wrapped by `<AdminShell>` with dedicated controls. Shares the exact same ambient mesh background, glassmorphic sidebar, and design system aesthetics as the Agent Portal. Access requires an active Supabase account with the `admin` or `principal` role; the hostname never grants authorization.
+- **Public Entry Points**: `/login`, `/reset-password`, `/register`, `/calculators/*`, `/conveyancer`, `/sign`, and `/sitemap.xml` are explicitly allowlisted. Conveyancer and signing routes are intended for separate token-validation workflows and do not require staff accounts.
 
 **Design System & Typography**:
+
 - **Google Fonts CDN**: Platform typography relies on Google Fonts loaded via `<link>` tags in `index.html` and preconnected to `https://fonts.googleapis.com`.
   - **Inter**: Primary sans-serif font for body text, tables, forms, and general UI (`--font-sans`).
   - **Outfit**: Display font for page titles, headings, and branding elements (`--font-display`).
   - **JetBrains Mono**: Monospace font for financial values, deal numbers, and system logs (`--font-mono`).
 
 **Testing & Calculation Engine**:
+
 - Spreadsheet multi-tier commission waterfall formulas (Royalty, Franchise, Office Split, Desk Fee) are unit tested in [`tests/agent-commission-spreadsheet.test.ts`](file:///c:/Personal%20Projects/FOCI%20PROJECTS/Dream-Supreme-Property-management/tests/agent-commission-spreadsheet.test.ts).
 
 **Domain & RBAC Enforcement Strategy**:
-1. **Domain Isolation**: Route guards check `window.location.origin` against `VITE_AGENT_DOMAIN` and `VITE_ADMIN_DOMAIN`. If an Agent attempts to access `/admin` or load the Admin domain, they are redirected back to the Agent Portal.
-2. **Unified Supabase RLS Authority**: Both domains share the single Supabase PostgreSQL backend. Admins retain full administrative control over agent records, FFC approvals, commission waterfalls, and impersonation across domains via Row-Level Security (RLS) policies.
+
+1. **Authenticated Root Guard**: `<AuthProvider>` wraps `<AppProvider>`. `AuthenticatedOutlet` waits for Supabase session restoration, permits only the explicit public-route allowlist without a session, and redirects every other route to `/login` unless both a session and active `user_account` profile exist.
+2. **Role Guard**: `/admin/*` separately requires an active `admin` or `principal` account. Administrative-domain detection is used only for portal routing and cannot bypass the account-role check.
+3. **Unified Supabase RLS Authority**: Both domains share the single Supabase PostgreSQL backend. Client guards control navigation, while PostgreSQL RLS remains authoritative for records, FFC approvals, commission waterfalls, and other protected operations.
 
 ## 3. State Management
 
@@ -42,6 +46,8 @@ State is separated into three distinct domains:
 2. **Session State (`src/lib/auth.tsx`)**:
    - Manages the active Supabase `Session` and `User`.
    - Fetches and stores the enriched `account` object from the `user_account` table to provide the user's full name, agency ID, and role immediately upon login.
+   - Subscribes to Supabase auth-state changes, clears impersonation on sign-out, and exposes `refreshAccount()` so invitation registration can load the newly provisioned profile before navigating into protected routes.
+   - Password login calls `supabase.auth.signInWithPassword`; password recovery uses `resetPasswordForEmail` and the public `/reset-password` completion route. No simulated client-side OTP is used.
 3. **Server State (TanStack Query)**:
    - Used for fetching, caching, and mutating database records. Found in the `src/data/` directory hooks (e.g., `usePipelineDeals`, `useAuditLogs`).
 

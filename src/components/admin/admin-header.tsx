@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useApp } from "@/lib/app-state";
-import { agency } from "@/data/state";
 import { initials } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
 
@@ -74,7 +73,7 @@ export function AdminHeader() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <p className="text-sm font-medium">{me.name}</p>
-              <p className="text-xs font-normal text-muted-foreground">{agency.name}</p>
+              <p className="text-xs font-normal text-muted-foreground">Dream Supreme Properties</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             {role === "Admin" && (

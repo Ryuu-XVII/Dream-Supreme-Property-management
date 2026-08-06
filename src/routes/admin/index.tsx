@@ -1,72 +1,71 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Building2, FileText, Users } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminDealsPipeline } from "@/components/admin/admin-deals-pipeline";
-import { GlassCard, KpiCard } from "@/components/ui-kit";
-import { Users, Building2, FileText, Plus, ShieldAlert, AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { EmptyState, GlassCard, KpiCard } from "@/components/ui-kit";
+import { useDashboardData } from "@/data/operations";
+import { relative } from "@/lib/format";
 
-export const Route = createFileRoute("/admin/")({
-  component: AdminDashboard,
-});
+export const Route = createFileRoute("/admin/")({ component: AdminDashboard });
 
 function AdminDashboard() {
+  const dashboard = useDashboardData();
+  const data = dashboard.data;
+  const propertyCount = new Set((data?.deals ?? []).map((deal) => deal.propertyId).filter(Boolean))
+    .size;
   return (
     <>
-      <AdminPageHeader title="Admin Home" description="System overview and administration." />
+      <AdminPageHeader title="Admin Home" description="Live system overview and administration." />
       <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-3">
           <KpiCard
-            label="Total Agents"
-            value={142}
-            trend={12}
-            sub="Active accounts"
+            label="Visible users"
+            value={data?.users.length ?? 0}
+            sub="Agency accounts"
             icon={Users}
-            delay={0}
           />
           <KpiCard
-            label="Properties"
-            value={384}
-            trend={4}
-            sub="Active listings"
+            label="Deal properties"
+            value={propertyCount}
+            sub="Properties attached to deals"
             icon={Building2}
-            delay={0.05}
           />
           <KpiCard
-            label="Total Deals"
-            value={89}
-            trend={8}
-            sub="In progress"
+            label="Total deals"
+            value={data?.deals.length ?? 0}
+            sub="Visible agency deals"
             icon={FileText}
-            delay={0.1}
           />
         </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div className="lg:col-span-1">
-            <AdminDealsPipeline />
-          </div>
-          <GlassCard className="lg:col-span-1">
-            <h3 className="font-display text-base font-semibold">Recent Activity</h3>
-            <p className="text-xs text-muted-foreground mb-4">Latest system events</p>
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div className="size-2 rounded-full bg-primary" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">Agent logged in</p>
-                      <span className="text-xs text-muted-foreground">{i}h ago</span>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <AdminDealsPipeline />
+          <GlassCard>
+            <h3 className="font-display text-base font-semibold">Recent activity</h3>
+            <p className="mb-4 text-xs text-muted-foreground">Latest persisted audit events</p>
+            {dashboard.isLoading ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : (data?.auditEvents.length ?? 0) === 0 ? (
+              <EmptyState
+                title="No recent activity"
+                message="Persisted agency actions will appear here."
+              />
+            ) : (
+              <div className="space-y-3">
+                {data?.auditEvents.map((event) => (
+                  <div key={event.id} className="rounded-lg border p-3">
+                    <div className="flex justify-between gap-3">
+                      <p className="text-sm font-medium">{event.summary}</p>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {relative(event.at)}
+                      </span>
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">
-                      Jane Doe accessed the system from Capetown, ZA
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {event.user} · {event.entityType}
                     </p>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </GlassCard>
         </div>
       </div>

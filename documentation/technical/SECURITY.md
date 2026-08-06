@@ -5,8 +5,13 @@ This document defines the core security constraints and architectural guidelines
 ## 1. Authentication & Authorization
 
 - **Supabase Auth:** All authentication is handled via Supabase (JWT tokens).
-- **Role-Based Access Control (RBAC):** Users are assigned specific roles (e.g., `admin`, `agent`, `principal`, `compliance_officer`). Access to features and UI elements must be strictly gated by these roles.
+- **Role-Based Access Control (RBAC):** Users are assigned one of the database roles (`principal`, `admin`, `agent`, or `candidate`). Access to features and UI elements must be strictly gated by these roles.
 - **Principle of Least Privilege:** A user should only have access to the data necessary for their specific job function.
+- **Active Profile Requirement:** Protected routes require both a valid Supabase session and an active `user_account` record. Suspended, archived, orphaned, or unprovisioned Auth users cannot enter the operational portal.
+- **Administrative Access:** An admin hostname is a routing convenience only. `/admin/*` requires an active `admin` or `principal` profile regardless of the host used to reach it.
+- **Password Authentication:** Login uses `supabase.auth.signInWithPassword`. New registrations and password changes require at least eight characters. Existing users authenticate against the server policy configured in the deployed Supabase project.
+- **Password Recovery:** Reset emails return to the public `/reset-password` route, which requires the recovery session issued by Supabase before calling `auth.updateUser`. Normal in-app password changes first reauthenticate the current password.
+- **MFA Claims:** The UI must not claim MFA is active unless Supabase MFA enrollment and challenge verification are implemented and enabled. There are no hard-coded OTP or demo-login paths.
 
 ## 2. Row-Level Security (RLS)
 

@@ -10,6 +10,7 @@ function makeTestStub(): SupabaseClient {
         eq: () => ({
           order: () => Promise.resolve({ data: [], error: null }),
           single: () => Promise.resolve({ data: null, error: null }),
+          maybeSingle: () => Promise.resolve({ data: null, error: null }),
           limit: () => Promise.resolve({ data: [], error: null }),
         }),
         order: () => Promise.resolve({ data: [], error: null }),
@@ -20,6 +21,22 @@ function makeTestStub(): SupabaseClient {
       delete: async () => ({ data: null, error: null }),
     }),
     rpc: async () => ({ data: null, error: null }),
+    auth: {
+      getSession: async () => ({ data: { session: null }, error: null }),
+      onAuthStateChange: () => ({
+        data: { subscription: { unsubscribe: () => undefined } },
+      }),
+      signOut: async () => ({ error: null }),
+      signInWithPassword: async () => ({
+        data: { user: null, session: null },
+        error: new Error("Authentication is not available in the unit-test stub."),
+      }),
+      resetPasswordForEmail: async () => ({ data: {}, error: null }),
+      updateUser: async () => ({
+        data: { user: null },
+        error: new Error("Authentication is not available in the unit-test stub."),
+      }),
+    },
     storage: {
       from: () => ({
         upload: async () => ({ data: { path: "test.pdf" }, error: null }),

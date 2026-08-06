@@ -42,7 +42,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!activeAccount) return;
     const roleMap: Record<typeof activeAccount.role, Role> = {
+      principal: "Admin",
       agent: "Agent",
+      candidate: "Agent",
       admin: "Admin",
     };
     setRoleState(roleMap[activeAccount.role] || "Agent");

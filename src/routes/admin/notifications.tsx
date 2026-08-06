@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { GlassCard } from "@/components/ui-kit";
-import { notificationTypes } from "@/data/state";
+import { NOTIFICATION_EVENT_TYPES as notificationTypes } from "@/lib/notification-events";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

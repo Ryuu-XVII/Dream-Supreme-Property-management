@@ -14,11 +14,11 @@ import { useApp } from "@/lib/app-state";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import {
-  VAT_RATE,
+  DEFAULT_VAT_PERCENT,
   DEFAULT_SALE_PRICE_CENTS,
   DEFAULT_COMMISSION_BPS,
-  DEFAULT_OFFICE_SHARE_PCT,
-} from "@/data/state";
+  DEFAULT_OFFICE_SHARE_PERCENT,
+} from "@/lib/financial-config";
 
 export type CalcLine = {
   id: string;
@@ -40,8 +40,8 @@ export function CommissionCalculator() {
   const [commRate, setCommRate] = useState<number>(DEFAULT_COMMISSION_BPS / 100); // %
   const [isVatVendor, setIsVatVendor] = useState<boolean>(true);
   const [isVatInclusive, setIsVatInclusive] = useState<boolean>(true);
-  const [vatRate, setVatRate] = useState<number>(VAT_RATE);
-  const [officeSharePct, setOfficeSharePct] = useState<number>(DEFAULT_OFFICE_SHARE_PCT); // %
+  const [vatRate, setVatRate] = useState<number>(DEFAULT_VAT_PERCENT);
+  const [officeSharePct, setOfficeSharePct] = useState<number>(DEFAULT_OFFICE_SHARE_PERCENT); // %
   const [agentASplitPct, setAgentASplitPct] = useState<number>(60.0); // %
   const [agentBSplitPct, setAgentBSplitPct] = useState<number>(40.0); // %
   const [hasCoAgent, setHasCoAgent] = useState<boolean>(false);

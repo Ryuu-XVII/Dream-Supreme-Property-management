@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { dateTimeFmt } from "@/lib/format";
-import type { Party } from "@/data/state";
+import type { Party } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { ChevronDown, ChevronRight, UploadCloud, ShieldCheck, ShieldOff } from "lucide-react";
 

@@ -22,7 +22,6 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 - **`user_notification_preference`**: Tracks user-level event notification preferences, frequency ('realtime' vs 'digest'), and custom condition configurations.
 - **`notification`**: Stores in-app and email notifications with delivery statuses ('sent', 'pending_digest', 'digest_queued').
 
-
 ### `trust_account_ledger` & `document_template` (Trust & Compliance Operations)
 
 - **`trust_account_ledger`**: Audited sub-ledger for Section 86(2) General and Section 86(4) Investment trust deposits, managing 95%/5% client vs PPRA statutory interest allocations and principal sign-offs.
@@ -156,9 +155,9 @@ Aggregates all notifications with a `delivery_status` of `'pending_digest'` for 
 
 ## 5. User Invitations & Security Functions
 
-- **`create_user_invitation(text, user_role)`**: Generates a secure invite token, automatically cleans up prior unaccepted invitations for the target email, auto-provisions a default agency if needed, enforces `principal`/`admin` authorization checks (when user account exists), and grants `EXECUTE` to `authenticated`, `anon`, and `service_role`.
+- **`create_user_invitation(text, user_role)`**: Generates a secure invite token, automatically cleans up prior unaccepted invitations for the target email, auto-provisions a default agency if needed, enforces `principal`/`admin` authorization checks, revokes public/anonymous execution, and grants `EXECUTE` to authenticated callers only.
 - **`prepare_invited_registration(text, text)`**: Validates an invitation token and email pairing, detects any orphan Supabase `auth.users` rows created by prior incomplete registration attempts, automatically cleans them up server-side, and returns validation status. Granted `EXECUTE` to `anon` and `authenticated`.
 - **`validate_user_invitation(text, text)`**: Validates invite token and email pairing with `EXECUTE` granted to `anon`, `authenticated`, and `service_role`.
 - **`accept_user_invitation(text, text, text, text)`**: Completes registration by creating/updating the `user_account` profile (with `ON CONFLICT` handling for existing auth users) and marking the invitation as accepted.
 - **`user_invitation` & `user_account` RLS Policies**: Updated `SELECT` policies to ensure agency directories and pending invitations remain queryable by managers and active agency accounts.
-
+- **Client Session Gate**: The React root guard requires a valid session plus an active `user_account` before rendering operational routes. This is defense in depth; PostgreSQL RLS remains the authoritative data boundary.

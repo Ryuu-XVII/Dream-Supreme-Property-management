@@ -32,35 +32,7 @@ export function useCreateLeaseOnboarding() {
         },
       });
 
-      if (error) {
-        // Fallback for demo mode
-        const { data: fallbackLease, error: fallbackError } = await supabase
-          .from("lease")
-          .insert([
-            {
-              agency_id: account.agencyId,
-              property_id: payload.propertyId,
-              landlord_party_id: payload.landlordPartyId,
-              tenant_party_id: payload.tenantPartyId,
-              managed_by: payload.managedBy || account.id,
-              start_on: payload.startOn,
-              end_on: payload.endOn,
-              monthly_rent_cents: payload.monthlyRentCents,
-              escalation_rate_bps: payload.escalationRateBps || 800,
-              escalation_month: payload.escalationMonth || 1,
-              deposit_cents: payload.depositCents || 0,
-              deposit_held_by: payload.depositHeldBy || "agency_trust",
-              procurement_fee_cents: payload.procurementFeeCents || 0,
-              management_fee_bps: payload.managementFeeBps || 800,
-              status: "active",
-            },
-          ])
-          .select("id")
-          .single();
-
-        if (fallbackError) throw fallbackError;
-        return fallbackLease.id;
-      }
+      if (error) throw error;
 
       return data;
     },

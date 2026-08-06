@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Copy, Archive, Pencil, Plus, ArrowUp, ArrowDown, Trash2, Sparkles } from "lucide-react";
+import { Copy, Archive, Pencil, Plus, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { GlassCard, EmptyState, TableSkeleton } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
@@ -35,16 +34,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { RuleSet, DeductionLine } from "@/types";
 import {
-  ruleSets as seedRuleSets,
-  ruleTemplates,
-  VAT_RATE,
+  DEFAULT_VAT_PERCENT,
   DEFAULT_SALE_PRICE_CENTS,
   DEFAULT_COMMISSION_BPS,
-  DEFAULT_OFFICE_SHARE_PCT,
-  type RuleSet,
-  type DeductionLine,
-} from "@/data/state";
+  DEFAULT_OFFICE_SHARE_PERCENT,
+} from "@/lib/financial-config";
 import { dateFmt, zar } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 
@@ -98,7 +94,7 @@ function blankRuleSet(): RuleSet {
     vatInclusive: true,
     defaultBps: DEFAULT_COMMISSION_BPS,
     rounding: "Nearest cent",
-    officeSharePct: DEFAULT_OFFICE_SHARE_PCT,
+    officeSharePct: DEFAULT_OFFICE_SHARE_PERCENT,
     deductions: [],
   };
 }
@@ -106,8 +102,8 @@ function blankRuleSet(): RuleSet {
 function computePreview(rs: RuleSet, sampleSale: number) {
   const gross = Math.round((sampleSale * rs.defaultBps) / 10000);
   const vat = rs.vatInclusive
-    ? Math.round(gross - gross / (1 + VAT_RATE / 100))
-    : Math.round(gross * (VAT_RATE / 100));
+    ? Math.round(gross - gross / (1 + DEFAULT_VAT_PERCENT / 100))
+    : Math.round(gross * (DEFAULT_VAT_PERCENT / 100));
   const net = rs.vatInclusive ? gross - vat : gross;
 
   const steps: {
@@ -123,8 +119,12 @@ function computePreview(rs: RuleSet, sampleSale: number) {
       kind: "base",
     },
     {
-      label: rs.vatInclusive ? `Less VAT (${VAT_RATE}%, incl.)` : `Plus VAT (${VAT_RATE}%, excl.)`,
-      formula: rs.vatInclusive ? `gross − gross ÷ (1 + ${VAT_RATE}/100)` : `gross × ${VAT_RATE}%`,
+      label: rs.vatInclusive
+        ? `Less VAT (${DEFAULT_VAT_PERCENT}%, incl.)`
+        : `Plus VAT (${DEFAULT_VAT_PERCENT}%, excl.)`,
+      formula: rs.vatInclusive
+        ? `gross − gross ÷ (1 + ${DEFAULT_VAT_PERCENT}/100)`
+        : `gross × ${DEFAULT_VAT_PERCENT}%`,
       amount: rs.vatInclusive ? -vat : vat,
       kind: "deduct",
     },
@@ -235,7 +235,7 @@ function CommissionRulesPage() {
     },
   });
   const loading = ruleQuery.isLoading;
-  const [ruleSets, setRuleSets] = useState<RuleSet[]>(seedRuleSets);
+  const [ruleSets, setRuleSets] = useState<RuleSet[]>([]);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<RuleSet | null>(null);
   const [sampleSale, setSampleSale] = useState(DEFAULT_SALE_PRICE_CENTS);
@@ -252,28 +252,6 @@ function CommissionRulesPage() {
   const openNew = () => {
     setEditing(blankRuleSet());
     setEditorOpen(true);
-  };
-
-  const openFromTemplate = (t: (typeof ruleTemplates)[number]) => {
-    const rs = blankRuleSet();
-    rs.name = t.name;
-    rs.defaultBps = t.bps;
-    rs.officeSharePct = t.office;
-    rs.deductions =
-      t.franchise > 0
-        ? [
-            {
-              id: newLine().id,
-              type: "Franchise Fee",
-              basis: "Percentage",
-              bps: t.franchise,
-              payee: "Franchisor",
-            },
-          ]
-        : [];
-    setEditing(rs);
-    setEditorOpen(true);
-    toast.success(`Pre-filled editor from "${t.name}" template`);
   };
 
   const saveEditing = async () => {
@@ -443,40 +421,6 @@ function CommissionRulesPage() {
               </Table>
             </div>
           )}
-        </GlassCard>
-
-        <GlassCard>
-          <h2 className="mb-1 font-display text-lg font-semibold">Template Rule Sets</h2>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Start from a well-known franchise commission model.
-          </p>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {ruleTemplates.map((t, i) => (
-              <motion.div
-                key={t.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-              >
-                <button
-                  onClick={() => openFromTemplate(t)}
-                  className="lift flex h-full w-full flex-col items-start gap-2 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/40"
-                >
-                  <span className="flex items-center gap-2 font-display text-sm font-semibold">
-                    <Sparkles className="size-4 text-primary" /> {t.name}
-                  </span>
-                  <p className="text-xs text-muted-foreground">{t.blurb}</p>
-                  <div className="mt-auto flex flex-wrap gap-1.5 pt-2">
-                    <Badge variant="outline">{(t.bps / 100).toFixed(1)}% comm.</Badge>
-                    <Badge variant="outline">{t.office}% office</Badge>
-                    {t.franchise > 0 && (
-                      <Badge variant="outline">{(t.franchise / 100).toFixed(1)}% franchise</Badge>
-                    )}
-                  </div>
-                </button>
-              </motion.div>
-            ))}
-          </div>
         </GlassCard>
 
         <Dialog open={editorOpen} onOpenChange={setEditorOpen}>

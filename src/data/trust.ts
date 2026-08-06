@@ -82,32 +82,7 @@ export function useRecordTrustTransaction() {
         p_interest_split_ppra_pct: payload.interestSplitPpraPct ?? 5.0,
       });
 
-      if (error) {
-        // Fallback for demo client-side insert if RPC is missing
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from("trust_account_ledger")
-          .insert([
-            {
-              agency_id: account.agencyId,
-              deal_id: payload.dealId || null,
-              lease_id: payload.leaseId || null,
-              account_type: payload.accountType,
-              transaction_type: payload.transactionType,
-              amount_cents: payload.amountCents,
-              reference_number: payload.referenceNumber,
-              bank_statement_date: payload.bankStatementDate,
-              payer_payee_name: payload.payerPayeeName,
-              interest_split_client_pct: payload.interestSplitClientPct ?? 95.0,
-              interest_split_ppra_pct: payload.interestSplitPpraPct ?? 5.0,
-              approved_by_principal: account.id,
-              approved_at: new Date().toISOString(),
-            },
-          ])
-          .select()
-          .single();
-        if (fallbackError) throw fallbackError;
-        return fallbackData;
-      }
+      if (error) throw error;
 
       return data;
     },
