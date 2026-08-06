@@ -160,5 +160,5 @@ Aggregates all notifications with a `delivery_status` of `'pending_digest'` for 
 - **`prepare_invited_registration(text, text)`**: Validates an invitation token and email pairing, detects any orphan Supabase `auth.users` rows created by prior incomplete registration attempts, automatically cleans them up server-side, and returns validation status. Granted `EXECUTE` to `anon` and `authenticated`.
 - **`validate_user_invitation(text, text)`**: Validates invite token and email pairing with `EXECUTE` granted to `anon`, `authenticated`, and `service_role`.
 - **`accept_user_invitation(text, text, text, text)`**: Completes registration by creating/updating the `user_account` profile (with `ON CONFLICT` handling for existing auth users) and marking the invitation as accepted.
-- **`user_invitation` RLS Policies**: Full RLS protection supporting `SELECT`, `INSERT`, and `DELETE` operations for `principal` and `admin` roles within their tenant agency.
+- **`user_invitation` & `user_account` RLS Policies**: Updated `SELECT` policies to ensure agency directories and pending invitations remain queryable by managers and active agency accounts.
 
