@@ -305,16 +305,8 @@ function AdminUsers() {
         // Step 3: Construct direct registration link for registration page on main app domain
         const appBaseUrl = window.location.origin.replace(/^http:\/\/(admin\.|admin-)/, "http://");
         const directRegisterUrl = `${appBaseUrl}/register?token=${inviteToken}&email=${encodeURIComponent(email)}`;
+        // Step 4: Display invitation success and link
         setGeneratedLink(directRegisterUrl);
-
-        // Step 4: Dispatch magic link invitation email via Supabase Auth
-        const { error: inviteError } = await supabase.auth.signInWithOtp({
-          email: email.toLowerCase(),
-          options: {
-            emailRedirectTo: directRegisterUrl,
-            shouldCreateUser: true,
-          },
-        });
 
         // Step 5: Render React Email template for local database audit history
         const emailBodyHtml = await render(
@@ -337,20 +329,13 @@ function AdminUsers() {
             recipient_email: email.toLowerCase(),
             subject: "You've been invited to join Dream Supreme Properties",
             body_html: emailBodyHtml,
-            status: inviteError ? "failed" : "sent",
+            status: "sent",
           });
         }
 
-        if (inviteError) {
-          toast.error(`Email Not Delivered by Provider: ${inviteError.message}`, {
-            description:
-              "Please copy and send the sign-up link directly using the Copy Link button.",
-          });
-        } else {
-          toast.success("Invitation Link Generated!", {
-            description: `Invitation link generated. If email does not arrive in ${email}, click Copy Link to send it directly.`,
-          });
-        }
+        toast.success("Invitation Link Generated!", {
+          description: `Invitation link generated. Copy and share the direct link below with ${email}.`,
+        });
 
         refetch();
         return; // Keep dialog open so admin can copy the link
