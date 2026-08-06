@@ -35,6 +35,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 function RegisterPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -57,9 +58,9 @@ function RegisterPage() {
   });
 
   useEffect(() => {
-    // If the magic link auto-authenticated a session, sign out immediately
-    // so the new user can fill in their registration details and choose a password
-    void supabase.auth.signOut();
+    // Clear any existing session so the form renders in an unauthenticated state.
+    // We await signOut to prevent a race with AuthProvider's onAuthStateChange.
+    supabase.auth.signOut().finally(() => setReady(true));
   }, []);
 
   useEffect(() => {
@@ -90,61 +91,44 @@ function RegisterPage() {
       if (!invitationToken) {
         throw new Error("A company invitation link is required to register.");
       }
-      const { data: validInvitation, error: invitationError } = await supabase.rpc(
-        "validate_user_invitation",
+
+      // Step 1: Validate invitation AND clean up any orphan auth user server-side.
+      // This RPC deletes orphan auth.users rows from previous failed attempts,
+      // so the subsequent signUp call will always succeed for valid invitations.
+      const { data: prepResult, error: prepError } = await supabase.rpc(
+        "prepare_invited_registration",
         { p_token: invitationToken, p_email: data.email },
       );
-      if (invitationError || !validInvitation) {
-        throw new Error(
-          "This invitation is invalid, expired, or belongs to another email address.",
-        );
+      if (prepError) throw new Error(prepError.message);
+      if (!prepResult?.valid) {
+        throw new Error(prepResult?.reason || "This invitation is invalid or expired.");
       }
 
-      // Upload only after authentication so storage policies can scope the file
-      // to this user. Object-store credentials never reach the browser.
+      // Step 2: Create the Supabase Auth user with the agent's chosen password.
       let avatarKey: string | null = null;
-      let authUser: any = null;
-      let session: any = null;
-
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
       });
 
-      if (authError) {
-        if (authError.message.toLowerCase().includes("already registered")) {
-          // Attempt to sign in with the provided password if user already exists
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email: data.email,
-            password: data.password,
-          });
+      if (authError) throw new Error(authError.message);
 
-          if (signInError) {
-            throw new Error(
-              "An account with this email address already exists. Please log in with your password or request a password reset.",
-            );
-          }
-          authUser = signInData.user;
-          session = signInData.session;
-        } else {
-          throw new Error(authError.message);
-        }
-      } else {
-        authUser = authData.user;
-        session = authData.session;
-      }
+      const authUser = authData.user;
+      let session = authData.session;
 
       if (!authUser) {
         throw new Error("Registration failed. Please try again.");
       }
 
-      // 3. Ensure session is active or sign in
+      // Step 3: Ensure we have an active session.
+      // If email confirmation is required, signUp may not return a session.
       if (!session) {
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email: data.email,
           password: data.password,
         });
         if (signInError) {
+          // Email confirmation is pending — store details for later acceptance.
           localStorage.setItem(
             "dsp-pending-invitation",
             JSON.stringify({
@@ -162,13 +146,14 @@ function RegisterPage() {
         session = signInData.session;
       }
 
+      // Step 4: Upload avatar after authentication.
       if (avatarFile && session) {
         const fileExt = avatarFile.name.split(".").pop();
         const storagePath = `${authUser.id}/avatars/${crypto.randomUUID()}.${fileExt}`;
         avatarKey = await uploadFileToR2(avatarFile, storagePath);
       }
 
-      // Create the company profile after the authenticated session is available.
+      // Step 5: Accept the invitation and create the user_account profile.
       const fullName = `${data.firstName.trim()} ${data.lastName.trim()}`;
       const { error: rpcError } = await supabase.rpc("accept_user_invitation", {
         p_token: invitationToken,
@@ -177,9 +162,7 @@ function RegisterPage() {
         p_avatar_key: avatarKey,
       });
 
-      if (rpcError) {
-        throw rpcError;
-      }
+      if (rpcError) throw rpcError;
       localStorage.removeItem("dsp-pending-invitation");
 
       toast.success("Welcome to Dream Supreme Properties!", { id: "register" });
@@ -190,6 +173,18 @@ function RegisterPage() {
       setLoading(false);
     }
   };
+
+  // Don't render the form until any stale session has been cleared
+  if (!ready) {
+    return (
+      <div
+        className="flex min-h-screen items-center justify-center px-4 py-10"
+        style={{ background: "var(--gradient-hero)" }}
+      >
+        <div className="animate-pulse text-muted-foreground text-sm">Loading registration…</div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -285,7 +280,8 @@ function RegisterPage() {
                   id="email"
                   type="email"
                   placeholder="john.doe@dreamsupreme.co.za"
-                  className="pl-9"
+                  readOnly={!!initialEmail}
+                  className={`pl-9${initialEmail ? " bg-muted/60 cursor-not-allowed opacity-70" : ""}`}
                   {...form.register("email")}
                 />
               </div>

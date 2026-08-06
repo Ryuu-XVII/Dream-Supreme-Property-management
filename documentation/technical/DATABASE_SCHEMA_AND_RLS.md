@@ -156,5 +156,9 @@ Aggregates all notifications with a `delivery_status` of `'pending_digest'` for 
 
 ## 5. User Invitations & Security Functions
 
-- **`create_user_invitation(text, user_role)`**: Generates secure invite token, cleans unaccepted invitations, auto-provisions default agency (populating valid columns: `name`) if missing on new database projects, and grants `EXECUTE` to `anon`, `authenticated`, and `service_role`.
+- **`create_user_invitation(text, user_role)`**: Generates a secure invite token, automatically cleans up prior unaccepted invitations for the target email, auto-provisions a default agency if needed, enforces `principal`/`admin` authorization checks, and grants `EXECUTE` strictly to `authenticated` users.
+- **`prepare_invited_registration(text, text)`**: Validates an invitation token and email pairing, detects any orphan Supabase `auth.users` rows created by prior incomplete registration attempts, automatically cleans them up server-side, and returns validation status. Granted `EXECUTE` to `anon` and `authenticated`.
 - **`validate_user_invitation(text, text)`**: Validates invite token and email pairing with `EXECUTE` granted to `anon`, `authenticated`, and `service_role`.
+- **`accept_user_invitation(text, text, text, text)`**: Completes registration by creating/updating the `user_account` profile (with `ON CONFLICT` handling for existing auth users) and marking the invitation as accepted.
+- **`user_invitation` RLS Policies**: Full RLS protection supporting `SELECT`, `INSERT`, and `DELETE` operations for `principal` and `admin` roles within their tenant agency.
+

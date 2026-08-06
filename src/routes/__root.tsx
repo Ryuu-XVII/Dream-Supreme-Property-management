@@ -130,7 +130,11 @@ function RootComponent() {
         (window.location.origin === import.meta.env.VITE_ADMIN_DOMAIN ||
           window.location.hostname === import.meta.env.VITE_ADMIN_DOMAIN));
 
-    if (isAdminDomain && !pathname.startsWith("/admin")) {
+    // Public paths that must NOT be redirected to /admin (e.g. invitation registration)
+    const publicPaths = ["/register", "/login"];
+    const isPublicPath = publicPaths.some((p) => pathname.startsWith(p));
+
+    if (isAdminDomain && !pathname.startsWith("/admin") && !isPublicPath) {
       window.location.replace("/admin" + (pathname === "/" ? "" : pathname));
     }
   }, []);

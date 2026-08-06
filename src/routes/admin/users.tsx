@@ -287,14 +287,7 @@ function AdminUsers() {
         if (error) throw error;
         toast.success("User updated successfully", { description: name });
       } else {
-        // Step 1: Clean up any prior unaccepted invitations for this email
-        await supabase
-          .from("user_invitation")
-          .delete()
-          .eq("email", email.toLowerCase())
-          .is("accepted_at", null);
-
-        // Step 2: Generate new invitation token via RPC
+        // Step 1: Generate new invitation token via RPC (RPC handles cleaning up prior unaccepted invites)
         const { data: inviteToken, error: rpcErr } = await supabase.rpc("create_user_invitation", {
           p_email: email,
           p_role: role.toLowerCase() as "agent" | "admin",
@@ -671,7 +664,7 @@ function AdminUsers() {
                 </div>
                 <p className="text-[11px] text-muted-foreground">
                   Send this registration link directly to the agent. They will set their own
-                  password upon opening it.
+                  password upon opening it. <strong>Link expires in 7 days.</strong>
                 </p>
               </div>
             )}

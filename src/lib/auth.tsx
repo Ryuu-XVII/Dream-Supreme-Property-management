@@ -83,16 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               role: data.role as "agent" | "admin",
               status: data.status,
             }
-          : {
-              id: "u1",
-              agencyId: "ag1",
-              branchId: "b1",
-              fullName: "Admin User",
-              email: "admin@dreamsupreme.co.za",
-              telephone: "+27 82 000 0000",
-              role: "admin",
-              status: "active",
-            },
+          : null,
       );
     };
 
