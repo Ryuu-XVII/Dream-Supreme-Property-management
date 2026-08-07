@@ -150,6 +150,7 @@ Aggregates all notifications with a `delivery_status` of `'pending_digest'` for 
 ## 4. Triggers & Automation
 
 - **`deal_stage_history`**: A Postgres trigger automatically records an entry in `deal_timeline` whenever a deal's `stage` column is updated.
+- **`notify_agency_admins()` Trigger**: An automated trigger on `public.deal` and `public.audit_log` that instantly broadcasts in-app notifications (`public.notification`) and enqueues HTML email notifications (`public.email_queue`) to all agency `admin` and `principal` accounts whenever a deal is registered (closed), cancelled, transitioned, or tagged with an operational progress note.
 - **`audit_log`**: Crucial actions (like commission finalization, user archival, entity updates) write to `audit_log` for complete financial transparency.
 - **`pg_cron` (Scheduled Jobs)**: Used for automated daily background tasks. For example, `run_daily_sweeps()` runs every night at midnight to check all FFC certificates and automatically suspends accounts if their FFC has expired.
 
@@ -162,4 +163,3 @@ Aggregates all notifications with a `delivery_status` of `'pending_digest'` for 
 - **`user_invitation` & `user_account` RLS Policies**: Updated `SELECT` policies to ensure agency directories and pending invitations remain queryable by managers and active agency accounts.
 - **Client Session Gate**: The React root guard requires a valid session plus an active `user_account` before rendering operational routes. This is defense in depth; PostgreSQL RLS remains the authoritative data boundary.
 - **Master Admin & Domain Separation**: The seed migration `20260807000000_seed_master_admin.sql` provisions the system master admin account (`admin@dreamsupreme.co.za`) in `public.user_account` with `admin` role and active status. Domain-based routing (`isAdminDomain()`) segregates the executive portal (`admin.localhost:5173`) from the agency portal (`localhost:5173`), with local session fallback handling (`setMasterAdminAccount`) ensuring seamless administration access.
-

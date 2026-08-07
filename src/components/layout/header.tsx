@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Bell, Search, Sun, Moon, Monitor, LogOut, Calculator, PlusCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,41 @@ export function Header() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
+
+  // Live Realtime Notification Listener
+  useEffect(() => {
+    if (!account?.id) return;
+
+    const channel = supabase
+      .channel(`user-notifications:${account.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notification",
+          filter: `user_account_id=eq.${account.id}`,
+        },
+        (payload) => {
+          const newNotif = payload.new as any;
+          toast.info(newNotif.subject || "New Deal Notification", {
+            description: newNotif.body,
+            action: newNotif.link
+              ? {
+                  label: "View",
+                  onClick: () => navigate({ to: newNotif.link }),
+                }
+              : undefined,
+          });
+          void notificationQuery.refetch();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [account?.id, navigate, notificationQuery]);
 
   const me = account
     ? { name: account.fullName, email: account.email }
