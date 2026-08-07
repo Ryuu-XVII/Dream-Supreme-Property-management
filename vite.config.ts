@@ -9,8 +9,9 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   server: {
-    port: 8080,
+    port: 5173,
     host: true,
+    allowedHosts: true,
   },
   build: {
     chunkSizeWarningLimit: 1000,

@@ -156,19 +156,18 @@ function RootComponent() {
 
 function AuthenticatedOutlet() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const { session, account, loading } = useAuth();
+  const { activeAccount, loading } = useAuth();
 
   if (isPublicPathname(pathname)) return <Outlet />;
 
-  if (loading) {
-    return (
-      <div className="grid min-h-screen place-items-center bg-background text-sm text-muted-foreground">
-        Verifying your session…
-      </div>
-    );
-  }
-
-  if (!session || !isActiveAccount(account)) {
+  if (!isActiveAccount(activeAccount)) {
+    if (loading) {
+      return (
+        <div className="grid min-h-screen place-items-center bg-background text-sm text-muted-foreground">
+          Verifying session…
+        </div>
+      );
+    }
     return <Navigate to="/login" replace />;
   }
 

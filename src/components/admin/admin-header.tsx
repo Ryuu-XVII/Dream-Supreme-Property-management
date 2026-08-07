@@ -23,7 +23,7 @@ export function AdminHeader() {
 
   const handleSignOut = async () => {
     await signOut();
-    await navigate({ to: "/login", replace: true });
+    window.location.href = "/login";
   };
 
   return (

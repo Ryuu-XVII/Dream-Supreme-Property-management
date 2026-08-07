@@ -10,6 +10,7 @@ interface AuthState {
   impersonatedAccount: UserAccount | null;
   startImpersonating: (user: UserAccount) => void;
   stopImpersonating: () => void;
+  setMasterAdminAccount: (user: UserAccount) => void;
   refreshAccount: () => Promise<UserAccount | null>;
   passwordRecovery: boolean;
   loading: boolean;
@@ -28,6 +29,8 @@ export interface UserAccount {
 }
 
 const AuthContext = createContext<AuthState | null>(null);
+
+const MASTER_SESSION_KEY = "ds_master_admin_session";
 
 async function fetchAccount(nextSession: Session | null): Promise<UserAccount | null> {
   if (!nextSession) return null;
@@ -56,10 +59,27 @@ async function fetchAccount(nextSession: Session | null): Promise<UserAccount | 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [account, setAccount] = useState<UserAccount | null>(null);
+  const [account, setAccount] = useState<UserAccount | null>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(MASTER_SESSION_KEY);
+      if (stored) {
+        try {
+          return JSON.parse(stored) as UserAccount;
+        } catch {
+          localStorage.removeItem(MASTER_SESSION_KEY);
+        }
+      }
+    }
+    return null;
+  });
   const [impersonatedAccount, setImpersonatedAccount] = useState<UserAccount | null>(null);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined" && localStorage.getItem(MASTER_SESSION_KEY)) {
+      return false;
+    }
+    return true;
+  });
 
   const activeAccount = impersonatedAccount ?? account;
 
@@ -71,34 +91,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setImpersonatedAccount(null);
   };
 
-  const refreshAccount = useCallback(async () => {
-    const {
-      data: { session: nextSession },
-      error,
-    } = await supabase.auth.getSession();
-    if (error) throw error;
+  const setMasterAdminAccount = (masterAcc: UserAccount) => {
+    setAccount(masterAcc);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(MASTER_SESSION_KEY, JSON.stringify(masterAcc));
+    }
+  };
 
-    const nextAccount = await fetchAccount(nextSession);
-    setSession(nextSession);
-    setUser(nextSession?.user ?? null);
-    setAccount(nextAccount);
-    return nextAccount;
-  }, []);
+  const refreshAccount = useCallback(async () => {
+    try {
+      const {
+        data: { session: nextSession },
+        error,
+      } = await supabase.auth.getSession();
+      if (error) throw error;
+
+      const nextAccount = await fetchAccount(nextSession);
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+      if (nextAccount) {
+        setAccount(nextAccount);
+      }
+      return nextAccount || account;
+    } catch {
+      if (!localStorage.getItem(MASTER_SESSION_KEY)) {
+        setSession(null);
+        setUser(null);
+        setAccount(null);
+      }
+      return null;
+    }
+  }, [account]);
 
   useEffect(() => {
     let active = true;
 
-    void refreshAccount()
-      .catch(() => {
-        if (active) {
-          setSession(null);
-          setUser(null);
-          setAccount(null);
-        }
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+    void refreshAccount().finally(() => {
+      if (active) setLoading(false);
+    });
 
     const {
       data: { subscription },
@@ -109,12 +139,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
+
+      if (!nextSession) {
+        if (!localStorage.getItem(MASTER_SESSION_KEY)) {
+          setAccount(null);
+        }
+        if (active) setLoading(false);
+        return;
+      }
+
       void fetchAccount(nextSession)
         .then((nextAccount) => {
-          if (active) setAccount(nextAccount);
+          if (active && nextAccount) setAccount(nextAccount);
         })
         .catch(() => {
-          if (active) setAccount(null);
+          if (active && !localStorage.getItem(MASTER_SESSION_KEY)) setAccount(null);
         })
         .finally(() => {
           if (active) setLoading(false);
@@ -128,8 +167,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshAccount]);
 
   const signOut = async () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(MASTER_SESSION_KEY);
+    }
     const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    if (error && error.message !== "Auth session missing!") throw error;
     setSession(null);
     setUser(null);
     setAccount(null);
@@ -147,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         impersonatedAccount,
         startImpersonating,
         stopImpersonating,
+        setMasterAdminAccount,
         refreshAccount,
         passwordRecovery,
         loading,

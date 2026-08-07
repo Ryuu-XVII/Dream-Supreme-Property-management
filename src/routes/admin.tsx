@@ -8,13 +8,13 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminLayout() {
-  const { account, loading } = useAuth();
-  const isAllowed = canAccessAdmin(account);
+  const { activeAccount, loading } = useAuth();
+  const isAllowed = canAccessAdmin(activeAccount);
 
   if (loading) return null;
 
   if (!isAllowed) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return (
