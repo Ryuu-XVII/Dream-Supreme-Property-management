@@ -32,7 +32,17 @@ import { DealCommissionTab } from "@/components/deal/commission";
 import { DealOffersTab } from "@/components/deal/offers";
 import { DealTimelineTab } from "@/components/deal/timeline";
 import { DealBondsTab } from "@/components/deal/bonds";
-import { ArrowLeft, ChevronRight, ChevronLeft, XCircle, CheckCircle2, Link2 } from "lucide-react";
+import { ProgressNoteModal } from "@/components/deal/progress-note-modal";
+import { StageGateModal } from "@/components/deal/stage-gate-modal";
+import {
+  ArrowLeft,
+  ChevronRight,
+  ChevronLeft,
+  XCircle,
+  CheckCircle2,
+  Link2,
+  MessageSquarePlus,
+} from "lucide-react";
 import { useDealDetail } from "@/data/deals";
 import { stageToDb, stageFromDb } from "@/lib/domain";
 
@@ -56,6 +66,7 @@ function DealDetailPage() {
 
   // Advance / Revert stage state
   const [stageModal, setStageModal] = useState<"advance" | "revert" | "cancel" | null>(null);
+  const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [stageReason, setStageReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [stageOverride, setStageOverride] = useState(false);
@@ -273,6 +284,9 @@ function DealDetailPage() {
           <div className="flex flex-wrap items-center gap-2">
             {deal.status !== "cancelled" && (
               <>
+                <Button variant="outline" size="sm" onClick={() => setNoteModalOpen(true)}>
+                  <MessageSquarePlus className="mr-1 size-4 text-primary" /> Log Note
+                </Button>
                 <Button variant="outline" size="sm" onClick={copyConveyancerLink}>
                   <Link2 className="mr-1 size-3.5" /> Conveyancer link
                 </Button>
@@ -530,6 +544,62 @@ function DealDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Progress Note Modal */}
+      <ProgressNoteModal
+        open={noteModalOpen}
+        onOpenChange={setNoteModalOpen}
+        dealId={deal.id}
+        dealRef={deal.reference || deal.ref || "Deal"}
+        onSuccess={(newEntry) => {
+          setDeal((prev: any) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              timeline: [newEntry, ...(prev.timeline || [])],
+            };
+          });
+        }}
+      />
+
+      {/* Stage Gate Helper Modal */}
+      {stageModal === "advance" && currentStageIdx < STAGES.length - 1 && (
+        <StageGateModal
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) {
+              setStageModal(null);
+              setGateError("");
+            }
+          }}
+          deal={deal}
+          targetStage={STAGES[currentStageIdx + 1]}
+          gateError={gateError}
+          onSuccess={(nextStage) => {
+            setDeal((prev: any) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                stage: nextStage,
+                timeline: [
+                  {
+                    id: `h_${Date.now()}`,
+                    at: new Date().toISOString(),
+                    from_stage: prev.stage,
+                    to_stage: (stageToDb as Record<string, string>)[nextStage] || nextStage,
+                    actor: "Current User",
+                    action: `Advanced stage to ${nextStage}`,
+                    reason: "Stage advanced via Stage Gate Checkpoint",
+                  },
+                  ...(prev.timeline || []),
+                ],
+              };
+            });
+            setStageModal(null);
+            setGateError("");
+          }}
+        />
+      )}
     </AppShell>
   );
 }

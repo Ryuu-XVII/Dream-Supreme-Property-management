@@ -15,7 +15,7 @@ This document outlines the core architecture of the Dream Supreme Property Manag
 
 The application operates as a **Monolith with Subdirectory Routing**, serving two distinct portals based on the user's authenticated role (`Agent`, `Admin`):
 
-- **Agent Portal (Main App / Subdomain)**: Hosted on the practitioner domain (e.g., `app.dreamsupreme.co.za` or `agent.dreamsupreme.co.za`). Wrapped by `<AppShell>` for daily practitioner operations (Listings, Rentals, Pipeline, Countdown, Commission, Clients, Documents, Leads, Reports, and a 4-tab Settings Hub for Profile & Security, Financials & Goals, Signing Presets, and Notifications). Restricted to Agents and Admins.
+- **Agent Portal (Main App / Subdomain)**: Hosted on the practitioner domain (e.g., `app.dreamsupreme.co.za` or `agent.dreamsupreme.co.za`). Wrapped by `<AppShell>` for daily practitioner operations (Listings, Rentals, Deal Flow, Countdown, Commission, Clients, Documents, Reports, and a 4-tab Settings Hub for Profile & Security, Financials & Goals, Signing Presets, and Notifications). Restricted to Agents and Admins.
 - **Admin Portal (Management Subdomain)**: Hosted on the administrative domain (e.g., `admin.dreamsupreme.co.za`). Wrapped by `<AdminShell>` with dedicated controls. Shares the exact same ambient mesh background, glassmorphic sidebar, and design system aesthetics as the Agent Portal. Access requires an active Supabase account with the `admin` or `principal` role; the hostname never grants authorization.
 - **Public Entry Points**: `/login`, `/reset-password`, `/register`, `/calculators/*`, `/conveyancer`, `/sign`, and `/sitemap.xml` are explicitly allowlisted. Conveyancer and signing routes are intended for separate token-validation workflows and do not require staff accounts.
 
@@ -57,7 +57,7 @@ State is separated into three distinct domains:
 /src
   /components
     /admin         # Admin Portal specific components (AdminShell, Charts, Global Config)
-    /deal          # Deal & Mandate components (QuickDealModal - EAAB/FICA Mandate Capture & Signed OTP Modal)
+    /deal          # Deal & Mandate components (QuickDealModal - 60s express deal capture; ProgressNoteModal - activity logging; StageGateModal - interactive prerequisite checklist)
     /layout        # Main Agent Portal shell (AppShell, Sidebar with Mandates/Rentals/Clients, Header)
     /ui            # Shadcn UI primitives (Buttons, Inputs, Dialogs, Selects)
   /data            # TanStack Query hooks and mock data fallbacks
