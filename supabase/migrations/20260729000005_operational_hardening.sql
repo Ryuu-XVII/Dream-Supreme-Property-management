@@ -172,6 +172,9 @@ end $$;
 create or replace function public.prevent_hard_delete()
 returns trigger language plpgsql as $$
 begin
+  if coalesce(current_setting('app.workflow_change', true), '') = 'allowed' then
+    return old;
+  end if;
   raise exception 'Hard deletes are disabled. Archive the record instead.' using errcode = 'P0001';
 end;
 $$;

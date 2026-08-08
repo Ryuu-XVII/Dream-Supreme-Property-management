@@ -9,8 +9,10 @@ returns trigger language plpgsql security definer
 set search_path = public, pg_temp
 as $$
 begin
-  -- If the user is a principal or admin, they are allowed to manage sensitive fields.
-  if public.get_current_role() in ('principal', 'admin') then
+  -- If admin override or workflow change is set, allow modification.
+  if coalesce(current_setting('app.admin_override', true), '') = 'true'
+     or coalesce(current_setting('app.workflow_change', true), '') = 'allowed'
+     or public.get_current_role() in ('principal', 'admin') then
     return new;
   end if;
 

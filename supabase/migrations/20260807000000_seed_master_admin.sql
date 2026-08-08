@@ -1,13 +1,15 @@
 -- Migration: Create Master Admin Account (Seed / Bootstrap)
 -- Description: Provision Master Admin credentials in auth.users and public.user_account tables.
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
+
 DO $$
 DECLARE
   v_agency_id uuid;
   v_branch_id uuid;
   v_auth_user_id uuid := '00000000-0000-0000-0000-000000000001'::uuid;
   v_user_account_id uuid := '00000000-0000-0000-0000-000000000002'::uuid;
-  v_encrypted_password text := crypt('Admin@Dream2026!', gen_salt('bf'));
+  v_encrypted_password text := extensions.crypt('Admin@Dream2026!', extensions.gen_salt('bf'));
   v_email text := 'admin@dreamsupreme.co.za';
 BEGIN
   -- 1. Ensure primary agency exists or retrieve existing
