@@ -50,9 +50,11 @@ The frontend is built with React, Vite, and TanStack Router.
 ## 3. Pre-Commit Safety Checks
 
 We enforce strict quality control. Before pushing code, you must ensure it passes our automated checks.
+
 ```bash
 npm run check
 ```
+
 This runs TypeScript (`tsc`), ESLint, and our test suite. You cannot merge code if this check fails.
 
 ## 4. Deployment

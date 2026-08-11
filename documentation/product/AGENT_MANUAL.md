@@ -28,4 +28,5 @@ You have full transparency over your expected earnings.
 ## 4. Notifications
 
 You can control how the system alerts you to changes in your deals.
+
 - Go to **Settings > Preferences** to choose whether you want immediate Realtime Emails, a Daily Digest, or just In-App notifications.
