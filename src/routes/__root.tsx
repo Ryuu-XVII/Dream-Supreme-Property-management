@@ -136,8 +136,10 @@ function RootComponent() {
 
     // Public paths that must NOT be redirected to /admin (e.g. invitation registration)
     const isPublicPath = isPublicPathname(pathname);
+    const isImpersonating =
+      typeof window !== "undefined" && !!sessionStorage.getItem("ds_impersonated_session_account");
 
-    if (isAdminDomain && !pathname.startsWith("/admin") && !isPublicPath) {
+    if (isAdminDomain && !pathname.startsWith("/admin") && !isPublicPath && !isImpersonating) {
       window.location.replace("/admin" + (pathname === "/" ? "" : pathname));
     }
   }, []);

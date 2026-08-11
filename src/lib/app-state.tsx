@@ -41,13 +41,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!activeAccount) return;
-    const roleMap: Record<typeof activeAccount.role, Role> = {
-      principal: "Admin",
-      agent: "Agent",
-      candidate: "Agent",
-      admin: "Admin",
-    };
-    setRoleState(roleMap[activeAccount.role] || "Agent");
+    const roleLower = (activeAccount.role || "").toLowerCase();
+    const derivedRole: Role =
+      roleLower.includes("admin") && roleLower.includes("agent")
+        ? "Admin & Agent"
+        : roleLower.includes("admin")
+          ? "Admin"
+          : "Agent";
+    setRoleState(derivedRole);
   }, [activeAccount]);
 
   useEffect(() => {
@@ -115,6 +116,14 @@ export function useApp() {
 export const permissions: Record<Role, string[]> = {
   Agent: ["view.own", "reports.all"],
   Admin: ["view.all", "commission.approve", "settings.manage", "users.manage", "reports.all"],
+  "Admin & Agent": [
+    "view.all",
+    "view.own",
+    "commission.approve",
+    "settings.manage",
+    "users.manage",
+    "reports.all",
+  ],
 };
 
 export function useCan(perm: string) {

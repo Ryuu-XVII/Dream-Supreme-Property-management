@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { Sidebar, MobileNav } from "./sidebar";
 import { Header } from "./header";
+import { ImpersonationBanner } from "./impersonation-banner";
 import { ChevronRight } from "lucide-react";
 
 export interface Crumb {
@@ -27,6 +28,7 @@ export function AppShell({
     <div className="ambient-mesh flex min-h-screen">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
+        <ImpersonationBanner />
         <Header />
         <main className="flex-1 px-3 pb-24 pt-5 sm:px-6 md:pb-10">
           {crumbs && crumbs.length > 0 && (

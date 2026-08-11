@@ -46,7 +46,7 @@ const categories = [
 ];
 
 function DocumentsPage() {
-  const { account } = useAuth();
+  const { activeAccount } = useAuth();
   const dealsQuery = usePipelineDeals();
   const templatesQuery = useDocumentTemplates();
   const [dealId, setDealId] = useState("");
@@ -59,9 +59,9 @@ function DocumentsPage() {
   const selectedDeal = deals.find((deal) => deal.id === dealId);
 
   async function uploadFile(file: File) {
-    if (!account?.agencyId || !dealId) return toast.error("Select a deal first.");
+    if (!activeAccount?.agencyId || !dealId) return toast.error("Select a deal first.");
     try {
-      await upload.mutateAsync({ file, dealId, category, agencyId: account.agencyId });
+      await upload.mutateAsync({ file, dealId, category, agencyId: activeAccount.agencyId });
       toast.success(`${file.name} uploaded`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed");

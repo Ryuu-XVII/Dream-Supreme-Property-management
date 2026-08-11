@@ -9,11 +9,7 @@ function ReconciliationRoute() {
   const { activeAccount } = useAuth();
   return (
     <Navigate
-      to={
-        activeAccount?.role === "admin" || activeAccount?.role === "principal"
-          ? "/admin/recon"
-          : "/commission/earnings"
-      }
+      to={activeAccount?.role === "admin" ? "/admin/recon" : "/commission/earnings"}
       replace
     />
   );

@@ -65,7 +65,8 @@ function Index() {
         (import.meta.env.VITE_ADMIN_DOMAIN &&
           (window.location.origin === import.meta.env.VITE_ADMIN_DOMAIN ||
             window.location.hostname === import.meta.env.VITE_ADMIN_DOMAIN));
-      if (isAdminDomain) {
+      const isImpersonating = !!sessionStorage.getItem("ds_impersonated_session_account");
+      if (isAdminDomain && !isImpersonating) {
         window.location.replace("/admin");
       }
     }

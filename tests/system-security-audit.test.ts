@@ -14,9 +14,9 @@ describe("System Security Audit & JWT Claims Parsing", () => {
       refresh_token: "mock-refresh",
       user: {
         id: "user-123",
-        email: "principal@dreamsupreme.co.za",
-        app_metadata: { role: "principal", agency_id: "agency-1" },
-        user_metadata: { full_name: "Principal Owner" },
+        email: "admin@dreamsupreme.co.za",
+        app_metadata: { role: "admin", agency_id: "agency-1" },
+        user_metadata: { full_name: "Admin User" },
         aud: "authenticated",
         created_at: new Date().toISOString(),
       },
@@ -30,7 +30,7 @@ describe("System Security Audit & JWT Claims Parsing", () => {
     const { data, error } = await supabase.auth.getSession();
     expect(error).toBeNull();
     expect(data.session?.user.id).toBe("user-123");
-    expect(data.session?.user.app_metadata.role).toBe("principal");
+    expect(data.session?.user.app_metadata.role).toBe("admin");
   });
 
   it("handles missing or invalid JWT claims gracefully", async () => {
@@ -45,19 +45,18 @@ describe("System Security Audit & JWT Claims Parsing", () => {
   });
 
   it("verifies role-based access levels from JWT app_metadata", () => {
-    const principalUser = {
+    const adminUser = {
       id: "u-1",
-      app_metadata: { role: "principal" },
+      app_metadata: { role: "admin" },
     };
     const agentUser = {
       id: "u-2",
       app_metadata: { role: "agent" },
     };
 
-    const isAuthorizedForAdmin = (user: typeof principalUser) =>
-      user.app_metadata.role === "principal" || user.app_metadata.role === "admin";
+    const isAuthorizedForAdmin = (user: typeof adminUser) => user.app_metadata.role === "admin";
 
-    expect(isAuthorizedForAdmin(principalUser)).toBe(true);
+    expect(isAuthorizedForAdmin(adminUser)).toBe(true);
     expect(isAuthorizedForAdmin(agentUser)).toBe(false);
   });
 });

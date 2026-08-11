@@ -37,5 +37,7 @@ export function isAdminDomain(): boolean {
 }
 
 export function canAccessAdmin(account: UserAccount | null): boolean {
-  return isActiveAccount(account) && (account.role === "admin" || account.role === "principal");
+  if (!account || !isActiveAccount(account)) return false;
+  const role = (account.role || "").toLowerCase();
+  return role.includes("admin");
 }

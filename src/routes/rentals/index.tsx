@@ -24,15 +24,15 @@ export const Route = createFileRoute("/rentals/")({
 });
 
 function RentalsDashboard() {
-  const { account } = useAuth();
+  const { activeAccount } = useAuth();
   const navigate = useNavigate();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const leasesQuery = useQuery({
-    queryKey: ["leases", account?.agencyId],
-    enabled: !!account?.agencyId || !!account,
+    queryKey: ["leases", activeAccount?.agencyId],
+    enabled: !!activeAccount?.agencyId || !!activeAccount,
     queryFn: async () => {
-      if (!account?.agencyId) return [];
+      if (!activeAccount?.agencyId) return [];
       const { data, error } = await supabase
         .from("lease")
         .select(
@@ -47,7 +47,7 @@ function RentalsDashboard() {
           property:property_id(id, address_line, suburb)
         `,
         )
-        .eq("agency_id", account!.agencyId)
+        .eq("agency_id", activeAccount!.agencyId)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -55,7 +55,7 @@ function RentalsDashboard() {
         const { data: fallback } = await supabase
           .from("lease")
           .select("*")
-          .eq("agency_id", account!.agencyId);
+          .eq("agency_id", activeAccount!.agencyId);
         return (fallback || []).map((l: any) => ({
           id: l.id,
           tenant_name: l.tenant_name || "Tenant",
@@ -122,7 +122,8 @@ function RentalsDashboard() {
               </TableRow>
             ) : (
               leasesQuery.data?.map((lease) => {
-                const isManager = lease.managed_by === account?.id || account?.role === "admin";
+                const isManager =
+                  lease.managed_by === activeAccount?.id || activeAccount?.role === "admin";
 
                 return (
                   <TableRow key={lease.id}>

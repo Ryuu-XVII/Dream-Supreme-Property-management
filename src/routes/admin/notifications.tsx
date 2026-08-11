@@ -41,7 +41,7 @@ export const Route = createFileRoute("/admin/notifications")({
   component: NotificationsPage,
 });
 
-const RECIPIENTS = ["Agent", "Principal", "Admin"] as const;
+const RECIPIENTS = ["Agent", "Admin"] as const;
 type Recipient = (typeof RECIPIENTS)[number];
 
 interface Pref {

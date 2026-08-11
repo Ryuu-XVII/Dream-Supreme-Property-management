@@ -10,6 +10,8 @@ export interface AdminUser {
   role: Role;
   active: boolean;
   colour: string;
+  agencyId?: string;
+  branchId?: string | null;
   commissionPct?: number;
   activeDeals?: number;
   ytdRevenue?: number;
@@ -40,7 +42,11 @@ export function useAdminUsers() {
         (u: Record<string, unknown>): AdminUser => {
           const rawRole = (typeof u.role === "string" ? u.role : "agent").toLowerCase();
           const formattedRole: Role =
-            rawRole === "admin" || rawRole === "principal" ? "Admin" : "Agent";
+            rawRole.includes("admin") && rawRole.includes("agent")
+              ? "Admin & Agent"
+              : rawRole.includes("admin")
+                ? "Admin"
+                : "Agent";
 
           const limit =
             typeof u.storage_limit_bytes === "number"
@@ -58,6 +64,8 @@ export function useAdminUsers() {
             role: formattedRole,
             active: u.status === "active",
             colour: "#4f46e5",
+            agencyId: typeof u.agency_id === "string" ? u.agency_id : "",
+            branchId: typeof u.branch_id === "string" ? u.branch_id : null,
             commissionPct: typeof u.commission_pct === "number" ? u.commission_pct : 50,
             storageLimitBytes: limit,
             storageUsedBytes: used,
@@ -69,7 +77,11 @@ export function useAdminUsers() {
         (i: Record<string, unknown>): AdminUser => {
           const rawRole = (typeof i.role === "string" ? i.role : "agent").toLowerCase();
           const formattedRole: Role =
-            rawRole === "admin" || rawRole === "principal" ? "Admin" : "Agent";
+            rawRole.includes("admin") && rawRole.includes("agent")
+              ? "Admin & Agent"
+              : rawRole.includes("admin")
+                ? "Admin"
+                : "Agent";
 
           return {
             id: `invite-${i.id}`,
@@ -78,6 +90,8 @@ export function useAdminUsers() {
             role: formattedRole,
             active: false,
             colour: "#eab308",
+            agencyId: typeof i.agency_id === "string" ? i.agency_id : "",
+            branchId: typeof i.branch_id === "string" ? i.branch_id : null,
             commissionPct: 50,
             storageLimitBytes: DEFAULT_USER_STORAGE_LIMIT_BYTES,
             storageUsedBytes: 0,

@@ -38,17 +38,17 @@ export function Header() {
   const [calcOpen, setCalcOpen] = useState(false);
   const navigate = useNavigate();
   const { theme, setTheme } = useApp();
-  const { account, signOut } = useAuth();
+  const { activeAccount, isReadOnly, signOut } = useAuth();
   const pipeline = usePipelineDeals();
   const deals = pipeline.data ?? [];
   const notificationQuery = useQuery({
-    queryKey: ["header-notifications", account?.id],
-    enabled: !!account,
+    queryKey: ["header-notifications", activeAccount?.id],
+    enabled: !!activeAccount,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("notification")
         .select("id, subject, body, created_at, read_at")
-        .eq("user_account_id", account!.id)
+        .eq("user_account_id", activeAccount!.id)
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
@@ -71,17 +71,17 @@ export function Header() {
 
   // Live Realtime Notification Listener
   useEffect(() => {
-    if (!account?.id) return;
+    if (!activeAccount?.id) return;
 
     const channel = supabase
-      .channel(`user-notifications:${account.id}`)
+      .channel(`user-notifications:${activeAccount.id}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "notification",
-          filter: `user_account_id=eq.${account.id}`,
+          filter: `user_account_id=eq.${activeAccount.id}`,
         },
         (payload) => {
           const newNotif = payload.new as any;
@@ -102,10 +102,10 @@ export function Header() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [account?.id, navigate, notificationQuery]);
+  }, [activeAccount?.id, navigate, notificationQuery]);
 
-  const me = account
-    ? { name: account.fullName, email: account.email }
+  const me = activeAccount
+    ? { name: activeAccount.fullName, email: activeAccount.email }
     : { name: "Signed out", email: "" };
 
   return (
@@ -136,11 +136,26 @@ export function Header() {
         >
           <Calculator className="size-4" /> Calculator
         </Button>
-        <Button size="sm" asChild className="gap-1.5 font-medium">
-          <Link to="/deals/new">
-            <PlusCircle className="size-4" /> New Deal
-          </Link>
-        </Button>
+        {isReadOnly ? (
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() =>
+              toast.info("Strict Read-Only Mode", {
+                description: "You are currently inspecting an agent's portal in read-only mode.",
+              })
+            }
+            className="gap-1.5 font-medium opacity-80"
+          >
+            <PlusCircle className="size-4" /> New Deal (Read-Only)
+          </Button>
+        ) : (
+          <Button size="sm" asChild className="gap-1.5 font-medium">
+            <Link to="/deals/new">
+              <PlusCircle className="size-4" /> New Deal
+            </Link>
+          </Button>
+        )}
       </div>
 
       <FloatingCalculatorModal open={calcOpen} onOpenChange={setCalcOpen} />

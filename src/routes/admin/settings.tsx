@@ -303,7 +303,7 @@ function AdminSettings() {
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground">
-                Supabase Auth with role-based JWT claims (Admin, Principal, Agent).
+                Supabase Auth with role-based JWT claims (Admin, Agent).
               </p>
             </GlassCard>
 
@@ -531,9 +531,7 @@ function AdminSettings() {
 
                 <div className="flex items-center justify-between p-3 border rounded-lg border-border/50">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">
-                      Require MFA for Admins & Principals
-                    </Label>
+                    <Label className="text-sm font-medium">Require MFA for Admins</Label>
                     <p className="text-xs text-muted-foreground">
                       Enforce Time-based One-Time Passwords (TOTP) on administrative log-ins.
                     </p>

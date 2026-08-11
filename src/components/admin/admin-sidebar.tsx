@@ -20,7 +20,7 @@ import { useState } from "react";
 
 export const adminNavItems = [
   { label: "Home", to: "/admin", icon: LayoutDashboard },
-  { label: "Agents", to: "/admin/users", icon: Users },
+  { label: "Team Members", to: "/admin/users", icon: Users },
   { label: "Properties", to: "/admin/properties", icon: Building2 },
   { label: "Deals", to: "/admin/deals", icon: FileText },
   { label: "Financials", to: "/admin/financials", icon: FileText },

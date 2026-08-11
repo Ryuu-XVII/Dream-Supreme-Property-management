@@ -8,6 +8,7 @@ interface AuthState {
   account: UserAccount | null;
   activeAccount: UserAccount | null;
   impersonatedAccount: UserAccount | null;
+  isReadOnly: boolean;
   startImpersonating: (user: UserAccount) => void;
   stopImpersonating: () => void;
   setMasterAdminAccount: (user: UserAccount) => void;
@@ -24,24 +25,44 @@ export interface UserAccount {
   fullName: string;
   email: string;
   telephone?: string | null;
-  role: "principal" | "agent" | "candidate" | "admin";
+  role: "admin" | "agent" | "admin_agent" | "admin & agent";
   status: "active" | "suspended" | "archived";
 }
 
 const AuthContext = createContext<AuthState | null>(null);
 
 const MASTER_SESSION_KEY = "ds_master_admin_session";
+export const IMPERSONATION_SESSION_KEY = "ds_impersonated_session_account";
 
 async function fetchAccount(nextSession: Session | null): Promise<UserAccount | null> {
   if (!nextSession) return null;
 
-  const { data, error } = await supabase
+  const { data: byAuthId, error } = await supabase
     .from("user_account")
     .select("id, agency_id, branch_id, full_name, email, mobile, role, status")
     .eq("auth_user_id", nextSession.user.id)
     .maybeSingle();
 
-  if (error) throw error;
+  let data = byAuthId;
+
+  if (!data && nextSession.user.email) {
+    const { data: byEmail } = await supabase
+      .from("user_account")
+      .select("id, agency_id, branch_id, full_name, email, mobile, role, status, auth_user_id")
+      .eq("email", nextSession.user.email)
+      .maybeSingle();
+    if (byEmail) {
+      data = byEmail;
+      if (!byEmail.auth_user_id || byEmail.auth_user_id !== nextSession.user.id) {
+        void supabase
+          .from("user_account")
+          .update({ auth_user_id: nextSession.user.id as any })
+          .eq("id", byEmail.id);
+      }
+    }
+  }
+
+  if (error) console.error("Error in fetchAccount:", error);
   if (!data) return null;
 
   return {
@@ -72,7 +93,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return null;
   });
-  const [impersonatedAccount, setImpersonatedAccount] = useState<UserAccount | null>(null);
+  const [impersonatedAccount, setImpersonatedAccount] = useState<UserAccount | null>(() => {
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem(IMPERSONATION_SESSION_KEY);
+      if (stored) {
+        try {
+          return JSON.parse(stored) as UserAccount;
+        } catch {
+          sessionStorage.removeItem(IMPERSONATION_SESSION_KEY);
+        }
+      }
+    }
+    return null;
+  });
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [loading, setLoading] = useState(() => {
     if (typeof window !== "undefined" && localStorage.getItem(MASTER_SESSION_KEY)) {
@@ -82,13 +115,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const activeAccount = impersonatedAccount ?? account;
+  const isReadOnly = !!impersonatedAccount;
 
   const startImpersonating = (user: UserAccount) => {
     setImpersonatedAccount(user);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(IMPERSONATION_SESSION_KEY, JSON.stringify(user));
+    }
   };
 
   const stopImpersonating = () => {
     setImpersonatedAccount(null);
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem(IMPERSONATION_SESSION_KEY);
+    }
   };
 
   const setMasterAdminAccount = (masterAcc: UserAccount) => {
@@ -136,7 +176,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!active) return;
       if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
       if (event === "SIGNED_IN" || event === "SIGNED_OUT") setPasswordRecovery(false);
-      setLoading(true);
+      if (!account && typeof window !== "undefined" && !localStorage.getItem(MASTER_SESSION_KEY)) {
+        setLoading(true);
+      }
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
 
@@ -150,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       void fetchAccount(nextSession)
         .then((nextAccount) => {
-          if (active && nextAccount) setAccount(nextAccount);
+          if (active) setAccount(nextAccount);
         })
         .catch(() => {
           if (active && !localStorage.getItem(MASTER_SESSION_KEY)) setAccount(null);
@@ -160,8 +202,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
     });
 
+    const timer = setTimeout(() => {
+      if (active) setLoading(false);
+    }, 1500);
+
     return () => {
       active = false;
+      clearTimeout(timer);
       subscription.unsubscribe();
     };
   }, [refreshAccount]);
@@ -187,6 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         account,
         activeAccount,
         impersonatedAccount,
+        isReadOnly,
         startImpersonating,
         stopImpersonating,
         setMasterAdminAccount,

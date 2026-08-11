@@ -438,7 +438,7 @@ function DealDetailPage() {
                     className="size-4 rounded border-destructive/50 text-destructive focus:ring-destructive"
                   />
                   <Label htmlFor="override" className="text-destructive font-medium cursor-pointer">
-                    Force override (Principal/Admin only)
+                    Force override (Admin only)
                   </Label>
                 </div>
               </div>

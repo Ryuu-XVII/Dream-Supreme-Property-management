@@ -138,7 +138,7 @@ export async function verifyStorageAccessAuthorization(
   }
 
   const role = (account.role || "agent").toLowerCase();
-  if (role === "admin" || role === "principal") {
+  if (role === "admin") {
     return true; // Administrative roles have agency-wide access
   }
 

@@ -33,7 +33,7 @@ The application operates as a **Monolith with Subdirectory Routing**, serving tw
 **Domain & RBAC Enforcement Strategy**:
 
 1. **Authenticated Root Guard**: `<AuthProvider>` wraps `<AppProvider>`. `AuthenticatedOutlet` waits for Supabase session restoration, permits only the explicit public-route allowlist without a session, and redirects every other route to `/login` unless both a session and active `user_account` profile exist.
-2. **Role Guard**: `/admin/*` separately requires an active `admin` or `principal` account. Administrative-domain detection is used only for portal routing and cannot bypass the account-role check.
+2. **Role Guard**: `/admin/*` separately requires an active `admin` account. Administrative-domain detection is used only for portal routing and cannot bypass the account-role check.
 3. **Unified Supabase RLS Authority**: Both domains share the single Supabase PostgreSQL backend. Client guards control navigation, while PostgreSQL RLS remains authoritative for records, FFC approvals, commission waterfalls, and other protected operations.
 
 ## 3. State Management

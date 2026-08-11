@@ -44,9 +44,9 @@ describe("authentication route policy", () => {
     expect(isActiveAccount(null)).toBe(false);
   });
 
-  it("limits admin routes to active administrators and principals", () => {
+  it("limits admin routes to active administrators and dual admin-agents", () => {
     expect(canAccessAdmin(account({ role: "admin" }))).toBe(true);
-    expect(canAccessAdmin(account({ role: "principal" }))).toBe(true);
+    expect(canAccessAdmin(account({ role: "admin_agent" }))).toBe(true);
     expect(canAccessAdmin(account({ role: "agent" }))).toBe(false);
     expect(canAccessAdmin(account({ role: "admin", status: "suspended" }))).toBe(false);
     expect(canAccessAdmin(null)).toBe(false);

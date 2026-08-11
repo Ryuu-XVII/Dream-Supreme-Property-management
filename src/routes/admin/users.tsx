@@ -1,6 +1,7 @@
 import { render } from "@react-email/render";
 import { InvitationEmailTemplate } from "@/emails/invitation";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth, type UserAccount } from "@/lib/auth";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
@@ -13,7 +14,7 @@ import { type Role } from "@/types";
 import { useAdminUsers, useUpdateUserStorageQuota, type AdminUser } from "@/data/users";
 import { DEFAULT_USER_STORAGE_LIMIT_BYTES } from "@/lib/storage";
 
-const ROLES: Role[] = ["Agent", "Admin"];
+const ROLES: Role[] = ["Agent", "Admin", "Admin & Agent"];
 import {
   Table,
   TableBody,
@@ -70,6 +71,7 @@ export const Route = createFileRoute("/admin/users")({
 });
 
 function AdminUsers() {
+  const queryClient = useQueryClient();
   const { data: usersList = [], isLoading, refetch } = useAdminUsers();
   const updateStorageQuota = useUpdateUserStorageQuota();
   const navigate = useNavigate();
@@ -279,6 +281,7 @@ function AdminUsers() {
     const name = draft.name?.trim() ?? "";
     const email = draft.email?.trim() ?? "";
     const role = (draft.role ?? "Agent") as Role;
+    const dbRole = role === "Admin & Agent" ? "admin_agent" : role.toLowerCase();
 
     if (!name || !email) {
       toast.error("Full name and email address are required.");
@@ -287,18 +290,32 @@ function AdminUsers() {
 
     try {
       if (editing) {
-        // Update existing user_account record
-        const { error } = await supabase
-          .from("user_account")
-          .update({
-            full_name: name,
-            email: email,
-            role: role.toLowerCase() as "agent" | "admin",
-            status: draft.active ? "active" : "suspended",
-          })
-          .eq("id", editing.id);
+        if (editing.id.startsWith("invite-")) {
+          const realInviteId = editing.id.replace("invite-", "");
+          const { error } = await supabase
+            .from("user_invitation")
+            .update({
+              role: dbRole as any,
+              email: email,
+            })
+            .eq("id", realInviteId);
 
-        if (error) throw error;
+          if (error) throw error;
+        } else {
+          // Update existing user_account record
+          const { error } = await supabase
+            .from("user_account")
+            .update({
+              full_name: name,
+              email: email,
+              role: dbRole as any,
+              commission_pct: draft.commissionPct,
+              status: draft.active ? "active" : "suspended",
+            })
+            .eq("id", editing.id);
+
+          if (error) throw error;
+        }
 
         // Update user storage quota if modified
         if (
@@ -317,7 +334,7 @@ function AdminUsers() {
         // Step 1: Generate new invitation token via RPC (RPC handles cleaning up prior unaccepted invites)
         const { data: inviteToken, error: rpcErr } = await supabase.rpc("create_user_invitation", {
           p_email: email,
-          p_role: role.toLowerCase() as "agent" | "admin",
+          p_role: dbRole as any,
         });
 
         if (rpcErr) throw rpcErr;
@@ -375,7 +392,8 @@ function AdminUsers() {
       }
 
       setDialogOpen(false);
-      refetch();
+      await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      await refetch();
     } catch (err: any) {
       console.error(err);
       toast.error("Action failed: " + (err.message || "Could not save user"));
@@ -666,7 +684,7 @@ function AdminUsers() {
                             Resend Invite
                           </Button>
                         )}
-                        {u.role === "Agent" && !u.id.startsWith("invite-") && (
+                        {!u.id.startsWith("invite-") && (
                           <>
                             <Button
                               variant="outline"
@@ -674,8 +692,8 @@ function AdminUsers() {
                               onClick={() => {
                                 startImpersonating({
                                   id: u.id,
-                                  agencyId: "current", // Assuming this is fine for frontend impersonation
-                                  branchId: null,
+                                  agencyId: u.agencyId || account?.agencyId || "",
+                                  branchId: u.branchId ?? null,
                                   fullName: u.name,
                                   email: u.email,
                                   role: "agent",
@@ -856,7 +874,7 @@ function AdminUsers() {
               </div>
             </div>
 
-            {draft.role === "Agent" && (
+            {draft.role !== "Admin" && (
               <div className="space-y-2">
                 <Label>Commission Split (%)</Label>
                 <Input
