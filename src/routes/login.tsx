@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Lock, Mail } from "lucide-react";
+import { Lock, Mail, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +42,7 @@ function LoginPage() {
   const { refreshAccount, signOut, setMasterAdminAccount } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const isAdmin = isAdminDomain();
 
   const form = useForm<CredentialsForm>({
@@ -230,12 +231,21 @@ function LoginPage() {
                 <Lock className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••••••"
-                  className="h-11 rounded-xl bg-background/50 pl-10.5 text-sm transition-all focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/40"
+                  className="h-11 rounded-xl bg-background/50 pl-10.5 pr-10 text-sm transition-all focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/40"
                   {...form.register("password")}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/70 transition-colors hover:text-foreground focus:outline-none"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
               </div>
+
               {form.formState.errors.password && (
                 <p className="text-xs font-medium text-destructive">
                   {form.formState.errors.password.message}
