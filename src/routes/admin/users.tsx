@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type Role } from "@/types";
-import { useAdminUsers, type AdminUser } from "@/data/users";
+import { useAdminUsers, useUpdateUserStorageQuota, type AdminUser } from "@/data/users";
+import { DEFAULT_USER_STORAGE_LIMIT_BYTES } from "@/lib/storage";
 
 const ROLES: Role[] = ["Agent", "Admin"];
 import {
@@ -37,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+
 import {
   Search,
   Plus,
@@ -49,10 +51,19 @@ import {
   Download,
   CheckCircle2,
   Send,
+  HardDrive,
 } from "lucide-react";
+
 import Papa from "papaparse";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+
+function formatStorageBytes(bytes: number): string {
+  if (bytes >= 1073741824) {
+    return `${(bytes / 1073741824).toFixed(1)} GB`;
+  }
+  return `${(bytes / 1048576).toFixed(0)} MB`;
+}
 
 export const Route = createFileRoute("/admin/users")({
   component: AdminUsers,
@@ -60,6 +71,7 @@ export const Route = createFileRoute("/admin/users")({
 
 function AdminUsers() {
   const { data: usersList = [], isLoading, refetch } = useAdminUsers();
+  const updateStorageQuota = useUpdateUserStorageQuota();
   const navigate = useNavigate();
   const { account, startImpersonating } = useAuth();
 
@@ -76,6 +88,7 @@ function AdminUsers() {
     role: "Agent",
     active: true,
     commissionPct: 50,
+    storageLimitBytes: DEFAULT_USER_STORAGE_LIMIT_BYTES,
   });
 
   const [page, setPage] = useState(1);
@@ -286,6 +299,19 @@ function AdminUsers() {
           .eq("id", editing.id);
 
         if (error) throw error;
+
+        // Update user storage quota if modified
+        if (
+          draft.storageLimitBytes !== undefined &&
+          draft.storageLimitBytes !== editing.storageLimitBytes &&
+          !editing.id.startsWith("invite-")
+        ) {
+          await updateStorageQuota.mutateAsync({
+            userId: editing.id,
+            newLimitBytes: draft.storageLimitBytes,
+          });
+        }
+
         toast.success("User updated successfully", { description: name });
       } else {
         // Step 1: Generate new invitation token via RPC (RPC handles cleaning up prior unaccepted invites)
@@ -530,7 +556,9 @@ function AdminUsers() {
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Performance</TableHead>
+
                   <TableHead>Split</TableHead>
+                  <TableHead>Storage Quota</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -596,6 +624,35 @@ function AdminUsers() {
                         <span className="text-muted-foreground text-xs">N/A</span>
                       )}
                     </TableCell>
+                    <TableCell>
+                      <div className="text-xs space-y-1 min-w-[130px]">
+                        <div className="flex items-center justify-between text-[11px] font-medium">
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <HardDrive className="size-3 text-indigo-500" />
+                            {formatStorageBytes(u.storageUsedBytes)} /{" "}
+                            {formatStorageBytes(u.storageLimitBytes)}
+                          </span>
+                          <span className="font-mono text-muted-foreground">
+                            {Math.round((u.storageUsedBytes / u.storageLimitBytes) * 100)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              u.storageUsedBytes / u.storageLimitBytes > 0.9
+                                ? "bg-rose-500"
+                                : u.storageUsedBytes / u.storageLimitBytes > 0.7
+                                  ? "bg-amber-500"
+                                  : "bg-indigo-500"
+                            }`}
+                            style={{
+                              width: `${Math.min(100, Math.max(4, Math.round((u.storageUsedBytes / u.storageLimitBytes) * 100)))}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </TableCell>
+
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         {u.id.startsWith("invite-") && (
@@ -817,7 +874,64 @@ function AdminUsers() {
                 </p>
               </div>
             )}
+
+            <div className="space-y-2 pt-2 border-t border-border/50">
+              <Label className="flex items-center gap-1.5 font-semibold text-sm">
+                <HardDrive className="size-4 text-indigo-500" /> Storage Quota (R2 Object Storage)
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={100}
+                  step={100}
+                  value={Math.round(
+                    (draft.storageLimitBytes ?? DEFAULT_USER_STORAGE_LIMIT_BYTES) / (1024 * 1024),
+                  )}
+                  onChange={(e) =>
+                    setDraft((d) => ({
+                      ...d,
+                      storageLimitBytes: Math.max(1, Number(e.target.value)) * 1024 * 1024,
+                    }))
+                  }
+                  className="w-32 font-mono"
+                />
+                <span className="text-sm text-muted-foreground font-medium">MB</span>
+                <span className="text-xs text-muted-foreground ml-2">
+                  ({formatStorageBytes(draft.storageLimitBytes ?? DEFAULT_USER_STORAGE_LIMIT_BYTES)}
+                  )
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {[
+                  { label: "500 MB", bytes: 500 * 1024 * 1024 },
+                  { label: "1 GB (Default)", bytes: 1024 * 1024 * 1024 },
+                  { label: "2 GB", bytes: 2 * 1024 * 1024 * 1024 },
+                  { label: "5 GB", bytes: 5 * 1024 * 1024 * 1024 },
+                  { label: "10 GB", bytes: 10 * 1024 * 1024 * 1024 },
+                  { label: "20 GB", bytes: 20 * 1024 * 1024 * 1024 },
+                ].map((preset) => (
+                  <Button
+                    key={preset.label}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={`text-xs h-7 ${
+                      draft.storageLimitBytes === preset.bytes
+                        ? "bg-indigo-50 dark:bg-indigo-950 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-semibold"
+                        : ""
+                    }`}
+                    onClick={() => setDraft((d) => ({ ...d, storageLimitBytes: preset.bytes }))}
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Individual Cloudflare R2 storage quota allocated to this agent profile.
+              </p>
+            </div>
           </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel

@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { type Role } from "@/types";
+import { DEFAULT_USER_STORAGE_LIMIT_BYTES } from "@/lib/storage";
 
 export interface AdminUser {
   id: string;
@@ -12,6 +13,8 @@ export interface AdminUser {
   commissionPct?: number;
   activeDeals?: number;
   ytdRevenue?: number;
+  storageLimitBytes: number;
+  storageUsedBytes: number;
 }
 
 export function useAdminUsers() {
@@ -39,6 +42,12 @@ export function useAdminUsers() {
           const formattedRole: Role =
             rawRole === "admin" || rawRole === "principal" ? "Admin" : "Agent";
 
+          const limit =
+            typeof u.storage_limit_bytes === "number"
+              ? u.storage_limit_bytes
+              : DEFAULT_USER_STORAGE_LIMIT_BYTES;
+          const used = typeof u.storage_used_bytes === "number" ? u.storage_used_bytes : 0;
+
           return {
             id: String(u.id),
             name:
@@ -50,6 +59,8 @@ export function useAdminUsers() {
             active: u.status === "active",
             colour: "#4f46e5",
             commissionPct: typeof u.commission_pct === "number" ? u.commission_pct : 50,
+            storageLimitBytes: limit,
+            storageUsedBytes: used,
           };
         },
       );
@@ -68,11 +79,41 @@ export function useAdminUsers() {
             active: false,
             colour: "#eab308",
             commissionPct: 50,
+            storageLimitBytes: DEFAULT_USER_STORAGE_LIMIT_BYTES,
+            storageUsedBytes: 0,
           };
         },
       );
 
       return [...registeredUsers, ...pendingUsers];
+    },
+  });
+}
+
+export function useUpdateUserStorageQuota() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, newLimitBytes }: { userId: string; newLimitBytes: number }) => {
+      // Direct PostgreSQL update on user_account table
+      const { data, error } = await supabase
+        .from("user_account")
+        .update({ storage_limit_bytes: newLimitBytes })
+        .eq("id", userId)
+        .select();
+
+      if (error) {
+        // Fallback to RPC function if direct RLS update requires security definer RPC
+        const { error: rpcErr } = await supabase.rpc("update_user_storage_quota", {
+          target_user_id: userId,
+          new_limit_bytes: newLimitBytes,
+        });
+        if (rpcErr) throw rpcErr;
+      }
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
   });
 }

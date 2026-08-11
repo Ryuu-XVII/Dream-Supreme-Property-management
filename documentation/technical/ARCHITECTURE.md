@@ -75,8 +75,9 @@ State is separated into three distinct domains:
 
 - **Never Trust the Client**: While `AuthGuard` handles UI routing, true data security is enforced at the database layer using Postgres Row Level Security (RLS). Even if a user bypasses the UI blocks, Supabase will reject queries they are not authorized for.
 - **No Shared Secrets**: The application only ships with the `VITE_SUPABASE_ANON_KEY`, relying strictly on JWTs for authorization.
-- **Cloudflare R2 Integration**: We utilize an S3-compatible storage bucket (`cloudflare-r2`) for all sensitive documents (FFCs, FICA documents, Deal PDFs). Files are uploaded with strict path constraints (`<agency_id>/...`).
-- **Signed URLs**: Documents are strictly private. The frontend requests signed URLs from Supabase to render PDFs safely in the UI.
+- **Cloudflare R2 Integration & Storage Isolation**: We utilize an S3-compatible storage adapter (`src/lib/storage.ts`) via `@aws-sdk/client-s3` targeting Cloudflare R2 buckets (`dream-supreme-documents`) for all files (FFCs, FICA documents, Deal PDFs, and avatars). Each agent has an isolated storage folder namespace (`users/<user_account_id>/...`).
+- **Per-Agent 1 GB Storage Quotas & Admin Controls**: Each user account is assigned a default 1 GB storage quota limit (`1,073,741,824 bytes`) tracked via `storage_limit_bytes` and `storage_used_bytes` in `public.user_account`. Admins can inspect agent storage usage progress bars and upgrade/modify quota allocations (e.g. 500MB, 1GB, 2GB, 5GB, 10GB, 20GB, or custom limits) via the **Admin > Team & Users** management portal.
+- **Storage Fallback & Signed URLs**: If R2 environment credentials (`VITE_R2_ACCOUNT_ID`, `VITE_R2_ACCESS_KEY_ID`, `VITE_R2_SECRET_ACCESS_KEY`) are unconfigured, storage transparently falls back to Supabase Storage (`mandate-documents`). All files remain strictly private, accessed via 300-second presigned URLs (`getR2FileUrl`) or configured R2 public custom domain URLs (`VITE_R2_PUBLIC_URL`).
 
 ## 6. Developer Guidelines
 
