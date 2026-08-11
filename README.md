@@ -9,43 +9,59 @@ Welcome to the **Dream Supreme** internal operations platform.
 
 Dream Supreme is a modern, next-generation web application designed to handle the end-to-end lifecycle of South African real estate operations. It operates as a secure, multi-tenant portal that enables property practitioners, principals, admins, and conveyancing attorneys to collaborate seamlessly.
 
+---
+
 ## 🌟 Core Modules & Capabilities
 
 The platform is designed to replace fragmented spreadsheets and legacy CRMs by centralizing:
 
-1. **Sales & Deal Workflows**
-   - Track properties from initial Mandate to Registered Deal.
-   - Manage Suspensive Conditions, OTPs, and strict stage transitions.
-   - Live Countdown Boards to monitor deal expiries.
+### 1. Sales & Deal Workflows
 
-2. **Rentals Management (Release 2)**
-   - Dedicated dashboard for active lease agreements.
-   - Integrated financial ledger tracking monthly invoices, utilities, and deposits.
-   - Maintenance ticket logging and status tracking.
-   - Strict read/write access limited to the designated `managed_by` rental agent.
+- Track properties from initial Mandate to Registered Deal.
+- Manage Suspensive Conditions, OTPs, and strict stage transitions.
+- **60-Second Express Deal Capture** modal for rapid agent pipeline entry.
+- Live Countdown Boards to monitor deal expiries.
 
-3. **Commission Engine**
-   - Automated, rule-based commission splits based on agency defaults or agent-specific overrides.
-   - Automated clawbacks and recalculations for canceled deals.
-   - **Compliance Blockers:** The engine automatically halts payouts if participating agents lack valid Fidelity Fund Certificates (FFC).
+### 2. Cloudflare R2 Object Storage & Agent Quotas
 
-4. **Conveyancer Portal**
-   - External attorneys do not require portal accounts.
-   - They receive secure, single-use, time-expiring "magic links" to update deal statuses (e.g., Lodged, Registered) directly into the agency's database.
+- Per-agent isolated storage namespaces (`users/<user_id>/...`).
+- Database session & role authorization checks (`verifyStorageAccessAuthorization`) protecting documents against unauthorized access.
+- Global per-agent storage allocation enforcement (1 GB default) with interactive Admin quota override controls.
 
-5. **Document & Compliance Management**
-   - Secure Cloudflare R2 object storage integration for FICA documents, FFCs, and Deal PDFs.
-   - Scheduled daily background sweeps (`pg_cron`) automatically audit and suspend agent accounts if their FFC expires.
+### 3. System Settings & Governance Hub (`/admin/settings`)
+
+- **General & Health**: Real-time DB latency diagnostics, R2 ping test, and infrastructure status badges.
+- **Storage & R2 Governance**: Bucket parameters (`dream-supreme-documents`), presigned URL policies, and agent quota configuration.
+- **Security & Access**: Idle session timeout rules, MFA enforcement, registration approval policies, and allowed domain filters (`dreamsupreme.co.za`).
+- **Notification & Gateway Status**: Automated event dispatchers and dynamic integration status checks (WhatsApp, Auth Mailer, Conveyancer Webhooks, Xero/Sage Sync).
+- **Automated Maintenance**: Configurable retention thresholds for deal archival, idle agent deactivation, and recycle bin purging.
+
+### 4. Commission Engine
+
+- Automated, rule-based commission splits based on agency defaults or agent-specific overrides.
+- Automated clawbacks and recalculations for canceled deals.
+- **Compliance Blockers:** The engine automatically halts payouts if participating agents lack valid Fidelity Fund Certificates (FFC).
+
+### 5. Conveyancer Portal
+
+- External attorneys receive secure, single-use, time-expiring "magic links" to update deal statuses (e.g., Lodged, Registered) directly into the agency's database.
+
+### 6. Rentals Management
+
+- Dedicated dashboard for active lease agreements.
+- Financial ledger tracking monthly invoices, utilities, and deposits.
+- Maintenance ticket logging with photo attachment support.
 
 ---
 
 ## 🏗️ Architecture & Technology Stack
 
-- **Frontend:** React 18, Vite, TypeScript
+- **Frontend:** React 18, Vite 8, TypeScript
 - **Routing & State:** `@tanstack/react-router` (file-based routing), `@tanstack/react-query` (server state)
 - **Styling:** Tailwind CSS, `shadcn/ui`, Framer Motion (animations)
-- **Backend:** Supabase (PostgreSQL, Auth, Storage)
-- **Security:** Strict PostgreSQL Row Level Security (RLS) handles all data isolation. The UI uses `<AuthGuard>` for routing, but true security is enforced at the database level.
+- **Backend:** Supabase (PostgreSQL, Auth, Realtime)
+- **Storage:** Cloudflare R2 S3 Object Storage API (with Supabase Storage fallback)
+- **Security:** Strict PostgreSQL Row Level Security (RLS) handles all data isolation. The UI uses `<AuthGuard>` for routing, with database-layer session authorization.
 
 ---
 
@@ -67,15 +83,22 @@ Copy the example environment file:
 cp .env.example .env.local
 ```
 
-### 3. Start Local Supabase
+Ensure your `.env.local` includes your Supabase and Cloudflare R2 credentials:
 
-This will boot up the local PostgreSQL database, Auth server, and Storage bucket via Docker.
+```env
+VITE_SUPABASE_URL=https://qlupnjrprvihlmtxplmo.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key
+VITE_R2_ACCOUNT_ID="c831ffacd8d317ac8342a1cebfcf914a"
+VITE_R2_ACCESS_KEY_ID="your_r2_access_key"
+VITE_R2_SECRET_ACCESS_KEY="your_r2_secret_key"
+VITE_R2_BUCKET_NAME="dream-supreme-documents"
+```
+
+### 3. Start Local Supabase
 
 ```bash
 npx supabase start
 ```
-
-_Note: Copy the API URL and anon key printed by this command into your `.env.local` file. The application will not start without them._
 
 ### 4. Apply Database Migrations & Seed Data
 
@@ -89,9 +112,9 @@ npx supabase db reset
 npm run dev
 ```
 
-### 6. Verify Code Quality
+### 6. Run Full Pre-Commit Check
 
-To run the complete verification suite (TypeScript, ESLint, Vitest, and a test build):
+Before committing or pushing code, run the mandatory check:
 
 ```bash
 npm run check
@@ -99,28 +122,18 @@ npm run check
 
 ---
 
-## 🔐 First Principal Bootstrap
+## 🔐 Authentication & Security
 
-Because Dream Supreme is an invitation-only enterprise platform, you cannot simply "sign up" from the UI.
+Dream Supreme is an invitation-only enterprise platform:
 
-For a brand new installation:
-
-1. Ensure all migrations are applied.
-2. Create the first principal user in your Supabase Auth dashboard.
-3. From a trusted server using the Supabase `service_role` key, invoke the `bootstrap_principal` RPC function with the agency slug, Auth user UUID, matching email, and full name.
-4. Sign into the application as that principal. You can now invite all subsequent agents and admins from **Settings > Users**.
-
-_(Never expose the `service_role` key to this Vite application. The bootstrap function permanently refuses to run once an agency has an active principal)._
+1. **Master Admin & Agent Auth**: Passwords are authenticated via Supabase Auth with bcrypt/JWT claims.
+2. **Show Password Option**: Login screen supports interactive password visibility toggling.
+3. **Database RLS**: Multi-tenant database isolation ensures users only see data belonging to their agency.
+4. **Storage Authorization**: File downloads require an active authenticated session matching the agent's user path.
 
 ---
 
-## 🌍 Production Deployment
+## 🌍 Repository & Remote
 
-Deploying this platform requires configuring the infrastructure outside of the repository:
-
-1. Provision a production Supabase project (configure Auth URLs, SMTP, and Cloudflare R2).
-2. Apply migrations (`npx supabase db push`).
-3. Inject the production `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_PUBLIC_AGENCY_SLUG` into the CI/CD pipeline environment.
-4. Build the application (`npm ci && npm run check`).
-5. Deploy the output `dist/` directory behind an HTTPS host (e.g., using the provided `Dockerfile` and `nginx.conf`).
-6. Schedule the daily trusted call to `run_daily_sweeps()` using a worker or cron job to maintain automated compliance enforcement.
+- **GitHub Repository**: [https://github.com/Ryuu-XVII/Dream-Supreme-Property-management](https://github.com/Ryuu-XVII/Dream-Supreme-Property-management)
+- **Primary Branch**: `main`
