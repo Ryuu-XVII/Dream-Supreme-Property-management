@@ -18,7 +18,16 @@ create table if not exists public.agency_system_setting (
   updated_at timestamptz not null default now()
 );
 
+create or replace function public.get_current_user_role()
+returns text language sql stable security definer as $$
+  select role::text from public.user_account
+  where auth_user_id = auth.uid()
+  and status = 'active'
+  limit 1;
+$$;
+
 alter table public.agency_system_setting enable row level security;
+
 
 create policy "Users view their agency system settings" on public.agency_system_setting
   for select using (agency_id = public.get_current_agency_id());
