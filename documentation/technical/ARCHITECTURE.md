@@ -64,7 +64,8 @@ State is separated into three distinct domains:
   /lib             # Core utilities (Auth, Supabase client, Formatting, State)
   /routes          # TanStack Router file-based route definitions
     __root.tsx     # Root context and AuthGuard enforcement
-    /admin         # Admin Portal routes (Agency Config, Commission Rules, System Settings)
+    /admin         # Admin Portal routes (Agency Config, Commission Rules, System Settings & Governance Hub with System Health, Cloudflare R2 Governance, Security & Access Rules, Notification Dispatchers, and Automated Maintenance Policies)
+
     /deals         # Agent Portal deal routes
     /settings      # Agent personal preferences (My Profile)
 /supabase
