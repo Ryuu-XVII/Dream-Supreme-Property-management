@@ -34,10 +34,12 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 - **`user_notification_preference`**: User-level overrides for the agency defaults. Allows individuals to toggle on/off emails/in-app alerts, define JSONB `condition_config`, and choose delivery `frequency` ('realtime' vs 'digest').
 - **`email_queue`**: Transactional email dispatch queue for automated compliance, deal updates, and task reminders.
 
-### `commission_rule_set` & `commission_calculation`
+### `commission_rule_set`, `commission_calculation`, & `agency_system_setting`
 
 - **`commission_rule_set`**: Defines global agency rules (e.g., Office Share %, Franchise Fees, Marketing Deductions).
 - **`commission_calculation`**: Triggered when a deal registers. Calculates the gross commission, subtracts deductions, and allocates the remaining net commission to the agents (`commission_allocation`).
+- **`agency_system_setting`**: Stores agency-wide System Governance configurations (Global agent storage quota limit MB, single upload ceiling MB, session idle timeouts, MFA enforcement, registration approval policies, automated event notification toggles, and archival/idle agent maintenance retention windows). RLS restricts reads/writes to agency members and admins.
+
 
 ## 2. Migration Ordering Strategy
 

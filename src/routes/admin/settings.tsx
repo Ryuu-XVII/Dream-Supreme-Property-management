@@ -41,6 +41,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { getR2Client, R2_BUCKET_NAME } from "@/lib/storage";
+import { useAgencySystemSettings, useSaveAgencySystemSettings } from "@/data/system-settings";
 
 export const Route = createFileRoute("/admin/settings")({ component: AdminSettings });
 
@@ -57,6 +58,10 @@ function AdminSettings() {
     whatsappQueueCount: number;
     userCount: number;
   } | null>(null);
+
+  // Database System Settings Hooks
+  const { data: dbSettings } = useAgencySystemSettings();
+  const saveSettings = useSaveAgencySystemSettings();
 
   // Storage Settings State
   const [globalQuotaMb, setGlobalQuotaMb] = useState<number>(1024);
@@ -78,6 +83,39 @@ function AdminSettings() {
   const [idleDays, setIdleDays] = useState("90");
   const [archiveDays, setArchiveDays] = useState("365");
   const [recycleRetentionDays, setRecycleRetentionDays] = useState("30");
+
+  // Sync state with Database when settings load
+  useEffect(() => {
+    if (dbSettings) {
+      setGlobalQuotaMb(dbSettings.globalStorageQuotaMb);
+      setMaxFileMb(dbSettings.maxFileUploadMb);
+      setSessionTimeout(String(dbSettings.sessionTimeoutMinutes));
+      setEnforceMfa(dbSettings.enforceMfa);
+      setRequireAdminApproval(dbSettings.requireAdminApproval);
+      setAllowedDomains(dbSettings.allowedDomains);
+      setNotifyDealStages(dbSettings.notifyDealStages);
+      setNotifyFfcWarnings(dbSettings.notifyFfcWarnings);
+      setNotifyFicaUploads(dbSettings.notifyFicaUploads);
+      setNotifyCommissionRecon(dbSettings.notifyCommissionRecon);
+      setIdleDays(String(dbSettings.idleAgentDays));
+      setArchiveDays(String(dbSettings.dealArchiveDays));
+      setRecycleRetentionDays(String(dbSettings.recycleBinRetentionDays));
+    }
+  }, [dbSettings]);
+
+  async function handleSaveSettings(
+    partial: Parameters<typeof saveSettings.mutateAsync>[0],
+    successMessage: string,
+  ) {
+    try {
+      await saveSettings.mutateAsync(partial);
+      toast.success(successMessage, {
+        description: "Configuration persisted to database.",
+      });
+    } catch (err: any) {
+      toast.error("Failed to save settings", { description: err.message });
+    }
+  }
 
   async function runPingTest(showToast = true) {
     setPingLoading(true);
@@ -423,10 +461,19 @@ function AdminSettings() {
                 </div>
 
                 <Button
-                  onClick={() => toast.success("Storage governance settings updated successfully")}
+                  disabled={saveSettings.isPending}
+                  onClick={() =>
+                    void handleSaveSettings(
+                      {
+                        globalStorageQuotaMb: globalQuotaMb,
+                        maxFileUploadMb: maxFileMb,
+                      },
+                      "Storage governance policies saved",
+                    )
+                  }
                   className="bg-indigo-600 hover:bg-indigo-700 text-white"
                 >
-                  Save Storage Policies
+                  {saveSettings.isPending ? "Saving…" : "Save Storage Policies"}
                 </Button>
               </div>
             </GlassCard>
@@ -534,10 +581,21 @@ function AdminSettings() {
                 </div>
 
                 <Button
-                  onClick={() => toast.success("Security & access policies saved")}
+                  disabled={saveSettings.isPending}
+                  onClick={() =>
+                    void handleSaveSettings(
+                      {
+                        sessionTimeoutMinutes: Number(sessionTimeout),
+                        enforceMfa,
+                        requireAdminApproval,
+                        allowedDomains,
+                      },
+                      "Security & access policies saved",
+                    )
+                  }
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
-                  Save Security Policies
+                  {saveSettings.isPending ? "Saving…" : "Save Security Policies"}
                 </Button>
               </div>
             </GlassCard>
@@ -606,6 +664,24 @@ function AdminSettings() {
                     onCheckedChange={setNotifyCommissionRecon}
                   />
                 </div>
+
+                <Button
+                  disabled={saveSettings.isPending}
+                  onClick={() =>
+                    void handleSaveSettings(
+                      {
+                        notifyDealStages,
+                        notifyFfcWarnings,
+                        notifyFicaUploads,
+                        notifyCommissionRecon,
+                      },
+                      "Notification dispatch policies saved",
+                    )
+                  }
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white mt-4"
+                >
+                  {saveSettings.isPending ? "Saving…" : "Save Notification Policies"}
+                </Button>
               </div>
             </GlassCard>
 
@@ -693,6 +769,25 @@ function AdminSettings() {
                 onChange={(e) => setRecycleRetentionDays(e.target.value)}
               />
             </GlassCard>
+          </div>
+
+          <div className="flex justify-end mb-6">
+            <Button
+              disabled={saveSettings.isPending}
+              onClick={() =>
+                void handleSaveSettings(
+                  {
+                    idleAgentDays: Number(idleDays),
+                    dealArchiveDays: Number(archiveDays),
+                    recycleBinRetentionDays: Number(recycleRetentionDays),
+                  },
+                  "Maintenance retention thresholds saved",
+                )
+              }
+              className="bg-rose-600 hover:bg-rose-700 text-white"
+            >
+              {saveSettings.isPending ? "Saving…" : "Save Retention Thresholds"}
+            </Button>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
