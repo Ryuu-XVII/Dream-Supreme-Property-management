@@ -3,28 +3,30 @@ import { playNotificationSound } from "@/lib/sound";
 
 describe("sound synthesizer engine", () => {
   beforeEach(() => {
+    const MockAudioContext = vi.fn(function (this: any) {
+      this.state = "running";
+      this.currentTime = 0;
+      this.createOscillator = vi.fn().mockReturnValue({
+        type: "sine",
+        frequency: { setValueAtTime: vi.fn() },
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+      });
+      this.createGain = vi.fn().mockReturnValue({
+        gain: {
+          setValueAtTime: vi.fn(),
+          linearRampToValueAtTime: vi.fn(),
+          exponentialRampToValueAtTime: vi.fn(),
+        },
+        connect: vi.fn(),
+      });
+      this.destination = {};
+      this.resume = vi.fn().mockResolvedValue(undefined);
+    });
+
     vi.stubGlobal("window", {
-      AudioContext: vi.fn().mockImplementation(() => ({
-        state: "running",
-        currentTime: 0,
-        createOscillator: vi.fn().mockReturnValue({
-          type: "sine",
-          frequency: { setValueAtTime: vi.fn() },
-          connect: vi.fn(),
-          start: vi.fn(),
-          stop: vi.fn(),
-        }),
-        createGain: vi.fn().mockReturnValue({
-          gain: {
-            setValueAtTime: vi.fn(),
-            linearRampToValueAtTime: vi.fn(),
-            exponentialRampToValueAtTime: vi.fn(),
-          },
-          connect: vi.fn(),
-        }),
-        destination: {},
-        resume: vi.fn().mockResolvedValue(undefined),
-      })),
+      AudioContext: MockAudioContext,
     });
   });
 
