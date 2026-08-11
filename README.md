@@ -77,21 +77,10 @@ npm ci
 
 ### 2. Environment Variables
 
-Copy the example environment file:
+Copy the example environment file and configure your credentials in `.env.local`:
 
 ```bash
 cp .env.example .env.local
-```
-
-Ensure your `.env.local` includes your Supabase and Cloudflare R2 credentials:
-
-```env
-VITE_SUPABASE_URL=https://qlupnjrprvihlmtxplmo.supabase.co
-VITE_SUPABASE_ANON_KEY=your_anon_key
-VITE_R2_ACCOUNT_ID="c831ffacd8d317ac8342a1cebfcf914a"
-VITE_R2_ACCESS_KEY_ID="your_r2_access_key"
-VITE_R2_SECRET_ACCESS_KEY="your_r2_secret_key"
-VITE_R2_BUCKET_NAME="dream-supreme-documents"
 ```
 
 ### 3. Start Local Supabase
