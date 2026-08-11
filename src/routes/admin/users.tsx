@@ -625,7 +625,7 @@ function AdminUsers() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="text-xs space-y-1 min-w-[130px]">
+                      <div className="text-xs space-y-1 min-w-32.5">
                         <div className="flex items-center justify-between text-[11px] font-medium">
                           <span className="flex items-center gap-1 text-muted-foreground">
                             <HardDrive className="size-3 text-indigo-500" />

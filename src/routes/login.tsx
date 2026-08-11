@@ -172,7 +172,7 @@ function LoginPage() {
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-              className="mb-4 grid size-16 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 font-display text-2xl font-bold text-primary-foreground shadow-lg shadow-primary/25"
+              className="mb-4 grid size-16 place-items-center rounded-2xl bg-linear-to-br from-primary to-primary/80 font-display text-2xl font-bold text-primary-foreground shadow-lg shadow-primary/25"
             >
               {isAdmin ? "AD" : "DS"}
             </motion.div>
