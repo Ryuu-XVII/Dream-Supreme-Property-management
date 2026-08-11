@@ -40,7 +40,6 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 - **`commission_calculation`**: Triggered when a deal registers. Calculates the gross commission, subtracts deductions, and allocates the remaining net commission to the agents (`commission_allocation`).
 - **`agency_system_setting`**: Stores agency-wide System Governance configurations (Global agent storage quota limit MB, single upload ceiling MB, session idle timeouts, MFA enforcement, registration approval policies, automated event notification toggles, and archival/idle agent maintenance retention windows). RLS restricts reads/writes to agency members and admins.
 
-
 ## 2. Migration Ordering Strategy
 
 All Supabase schema migrations are stored sequentially in `supabase/migrations/` using 14-digit ISO-like UTC timestamps (`YYYYMMDDhhmmss_description.sql`).

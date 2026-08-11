@@ -313,12 +313,22 @@ function AdminSettings() {
                   <MessageSquare className="size-5 text-emerald-400" />
                   <span className="font-semibold text-sm">WhatsApp Business API</span>
                 </div>
-                <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-                  <Radio className="size-3 mr-1 animate-pulse" /> Ready
-                </Badge>
+                {import.meta.env.VITE_WHATSAPP_API_TOKEN ||
+                import.meta.env.VITE_WHATSAPP_PHONE_NUMBER_ID ? (
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                    <Radio className="size-3 mr-1 animate-pulse" /> Ready
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-muted-foreground border-border/40">
+                    Not Configured
+                  </Badge>
+                )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Automated document & lead notification webhook gateway listening.
+                {import.meta.env.VITE_WHATSAPP_API_TOKEN ||
+                import.meta.env.VITE_WHATSAPP_PHONE_NUMBER_ID
+                  ? "Automated document & lead notification webhook gateway listening."
+                  : "Meta WhatsApp API token missing in environment variables."}
               </p>
             </GlassCard>
 
@@ -697,9 +707,16 @@ function AdminSettings() {
                     <MessageSquare className="size-4 text-emerald-400" />
                     <span>WhatsApp Gateway</span>
                   </div>
-                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-                    Active
-                  </Badge>
+                  {import.meta.env.VITE_WHATSAPP_API_TOKEN ||
+                  import.meta.env.VITE_WHATSAPP_PHONE_NUMBER_ID ? (
+                    <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                      Active
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground border-border/40">
+                      Not Configured
+                    </Badge>
+                  )}
                 </div>
 
                 <div className="flex justify-between items-center p-3 border rounded-lg border-border/50">
@@ -707,9 +724,15 @@ function AdminSettings() {
                     <Mail className="size-4 text-indigo-400" />
                     <span>Supabase Auth Mailer</span>
                   </div>
-                  <Badge className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
-                    Active
-                  </Badge>
+                  {import.meta.env.VITE_SUPABASE_URL ? (
+                    <Badge className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
+                      Active
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground border-border/40">
+                      Not Configured
+                    </Badge>
+                  )}
                 </div>
 
                 <div className="flex justify-between items-center p-3 border rounded-lg border-border/50">
@@ -717,9 +740,15 @@ function AdminSettings() {
                     <FileCheck className="size-4 text-amber-400" />
                     <span>Conveyancer Portal Webhook</span>
                   </div>
-                  <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20">
-                    Listening
-                  </Badge>
+                  {import.meta.env.VITE_CONVEYANCER_WEBHOOK_URL ? (
+                    <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20">
+                      Listening
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground border-border/40">
+                      Not Configured
+                    </Badge>
+                  )}
                 </div>
 
                 <div className="flex justify-between items-center p-3 border rounded-lg border-border/50">
@@ -727,7 +756,15 @@ function AdminSettings() {
                     <Building2 className="size-4 text-purple-400" />
                     <span>Xero / Sage Accounting Sync</span>
                   </div>
-                  <Badge variant="outline">Configured</Badge>
+                  {import.meta.env.VITE_XERO_CLIENT_ID || import.meta.env.VITE_SAGE_API_KEY ? (
+                    <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20">
+                      Configured
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground border-border/40">
+                      Not Configured
+                    </Badge>
+                  )}
                 </div>
               </div>
             </GlassCard>
