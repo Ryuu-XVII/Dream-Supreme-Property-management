@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Server,
@@ -54,6 +54,8 @@ function AdminSettings() {
   const [pingResult, setPingResult] = useState<{
     dbMs: number;
     r2Connected: boolean;
+    whatsappQueueCount: number;
+    userCount: number;
   } | null>(null);
 
   // Storage Settings State
@@ -77,30 +79,52 @@ function AdminSettings() {
   const [archiveDays, setArchiveDays] = useState("365");
   const [recycleRetentionDays, setRecycleRetentionDays] = useState("30");
 
-  async function runPingTest() {
+  async function runPingTest(showToast = true) {
     setPingLoading(true);
     const start = performance.now();
     try {
-      // 1. Ping Supabase DB
-      const { error: dbErr } = await supabase.from("agency").select("id").limit(1);
+      // 1. Live Query to Supabase DB
+      const { count: usersCount, error: dbErr } = await supabase
+        .from("user_account")
+        .select("*", { count: "exact", head: true });
       const dbMs = Math.round(performance.now() - start);
 
       if (dbErr) throw dbErr;
 
-      // 2. Ping R2 Client
+      // 2. Query Live WhatsApp Queue Count
+      const { count: waCount } = await supabase
+        .from("whatsapp_queue")
+        .select("*", { count: "exact", head: true });
+
+      // 3. Ping R2 Storage Client
       const r2Client = getR2Client();
       const r2Connected = !!r2Client;
 
-      setPingResult({ dbMs, r2Connected });
-      toast.success("Diagnostics Complete", {
-        description: `Database query latency: ${dbMs}ms | R2 Storage: ${r2Connected ? "Connected" : "Supabase Fallback"}`,
+      setPingResult({
+        dbMs,
+        r2Connected,
+        whatsappQueueCount: waCount ?? 0,
+        userCount: usersCount ?? 0,
       });
+
+      if (showToast) {
+        toast.success("Live Diagnostics Complete", {
+          description: `Database Latency: ${dbMs}ms | Active Users: ${usersCount ?? 0} | R2 Storage: ${r2Connected ? "Connected" : "Supabase Fallback"} | WhatsApp Queue: ${waCount ?? 0} messages`,
+        });
+      }
     } catch (err: any) {
-      toast.error("Diagnostics Failed", { description: err.message });
+      if (showToast) {
+        toast.error("Diagnostics Failed", { description: err.message });
+      }
     } finally {
       setPingLoading(false);
     }
   }
+
+  // Run live diagnostics automatically on mount
+  useEffect(() => {
+    void runPingTest(false);
+  }, []);
 
   async function runMaintenanceAction(action: Action) {
     if (!account) return;
@@ -180,7 +204,7 @@ function AdminSettings() {
               variant="outline"
               size="sm"
               disabled={pingLoading}
-              onClick={runPingTest}
+              onClick={() => void runPingTest(true)}
               className="gap-2"
             >
               <RefreshCw className={`size-4 ${pingLoading ? "animate-spin" : ""}`} />
