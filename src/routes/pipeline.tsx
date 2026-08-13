@@ -31,6 +31,7 @@ import { dateFmt, zar } from "@/lib/format";
 import { STAGES } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { stageFromDb, stageToDb } from "@/lib/domain";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/pipeline")({
   validateSearch: (search: Record<string, unknown>): { tab?: string } => ({
@@ -45,6 +46,7 @@ const leadStatuses = ["new", "contacted", "qualified", "converted", "closed"];
 function DealFlowPage() {
   const { tab: currentTab } = Route.useSearch();
   const navigate = useNavigate({ from: Route.id });
+  const { isReadOnly } = useAuth();
   const pipeline = usePipelineDeals();
   const leadsQuery = useLeads();
   const agentQuery = useAgents();
@@ -121,6 +123,7 @@ function DealFlowPage() {
     id: string,
     updates: { status?: string; assignedTo?: string | null },
   ) {
+    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to edit leads.");
     try {
       await updateLead.mutateAsync({ id, ...updates });
       toast.success("Lead updated");
@@ -135,13 +138,23 @@ function DealFlowPage() {
       description="Unified workspace for incoming leads, client inquiries, and active transaction pipelines."
       actions={
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setQuickCaptureOpen(true)}>
+          <Button variant="outline" disabled={isReadOnly} onClick={() => setQuickCaptureOpen(true)}>
             <Plus className="size-4" /> Quick Deal
           </Button>
-          <Button asChild>
-            <Link to="/deals/new">
-              <Plus className="size-4" /> Full Deal Wizard
-            </Link>
+          <Button
+            asChild
+            disabled={isReadOnly}
+            className={isReadOnly ? "pointer-events-none opacity-50" : undefined}
+          >
+            {isReadOnly ? (
+              <span>
+                <Plus className="size-4" /> Full Deal Wizard
+              </span>
+            ) : (
+              <Link to="/deals/new">
+                <Plus className="size-4" /> Full Deal Wizard
+              </Link>
+            )}
           </Button>
         </div>
       }
@@ -376,7 +389,12 @@ function DealFlowPage() {
                             </span>
                             <Select
                               value={deal.stage}
+                              disabled={isReadOnly}
                               onValueChange={async (newStageDb) => {
+                                if (isReadOnly) {
+                                  toast.info("Read-only mode: exit impersonation to move deals.");
+                                  return;
+                                }
                                 try {
                                   const { error } = await supabase.rpc("transition_deal", {
                                     p_deal_id: deal.id,
@@ -479,6 +497,7 @@ function DealFlowPage() {
                       <TableCell>
                         <Select
                           value={lead.assignedTo ?? "unassigned"}
+                          disabled={isReadOnly}
                           onValueChange={(value) =>
                             void handleSaveLead(lead.id, {
                               assignedTo: value === "unassigned" ? null : value,
@@ -501,6 +520,7 @@ function DealFlowPage() {
                       <TableCell>
                         <Select
                           value={lead.status}
+                          disabled={isReadOnly}
                           onValueChange={(value) => void handleSaveLead(lead.id, { status: value })}
                         >
                           <SelectTrigger className="w-36">

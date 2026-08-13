@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMyEarnings } from "@/data/deals";
 import { useSaveUserSettings, useUserSettings } from "@/data/user-settings";
+import { useAuth } from "@/lib/auth";
 import { zarCompact } from "@/lib/format";
 
 export const Route = createFileRoute("/settings/financials")({
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/settings/financials")({
 });
 
 function FinancialsPage() {
+  const { isReadOnly } = useAuth();
   const settings = useUserSettings();
   const save = useSaveUserSettings();
   const earnings = useMyEarnings();
@@ -33,6 +35,7 @@ function FinancialsPage() {
   }, [settings.data]);
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to edit targets.");
     if (!settings.data) return;
     try {
       await save.mutateAsync({
@@ -72,6 +75,7 @@ function FinancialsPage() {
               type="number"
               min="0"
               value={mandates}
+              disabled={isReadOnly}
               onChange={(event) => setMandates(Number(event.target.value))}
             />
           </div>
@@ -82,6 +86,7 @@ function FinancialsPage() {
               type="number"
               min="0"
               value={sales}
+              disabled={isReadOnly}
               onChange={(event) => setSales(Number(event.target.value))}
             />
           </div>
@@ -92,12 +97,13 @@ function FinancialsPage() {
               type="number"
               min="0"
               value={gci}
+              disabled={isReadOnly}
               onChange={(event) => setGci(Number(event.target.value))}
             />
           </div>
           <div className="sm:col-span-3">
-            <Button disabled={save.isPending || settings.isLoading}>
-              {save.isPending ? "Saving…" : "Save targets"}
+            <Button disabled={save.isPending || settings.isLoading || isReadOnly}>
+              {isReadOnly ? "Read-Only Mode" : save.isPending ? "Saving…" : "Save targets"}
             </Button>
           </div>
         </form>

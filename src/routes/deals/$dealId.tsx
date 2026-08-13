@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 import { useDealDetail } from "@/data/deals";
 import { stageToDb, stageFromDb } from "@/lib/domain";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/deals/$dealId")({
   component: DealDetailPage,
@@ -52,6 +53,7 @@ export const Route = createFileRoute("/deals/$dealId")({
 
 function DealDetailPage() {
   const { dealId } = Route.useParams();
+  const { isReadOnly } = useAuth();
 
   const { data: initialDeal, isLoading, error } = useDealDetail(dealId);
   const [deal, setDeal] = useState<any>(null);
@@ -98,6 +100,7 @@ function DealDetailPage() {
   const currentStageIdx = STAGES.findIndex((s) => s === humanStage);
 
   const handleAdvanceStage = async () => {
+    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to change deal stage.");
     if (currentStageIdx >= STAGES.length - 1) return;
     const nextStage = STAGES[currentStageIdx + 1];
     try {
@@ -148,6 +151,7 @@ function DealDetailPage() {
   };
 
   const handleRevertStage = async () => {
+    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to change deal stage.");
     if (currentStageIdx <= 0) return;
     const prevStage = STAGES[currentStageIdx - 1];
     try {
@@ -193,6 +197,7 @@ function DealDetailPage() {
   };
 
   const handleCancelDeal = async () => {
+    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to cancel deals.");
     if (!cancelReason) {
       toast.error("Select a cancellation reason.");
       return;
@@ -236,6 +241,8 @@ function DealDetailPage() {
   };
 
   const copyConveyancerLink = async () => {
+    if (isReadOnly)
+      return toast.info("Read-only mode: exit impersonation to generate conveyancer links.");
     const email = deal.conveyancer?.email;
     if (!email) {
       toast.error("Add an email address to the appointed conveyancer firm first.");
@@ -284,23 +291,43 @@ function DealDetailPage() {
           <div className="flex flex-wrap items-center gap-2">
             {deal.status !== "cancelled" && (
               <>
-                <Button variant="outline" size="sm" onClick={() => setNoteModalOpen(true)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isReadOnly}
+                  onClick={() => setNoteModalOpen(true)}
+                >
                   <MessageSquarePlus className="mr-1 size-4 text-primary" /> Log Note
                 </Button>
-                <Button variant="outline" size="sm" onClick={copyConveyancerLink}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isReadOnly}
+                  onClick={copyConveyancerLink}
+                >
                   <Link2 className="mr-1 size-3.5" /> Conveyancer link
                 </Button>
                 {currentStageIdx > 0 && (
-                  <Button variant="outline" size="sm" onClick={() => setStageModal("revert")}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isReadOnly}
+                    onClick={() => setStageModal("revert")}
+                  >
                     <ChevronLeft className="mr-1 size-4" /> Revert Stage
                   </Button>
                 )}
                 {currentStageIdx < STAGES.length - 1 && (
-                  <Button size="sm" onClick={() => setStageModal("advance")}>
+                  <Button size="sm" disabled={isReadOnly} onClick={() => setStageModal("advance")}>
                     Advance Stage <ChevronRight className="ml-1 size-4" />
                   </Button>
                 )}
-                <Button variant="destructive" size="sm" onClick={() => setStageModal("cancel")}>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={isReadOnly}
+                  onClick={() => setStageModal("cancel")}
+                >
                   <XCircle className="mr-1 size-4" /> Cancel Deal
                 </Button>
               </>

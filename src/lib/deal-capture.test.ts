@@ -84,15 +84,20 @@ describe("deal capture validation", () => {
     expect(validateDealStep(deal, 2)).toContain("Seller ownership shares must total 100%.");
   });
 
-  it("enforces conditional finance and VAT requirements", () => {
+  it("enforces the VAT vendor requirement on step 3", () => {
     const deal = validDeal();
-    deal.bondAmount = "0";
     deal.isVatSale = true;
     const errors = validateDealStep(deal, 3);
-    expect(errors).toContain("Bond amount and approval deadline are required for a financed sale.");
     expect(errors).toContain(
       "A VAT sale requires at least one seller to be recorded as a VAT vendor.",
     );
+  });
+
+  it("enforces the finance (bond) requirement on step 4, where the bond fields are captured", () => {
+    const deal = validDeal();
+    deal.bondAmount = "0";
+    const errors = validateDealStep(deal, 4);
+    expect(errors).toContain("Bond amount and approval deadline are required for a financed sale.");
   });
 
   it("requires sanctions screening for every transaction party", () => {

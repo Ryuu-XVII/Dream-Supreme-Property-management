@@ -11,11 +11,17 @@ export const Route = createFileRoute("/admin")({
 function AdminLayout() {
   const { account, impersonatedAccount, stopImpersonating, loading } = useAuth();
 
+  // Only clear impersonation on mount (e.g. an admin navigates back into
+  // /admin while still impersonating someone). Must NOT re-run on every
+  // change to impersonatedAccount, otherwise clicking "View Portal" from
+  // within /admin/users clears the impersonation it just started before the
+  // resulting navigate({ to: "/" }) has a chance to leave this layout.
   useEffect(() => {
     if (impersonatedAccount) {
       stopImpersonating();
     }
-  }, [impersonatedAccount, stopImpersonating]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isAllowed = canAccessAdmin(account);
 

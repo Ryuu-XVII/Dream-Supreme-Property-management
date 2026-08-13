@@ -32,7 +32,7 @@ interface Preference {
 }
 
 function NotificationsPage() {
-  const { account } = useAuth();
+  const { account, isReadOnly } = useAuth();
   const [preferences, setPreferences] = useState<Preference[]>(
     eventTypes.map((type) => ({ type, email: true, inApp: true })),
   );
@@ -73,6 +73,7 @@ function NotificationsPage() {
   }
 
   async function save() {
+    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to edit preferences.");
     if (!account) return;
     setSaving(true);
     const { error } = await supabase.from("user_notification_preference").upsert(
@@ -98,8 +99,8 @@ function NotificationsPage() {
           <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
             <Bell className="size-4 text-primary" /> Notification channels
           </h2>
-          <Button disabled={loading || saving} onClick={() => void save()}>
-            {saving ? "Saving…" : "Save preferences"}
+          <Button disabled={loading || saving || isReadOnly} onClick={() => void save()}>
+            {isReadOnly ? "Read-Only Mode" : saving ? "Saving…" : "Save preferences"}
           </Button>
         </div>
         <Table>
@@ -117,7 +118,7 @@ function NotificationsPage() {
                 <TableCell>
                   <div className="flex justify-center">
                     <Switch
-                      disabled={loading}
+                      disabled={loading || isReadOnly}
                       checked={item.email}
                       onCheckedChange={(checked) => update(item.type, { email: checked })}
                     />
@@ -126,7 +127,7 @@ function NotificationsPage() {
                 <TableCell>
                   <div className="flex justify-center">
                     <Switch
-                      disabled={loading}
+                      disabled={loading || isReadOnly}
                       checked={item.inApp}
                       onCheckedChange={(checked) => update(item.type, { inApp: checked })}
                     />

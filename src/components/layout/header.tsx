@@ -245,11 +245,19 @@ export function Header() {
           <DropdownMenuItem asChild>
             <Link to={"/commission/earnings" as any}>My earnings</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link to={"/setup" as any}>Setup wizard</Link>
-          </DropdownMenuItem>
+          {!isReadOnly && (
+            <DropdownMenuItem asChild>
+              <Link to={"/setup" as any}>Setup wizard</Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => void signOut()}>
+          <DropdownMenuItem
+            disabled={isReadOnly}
+            onSelect={() => {
+              if (isReadOnly) return;
+              void signOut();
+            }}
+          >
             <LogOut className="size-4" /> Sign out
           </DropdownMenuItem>
         </DropdownMenuContent>

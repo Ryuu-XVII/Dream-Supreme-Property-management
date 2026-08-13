@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { type User, type Session } from "@supabase/supabase-js";
-import { supabase } from "./supabase";
+import { supabase, impersonationState } from "./supabase";
 
 interface AuthState {
   user: User | null;
@@ -98,7 +98,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const stored = sessionStorage.getItem(IMPERSONATION_SESSION_KEY);
       if (stored) {
         try {
-          return JSON.parse(stored) as UserAccount;
+          const parsed = JSON.parse(stored) as UserAccount;
+          impersonationState.active = true;
+          return parsed;
         } catch {
           sessionStorage.removeItem(IMPERSONATION_SESSION_KEY);
         }
@@ -119,6 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const startImpersonating = (user: UserAccount) => {
     setImpersonatedAccount(user);
+    impersonationState.active = true;
     if (typeof window !== "undefined") {
       sessionStorage.setItem(IMPERSONATION_SESSION_KEY, JSON.stringify(user));
     }
@@ -126,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const stopImpersonating = () => {
     setImpersonatedAccount(null);
+    impersonationState.active = false;
     if (typeof window !== "undefined") {
       sessionStorage.removeItem(IMPERSONATION_SESSION_KEY);
     }
@@ -223,6 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setAccount(null);
     setImpersonatedAccount(null);
+    impersonationState.active = false;
     setPasswordRecovery(false);
   };
 

@@ -17,7 +17,7 @@ export const Route = createFileRoute("/settings/profile")({
 });
 
 function ProfilePage() {
-  const { account, refreshAccount } = useAuth();
+  const { account, refreshAccount, isReadOnly } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
@@ -36,6 +36,7 @@ function ProfilePage() {
 
   async function saveProfile(event: React.FormEvent) {
     event.preventDefault();
+    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to edit the profile.");
     if (!account || !fullName.trim() || !email.trim())
       return toast.error("Name and email are required.");
     setSaving(true);
@@ -65,6 +66,7 @@ function ProfilePage() {
 
   async function updatePassword(event: React.FormEvent) {
     event.preventDefault();
+    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to change the password.");
     if (newPassword.length < 8) return toast.error("New password must be at least 8 characters.");
     if (newPassword !== confirmPassword) return toast.error("Passwords do not match.");
     if (!currentPassword || !account?.email) return toast.error("Enter your current password.");
@@ -137,7 +139,9 @@ function ProfilePage() {
                 />
               </div>
             </div>
-            <Button disabled={saving}>{saving ? "Saving…" : "Save profile"}</Button>
+            <Button disabled={saving || isReadOnly}>
+              {isReadOnly ? "Read-Only Mode" : saving ? "Saving…" : "Save profile"}
+            </Button>
           </form>
         </GlassCard>
         <GlassCard>
@@ -193,8 +197,8 @@ function ProfilePage() {
               />
             </div>
             <div className="sm:col-span-3">
-              <Button variant="outline" disabled={passwordSaving}>
-                {passwordSaving ? "Updating…" : "Update password"}
+              <Button variant="outline" disabled={passwordSaving || isReadOnly}>
+                {isReadOnly ? "Read-Only Mode" : passwordSaving ? "Updating…" : "Update password"}
               </Button>
             </div>
           </form>

@@ -46,7 +46,7 @@ const categories = [
 ];
 
 function DocumentsPage() {
-  const { activeAccount } = useAuth();
+  const { activeAccount, isReadOnly } = useAuth();
   const dealsQuery = usePipelineDeals();
   const templatesQuery = useDocumentTemplates();
   const [dealId, setDealId] = useState("");
@@ -59,6 +59,7 @@ function DocumentsPage() {
   const selectedDeal = deals.find((deal) => deal.id === dealId);
 
   async function uploadFile(file: File) {
+    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to upload documents.");
     if (!activeAccount?.agencyId || !dealId) return toast.error("Select a deal first.");
     try {
       await upload.mutateAsync({ file, dealId, category, agencyId: activeAccount.agencyId });
@@ -132,8 +133,12 @@ function DocumentsPage() {
               event.target.value = "";
             }}
           />
-          <Button disabled={!dealId || upload.isPending} onClick={() => fileInput.current?.click()}>
-            <Upload className="size-4" /> {upload.isPending ? "Uploading…" : "Upload"}
+          <Button
+            disabled={!dealId || upload.isPending || isReadOnly}
+            onClick={() => fileInput.current?.click()}
+          >
+            <Upload className="size-4" />{" "}
+            {isReadOnly ? "Upload (Read-Only)" : upload.isPending ? "Uploading…" : "Upload"}
           </Button>
         </div>
       </GlassCard>
@@ -222,10 +227,10 @@ function DocumentsPage() {
                     className="mt-3"
                     size="sm"
                     variant="outline"
-                    disabled={!dealId || upload.isPending}
+                    disabled={!dealId || upload.isPending || isReadOnly}
                     onClick={() => void generate(template.id)}
                   >
-                    Generate and store
+                    {isReadOnly ? "Generate (Read-Only)" : "Generate and store"}
                   </Button>
                 </div>
               ))}

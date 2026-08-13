@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
+import { useAuth } from "@/lib/auth";
 import { GlassCard } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,7 @@ const STEPS = [
 ];
 
 function SetupPage() {
+  const { isReadOnly } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
 
@@ -94,6 +96,10 @@ function SetupPage() {
     toast.info("Use Settings to save agency configuration.");
     navigate({ to: "/admin/agency" });
   };
+
+  if (isReadOnly) {
+    return <Navigate to="/" />;
+  }
 
   return (
     <AppShell>

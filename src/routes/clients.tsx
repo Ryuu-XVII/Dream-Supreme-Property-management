@@ -13,6 +13,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 import {
   createInitialClientCapture,
   validateClientCapture,
@@ -121,6 +122,7 @@ function FieldErrorSummary({ errors }: { errors: string[] }) {
 }
 
 function ClientsPage() {
+  const { isReadOnly } = useAuth();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [ficaFilter, setFicaFilter] = useState("all");
@@ -235,6 +237,7 @@ function ClientsPage() {
 
   const handleAddClient = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to add clients.");
     const errors = validateClientCapture(newForm);
     if (errors.length > 0) {
       setFormErrors(errors);
@@ -306,8 +309,12 @@ function ClientsPage() {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={() => setAddModalOpen(true)} className="gap-1.5 font-semibold">
-          <Plus className="size-4" /> Add Client
+        <Button
+          disabled={isReadOnly}
+          onClick={() => setAddModalOpen(true)}
+          className="gap-1.5 font-semibold"
+        >
+          <Plus className="size-4" /> {isReadOnly ? "Add Client (Read-Only)" : "Add Client"}
         </Button>
       </div>
 
@@ -849,7 +856,7 @@ function ClientsPage() {
               <Button type="button" variant="outline" onClick={closeAddModal}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || isReadOnly}>
                 {isSubmitting
                   ? "Saving…"
                   : newForm.startFica

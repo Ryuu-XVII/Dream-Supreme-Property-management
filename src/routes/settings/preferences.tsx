@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { useUserSettings, useSaveUserSettings } from "@/data/user-settings";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/settings/preferences")({
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/settings/preferences")({
 });
 
 function PreferencesPage() {
+  const { isReadOnly } = useAuth();
   const settings = useUserSettings();
   const save = useSaveUserSettings();
   const firms = useQuery({
@@ -48,6 +50,7 @@ function PreferencesPage() {
   }, [settings.data]);
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to edit presets.");
     if (!settings.data) return;
     try {
       await save.mutateAsync({
@@ -100,8 +103,8 @@ function PreferencesPage() {
                 </SelectContent>
               </Select>
             </div>
-            <Button disabled={save.isPending || settings.isLoading}>
-              {save.isPending ? "Saving…" : "Save presets"}
+            <Button disabled={save.isPending || settings.isLoading || isReadOnly}>
+              {isReadOnly ? "Read-Only Mode" : save.isPending ? "Saving…" : "Save presets"}
             </Button>
           </form>
         </GlassCard>

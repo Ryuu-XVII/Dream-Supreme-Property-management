@@ -30,6 +30,7 @@ import { dateFmt, daysUntil, urgencyOf, urgencyClass, type Urgency } from "@/lib
 import type { Condition, ConditionType, Deal, User } from "@/types";
 import { useCountdownData } from "@/data/operations";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 import {
   LayoutGrid,
   Rows3,
@@ -462,6 +463,7 @@ function ConditionRowView({
 }
 
 function CountdownBoard() {
+  const { isReadOnly } = useAuth();
   const countdown = useCountdownData();
   const loading = countdown.isLoading;
   const openConditions = useMemo(
@@ -526,6 +528,7 @@ function CountdownBoard() {
     status: LocalStatus,
     extra?: { dueDate?: string; reason?: string },
   ) {
+    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to update conditions.");
     const statusMap: Record<LocalStatus, string> = {
       Open: "pending",
       Fulfilled: "fulfilled",

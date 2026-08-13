@@ -21,6 +21,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createDeal } from "@/data/deals";
 import { useAgents } from "@/data/reference";
+import { useAuth } from "@/lib/auth";
 import {
   Home,
   User,
@@ -47,6 +48,7 @@ export function QuickDealModal({
   onSuccess,
   initialType = "deal",
 }: QuickDealModalProps) {
+  const { isReadOnly } = useAuth();
   const { data: agents = [] } = useAgents();
   const [entryType, setEntryType] = useState<"deal" | "mandate">(initialType);
   const [loading, setLoading] = useState(false);
@@ -128,6 +130,7 @@ export function QuickDealModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to save records.");
     if (!form.address || !form.sellerName) {
       toast.error("Please fill in property address and seller/mandator name.");
       return;
@@ -456,12 +459,14 @@ export function QuickDealModal({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading
-                ? "Saving..."
-                : entryType === "deal"
-                  ? "Create Deal & Initialize OTP"
-                  : "Register Mandate"}
+            <Button type="submit" disabled={loading || isReadOnly}>
+              {isReadOnly
+                ? "Read-Only Mode"
+                : loading
+                  ? "Saving..."
+                  : entryType === "deal"
+                    ? "Create Deal & Initialize OTP"
+                    : "Register Mandate"}
             </Button>
           </DialogFooter>
         </form>

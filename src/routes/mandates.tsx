@@ -25,7 +25,7 @@ export const Route = createFileRoute("/mandates")({
 });
 
 function MandatesRegister() {
-  const { account } = useAuth();
+  const { account, isReadOnly } = useAuth();
   const navigate = useNavigate();
   const [openCapture, setOpenCapture] = useState(false);
 
@@ -71,8 +71,9 @@ function MandatesRegister() {
       title="Mandate Register"
       description="View and manage all active property mandates."
       actions={
-        <Button onClick={() => setOpenCapture(true)}>
-          <PlusCircle className="mr-2 size-4" /> New Listing
+        <Button disabled={isReadOnly} onClick={() => setOpenCapture(true)}>
+          <PlusCircle className="mr-2 size-4" />{" "}
+          {isReadOnly ? "New Listing (Read-Only)" : "New Listing"}
         </Button>
       }
     >

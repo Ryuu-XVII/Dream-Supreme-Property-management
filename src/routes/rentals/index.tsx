@@ -24,7 +24,7 @@ export const Route = createFileRoute("/rentals/")({
 });
 
 function RentalsDashboard() {
-  const { activeAccount } = useAuth();
+  const { activeAccount, isReadOnly } = useAuth();
   const navigate = useNavigate();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -89,8 +89,9 @@ function RentalsDashboard() {
       title="Rentals Management"
       description="Manage active leases, track tenant invoices, and log maintenance tickets."
       actions={
-        <Button onClick={() => setIsCreateOpen(true)}>
-          <PlusCircle className="mr-2 size-4" /> New Lease
+        <Button disabled={isReadOnly} onClick={() => setIsCreateOpen(true)}>
+          <PlusCircle className="mr-2 size-4" />{" "}
+          {isReadOnly ? "New Lease (Read-Only)" : "New Lease"}
         </Button>
       }
     >

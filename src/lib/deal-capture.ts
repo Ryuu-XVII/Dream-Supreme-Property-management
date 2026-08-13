@@ -291,9 +291,6 @@ export function validateDealStep(form: DealCaptureForm, step: number): string[] 
     if (Number(form.depositAmount) > 0 && (!form.depositDueOn || !form.depositHolder.trim())) {
       errors.push("Deposit due date and stakeholder are required when a deposit is payable.");
     }
-    if (form.bondRequired && (!positiveMoney(form.bondAmount) || !form.bondDueDate)) {
-      errors.push("Bond amount and approval deadline are required for a financed sale.");
-    }
     if (form.occupationDate && Number(form.occupationalRent) < 0) {
       errors.push("Occupational rent cannot be negative.");
     }
@@ -306,6 +303,9 @@ export function validateDealStep(form: DealCaptureForm, step: number): string[] 
   }
 
   if (step === 4) {
+    if (form.bondRequired && (!positiveMoney(form.bondAmount) || !form.bondDueDate)) {
+      errors.push("Bond amount and approval deadline are required for a financed sale.");
+    }
     if (form.subjectToSale && (!form.subjectToSaleDesc.trim() || !form.subjectToSaleDueDate)) {
       errors.push("Describe the purchaser's property and capture the sale-condition deadline.");
     }
