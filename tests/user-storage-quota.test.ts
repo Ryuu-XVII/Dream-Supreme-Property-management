@@ -1,12 +1,17 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   getUserStoragePath,
   DEFAULT_USER_STORAGE_LIMIT_BYTES,
   uploadFileToR2,
   MAX_SINGLE_FILE_BYTES,
 } from "@/lib/storage";
+import { supabase } from "@/lib/supabase";
 
 describe("Per-Agent Storage Isolation & Quota Limits", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("generates isolated per-agent storage paths", () => {
     const userId = "agent-123-uuid";
     const path = getUserStoragePath(userId, "fica/identity-document.pdf");
@@ -46,6 +51,12 @@ describe("Per-Agent Storage Isolation & Quota Limits", () => {
     const newFile = new File(["small content"], "small.pdf", {
       type: "application/pdf",
     });
+
+    // uploadFileToR2 always goes through Supabase Storage now (see src/lib/storage.ts);
+    // stub it so this quota-logic test doesn't depend on a live, authenticated session.
+    vi.spyOn(supabase.storage, "from").mockReturnValue({
+      upload: async (path: string) => ({ data: { path }, error: null }),
+    } as unknown as ReturnType<typeof supabase.storage.from>);
 
     await expect(
       uploadFileToR2(newFile, "users/agent-1/small.pdf", {

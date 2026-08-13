@@ -275,19 +275,21 @@ function AdminSettings() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <HardDrive className="size-5 text-cyan-500" />
-                  <span className="font-semibold text-sm">Cloudflare R2 Storage</span>
+                  <span className="font-semibold text-sm">Document Storage</span>
                 </div>
                 <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
-                  <CheckCircle2 className="size-3 mr-1" /> S3 API Active
+                  <CheckCircle2 className="size-3 mr-1" /> Supabase Storage
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground">
-                Bucket: <code className="text-cyan-300">{R2_BUCKET_NAME}</code> with per-agent
-                folder isolation.
+                Bucket: <code className="text-cyan-300">{R2_BUCKET_NAME}</code>. Direct R2 access
+                from the browser is disabled — Cloudflare R2 credentials cannot be scoped safely to
+                the client, so uploads/downloads go through Supabase Storage's agency-scoped RLS
+                policies instead.
               </p>
               {pingResult && (
                 <div className="text-xs font-mono bg-muted/30 p-2 rounded border text-cyan-400">
-                  R2 Adapter: {pingResult.r2Connected ? "Connected" : "Fallback Mode"}
+                  R2 Adapter: Disabled (Supabase Storage fallback active)
                 </div>
               )}
             </GlassCard>

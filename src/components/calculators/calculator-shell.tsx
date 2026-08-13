@@ -53,7 +53,7 @@ export function CalculatorShell({
 
   const onSubmit = form.handleSubmit(async (values) => {
     const { error } = await supabase.rpc("submit_public_lead", {
-      p_agency_slug: import.meta.env.VITE_AGENCY_SLUG || "dream-supreme",
+      p_agency_slug: import.meta.env.VITE_PUBLIC_AGENCY_SLUG || "dream-supreme",
       p_source: currentPath.split("/").pop() || "calculator",
       p_full_name: values.name,
       p_email: values.email,

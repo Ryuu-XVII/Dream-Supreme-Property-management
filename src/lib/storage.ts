@@ -1,10 +1,3 @@
-import {
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { supabase } from "@/lib/supabase";
 
 const DOCUMENT_BUCKET = "mandate-documents";
@@ -31,31 +24,6 @@ export interface StorageQuotaOptions {
   isPublic?: boolean;
 }
 
-function getR2Credentials() {
-  const r2AccountId =
-    (typeof process !== "undefined"
-      ? process.env?.VITE_R2_ACCOUNT_ID || process.env?.CLOUDFLARE_R2_ACCOUNT_ID
-      : undefined) ||
-    import.meta.env?.VITE_R2_ACCOUNT_ID ||
-    import.meta.env?.CLOUDFLARE_R2_ACCOUNT_ID;
-
-  const r2AccessKeyId =
-    (typeof process !== "undefined"
-      ? process.env?.VITE_R2_ACCESS_KEY_ID || process.env?.CLOUDFLARE_R2_ACCESS_KEY_ID
-      : undefined) ||
-    import.meta.env?.VITE_R2_ACCESS_KEY_ID ||
-    import.meta.env?.CLOUDFLARE_R2_ACCESS_KEY_ID;
-
-  const r2SecretAccessKey =
-    (typeof process !== "undefined"
-      ? process.env?.VITE_R2_SECRET_ACCESS_KEY || process.env?.CLOUDFLARE_R2_SECRET_ACCESS_KEY
-      : undefined) ||
-    import.meta.env?.VITE_R2_SECRET_ACCESS_KEY ||
-    import.meta.env?.CLOUDFLARE_R2_SECRET_ACCESS_KEY;
-
-  return { r2AccountId, r2AccessKeyId, r2SecretAccessKey };
-}
-
 export const R2_BUCKET_NAME =
   (typeof process !== "undefined"
     ? process.env?.VITE_R2_BUCKET_NAME || process.env?.CLOUDFLARE_R2_BUCKET_NAME
@@ -64,38 +32,20 @@ export const R2_BUCKET_NAME =
   import.meta.env?.CLOUDFLARE_R2_BUCKET_NAME ||
   "dream-supreme-documents";
 
-export const R2_PUBLIC_URL =
-  (typeof process !== "undefined"
-    ? process.env?.VITE_R2_PUBLIC_URL || process.env?.CLOUDFLARE_R2_PUBLIC_URL
-    : undefined) ||
-  import.meta.env?.VITE_R2_PUBLIC_URL ||
-  import.meta.env?.CLOUDFLARE_R2_PUBLIC_URL;
-
-let s3Client: S3Client | null = null;
-let currentAccountId: string | undefined = undefined;
-
-export function getR2Client(): S3Client | null {
-  const { r2AccountId, r2AccessKeyId, r2SecretAccessKey } = getR2Credentials();
-
-  if (!r2AccountId || !r2AccessKeyId || !r2SecretAccessKey) {
-    s3Client = null;
-    currentAccountId = undefined;
-    return null;
-  }
-
-  if (!s3Client || currentAccountId !== r2AccountId) {
-    currentAccountId = r2AccountId;
-    s3Client = new S3Client({
-      region: "auto",
-      endpoint: `https://${r2AccountId}.r2.cloudflarestorage.com`,
-      credentials: {
-        accessKeyId: r2AccessKeyId,
-        secretAccessKey: r2SecretAccessKey,
-      },
-    });
-  }
-
-  return s3Client;
+/**
+ * Direct R2 access from the browser is intentionally disabled: Cloudflare R2 has no
+ * browser-safe (RLS-scoped) auth mode comparable to Supabase's anon key, so any IAM
+ * credential capable of signing R2 requests must never be shipped in client JS —
+ * Vite inlines every `VITE_`-prefixed env var into the built bundle regardless of
+ * whether the code path using it actually runs, so simply gating usage at runtime
+ * isn't sufficient. Object storage always goes through Supabase Storage below, which
+ * is protected by the agency-scoped RLS policies in
+ * supabase/migrations/20260730000001_secure_storage_buckets.sql. Re-introducing R2
+ * requires proxying uploads/downloads through a server-side function (e.g. a Supabase
+ * Edge Function) that holds the R2 credentials outside the client bundle.
+ */
+export function getR2Client(): null {
+  return null;
 }
 
 /**
@@ -157,8 +107,8 @@ export async function verifyStorageAccessAuthorization(
 }
 
 /**
- * Upload a file/blob to Cloudflare R2 object storage (or fallback to Supabase Storage)
- * with per-user quota checking and database authorization verification.
+ * Upload a file/blob to Supabase Storage with per-user quota checking and
+ * database authorization verification.
  */
 export async function uploadFileToR2(
   file: File | Blob,
@@ -185,31 +135,6 @@ export async function uploadFileToR2(
     );
   }
 
-  const client = getR2Client();
-
-  if (client) {
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const command = new PutObjectCommand({
-        Bucket: R2_BUCKET_NAME,
-        Key: path,
-        Body: new Uint8Array(arrayBuffer),
-        ContentType: file.type || "application/octet-stream",
-      });
-      await client.send(command);
-      return path;
-    } catch (err) {
-      const isTest =
-        (typeof process !== "undefined" && process.env?.NODE_ENV === "test") ||
-        import.meta.env?.MODE === "test";
-      if (isTest) {
-        return path;
-      }
-      throw err;
-    }
-  }
-
-  // Fallback to Supabase Storage if R2 is not configured
   const { data, error } = await supabase.storage.from(DOCUMENT_BUCKET).upload(path, file, {
     upsert: false,
     contentType: file.type || "application/octet-stream",
@@ -219,8 +144,8 @@ export async function uploadFileToR2(
 }
 
 /**
- * Get a presigned download URL (or public URL) for a file stored in Cloudflare R2 / Supabase Storage
- * after verifying database authorization.
+ * Get a presigned download URL for a file stored in Supabase Storage after
+ * verifying database authorization.
  */
 export async function getR2FileUrl(
   key: string | null | undefined,
@@ -231,31 +156,13 @@ export async function getR2FileUrl(
 
   await verifyStorageAccessAuthorization(key, options);
 
-  const client = getR2Client();
-
-  if (client) {
-    if (R2_PUBLIC_URL) {
-      const baseUrl = R2_PUBLIC_URL.endsWith("/") ? R2_PUBLIC_URL.slice(0, -1) : R2_PUBLIC_URL;
-      const cleanKey = key.startsWith("/") ? key.slice(1) : key;
-      return `${baseUrl}/${cleanKey}`;
-    }
-
-    const command = new GetObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: key,
-    });
-
-    return await getSignedUrl(client, command, { expiresIn: 300 });
-  }
-
-  // Fallback to Supabase Storage
   const { data, error } = await supabase.storage.from(DOCUMENT_BUCKET).createSignedUrl(key, 300);
   if (error) throw error;
   return data.signedUrl;
 }
 
 /**
- * Delete a file from Cloudflare R2 storage / Supabase Storage after verifying authorization.
+ * Delete a file from Supabase Storage after verifying authorization.
  */
 export async function removeStoredFile(
   key: string,
@@ -263,18 +170,6 @@ export async function removeStoredFile(
 ): Promise<void> {
   await verifyStorageAccessAuthorization(key, options);
 
-  const client = getR2Client();
-
-  if (client) {
-    const command = new DeleteObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: key,
-    });
-    await client.send(command);
-    return;
-  }
-
-  // Fallback to Supabase Storage
   const { error } = await supabase.storage.from(DOCUMENT_BUCKET).remove([key]);
   if (error) throw error;
 }
