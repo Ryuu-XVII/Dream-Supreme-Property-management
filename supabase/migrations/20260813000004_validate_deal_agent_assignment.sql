@@ -1,3 +1,10 @@
+-- Migration: Validate deal agent assignment stays within the caller's agency
+-- Description: create_deal_full checked the caller's own agency via get_current_agency_id()
+-- but never verified that p_agent_id (the user_account assigned as listing_agent) actually
+-- belongs to that agency, or exists/is active at all. Any agent could pass an arbitrary uuid
+-- -- another agency's user, an archived account, or a non-existent id -- and have it recorded
+-- as the deal's listing agent, which downstream feeds commission-split calculations.
+
 CREATE OR REPLACE FUNCTION public.create_deal_full (
   p_address_line text,
   p_suburb text,
@@ -8,11 +15,11 @@ CREATE OR REPLACE FUNCTION public.create_deal_full (
   p_garages smallint,
   p_erf_size_sqm numeric,
   p_floor_size_sqm numeric,
-  
+
   p_mandate_type public.mandate_type,
   p_listing_price_cents bigint,
   p_commission_rate_bps int,
-  
+
   p_seller_name text,
   p_seller_email text,
   p_seller_mobile text,
@@ -28,7 +35,7 @@ CREATE OR REPLACE FUNCTION public.create_deal_full (
   p_occupation_date date,
   p_conveyancer_name text,
   p_agent_id uuid,
-  
+
   p_bond_amount_cents bigint,
   p_bond_due_date date,
   p_fica_due_date date
@@ -90,7 +97,7 @@ BEGIN
     INSERT INTO public.suspensive_condition (deal_id, condition_type, description, due_on, original_due_on, responsible_party)
     VALUES (v_deal_id, 'bond_approval', 'Bond approval required', p_bond_due_date, p_bond_due_date, 'purchaser');
   END IF;
-  
+
   IF p_fica_due_date IS NOT NULL THEN
     INSERT INTO public.suspensive_condition (deal_id, condition_type, description, due_on, original_due_on, responsible_party)
     VALUES (v_deal_id, 'fica_clearance', 'Deposit clearance', p_fica_due_date, p_fica_due_date, 'purchaser');

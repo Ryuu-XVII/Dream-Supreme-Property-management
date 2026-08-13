@@ -24,10 +24,7 @@ export function useTrustLedger(dealId?: string, leaseId?: string) {
       }
 
       const { data, error } = await query;
-      if (error) {
-        console.error("Failed to fetch trust ledger:", error);
-        return [];
-      }
+      if (error) throw error;
 
       return (data || []).map((row: any) => ({
         id: row.id,

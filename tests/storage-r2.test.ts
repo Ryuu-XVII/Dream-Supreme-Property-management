@@ -27,7 +27,7 @@ describe("Cloudflare R2 Storage Adapter", () => {
     expect(getR2Client()).toBeNull();
   });
 
-  it("throws an error when uploaded file exceeds 50MB max limit", async () => {
+  it("throws an error when uploaded file exceeds 20MB max limit", async () => {
     const oversizedBlob = {
       size: MAX_SINGLE_FILE_BYTES + 1,
       type: "application/pdf",
@@ -35,7 +35,19 @@ describe("Cloudflare R2 Storage Adapter", () => {
     } as unknown as File;
 
     await expect(uploadFileToR2(oversizedBlob, "test/oversized.pdf")).rejects.toThrow(
-      /exceeds maximum allowable limit of 50MB/,
+      /exceeds the maximum allowable limit of 20MB/,
+    );
+  });
+
+  it("throws an error when uploaded file type is not in the allowed list", async () => {
+    const disallowedFile = {
+      size: 1024,
+      type: "application/zip",
+      arrayBuffer: async () => new ArrayBuffer(0),
+    } as unknown as File;
+
+    await expect(uploadFileToR2(disallowedFile, "test/archive.zip")).rejects.toThrow(
+      /is not supported/,
     );
   });
 

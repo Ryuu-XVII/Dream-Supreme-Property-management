@@ -29,14 +29,14 @@ export function useAdminUsers() {
         .select("*")
         .neq("status", "archived")
         .neq("status", "suspended");
-      if (accountErr) console.error("Error fetching user_account:", accountErr);
+      if (accountErr) throw accountErr;
 
       // 2. Fetch pending invitations from PostgreSQL migration schema (public.user_invitation)
       const { data: invitations, error: inviteErr } = await supabase
         .from("user_invitation")
         .select("*")
         .is("accepted_at", null);
-      if (inviteErr) console.error("Error fetching user_invitation:", inviteErr);
+      if (inviteErr) throw inviteErr;
 
       const registeredUsers: AdminUser[] = (accounts || []).map(
         (u: Record<string, unknown>): AdminUser => {

@@ -2,21 +2,20 @@ import { supabase } from "@/lib/supabase";
 
 const DOCUMENT_BUCKET = "mandate-documents";
 
-export const MAX_SINGLE_FILE_BYTES = 50 * 1024 * 1024; // 50MB max per document
+// Must stay in sync with the `mandate-documents` bucket's file_size_limit and
+// allowed_mime_types in supabase/migrations/20260730000001_secure_storage_buckets.sql —
+// otherwise uploads that pass client-side checks are rejected server-side with a
+// confusing error instead of a clear one.
+export const MAX_SINGLE_FILE_BYTES = 20 * 1024 * 1024; // 20MB max per document
 export const MAX_BUCKET_STORAGE_BYTES = 8 * 1024 * 1024 * 1024; // 8GB total storage cap
 export const DEFAULT_USER_STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024; // 1GB default storage limit per user
-
-/**
- * Generate an isolated per-user storage key path.
- * Format: users/<user_id>/<filename>
- */
-export function getUserStoragePath(userId: string, filename: string): string {
-  const cleanPath = filename.replace(/^\/+/, "");
-  if (cleanPath.startsWith(`users/${userId}/`)) {
-    return cleanPath;
-  }
-  return `users/${userId}/${cleanPath}`;
-}
+export const ALLOWED_DOCUMENT_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
 
 export interface StorageQuotaOptions {
   currentStorageUsedBytes?: number;
@@ -119,7 +118,14 @@ export async function uploadFileToR2(
 
   if (file.size > MAX_SINGLE_FILE_BYTES) {
     throw new Error(
-      `File size (${(file.size / (1024 * 1024)).toFixed(1)}MB) exceeds maximum allowable limit of 50MB per file to maintain 8GB storage ceiling.`,
+      `File size (${(file.size / (1024 * 1024)).toFixed(1)}MB) exceeds the maximum allowable limit of 20MB per file.`,
+    );
+  }
+
+  const contentType = file.type || "application/octet-stream";
+  if (!ALLOWED_DOCUMENT_MIME_TYPES.includes(contentType)) {
+    throw new Error(
+      `File type "${contentType}" is not supported. Allowed types: JPEG, PNG, PDF, DOC, DOCX.`,
     );
   }
 
@@ -137,7 +143,7 @@ export async function uploadFileToR2(
 
   const { data, error } = await supabase.storage.from(DOCUMENT_BUCKET).upload(path, file, {
     upsert: false,
-    contentType: file.type || "application/octet-stream",
+    contentType,
   });
   if (error) throw error;
   return data.path;

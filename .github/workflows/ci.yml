@@ -30,7 +30,15 @@ jobs:
           cache: npm
 
       - name: Install Dependencies
-        run: npm ci || npm install
+        run: npm ci
+
+      - name: Audit dependencies for known vulnerabilities
+        run: npm audit --audit-level=high
+
+      - name: Scan for committed secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create local env for tests
         run: |
@@ -125,7 +133,7 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.114.0
       - run: supabase start
       - run: supabase db reset
       - run: supabase db lint --level warning

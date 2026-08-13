@@ -28,10 +28,7 @@ export function useAdminProperties() {
         deals:deal(id, status, stage, sale_price_cents, participants:deal_participant(role, user:user_account_id(full_name)))
       `);
 
-      if (error) {
-        console.error(error);
-        return [];
-      }
+      if (error) throw error;
 
       return data.map((p: Record<string, unknown>): PropertyData => {
         const addressLine1 = typeof p.address_line === "string" ? p.address_line : "";

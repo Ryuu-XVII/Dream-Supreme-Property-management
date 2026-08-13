@@ -148,20 +148,18 @@ function RegisterPage() {
         session = signInData.session;
       }
 
-      // Step 4: Upload avatar after authentication.
-      if (avatarFile && session) {
-        const fileExt = avatarFile.name.split(".").pop();
-        const storagePath = `${authUser.id}/avatars/${crypto.randomUUID()}.${fileExt}`;
-        avatarKey = await uploadFileToR2(avatarFile, storagePath);
-      }
-
-      // Step 5: Accept the invitation and create the user_account profile.
+      // Step 4: Accept the invitation and create the user_account profile.
+      // This must happen before any storage upload: the storage RLS policies scope
+      // access by the caller's agency_id via get_current_agency_id(), which resolves
+      // from the user_account row created here. Uploading first (as this used to do,
+      // keyed by authUser.id) meant get_current_agency_id() was still NULL and every
+      // avatar upload during registration was silently rejected by RLS.
       const fullName = `${data.firstName.trim()} ${data.lastName.trim()}`;
       const { error: rpcError } = await supabase.rpc("accept_user_invitation", {
         p_token: invitationToken,
         p_full_name: fullName,
         p_mobile: data.phone,
-        p_avatar_key: avatarKey,
+        p_avatar_key: null,
       });
 
       if (rpcError) throw rpcError;
@@ -171,6 +169,19 @@ function RegisterPage() {
         throw new Error(
           "Your profile was created but could not be activated. Please sign in again.",
         );
+      }
+
+      // Step 5: Now that the agent's user_account exists, upload the avatar under
+      // their agency's storage path and attach it to the profile.
+      if (avatarFile && session) {
+        const fileExt = avatarFile.name.split(".").pop();
+        const storagePath = `${createdAccount.agencyId}/avatars/${authUser.id}/${crypto.randomUUID()}.${fileExt}`;
+        avatarKey = await uploadFileToR2(avatarFile, storagePath);
+        const { error: avatarUpdateError } = await supabase
+          .from("user_account")
+          .update({ avatar_key: avatarKey })
+          .eq("id", createdAccount.id);
+        if (avatarUpdateError) throw avatarUpdateError;
       }
 
       toast.success("Welcome to Dream Supreme Properties!", { id: "register" });

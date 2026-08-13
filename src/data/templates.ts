@@ -16,10 +16,7 @@ export function useDocumentTemplates() {
         .eq("agency_id", account!.agencyId)
         .order("name", { ascending: true });
 
-      if (error) {
-        console.error("Failed to fetch document templates:", error);
-        return [];
-      }
+      if (error) throw error;
 
       return (data || []).map((row: any) => ({
         id: row.id,

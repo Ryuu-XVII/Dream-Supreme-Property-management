@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import {
-  getUserStoragePath,
-  DEFAULT_USER_STORAGE_LIMIT_BYTES,
-  uploadFileToR2,
-  MAX_SINGLE_FILE_BYTES,
-} from "@/lib/storage";
+import { DEFAULT_USER_STORAGE_LIMIT_BYTES, uploadFileToR2 } from "@/lib/storage";
 import { supabase } from "@/lib/supabase";
 
 describe("Per-Agent Storage Isolation & Quota Limits", () => {
@@ -12,27 +7,15 @@ describe("Per-Agent Storage Isolation & Quota Limits", () => {
     vi.restoreAllMocks();
   });
 
-  it("generates isolated per-agent storage paths", () => {
-    const userId = "agent-123-uuid";
-    const path = getUserStoragePath(userId, "fica/identity-document.pdf");
-    expect(path).toBe("users/agent-123-uuid/fica/identity-document.pdf");
-  });
-
-  it("does not duplicate users prefix if already present", () => {
-    const userId = "agent-123-uuid";
-    const existingPath = "users/agent-123-uuid/ffc/cert.pdf";
-    expect(getUserStoragePath(userId, existingPath)).toBe("users/agent-123-uuid/ffc/cert.pdf");
-  });
-
   it("defaults user storage quota to 1GB (1,073,741,824 bytes)", () => {
     expect(DEFAULT_USER_STORAGE_LIMIT_BYTES).toBe(1024 * 1024 * 1024);
   });
 
   it("rejects uploads that exceed the user's storage quota limit", async () => {
-    const currentUsed = 990 * 1024 * 1024; // 990 MB used
+    const currentUsed = 1010 * 1024 * 1024; // 1010 MB used
     const limit = 1024 * 1024 * 1024; // 1 GB limit
     const mockFile = {
-      size: 40 * 1024 * 1024, // 40 MB file
+      size: 15 * 1024 * 1024, // 15 MB file, under the 20MB per-file cap
       type: "application/pdf",
       arrayBuffer: async () => new ArrayBuffer(0),
     } as unknown as File;

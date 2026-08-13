@@ -33,10 +33,7 @@ export function useAuditLogs() {
         .order("occurred_at", { ascending: false })
         .limit(50);
 
-      if (error) {
-        console.error(error);
-        return [];
-      }
+      if (error) throw error;
 
       return data.map((log: Record<string, unknown>): AuditLogEntry => {
         return {

@@ -45,7 +45,12 @@ async function fetchAccount(nextSession: Session | null): Promise<UserAccount | 
 
   let data = byAuthId;
 
-  if (!data && nextSession.user.email) {
+  // Fall back to matching by email only once Supabase has confirmed this session's user
+  // actually controls that mailbox. Without that check, anyone could sign up with an
+  // existing user's email address and have their auth_user_id silently rebound onto that
+  // user's account, hijacking it. A confirmed email means the confirmation link was
+  // clicked from that inbox, which an attacker impersonating the address cannot do.
+  if (!data && nextSession.user.email && nextSession.user.email_confirmed_at) {
     const { data: byEmail } = await supabase
       .from("user_account")
       .select("id, agency_id, branch_id, full_name, email, mobile, role, status, auth_user_id")
