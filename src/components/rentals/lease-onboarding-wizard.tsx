@@ -118,11 +118,12 @@ export function LeaseOnboardingWizard({ open, onOpenChange }: LeaseOnboardingWiz
     queryKey: ["wizard-properties", account?.agencyId],
     enabled: !!account && open,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("property")
         .select("id, address_line, suburb, city")
         .eq("agency_id", account!.agencyId)
         .order("address_line");
+      if (error) throw error;
       return (data || []).map((p: any) => ({
         id: p.id,
         label: `${p.address_line || "Property #" + p.id.slice(0, 6)} ${p.suburb ? `(${p.suburb})` : ""}`,
@@ -134,12 +135,13 @@ export function LeaseOnboardingWizard({ open, onOpenChange }: LeaseOnboardingWiz
     queryKey: ["wizard-parties", account?.agencyId],
     enabled: !!account && open,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("party")
         .select("id, full_name, party_type, entity_type")
         .eq("agency_id", account!.agencyId)
         .is("archived_at", null)
         .order("full_name");
+      if (error) throw error;
       return data || [];
     },
   });
@@ -148,15 +150,33 @@ export function LeaseOnboardingWizard({ open, onOpenChange }: LeaseOnboardingWiz
     queryKey: ["wizard-agents", account?.agencyId],
     enabled: !!account && open,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("user_account")
         .select("id, full_name")
         .eq("agency_id", account!.agencyId)
         .eq("status", "active")
         .order("full_name");
+      if (error) throw error;
       return data || [];
     },
   });
+
+  useEffect(() => {
+    if (!open) return;
+    const queries = [
+      { query: propertiesQuery, label: "properties" },
+      { query: partiesQuery, label: "landlord/tenant parties" },
+      { query: agentsQuery, label: "rental practitioners" },
+    ];
+    for (const { query, label } of queries) {
+      if (query.isError) {
+        toast.error(
+          `Could not load ${label}: ${query.error instanceof Error ? query.error.message : "unknown error"}`,
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, propertiesQuery.isError, partiesQuery.isError, agentsQuery.isError]);
 
   // Calculate pro-rata rent preview automatically
   useEffect(() => {
@@ -292,11 +312,19 @@ export function LeaseOnboardingWizard({ open, onOpenChange }: LeaseOnboardingWiz
                     <SelectValue placeholder="Select property asset..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {propertiesQuery.data?.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.label}
-                      </SelectItem>
-                    ))}
+                    {propertiesQuery.data?.length ? (
+                      propertiesQuery.data.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.label}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        {propertiesQuery.isLoading
+                          ? "Loading properties..."
+                          : "No properties found for this agency."}
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -308,11 +336,19 @@ export function LeaseOnboardingWizard({ open, onOpenChange }: LeaseOnboardingWiz
                     <SelectValue placeholder="Select practitioner..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {agentsQuery.data?.map((a) => (
-                      <SelectItem key={a.id} value={a.id}>
-                        {a.full_name}
-                      </SelectItem>
-                    ))}
+                    {agentsQuery.data?.length ? (
+                      agentsQuery.data.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.full_name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        {agentsQuery.isLoading
+                          ? "Loading practitioners..."
+                          : "No active practitioners found."}
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -330,11 +366,19 @@ export function LeaseOnboardingWizard({ open, onOpenChange }: LeaseOnboardingWiz
                       <SelectValue placeholder="Select landlord..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {partiesQuery.data?.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.full_name} ({p.party_type})
-                        </SelectItem>
-                      ))}
+                      {partiesQuery.data?.length ? (
+                        partiesQuery.data.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.full_name} ({p.party_type})
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                          {partiesQuery.isLoading
+                            ? "Loading parties..."
+                            : "No client contacts found. Add one under Clients first."}
+                        </div>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -346,11 +390,19 @@ export function LeaseOnboardingWizard({ open, onOpenChange }: LeaseOnboardingWiz
                       <SelectValue placeholder="Select tenant..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {partiesQuery.data?.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.full_name} ({p.party_type})
-                        </SelectItem>
-                      ))}
+                      {partiesQuery.data?.length ? (
+                        partiesQuery.data.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.full_name} ({p.party_type})
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                          {partiesQuery.isLoading
+                            ? "Loading parties..."
+                            : "No client contacts found. Add one under Clients first."}
+                        </div>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
