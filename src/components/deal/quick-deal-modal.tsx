@@ -116,6 +116,7 @@ export function QuickDealModal({
     sellerEmail: "",
     sellerMobile: "",
     sellerIdNumber: "",
+    sellerTaxNumber: "",
     sellerFica: "Complete",
     popiaConsentSigned: true,
 
