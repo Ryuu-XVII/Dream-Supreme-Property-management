@@ -13,9 +13,9 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 
 ### `property`, `mandate`, & `deal`
 
-- **`property`**: The physical real estate asset. Independent of the transaction.
-- **`mandate`**: The exclusive or open listing agreement to sell/rent a `property`. Tracks listing price and expiry.
-- **`deal`**: The transactional workflow. Links a `property` (and optionally a `mandate`) to `user_account`s (via `deal_participant`). Moves through strict stages (e.g., `Mandate Signed` -> `OTP Signed` -> `Registered`). Deals can now be put into an `'archived'` status when older than 3 years.
+- **`property`**: The physical real estate asset. Independent of the transaction. Its street address column is `address_line`, not `address`.
+- **`mandate`**: The exclusive or open listing agreement to sell/rent a `property`. Tracks listing price and expiry. `seller_party_id` and `listing_agent_id` (added in `20260814000004_lightweight_mandate_registration.sql`) let a mandate stand on its own, independent of any `deal` — a mandate is pre-legal listing intake and doesn't require a purchaser or signed OTP to exist.
+- **`deal`**: The transactional workflow. Links a `property` (and optionally a `mandate`) to `user_account`s (via `deal_participant`). Moves through strict stages (e.g., `Mandate Signed` -> `OTP Signed` -> `Registered`). Deals can now be put into an `'archived'` status when older than 3 years. `document.mandate_id` lets uploads attach directly to a mandate before a deal exists.
 
 ### `user_notification_preference` & `notification` (Notification System)
 
@@ -86,6 +86,8 @@ Another helper `public.get_current_role()` extracts the user's role from their `
 - **Principals & Admins**: Can view, edit, and delete almost all records within their `agency_id`.
 - **Agents & Candidates**: Can only view and edit records they are explicitly assigned to (e.g., a `deal` where they exist in `deal_participant`).
 
+**`is_manager()` vs `get_current_role()`**: `public.is_manager()` is the correct helper for any "is this caller a manager?" check — it recognizes `admin`, `principal`, `admin_agent`, and `admin & agent` (dual-role) accounts. `get_current_role() in ('principal', 'admin')` misses dual-role accounts entirely and previously caused `create_deal`, `create_client`, and (pre-emptively, in `create_mandate`) to wrongly block a legitimate manager from reassigning a record; all three now use `is_manager()`.
+
 ### `managed_by` Edit Rights (Rentals)
 
 For the Rentals module, read access is granted to the entire agency for transparency, but write/edit access on a `lease` (and its invoices/maintenance) is strictly limited to the `managed_by` agent via the `public.can_edit_lease()` RLS helper function.
@@ -134,6 +136,10 @@ Enforces agency principal approval for tenant maintenance work orders and contra
 
 Executes server-side document merge substitution on template markdown, creates the generated document entry in `public.document`, and logs an automated audit entry.
 
+### `create_mandate(p_payload jsonb)`
+
+Registers a bare property mandate: `property` + a seller `party` + listing terms only (added in `20260814000004_lightweight_mandate_registration.sql`). Deliberately separate from `create_deal`, which requires a purchaser and FICA/OTP-grade party data that doesn't exist yet at listing intake. The Mandates Register's "New Listing" flow and the `/mandates/new` wizard both call this instead of `create_deal`. "Convert to Deal" (`/deals/new?mandateId=...`) later prefills a full deal capture from the mandate's `property`/`seller_party_id`/terms.
+
 ### `create_lease_onboarding(p_payload jsonb)`
 
 Executes atomic lease onboarding, inserting the `lease` record, trust deposit ledger entries, initial pro-rata rent invoice, and ingoing inspection schedule in a single audited transaction.
@@ -157,8 +163,9 @@ Adjusts a user's `storage_used_bytes` by `bytes_delta` (clamped to a minimum of 
 ## 4. Triggers & Automation
 
 - **`deal_stage_history`**: A Postgres trigger automatically records an entry in `deal_timeline` whenever a deal's `stage` column is updated.
-- **`notify_agency_admins()` Trigger**: An automated trigger on `public.deal` and `public.audit_log` that instantly broadcasts in-app notifications (`public.notification`) and enqueues HTML email notifications (`public.email_queue`) to all agency `admin` and `principal` accounts whenever a deal is registered (closed), cancelled, transitioned, or tagged with an operational progress note.
-- **`audit_log`**: Crucial actions (like commission finalization, user archival, entity updates) write to `audit_log` for complete financial transparency.
+- **`notify_agency_admins()` Trigger**: An automated trigger on `public.deal` and `public.audit_log` that instantly broadcasts in-app notifications (`public.notification`) and enqueues HTML email notifications (`public.email_queue`) to all agency `admin` and `principal` accounts whenever a deal is registered (closed), cancelled, transitioned, or tagged with an operational progress note. Fixed in `20260814000005_fix_deal_notification_address_column.sql`, which also fired on every `deal` insert: it queried `property.address`, a column that has always been named `address_line`, so it broke every deal creation until fixed.
+- **`trigger_deal_stage_whatsapp_notification()` Trigger**: Fires on `deal.stage` transitions to `bond_approved`/`registered` and queues `whatsapp_queue` messages to the buyer/seller. Also fixed in `20260814000005_fix_deal_notification_address_column.sql` — it referenced a non-existent function, `dp.role = 'buyer'` when `deal_party.role` only has `'purchaser'`, and `p.phone`/`deal.address`, none of which exist (the party phone column is `mobile`; address must be joined via `property_id`).
+- **`audit_log`**: Crucial actions (like commission finalization, user archival, entity updates) write to `audit_log` for complete financial transparency. `action` is a `public.audit_action` enum; `20260814000006_add_progress_note_audit_action.sql` added the `'progress_note_added'` value that `notify_agency_admins()` compared against — the missing value broke the cast on **every** `audit_log` insert app-wide (not just progress notes) until fixed.
 - **`pg_cron` (Scheduled Jobs)**: Used for automated daily background tasks. For example, `run_daily_sweeps()` runs every night at midnight to check all FFC certificates and automatically suspends accounts if their FFC has expired.
 
 ## 5. User Invitations & Security Functions

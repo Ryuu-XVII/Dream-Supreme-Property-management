@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createDeal } from "@/data/deals";
+import { createMandate } from "@/data/deals";
 import { useAgents } from "@/data/reference";
 import { supabase } from "@/lib/supabase";
 import { uploadFileToR2, getUserStorageUsage, recordStorageUsageDelta } from "@/lib/storage";
@@ -162,31 +162,15 @@ function NewMandatePage() {
       setLoading(true);
       toast.loading("Registering property mandate...", { id: "new-mandate" });
 
-      const commissionBps = (parseFloat(form.agreedCommissionPct || "5") * 100).toString();
-
-      const dealId = await createDeal({
-        ...form,
-        commissionBps,
-        buyerName: "Unassigned Purchaser",
-        salePrice: form.listingPrice,
-        otpSigned: form.mandateStartDate,
-        occupationDate: form.mandateExpiryDate,
-        conveyancer: "Vogel & Associates Attorneys",
-        bondRequired: false,
-        bondAmount: "0",
-        bondDueDate: form.mandateExpiryDate,
-        ficaRequired: true,
-        ficaDueDate: form.mandateStartDate,
-      });
+      const mandateId = await createMandate(form);
 
       // Upload attached documents if any
       const docsToUpload: Array<{ file: File; category: string }> = [];
-      if (form.mandateDoc)
-        docsToUpload.push({ file: form.mandateDoc, category: "mandate_agreement" });
+      if (form.mandateDoc) docsToUpload.push({ file: form.mandateDoc, category: "mandate" });
       if (form.sellerIdDoc) docsToUpload.push({ file: form.sellerIdDoc, category: "fica_id" });
       if (form.titleDeedDoc) docsToUpload.push({ file: form.titleDeedDoc, category: "title_deed" });
 
-      if (docsToUpload.length > 0 && dealId) {
+      if (docsToUpload.length > 0 && mandateId) {
         const {
           data: { user },
         } = await supabase.auth.getUser();
@@ -204,7 +188,7 @@ function NewMandatePage() {
             let currentUsed = usedBytes;
 
             for (const { file, category } of docsToUpload) {
-              const path = `${agencyId}/${dealId}/${crypto.randomUUID()}-${file.name}`;
+              const path = `${agencyId}/${mandateId}/${crypto.randomUUID()}-${file.name}`;
               const storageKey = await uploadFileToR2(file, path, {
                 currentStorageUsedBytes: currentUsed,
                 storageLimitBytes: limitBytes,
@@ -214,7 +198,7 @@ function NewMandatePage() {
 
               await supabase.from("document").insert({
                 agency_id: agencyId,
-                deal_id: dealId,
+                mandate_id: mandateId,
                 category,
                 filename: file.name,
                 storage_key: storageKey,

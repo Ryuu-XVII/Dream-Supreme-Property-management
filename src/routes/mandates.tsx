@@ -53,7 +53,7 @@ function MandatesRegister() {
           signed_on,
           expires_on,
           status,
-          property:property_id(id, address, suburb)
+          property:property_id(id, address_line, suburb)
         `,
         )
         .eq("agency_id", account!.agencyId)
@@ -110,7 +110,7 @@ function MandatesRegister() {
               mandatesQuery.data?.map((mandate) => (
                 <TableRow key={mandate.id}>
                   <TableCell>
-                    <div className="font-medium">{(mandate.property as any)?.address}</div>
+                    <div className="font-medium">{(mandate.property as any)?.address_line}</div>
                     <div className="text-xs text-muted-foreground">
                       {(mandate.property as any)?.suburb}
                     </div>

@@ -46,6 +46,24 @@ export const entityTypeFromDb: Record<string, EntityType> = {
   deceased_estate: "Deceased Estate",
 };
 
+export const propertyTypeFromDb: Record<string, string> = {
+  house: "Freehold House",
+  apartment: "Sectional Title",
+  townhouse: "Townhouse",
+  vacant_land: "Vacant Land",
+  farm: "Farm",
+  commercial: "Commercial",
+  industrial: "Industrial",
+  other: "Other",
+};
+
+export const ficaStatusFromDb: Record<string, "Complete" | "Partial" | "Not Started"> = {
+  complete: "Complete",
+  partial: "Partial",
+  not_started: "Not Started",
+  expired: "Not Started",
+};
+
 export interface TransferDutyBracket {
   from: number;
   to: number | null;

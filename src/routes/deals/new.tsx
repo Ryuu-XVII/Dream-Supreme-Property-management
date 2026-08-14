@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -43,6 +43,7 @@ import {
   type DealCaptureForm,
   type DealPartyInput,
 } from "@/lib/deal-capture";
+import { entityTypeFromDb, ficaStatusFromDb, propertyTypeFromDb } from "@/lib/domain";
 import type { EntityType } from "@/types";
 
 export const Route = createFileRoute("/deals/new")({
@@ -352,6 +353,7 @@ function PartyEditor({
 function NewDealPage() {
   const { account } = useAuth();
   const navigate = useNavigate();
+  const { mandateId } = Route.useSearch();
   const [step, setStep] = useState(1);
   const [baselineFiles, setBaselineFiles] = useState<Record<string, File | null>>({
     mandate: null,
@@ -390,7 +392,93 @@ function NewDealPage() {
   const users = referenceData?.users || [];
   const conveyancerFirms = referenceData?.conveyancerFirms || [];
 
+  const { data: sourceMandate } = useQuery({
+    queryKey: ["mandate-for-conversion", mandateId],
+    enabled: !!mandateId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mandate")
+        .select(
+          `
+          id, mandate_type, listing_price_cents, commission_rate_bps, signed_on, expires_on,
+          listing_agent_id,
+          property:property_id (
+            address_line, suburb, city, province, postal_code, erf_number, title_deed_number,
+            property_type, is_sectional_title, bedrooms, bathrooms, garages, erf_size_sqm,
+            floor_size_sqm, legal_description, deeds_office, property_use, is_improved
+          ),
+          seller:seller_party_id (
+            full_name, id_or_reg_number, email, mobile, entity_type, fica_status, popia_consent_at
+          )
+        `,
+        )
+        .eq("id", mandateId)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+  });
+
   const [formData, setFormData] = useState<DealCaptureForm>(createInitialDealCapture);
+  const prefilledMandateId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!sourceMandate || !mandateId || prefilledMandateId.current === mandateId) return;
+    prefilledMandateId.current = mandateId;
+    const property = sourceMandate.property || {};
+    const seller = sourceMandate.seller;
+    const listingPriceZar = String((sourceMandate.listing_price_cents || 0) / 100);
+
+    setFormData((prev) => ({
+      ...prev,
+      address: property.address_line || prev.address,
+      suburb: property.suburb || prev.suburb,
+      city: property.city || prev.city,
+      province: property.province || prev.province,
+      postalCode: property.postal_code || prev.postalCode,
+      legalDescription:
+        property.legal_description ||
+        (property.erf_number
+          ? `Erf ${property.erf_number}, ${property.address_line || ""}, ${property.suburb || ""}, ${property.city || ""}`.trim()
+          : prev.legalDescription),
+      deedsOffice: property.deeds_office || prev.deedsOffice,
+      erfNumber: property.erf_number || prev.erfNumber,
+      titleDeedNumber: property.title_deed_number || prev.titleDeedNumber,
+      propertyType:
+        (propertyTypeFromDb[property.property_type] as DealCaptureForm["propertyType"]) ||
+        prev.propertyType,
+      propertyUse: property.property_use || prev.propertyUse,
+      isImproved: property.is_improved ?? prev.isImproved,
+      beds: property.bedrooms ?? prev.beds,
+      baths: property.bathrooms ?? prev.baths,
+      garages: property.garages ?? prev.garages,
+      erfSize: property.erf_size_sqm ?? prev.erfSize,
+      floorSize: property.floor_size_sqm ?? prev.floorSize,
+      mandateType: (sourceMandate.mandate_type?.replace(/^./, (v: string) => v.toUpperCase()) ||
+        prev.mandateType) as DealCaptureForm["mandateType"],
+      listingPrice: listingPriceZar,
+      salePrice: listingPriceZar,
+      commissionBps: String(sourceMandate.commission_rate_bps ?? prev.commissionBps),
+      mandateSigned: sourceMandate.signed_on || prev.mandateSigned,
+      mandateExpiry: sourceMandate.expires_on || prev.mandateExpiry,
+      agentId: sourceMandate.listing_agent_id || prev.agentId,
+      sellers: seller
+        ? [
+            {
+              ...createEmptyParty(),
+              name: seller.full_name || "",
+              idNumber: seller.id_or_reg_number || "",
+              email: seller.email || "",
+              mobile: seller.mobile || "",
+              entityType: entityTypeFromDb[seller.entity_type] || "Natural Person",
+              fica: ficaStatusFromDb[seller.fica_status] || "Not Started",
+              popiaConsent: !!seller.popia_consent_at,
+            },
+          ]
+        : prev.sellers,
+    }));
+    toast.success("Mandate details loaded — review and complete the remaining deal fields.");
+  }, [sourceMandate, mandateId]);
 
   const updateForm = <Key extends keyof DealCaptureForm>(key: Key, val: DealCaptureForm[Key]) => {
     setFormData((prev) => ({ ...prev, [key]: val }));
@@ -654,7 +742,24 @@ function NewDealPage() {
                   />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label>Full deeds-search property description *</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Full deeds-search property description *</Label>
+                    {!formData.legalDescription.trim() &&
+                      (formData.erfNumber.trim() || formData.address.trim()) && (
+                        <button
+                          type="button"
+                          className="text-xs font-medium text-primary hover:underline"
+                          onClick={() =>
+                            updateForm(
+                              "legalDescription",
+                              `Erf ${formData.erfNumber || "[erf number]"}, ${formData.address}, ${formData.suburb}, ${formData.city}`.trim(),
+                            )
+                          }
+                        >
+                          Use suggested description
+                        </button>
+                      )}
+                  </div>
                   <Textarea
                     placeholder="Erf / unit, township or scheme, registration division, province and extent"
                     value={formData.legalDescription}

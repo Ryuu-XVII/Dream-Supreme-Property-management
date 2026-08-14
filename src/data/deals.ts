@@ -335,18 +335,73 @@ export function useDealDetail(dealId: string) {
   });
 }
 
-export async function createDeal(formData: any) {
-  const propertyTypes: Record<string, string> = {
-    "Freehold House": "house",
-    "Sectional Title": "apartment",
-    "Estate House": "house",
-    Townhouse: "townhouse",
-    "Vacant Land": "vacant_land",
-    Farm: "farm",
-    Commercial: "commercial",
-    Industrial: "industrial",
-    Other: "other",
+const MANDATE_PROPERTY_TYPES: Record<string, string> = {
+  "Freehold House": "house",
+  "Sectional Title": "apartment",
+  "Sectional Title Apartment": "apartment",
+  "Estate House": "house",
+  "Estate Villa": "house",
+  Townhouse: "townhouse",
+  "Vacant Land": "vacant_land",
+  Farm: "farm",
+  Commercial: "commercial",
+  Industrial: "industrial",
+  Other: "other",
+};
+
+/**
+ * Registers a bare property mandate: property + seller + listing terms only.
+ * Deliberately separate from createDeal(), which is built for a fully signed
+ * OTP deal and requires a purchaser plus FICA/OTP-grade party data (sanctions
+ * screening, tax numbers, source of funds, disclosure sign-off) that doesn't
+ * exist yet at the listing-intake stage. Mandates are converted to deals
+ * later once a buyer and OTP are in place.
+ */
+export async function createMandate(formData: any) {
+  const toCents = (value: string | number | undefined) => Math.round((Number(value) || 0) * 100);
+
+  const payload = {
+    address: formData.address || "",
+    suburb: formData.suburb || "",
+    city: formData.city || "",
+    province: formData.province || "",
+    postalCode: formData.postalCode || "",
+    erfNumber: formData.erfNumber || "",
+    titleDeedNumber: formData.titleDeedNumber || "",
+    legalDescription: formData.deedsDescription || "",
+    deedsOffice: formData.deedsOffice || "",
+    propertyType: MANDATE_PROPERTY_TYPES[formData.propertyType] || "house",
+    isSectionalTitle: formData.propertyType === "Sectional Title Apartment",
+    bedrooms: Number(formData.beds) || 0,
+    bathrooms: Number(formData.baths) || 0,
+    garages: Number(formData.garages) || 0,
+    erfSizeSqm: Number(formData.erfSize) || 0,
+    floorSizeSqm: Number(formData.floorSize) || 0,
+    mandateType: String(formData.mandateType || "sole").toLowerCase(),
+    listingPriceCents: toCents(formData.listingPrice),
+    commissionRateBps: Math.round((parseFloat(formData.agreedCommissionPct || "5") || 5) * 100),
+    mandateSignedOn: formData.mandateStartDate || new Date().toISOString().split("T")[0],
+    mandateExpiresOn:
+      formData.mandateExpiryDate ||
+      new Date(Date.now() + 90 * 86400000).toISOString().split("T")[0],
+    leadAgentId: formData.agentId || undefined,
+    sellerName: formData.sellerName || "",
+    sellerIdNumber: formData.sellerIdNumber || "",
+    sellerEmail: formData.sellerEmail || "",
+    sellerMobile: formData.sellerMobile || "",
+    sellerAddress: formData.sellerAddress || "",
+    sellerFicaStatus: (formData.sellerFica || "not_started").toLowerCase().replaceAll(" ", "_"),
+    sellerPopiaConsent: formData.popiaConsentSigned ?? formData.popiaConsent ?? true,
   };
+
+  const { data, error } = await supabase.rpc("create_mandate", { p_payload: payload });
+  if (error) throw error;
+  if (!data) throw new Error("The mandate could not be registered.");
+  return data as string;
+}
+
+export async function createDeal(formData: any) {
+  const propertyTypes: Record<string, string> = MANDATE_PROPERTY_TYPES;
   const entityTypes: Record<string, string> = {
     "Natural Person": "natural_person",
     Company: "company",

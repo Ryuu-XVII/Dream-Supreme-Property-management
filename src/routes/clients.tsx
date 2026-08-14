@@ -259,7 +259,13 @@ function ClientsPage() {
         },
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "The client could not be saved.";
+      const message =
+        error &&
+        typeof error === "object" &&
+        "message" in error &&
+        typeof error.message === "string"
+          ? error.message
+          : "The client could not be saved.";
       toast.error(message, { id: "add-client" });
     } finally {
       setIsSubmitting(false);

@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { createDeal } from "@/data/deals";
+import { createDeal, createMandate } from "@/data/deals";
 import { useAgents } from "@/data/reference";
 import { useAuth } from "@/lib/auth";
 import {
@@ -224,19 +224,22 @@ export function QuickDealModal({
 
     try {
       setLoading(true);
-      toast.loading("Saving mandate record...", { id: "quick-deal" });
+      toast.loading(
+        entryType === "mandate" ? "Saving mandate record..." : "Saving deal record...",
+        { id: "quick-deal" },
+      );
 
-      const commissionBps = (parseFloat(form.agreedCommissionPct || "5") * 100).toString();
-
-      const dealId = await createDeal({
-        ...form,
-        commissionBps,
-        mandateSigned: form.mandateStartDate,
-        mandateExpiry: form.mandateExpiryDate,
-        effectiveDate: entryType === "mandate" ? form.mandateStartDate : form.otpSigned,
-        salePrice: entryType === "mandate" ? form.listingPrice : form.salePrice,
-        buyerName: entryType === "mandate" ? "Unassigned Purchaser" : form.buyerName,
-      });
+      const recordId =
+        entryType === "mandate"
+          ? await createMandate(form)
+          : await createDeal({
+              ...form,
+              commissionBps: (parseFloat(form.agreedCommissionPct || "5") * 100).toString(),
+              mandateSigned: form.mandateStartDate,
+              mandateExpiry: form.mandateExpiryDate,
+              effectiveDate: form.otpSigned,
+              salePrice: form.salePrice,
+            });
 
       toast.success(
         entryType === "deal"
@@ -245,7 +248,7 @@ export function QuickDealModal({
         { id: "quick-deal" },
       );
       onOpenChange(false);
-      if (onSuccess) onSuccess(dealId);
+      if (onSuccess) onSuccess(recordId);
     } catch (err: any) {
       toast.error(`Failed to record mandate: ${err.message}`, { id: "quick-deal" });
     } finally {

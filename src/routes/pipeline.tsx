@@ -198,7 +198,8 @@ const LeadTableRow = memo(function LeadTableRow({
 });
 
 function DealFlowPage() {
-  const { tab: currentTab } = Route.useSearch();
+  const { tab: rawTab } = Route.useSearch();
+  const currentTab = rawTab ?? "pipeline";
   const navigate = useNavigate({ from: Route.id });
   const { isReadOnly } = useAuth();
   const pipeline = usePipelineDeals();
