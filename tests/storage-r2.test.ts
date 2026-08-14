@@ -63,7 +63,9 @@ describe("Cloudflare R2 Storage Adapter", () => {
       remove: vi.fn().mockResolvedValue({ data: [], error: null }),
     } as any);
 
-    const dummyFile = new File(["test content"], "doc.pdf", { type: "application/pdf" });
+    const dummyFile = new File(["%PDF-1.4 test content"], "doc.pdf", {
+      type: "application/pdf",
+    });
     const uploadedPath = await uploadFileToR2(dummyFile, "mandates/doc.pdf");
     expect(uploadedPath).toBe("mandates/doc.pdf");
 

@@ -34,7 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createDeal } from "@/data/deals";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
-import { uploadFileToR2 } from "@/lib/storage";
+import { uploadFileToR2, getUserStorageUsage, recordStorageUsageDelta } from "@/lib/storage";
 import {
   createEmptyParty,
   createInitialDealCapture,
@@ -466,13 +466,18 @@ function NewDealPage() {
         agentId: formData.agentId || users[0]?.id,
       });
       try {
+        const usage = await getUserStorageUsage(account.id);
+        let runningUsedBytes = usage.usedBytes;
         for (const [category, file] of Object.entries(baselineFiles)) {
           if (!file) continue;
           const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
           const storageKey = await uploadFileToR2(
             file,
-            `${account.agencyId}/deals/${dealId}/${Date.now()}-${safeName}`,
+            `${account.agencyId}/deals/${dealId}/${crypto.randomUUID()}-${safeName}`,
+            { currentStorageUsedBytes: runningUsedBytes, storageLimitBytes: usage.limitBytes },
           );
+          await recordStorageUsageDelta(account.id, file.size);
+          runningUsedBytes += file.size;
           const { data: documentRecord, error } = await supabase
             .from("document")
             .insert({

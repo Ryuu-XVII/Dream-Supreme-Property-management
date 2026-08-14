@@ -91,7 +91,13 @@ export async function verifyStorageAccessAuthorization(
     return true; // Administrative roles have agency-wide access
   }
 
-  // Agent role authorization check: restrict access to their own user subfolder
+  // Agent role authorization check. Storage keys follow one of two conventions:
+  // `users/<userId>/...` for per-user private files, or `<agencyId>/...` for
+  // agency-scoped documents (deals, FFC certificates, avatars). Restrict agents
+  // to their own user folder or their own agency's folder accordingly. This is
+  // defense-in-depth alongside the agency-scoped RLS policies in
+  // supabase/migrations/20260730000001_secure_storage_buckets.sql, which are the
+  // authoritative enforcement point.
   const pathParts = key.split("/");
   if (pathParts[0] === "users" && pathParts[1]) {
     const targetUserId = pathParts[1];
@@ -100,9 +106,42 @@ export async function verifyStorageAccessAuthorization(
         "Unauthorized: You do not have permission to access another agent's private storage.",
       );
     }
+  } else if (pathParts[0] !== account.agency_id) {
+    throw new Error(
+      "Unauthorized: You do not have permission to access files outside your agency.",
+    );
   }
 
   return true;
+}
+
+// Magic-byte signatures for each allowed MIME type. The browser-supplied
+// `file.type` (and the Content-Type header derived from it) can be spoofed
+// trivially by renaming a file or editing form data, and the Supabase bucket's
+// allowed_mime_types check relies on that same client-supplied header — so
+// without this, both the client and bucket checks can be bypassed by simply
+// mislabeling a file. Sniffing the actual leading bytes catches that class of
+// bypass, though it does not substitute for content/virus scanning.
+const FILE_SIGNATURES: Record<string, { offset: number; bytes: number[] }[]> = {
+  "application/pdf": [{ offset: 0, bytes: [0x25, 0x50, 0x44, 0x46] }], // %PDF
+  "image/jpeg": [{ offset: 0, bytes: [0xff, 0xd8, 0xff] }],
+  "image/png": [{ offset: 0, bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] }],
+  "application/msword": [{ offset: 0, bytes: [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1] }],
+  // .docx (and other OOXML formats) are zip archives, identified by the local
+  // file header signature "PK\x03\x04".
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
+    { offset: 0, bytes: [0x50, 0x4b, 0x03, 0x04] },
+  ],
+};
+
+async function verifyFileSignature(file: File | Blob, mimeType: string): Promise<boolean> {
+  const signatures = FILE_SIGNATURES[mimeType];
+  if (!signatures) return true;
+
+  const maxLen = Math.max(...signatures.map((sig) => sig.offset + sig.bytes.length));
+  const head = new Uint8Array(await file.slice(0, maxLen).arrayBuffer());
+
+  return signatures.some((sig) => sig.bytes.every((b, i) => head[sig.offset + i] === b));
 }
 
 /**
@@ -129,6 +168,12 @@ export async function uploadFileToR2(
     );
   }
 
+  if (!(await verifyFileSignature(file, contentType))) {
+    throw new Error(
+      `File content does not match its declared type "${contentType}". The file may be corrupted, mislabeled, or renamed from a different format.`,
+    );
+  }
+
   const limit = quotaOptions?.storageLimitBytes ?? DEFAULT_USER_STORAGE_LIMIT_BYTES;
   const currentUsed = quotaOptions?.currentStorageUsedBytes ?? 0;
 
@@ -147,6 +192,39 @@ export async function uploadFileToR2(
   });
   if (error) throw error;
   return data.path;
+}
+
+/**
+ * Fetch a user's current storage usage/limit so callers can pass accurate
+ * StorageQuotaOptions into uploadFileToR2 instead of implicitly checking
+ * against zero bytes used.
+ */
+export async function getUserStorageUsage(
+  userId: string,
+): Promise<{ usedBytes: number; limitBytes: number }> {
+  const { data, error } = await supabase
+    .from("user_account")
+    .select("storage_used_bytes, storage_limit_bytes")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return {
+    usedBytes: data?.storage_used_bytes ?? 0,
+    limitBytes: data?.storage_limit_bytes ?? DEFAULT_USER_STORAGE_LIMIT_BYTES,
+  };
+}
+
+/**
+ * Record a change in a user's storage usage (positive on upload) via the
+ * `adjust_user_storage_usage` RPC, which enforces that callers may only
+ * adjust their own usage unless they hold an admin role.
+ */
+export async function recordStorageUsageDelta(userId: string, deltaBytes: number): Promise<void> {
+  const { error } = await supabase.rpc("adjust_user_storage_usage", {
+    target_user_id: userId,
+    bytes_delta: deltaBytes,
+  });
+  if (error) throw error;
 }
 
 /**

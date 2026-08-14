@@ -30,7 +30,13 @@ import { dateFmt, daysUntil } from "@/lib/format";
 import { useDashboardData } from "@/data/operations";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { getR2FileUrl, removeStoredFile, uploadFileToR2 } from "@/lib/storage";
+import {
+  getR2FileUrl,
+  removeStoredFile,
+  uploadFileToR2,
+  getUserStorageUsage,
+  recordStorageUsageDelta,
+} from "@/lib/storage";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -224,10 +230,13 @@ function UploadDialog({
               let storageKey = "";
               try {
                 const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
+                const { usedBytes, limitBytes } = await getUserStorageUsage(user.id);
                 storageKey = await uploadFileToR2(
                   file,
-                  `${account.agencyId}/ffc/${user.id}/${Date.now()}-${safeName}`,
+                  `${account.agencyId}/ffc/${user.id}/${crypto.randomUUID()}-${safeName}`,
+                  { currentStorageUsedBytes: usedBytes, storageLimitBytes: limitBytes },
                 );
+                await recordStorageUsageDelta(user.id, file.size);
                 const certificateResult = await supabase.rpc("upsert_ffc_certificate", {
                   p_user_account_id: user.id,
                   p_certificate_number: number.trim(),
@@ -243,7 +252,10 @@ function UploadDialog({
                 onSaved();
                 onOpenChange(false);
               } catch (error: any) {
-                if (storageKey) await removeStoredFile(storageKey).catch(() => undefined);
+                if (storageKey) {
+                  await removeStoredFile(storageKey).catch(() => undefined);
+                  await recordStorageUsageDelta(user.id, -file.size).catch(() => undefined);
+                }
                 toast.error(error.message || "Certificate upload failed");
               } finally {
                 setSaving(false);

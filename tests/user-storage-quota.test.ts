@@ -14,10 +14,12 @@ describe("Per-Agent Storage Isolation & Quota Limits", () => {
   it("rejects uploads that exceed the user's storage quota limit", async () => {
     const currentUsed = 1010 * 1024 * 1024; // 1010 MB used
     const limit = 1024 * 1024 * 1024; // 1 GB limit
+    const pdfHeader = new Uint8Array([0x25, 0x50, 0x44, 0x46]); // %PDF
     const mockFile = {
       size: 15 * 1024 * 1024, // 15 MB file, under the 20MB per-file cap
       type: "application/pdf",
-      arrayBuffer: async () => new ArrayBuffer(0),
+      arrayBuffer: async () => pdfHeader.buffer,
+      slice: () => ({ arrayBuffer: async () => pdfHeader.buffer }),
     } as unknown as File;
 
     await expect(
@@ -31,7 +33,7 @@ describe("Per-Agent Storage Isolation & Quota Limits", () => {
   it("allows uploads within the assigned custom quota limit", async () => {
     const currentUsed = 500 * 1024 * 1024; // 500 MB used
     const limit = 2 * 1024 * 1024 * 1024; // 2 GB limit (upgraded by admin)
-    const newFile = new File(["small content"], "small.pdf", {
+    const newFile = new File(["%PDF-1.4 small content"], "small.pdf", {
       type: "application/pdf",
     });
 

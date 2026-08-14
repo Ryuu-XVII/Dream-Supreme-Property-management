@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
-import { uploadFileToR2 } from "@/lib/storage";
+import { uploadFileToR2, recordStorageUsageDelta } from "@/lib/storage";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/register")({
@@ -177,6 +177,7 @@ function RegisterPage() {
         const fileExt = avatarFile.name.split(".").pop();
         const storagePath = `${createdAccount.agencyId}/avatars/${authUser.id}/${crypto.randomUUID()}.${fileExt}`;
         avatarKey = await uploadFileToR2(avatarFile, storagePath);
+        await recordStorageUsageDelta(createdAccount.id, avatarFile.size);
         const { error: avatarUpdateError } = await supabase
           .from("user_account")
           .update({ avatar_key: avatarKey })

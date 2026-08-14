@@ -22,16 +22,15 @@ The platform is designed to replace fragmented spreadsheets and legacy CRMs by c
 - **60-Second Express Deal Capture** modal for rapid agent pipeline entry.
 - Live Countdown Boards to monitor deal expiries.
 
-### 2. Cloudflare R2 Object Storage & Agent Quotas
+### 2. Document Storage & Agent Quotas
 
-- Per-agent isolated storage namespaces (`users/<user_id>/...`).
-- Database session & role authorization checks (`verifyStorageAccessAuthorization`) protecting documents against unauthorized access.
-- Global per-agent storage allocation enforcement (1 GB default) with interactive Admin quota override controls.
+- Agency- and agent-scoped storage namespaces (`<agency_id>/...`, `users/<user_id>/...`), enforced by Supabase Storage RLS policies and mirrored app-side authorization checks (`verifyStorageAccessAuthorization`). Direct client-side Cloudflare R2 access is intentionally disabled — see `src/lib/storage.ts` for the rationale — so all object storage runs through Supabase Storage.
+- Per-agent storage allocation enforcement (1 GB default) with interactive Admin quota override controls.
 
 ### 3. System Settings & Governance Hub (`/admin/settings`)
 
-- **General & Health**: Real-time DB latency diagnostics, R2 ping test, and infrastructure status badges.
-- **Storage & R2 Governance**: Bucket parameters (`dream-supreme-documents`), presigned URL policies, and agent quota configuration.
+- **General & Health**: Real-time DB latency diagnostics and infrastructure status badges.
+- **Storage Governance**: Bucket parameters (`mandate-documents`), signed URL policies, and agent quota configuration.
 - **Security & Access**: Idle session timeout rules, MFA enforcement, registration approval policies, and allowed domain filters (`dreamsupreme.co.za`).
 - **Notification & Gateway Status**: Automated event dispatchers and dynamic integration status checks (WhatsApp, Auth Mailer, Conveyancer Webhooks, Xero/Sage Sync).
 - **Automated Maintenance**: Configurable retention thresholds for deal archival, idle agent deactivation, and recycle bin purging.
@@ -60,7 +59,7 @@ The platform is designed to replace fragmented spreadsheets and legacy CRMs by c
 - **Routing & State:** `@tanstack/react-router` (file-based routing), `@tanstack/react-query` (server state)
 - **Styling:** Tailwind CSS, `shadcn/ui`, Framer Motion (animations)
 - **Backend:** Supabase (PostgreSQL, Auth, Realtime)
-- **Storage:** Cloudflare R2 S3 Object Storage API (with Supabase Storage fallback)
+- **Storage:** Supabase Storage (object storage, RLS-scoped). Direct client-side Cloudflare R2 access is disabled by design — see `src/lib/storage.ts`.
 - **Security:** Strict PostgreSQL Row Level Security (RLS) handles all data isolation. The UI uses `<AuthGuard>` for routing, with database-layer session authorization.
 
 ---
@@ -118,7 +117,7 @@ Dream Supreme is an invitation-only enterprise platform:
 1. **Master Admin & Agent Auth**: Passwords are authenticated via Supabase Auth with bcrypt/JWT claims.
 2. **Show Password Option**: Login screen supports interactive password visibility toggling.
 3. **Database RLS**: Multi-tenant database isolation ensures users only see data belonging to their agency.
-4. **Storage Authorization**: File downloads require an active authenticated session matching the agent's user path.
+4. **Storage Authorization**: File downloads require an active authenticated session, enforced by agency-scoped storage RLS policies plus an app-level check restricting agents to their own agency or user path.
 
 ---
 

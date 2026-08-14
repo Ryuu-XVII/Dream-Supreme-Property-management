@@ -148,6 +148,10 @@ Sets an array of users' `commission_pct` to `NULL`, forcing them to inherit the 
 
 Aggregates all notifications with a `delivery_status` of `'pending_digest'` for users who have opted into digest frequency. Generates a combined HTML email and inserts it into `email_queue`. Scheduled via `pg_cron` at 08:00 UTC daily.
 
+### `adjust_user_storage_usage(target_user_id, bytes_delta)`
+
+Adjusts a user's `storage_used_bytes` by `bytes_delta` (clamped to a minimum of zero), called from the client after each successful document/avatar/certificate upload to `mandate-documents` so per-user storage quotas (`storage_limit_bytes`) reflect real usage. `security definer`, but restricted in-function to the caller adjusting their own usage, or an `admin`/`admin_agent` caller adjusting anyone's — a caller cannot pass an arbitrary `target_user_id` to alter another user's usage.
+
 ## 4. Triggers & Automation
 
 - **`deal_stage_history`**: A Postgres trigger automatically records an entry in `deal_timeline` whenever a deal's `stage` column is updated.

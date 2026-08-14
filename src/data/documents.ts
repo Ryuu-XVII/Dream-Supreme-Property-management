@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { uploadFileToR2, removeStoredFile } from "@/lib/storage";
+import {
+  uploadFileToR2,
+  removeStoredFile,
+  getUserStorageUsage,
+  recordStorageUsageDelta,
+} from "@/lib/storage";
 
 export interface DocumentRecord {
   id: string;
@@ -93,7 +98,12 @@ export function useUploadDocument() {
 
       // 2. Upload file to storage
       const path = `${agencyId}/${dealId}/${crypto.randomUUID()}-${file.name}`;
-      const storageKey = await uploadFileToR2(file, path);
+      const { usedBytes, limitBytes } = await getUserStorageUsage(userAccount.id);
+      const storageKey = await uploadFileToR2(file, path, {
+        currentStorageUsedBytes: usedBytes,
+        storageLimitBytes: limitBytes,
+      });
+      await recordStorageUsageDelta(userAccount.id, file.size);
 
       // 3. Insert into database
       const { data, error } = await supabase
@@ -114,8 +124,9 @@ export function useUploadDocument() {
         .single();
 
       if (error) {
-        // Cleanup storage on db failure
+        // Cleanup storage and quota usage on db failure
         await removeStoredFile(storageKey);
+        await recordStorageUsageDelta(userAccount.id, -file.size);
         throw error;
       }
 

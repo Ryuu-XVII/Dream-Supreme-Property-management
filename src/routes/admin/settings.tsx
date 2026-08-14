@@ -40,7 +40,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { getR2Client, R2_BUCKET_NAME } from "@/lib/storage";
+import { R2_BUCKET_NAME } from "@/lib/storage";
 import { useAgencySystemSettings, useSaveAgencySystemSettings } from "@/data/system-settings";
 
 export const Route = createFileRoute("/admin/settings")({ component: AdminSettings });
@@ -54,7 +54,6 @@ function AdminSettings() {
   const [pingLoading, setPingLoading] = useState(false);
   const [pingResult, setPingResult] = useState<{
     dbMs: number;
-    r2Connected: boolean;
     whatsappQueueCount: number;
     userCount: number;
   } | null>(null);
@@ -134,20 +133,15 @@ function AdminSettings() {
         .from("whatsapp_queue")
         .select("*", { count: "exact", head: true });
 
-      // 3. Ping R2 Storage Client
-      const r2Client = getR2Client();
-      const r2Connected = !!r2Client;
-
       setPingResult({
         dbMs,
-        r2Connected,
         whatsappQueueCount: waCount ?? 0,
         userCount: usersCount ?? 0,
       });
 
       if (showToast) {
         toast.success("Live Diagnostics Complete", {
-          description: `Database Latency: ${dbMs}ms | Active Users: ${usersCount ?? 0} | R2 Storage: ${r2Connected ? "Connected" : "Supabase Fallback"} | WhatsApp Queue: ${waCount ?? 0} messages`,
+          description: `Database Latency: ${dbMs}ms | Active Users: ${usersCount ?? 0} | WhatsApp Queue: ${waCount ?? 0} messages`,
         });
       }
     } catch (err: any) {
@@ -202,7 +196,7 @@ function AdminSettings() {
     <>
       <AdminPageHeader
         title="System Settings & Governance Hub"
-        description="Manage system infrastructure health, Cloudflare R2 storage policies, security controls, notifications, and maintenance."
+        description="Manage system infrastructure health, document storage policies, security controls, notifications, and maintenance."
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -213,7 +207,7 @@ function AdminSettings() {
           </TabsTrigger>
           <TabsTrigger value="storage" className="flex items-center gap-2 text-xs sm:text-sm">
             <HardDrive className="size-4 text-cyan-500" />
-            <span>Storage & R2</span>
+            <span>Storage</span>
           </TabsTrigger>
           <TabsTrigger value="security" className="flex items-center gap-2 text-xs sm:text-sm">
             <ShieldCheck className="size-4 text-emerald-500" />
@@ -377,15 +371,13 @@ function AdminSettings() {
           </div>
         </TabsContent>
 
-        {/* TAB 2: STORAGE & CLOUDFLARE R2 GOVERNANCE */}
+        {/* TAB 2: OBJECT STORAGE GOVERNANCE */}
         <TabsContent value="storage" className="space-y-6">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">
-              Cloudflare R2 & Object Storage Governance
-            </h2>
+            <h2 className="text-lg font-semibold tracking-tight">Object Storage Governance</h2>
             <p className="text-sm text-muted-foreground">
-              Configure per-agent storage quotas, file upload caps, path namespaces, and presigned
-              URL policies.
+              Configure per-agent storage quotas, file upload caps, path namespaces, and signed URL
+              policies.
             </p>
           </div>
 
@@ -398,26 +390,30 @@ function AdminSettings() {
 
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between items-center py-2 border-b border-border/40">
-                  <span className="text-muted-foreground">Active Primary Storage</span>
-                  <span className="font-medium text-cyan-400">Cloudflare R2 S3 API</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border/40">
-                  <span className="text-muted-foreground">R2 Bucket Name</span>
-                  <code className="text-xs bg-muted/40 px-2 py-0.5 rounded">{R2_BUCKET_NAME}</code>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border/40">
-                  <span className="text-muted-foreground">Fallback Storage</span>
-                  <span className="font-medium text-muted-foreground">
+                  <span className="text-muted-foreground">Active Storage Backend</span>
+                  <span className="font-medium text-cyan-400">
                     Supabase Storage (`mandate-documents`)
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-border/40">
-                  <span className="text-muted-foreground">Presigned URL Expiration</span>
+                  <span className="text-muted-foreground">Cloudflare R2</span>
+                  <span className="font-medium text-muted-foreground">
+                    Disabled (client-side R2 credentials can't be scoped safely)
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-border/40">
+                  <span className="text-muted-foreground">Configured R2 Bucket Name</span>
+                  <code className="text-xs bg-muted/40 px-2 py-0.5 rounded">{R2_BUCKET_NAME}</code>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-border/40">
+                  <span className="text-muted-foreground">Signed URL Expiration</span>
                   <span className="font-medium text-emerald-400">300 seconds (5 minutes)</span>
                 </div>
                 <div className="flex justify-between items-center py-2">
                   <span className="text-muted-foreground">Folder Namespace Isolation</span>
-                  <span className="font-medium text-indigo-400">`users/&lt;user_id&gt;/...`</span>
+                  <span className="font-medium text-indigo-400">
+                    `&lt;agency_id&gt;/...` and `users/&lt;user_id&gt;/...`
+                  </span>
                 </div>
               </div>
             </GlassCard>
