@@ -230,6 +230,10 @@ export function QuickDealModal({
       const dealId = await createDeal({
         ...form,
         commissionBps,
+        mandateSigned: form.mandateStartDate,
+        mandateExpiry: form.mandateExpiryDate,
+        effectiveDate: entryType === "mandate" ? form.mandateStartDate : form.otpSigned,
+        salePrice: entryType === "mandate" ? form.listingPrice : form.salePrice,
         buyerName: entryType === "mandate" ? "Unassigned Purchaser" : form.buyerName,
       });
 
