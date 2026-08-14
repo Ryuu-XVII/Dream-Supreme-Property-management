@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { LayoutGrid, List, Plus, SlidersHorizontal, Users2, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
@@ -23,8 +23,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePipelineDeals } from "@/data/deals";
-import { useLeads, useUpdateLead } from "@/data/leads";
+import { usePipelineDeals, type PipelineDeal } from "@/data/deals";
+import { useLeads, useUpdateLead, type LeadRecord } from "@/data/leads";
 import { useAgents } from "@/data/reference";
 import { QuickDealModal } from "@/components/deal/quick-deal-modal";
 import { dateFmt, zar } from "@/lib/format";
@@ -42,6 +42,160 @@ export const Route = createFileRoute("/pipeline")({
 });
 
 const leadStatuses = ["new", "contacted", "qualified", "converted", "closed"];
+
+const DealTableRow = memo(function DealTableRow({ deal }: { deal: PipelineDeal }) {
+  return (
+    <TableRow>
+      <TableCell>
+        <Link
+          to="/deals/$dealId"
+          params={{ dealId: deal.id }}
+          className="font-mono text-primary hover:underline"
+        >
+          {deal.ref}
+        </Link>
+      </TableCell>
+      <TableCell>
+        {deal.property.address}
+        <span className="block text-xs text-muted-foreground">{deal.property.suburb}</span>
+      </TableCell>
+      <TableCell>
+        <Badge variant="outline">{stageFromDb[deal.stage] ?? deal.stage}</Badge>
+      </TableCell>
+      <TableCell>{deal.agent.name}</TableCell>
+      <TableCell className="font-semibold">{zar(deal.salePrice)}</TableCell>
+      <TableCell>{dateFmt(deal.stageSince)}</TableCell>
+    </TableRow>
+  );
+});
+
+const DealCard = memo(function DealCard({
+  deal,
+  isReadOnly,
+  onStageChange,
+}: {
+  deal: PipelineDeal;
+  isReadOnly: boolean;
+  onStageChange: (deal: PipelineDeal, newStageDb: string) => void;
+}) {
+  return (
+    <Link to="/deals/$dealId" params={{ dealId: deal.id }} className="block">
+      <GlassCard className="transition-colors hover:border-primary/40">
+        <div className="flex justify-between gap-2">
+          <span className="font-mono text-xs text-primary">{deal.ref}</span>
+          <span className="text-xs text-muted-foreground">{deal.daysInStage}d</span>
+        </div>
+        <p className="mt-2 font-medium">{deal.property.address}</p>
+        <p className="text-xs text-muted-foreground">{deal.property.suburb}</p>
+        <div className="mt-3 flex items-center justify-between text-sm">
+          <span className="truncate max-w-28 text-muted-foreground">{deal.agent.name}</span>
+          <span className="font-semibold text-foreground">{zar(deal.salePrice)}</span>
+        </div>
+        <div
+          className="mt-3 border-t border-border/40 pt-2 flex items-center justify-between"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className="text-[11px] font-medium text-muted-foreground">Move Stage:</span>
+          <Select
+            value={deal.stage}
+            disabled={isReadOnly}
+            onValueChange={(newStageDb) => onStageChange(deal, newStageDb)}
+          >
+            <SelectTrigger className="h-7 text-[11px] w-36 px-2 py-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STAGES.map((s) => (
+                <SelectItem key={s} value={stageToDb[s] || s} className="text-xs">
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </GlassCard>
+    </Link>
+  );
+});
+
+const LeadTableRow = memo(function LeadTableRow({
+  lead,
+  agents,
+  isReadOnly,
+  onAssign,
+  onStatusChange,
+}: {
+  lead: LeadRecord;
+  agents: { id: string; full_name: string }[];
+  isReadOnly: boolean;
+  onAssign: (leadId: string, agentId: string | null) => void;
+  onStatusChange: (leadId: string, status: string) => void;
+}) {
+  return (
+    <TableRow>
+      <TableCell className="font-medium">
+        {lead.name}
+        {lead.message && (
+          <span className="block max-w-64 truncate text-xs text-muted-foreground">
+            {lead.message}
+          </span>
+        )}
+      </TableCell>
+      <TableCell>
+        {lead.email || "—"}
+        <span className="block text-xs text-muted-foreground">{lead.mobile}</span>
+      </TableCell>
+      <TableCell>
+        <Badge variant="outline">{lead.source}</Badge>
+      </TableCell>
+      <TableCell>{dateFmt(lead.createdAt)}</TableCell>
+      <TableCell>
+        <Select
+          value={lead.assignedTo ?? "unassigned"}
+          disabled={isReadOnly}
+          onValueChange={(value) => onAssign(lead.id, value === "unassigned" ? null : value)}
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="unassigned">Unassigned</SelectItem>
+            {agents.map((agent) => (
+              <SelectItem key={agent.id} value={agent.id}>
+                {agent.full_name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell>
+        <Select
+          value={lead.status}
+          disabled={isReadOnly}
+          onValueChange={(value) => onStatusChange(lead.id, value)}
+        >
+          <SelectTrigger className="w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {leadStatuses.map((item) => (
+              <SelectItem key={item} value={item}>
+                {item[0].toUpperCase() + item.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell className="text-right">
+        <Button asChild size="sm" variant="ghost" className="gap-1 text-xs">
+          <Link to="/deals/new">
+            Convert to Deal <ArrowUpRight className="size-3.5" />
+          </Link>
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+});
 
 function DealFlowPage() {
   const { tab: currentTab } = Route.useSearch();
@@ -119,18 +273,59 @@ function DealFlowPage() {
     [leads],
   );
 
-  async function handleSaveLead(
-    id: string,
-    updates: { status?: string; assignedTo?: string | null },
-  ) {
-    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to edit leads.");
-    try {
-      await updateLead.mutateAsync({ id, ...updates });
-      toast.success("Lead updated");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not update lead");
-    }
-  }
+  const handleSaveLead = useCallback(
+    async (id: string, updates: { status?: string; assignedTo?: string | null }) => {
+      if (isReadOnly) return toast.info("Read-only mode: exit impersonation to edit leads.");
+      try {
+        await updateLead.mutateAsync({ id, ...updates });
+        toast.success("Lead updated");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Could not update lead");
+      }
+    },
+    [isReadOnly, updateLead],
+  );
+
+  const handleAssignLead = useCallback(
+    (leadId: string, agentId: string | null) =>
+      void handleSaveLead(leadId, { assignedTo: agentId }),
+    [handleSaveLead],
+  );
+
+  const handleLeadStatusChange = useCallback(
+    (leadId: string, status: string) => void handleSaveLead(leadId, { status }),
+    [handleSaveLead],
+  );
+
+  const handleStageChange = useCallback(
+    async (deal: PipelineDeal, newStageDb: string) => {
+      if (isReadOnly) {
+        toast.info("Read-only mode: exit impersonation to move deals.");
+        return;
+      }
+      try {
+        const { error } = await supabase.rpc("transition_deal", {
+          p_deal_id: deal.id,
+          p_to_stage: newStageDb,
+          p_reason: "Updated from Kanban board",
+          p_override: false,
+        });
+        if (error) {
+          if (error.message.includes("GATE_FAILED")) {
+            toast.error(error.message.replace("GATE_FAILED: ", ""));
+          } else {
+            toast.error(error.message);
+          }
+          return;
+        }
+        toast.success(`Deal ${deal.ref} moved to next stage`);
+        void pipeline.refetch();
+      } catch (err: any) {
+        toast.error(err.message || "Failed to update deal stage");
+      }
+    },
+    [isReadOnly, pipeline],
+  );
 
   return (
     <AppShell
@@ -320,29 +515,7 @@ function DealFlowPage() {
                 </TableHeader>
                 <TableBody>
                   {filteredDeals.map((deal) => (
-                    <TableRow key={deal.id}>
-                      <TableCell>
-                        <Link
-                          to="/deals/$dealId"
-                          params={{ dealId: deal.id }}
-                          className="font-mono text-primary hover:underline"
-                        >
-                          {deal.ref}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        {deal.property.address}
-                        <span className="block text-xs text-muted-foreground">
-                          {deal.property.suburb}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{stageFromDb[deal.stage] ?? deal.stage}</Badge>
-                      </TableCell>
-                      <TableCell>{deal.agent.name}</TableCell>
-                      <TableCell className="font-semibold">{zar(deal.salePrice)}</TableCell>
-                      <TableCell>{dateFmt(deal.stageSince)}</TableCell>
-                    </TableRow>
+                    <DealTableRow key={deal.id} deal={deal} />
                   ))}
                 </TableBody>
               </Table>
@@ -357,80 +530,12 @@ function DealFlowPage() {
                   </div>
                   <div className="space-y-3">
                     {stageDeals.map((deal) => (
-                      <Link
+                      <DealCard
                         key={deal.id}
-                        to="/deals/$dealId"
-                        params={{ dealId: deal.id }}
-                        className="block"
-                      >
-                        <GlassCard className="transition-colors hover:border-primary/40">
-                          <div className="flex justify-between gap-2">
-                            <span className="font-mono text-xs text-primary">{deal.ref}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {deal.daysInStage}d
-                            </span>
-                          </div>
-                          <p className="mt-2 font-medium">{deal.property.address}</p>
-                          <p className="text-xs text-muted-foreground">{deal.property.suburb}</p>
-                          <div className="mt-3 flex items-center justify-between text-sm">
-                            <span className="truncate max-w-28 text-muted-foreground">
-                              {deal.agent.name}
-                            </span>
-                            <span className="font-semibold text-foreground">
-                              {zar(deal.salePrice)}
-                            </span>
-                          </div>
-                          <div
-                            className="mt-3 border-t border-border/40 pt-2 flex items-center justify-between"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <span className="text-[11px] font-medium text-muted-foreground">
-                              Move Stage:
-                            </span>
-                            <Select
-                              value={deal.stage}
-                              disabled={isReadOnly}
-                              onValueChange={async (newStageDb) => {
-                                if (isReadOnly) {
-                                  toast.info("Read-only mode: exit impersonation to move deals.");
-                                  return;
-                                }
-                                try {
-                                  const { error } = await supabase.rpc("transition_deal", {
-                                    p_deal_id: deal.id,
-                                    p_to_stage: newStageDb,
-                                    p_reason: "Updated from Kanban board",
-                                    p_override: false,
-                                  });
-                                  if (error) {
-                                    if (error.message.includes("GATE_FAILED")) {
-                                      toast.error(error.message.replace("GATE_FAILED: ", ""));
-                                    } else {
-                                      toast.error(error.message);
-                                    }
-                                    return;
-                                  }
-                                  toast.success(`Deal ${deal.ref} moved to next stage`);
-                                  void pipeline.refetch();
-                                } catch (err: any) {
-                                  toast.error(err.message || "Failed to update deal stage");
-                                }
-                              }}
-                            >
-                              <SelectTrigger className="h-7 text-[11px] w-36 px-2 py-0">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {STAGES.map((s) => (
-                                  <SelectItem key={s} value={stageToDb[s] || s} className="text-xs">
-                                    {s}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </GlassCard>
-                      </Link>
+                        deal={deal}
+                        isReadOnly={isReadOnly}
+                        onStageChange={handleStageChange}
+                      />
                     ))}
                   </div>
                 </section>
@@ -477,72 +582,14 @@ function DealFlowPage() {
                 </TableHeader>
                 <TableBody>
                   {filteredLeads.map((lead) => (
-                    <TableRow key={lead.id}>
-                      <TableCell className="font-medium">
-                        {lead.name}
-                        {lead.message && (
-                          <span className="block max-w-64 truncate text-xs text-muted-foreground">
-                            {lead.message}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {lead.email || "—"}
-                        <span className="block text-xs text-muted-foreground">{lead.mobile}</span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{lead.source}</Badge>
-                      </TableCell>
-                      <TableCell>{dateFmt(lead.createdAt)}</TableCell>
-                      <TableCell>
-                        <Select
-                          value={lead.assignedTo ?? "unassigned"}
-                          disabled={isReadOnly}
-                          onValueChange={(value) =>
-                            void handleSaveLead(lead.id, {
-                              assignedTo: value === "unassigned" ? null : value,
-                            })
-                          }
-                        >
-                          <SelectTrigger className="w-44">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="unassigned">Unassigned</SelectItem>
-                            {agents.map((agent) => (
-                              <SelectItem key={agent.id} value={agent.id}>
-                                {agent.full_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={lead.status}
-                          disabled={isReadOnly}
-                          onValueChange={(value) => void handleSaveLead(lead.id, { status: value })}
-                        >
-                          <SelectTrigger className="w-36">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {leadStatuses.map((item) => (
-                              <SelectItem key={item} value={item}>
-                                {item[0].toUpperCase() + item.slice(1)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button asChild size="sm" variant="ghost" className="gap-1 text-xs">
-                          <Link to="/deals/new">
-                            Convert to Deal <ArrowUpRight className="size-3.5" />
-                          </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
+                    <LeadTableRow
+                      key={lead.id}
+                      lead={lead}
+                      agents={agents}
+                      isReadOnly={isReadOnly}
+                      onAssign={handleAssignLead}
+                      onStatusChange={handleLeadStatusChange}
+                    />
                   ))}
                 </TableBody>
               </Table>

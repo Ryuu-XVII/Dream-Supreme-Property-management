@@ -59,8 +59,12 @@ export function useGenerateDocumentFromTemplate() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
+    onSuccess: (_, variables) => {
+      // Scope to the affected deal's cached document list rather than
+      // invalidating every open deal's documents query.
+      queryClient.invalidateQueries({
+        queryKey: variables.dealId ? ["documents", "deal", variables.dealId] : ["documents"],
+      });
     },
   });
 }

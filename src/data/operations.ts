@@ -9,14 +9,28 @@ export function useDashboardData() {
   return useQuery({
     queryKey: ["dashboard", activeAccount?.id],
     queryFn: async () => {
-      const [dealResult, userResult, auditResult] = await Promise.all([
-        supabase.from("deal").select(`
-            id, reference, stage, status, sale_price_cents, registration_date, updated_at,
-            property:property_id(id, address_line, suburb, city),
-            mandate:mandate_id(commission_rate_bps),
-            conditions:suspensive_condition(id, condition_type, description, due_on, original_due_on, status, responsible_party),
-            participants:deal_participant(user:user_account_id(id, full_name))
-          `),
+      const isAgent = activeAccount?.role === "agent";
+
+      // Agents only see their own deals. Rather than fetching every deal in
+      // the agency and filtering client-side (which both over-fetches and
+      // briefly exposes other agents' deal data to the browser before the
+      // filter runs), resolve the agent's own deal IDs first and scope the
+      // deal query server-side with `.in("id", ...)`. Run this lookup
+      // alongside the user/audit queries rather than blocking on it.
+      const dealIdsPromise: Promise<string[] | null> = isAgent
+        ? Promise.resolve(
+            supabase
+              .from("deal_participant")
+              .select("deal_id")
+              .eq("user_account_id", activeAccount!.id),
+          ).then(({ data, error }) => {
+            if (error) throw error;
+            return [...new Set((data ?? []).map((p: any) => p.deal_id))];
+          })
+        : Promise.resolve(null);
+
+      const [dealIds, userResult, auditResult] = await Promise.all([
+        dealIdsPromise,
         supabase
           .from("user_account")
           .select(
@@ -30,15 +44,22 @@ export function useDashboardData() {
           .order("occurred_at", { ascending: false })
           .limit(10),
       ]);
-      if (dealResult.error) throw dealResult.error;
       if (userResult.error) throw userResult.error;
 
-      let filteredDealsData = dealResult.data || [];
-      if (activeAccount && activeAccount.role === "agent") {
-        filteredDealsData = filteredDealsData.filter((d: any) =>
-          d.participants?.some((p: any) => p.user?.id === activeAccount.id),
-        );
+      let dealQuery = supabase.from("deal").select(`
+            id, reference, stage, status, sale_price_cents, registration_date, updated_at,
+            property:property_id(id, address_line, suburb, city),
+            mandate:mandate_id(commission_rate_bps),
+            conditions:suspensive_condition(id, condition_type, description, due_on, original_due_on, status, responsible_party),
+            participants:deal_participant(user:user_account_id(id, full_name))
+          `);
+      if (dealIds) {
+        dealQuery = dealQuery.in("id", dealIds);
       }
+      const dealResult = await dealQuery;
+      if (dealResult.error) throw dealResult.error;
+
+      const filteredDealsData = dealResult.data || [];
 
       const deals = filteredDealsData.map((deal: any) => ({
         id: deal.id,

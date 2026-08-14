@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Bell, Search, Sun, Moon, Monitor, LogOut, Calculator, PlusCircle } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useApp } from "@/lib/app-state";
 import { useAuth } from "@/lib/auth";
 import { initials, zar, relative, dateFmt } from "@/lib/format";
-import { usePipelineDeals } from "@/data/deals";
+import { useDealSearch } from "@/data/deals";
 import { supabase } from "@/lib/supabase";
 import { navItems } from "./sidebar";
 import { cn } from "@/lib/utils";
@@ -39,10 +39,15 @@ export function Header() {
   const navigate = useNavigate();
   const { theme, setTheme } = useApp();
   const { activeAccount, isReadOnly, signOut } = useAuth();
-  const pipeline = usePipelineDeals();
-  const deals = pipeline.data ?? [];
+  const dealSearch = useDealSearch(open);
+  const deals = dealSearch.data ?? [];
+  const queryClient = useQueryClient();
+  const notificationQueryKey = useMemo(
+    () => ["header-notifications", activeAccount?.id],
+    [activeAccount?.id],
+  );
   const notificationQuery = useQuery({
-    queryKey: ["header-notifications", activeAccount?.id],
+    queryKey: notificationQueryKey,
     enabled: !!activeAccount,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -94,7 +99,22 @@ export function Header() {
                 }
               : undefined,
           });
-          void notificationQuery.refetch();
+          queryClient.setQueryData(
+            notificationQueryKey,
+            (prev: typeof notifications | undefined) => {
+              const next = [
+                {
+                  id: newNotif.id,
+                  subject: newNotif.subject,
+                  body: newNotif.body,
+                  created_at: newNotif.created_at,
+                  read_at: newNotif.read_at ?? null,
+                },
+                ...(prev ?? []),
+              ];
+              return next.slice(0, 20);
+            },
+          );
         },
       )
       .subscribe();
@@ -102,7 +122,7 @@ export function Header() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [activeAccount?.id, navigate, notificationQuery]);
+  }, [activeAccount?.id, navigate, queryClient, notificationQueryKey]);
 
   const me = activeAccount
     ? { name: activeAccount.fullName, email: activeAccount.email }

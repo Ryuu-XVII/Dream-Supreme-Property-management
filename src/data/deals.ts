@@ -102,6 +102,55 @@ export function usePipelineDeals() {
   });
 }
 
+export interface DealSearchResult {
+  id: string;
+  ref: string;
+  salePrice: number;
+  property: { address: string };
+}
+
+/**
+ * Lightweight deal lookup for the command palette (Cmd-K search), which only
+ * ever needs a handful of fields for the top ~8 results. Deliberately
+ * separate from usePipelineDeals, which fetches every deal with five nested
+ * joins for the full pipeline board — using that here would re-run a heavy,
+ * unbounded query on every app navigation just to power a search box.
+ */
+export function useDealSearch(enabled: boolean) {
+  const { activeAccount } = useAuth();
+
+  return useQuery({
+    queryKey: ["deal-search", activeAccount?.id],
+    enabled: enabled && !!activeAccount,
+    queryFn: async () => {
+      let query = supabase
+        .from("deal")
+        .select(
+          activeAccount?.role === "agent"
+            ? `id, reference, sale_price_cents, property:property_id ( address_line ),
+               participants:deal_participant!inner ( user_account_id )`
+            : `id, reference, sale_price_cents, property:property_id ( address_line )`,
+        )
+        .order("updated_at", { ascending: false })
+        .limit(50);
+
+      if (activeAccount?.role === "agent") {
+        query = query.eq("participants.user_account_id", activeAccount.id);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      return (data as any[]).map((d): DealSearchResult => ({
+        id: d.id,
+        ref: d.reference,
+        salePrice: d.sale_price_cents,
+        property: { address: d.property?.address_line || "Unknown Address" },
+      }));
+    },
+  });
+}
+
 export function useDealDetail(dealId: string) {
   return useQuery({
     queryKey: ["deal", dealId],
@@ -466,22 +515,26 @@ export function useMyEarnings() {
           agentName: "Agent",
         };
 
+      // `!inner` makes the participants filter apply to the top-level deal
+      // rows too (a plain embedded-resource filter only narrows the nested
+      // `participants` array, not which deals are returned — which
+      // previously meant every deal in the agency was fetched and re-filtered
+      // client-side). Safe to also narrow the embedded array to just this
+      // participant, since myParticipant below only ever needs their own row.
       const { data: deals, error } = await supabase
         .from("deal")
         .select(
           `
           id, sale_price_cents, commission_rate_bps, status, stage, registration_date,
           property:property_id ( address_line ),
-          participants:deal_participant ( user_account_id, role, split_value )
+          participants:deal_participant!inner ( user_account_id, role, split_value )
         `,
         )
         .eq("participants.user_account_id", userAccountId);
 
       if (error) throw error;
 
-      const myDeals = (deals as any[]).filter((d) =>
-        d.participants.some((p: any) => p.user_account_id === userAccountId),
-      );
+      const myDeals = deals as any[];
 
       let ytdEarnings = 0;
       let pendingPipeline = 0;

@@ -12,7 +12,11 @@ export function useTrustLedger(dealId?: string, leaseId?: string) {
     queryFn: async (): Promise<TrustLedgerEntry[]> => {
       let query = supabase
         .from("trust_account_ledger")
-        .select("*")
+        .select(
+          `id, agency_id, deal_id, lease_id, account_type, transaction_type, amount_cents,
+           reference_number, bank_statement_date, payer_payee_name, interest_split_client_pct,
+           interest_split_ppra_pct, approved_by_principal, approved_at, created_at`,
+        )
         .eq("agency_id", account!.agencyId)
         .order("created_at", { ascending: false });
 
@@ -21,6 +25,12 @@ export function useTrustLedger(dealId?: string, leaseId?: string) {
       }
       if (leaseId) {
         query = query.eq("lease_id", leaseId);
+      }
+      // Without a scoping dealId/leaseId this is an agency-wide ledger view,
+      // which grows unbounded over the agency's lifetime — cap to the most
+      // recent entries rather than fetching the full table on every mount.
+      if (!dealId && !leaseId) {
+        query = query.limit(500);
       }
 
       const { data, error } = await query;

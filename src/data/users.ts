@@ -26,7 +26,10 @@ export function useAdminUsers() {
       // 1. Fetch active registered user accounts from PostgreSQL migration schema (public.user_account)
       const { data: accounts, error: accountErr } = await supabase
         .from("user_account")
-        .select("*")
+        .select(
+          `id, full_name, email, role, status, agency_id, branch_id, commission_pct,
+           storage_limit_bytes, storage_used_bytes`,
+        )
         .neq("status", "archived")
         .neq("status", "suspended");
       if (accountErr) throw accountErr;
@@ -34,7 +37,7 @@ export function useAdminUsers() {
       // 2. Fetch pending invitations from PostgreSQL migration schema (public.user_invitation)
       const { data: invitations, error: inviteErr } = await supabase
         .from("user_invitation")
-        .select("*")
+        .select("id, email, role, agency_id, branch_id, accepted_at")
         .is("accepted_at", null);
       if (inviteErr) throw inviteErr;
 

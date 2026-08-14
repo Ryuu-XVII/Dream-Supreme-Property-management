@@ -129,11 +129,36 @@ export function ReconciliationContent() {
     }
 
     setIsProcessing(true);
-    let successCount = 0;
 
+    // Fetch every outstanding invoice for the matched leases in one batched
+    // query instead of one query per transaction, then deterministically hand
+    // out invoices in due-on order per lease (mirrors the old per-tx
+    // "earliest outstanding invoice" lookup for leases with multiple matched
+    // deposits in the same batch, without a network round trip per tx).
+    const leaseIds = [...new Set(matchedTxs.map((t) => t.matchedLeaseId!))];
+    const { data: outstandingInvoices } = await supabase
+      .from("lease_invoice")
+      .select("*")
+      .in("lease_id", leaseIds)
+      .in("status", ["draft", "issued", "overdue"])
+      .order("due_on", { ascending: true });
+
+    const invoiceQueueByLease = new Map<string, any[]>();
+    for (const inv of outstandingInvoices ?? []) {
+      const queue = invoiceQueueByLease.get(inv.lease_id) ?? [];
+      queue.push(inv);
+      invoiceQueueByLease.set(inv.lease_id, queue);
+    }
+
+    const matchedInvoiceByTxId = new Map<string, any>();
     for (const tx of matchedTxs) {
-      try {
-        await recordTransaction.mutateAsync({
+      const inv = invoiceQueueByLease.get(tx.matchedLeaseId!)?.shift();
+      if (inv) matchedInvoiceByTxId.set(tx.id, inv);
+    }
+
+    const results = await Promise.allSettled(
+      matchedTxs.map((tx) =>
+        recordTransaction.mutateAsync({
           leaseId: tx.matchedLeaseId!,
           accountType: "section_86_2_general",
           transactionType: "deposit_inflow",
@@ -141,33 +166,39 @@ export function ReconciliationContent() {
           referenceNumber: tx.description.substring(0, 50),
           bankStatementDate: tx.date || new Date().toISOString().split("T")[0],
           payerPayeeName: tx.matchedLeaseName || "Unknown Tenant",
-        });
+        }),
+      ),
+    );
 
-        const { data: invoices } = await supabase
-          .from("lease_invoice")
-          .select("*")
-          .eq("lease_id", tx.matchedLeaseId!)
-          .in("status", ["draft", "issued", "overdue"])
-          .order("due_on", { ascending: true })
-          .limit(1);
+    const paidOn = new Date().toISOString().split("T")[0];
+    const invoiceUpdates: { id: string; status: string; paid_cents: number; paid_on: string }[] =
+      [];
+    let successCount = 0;
 
-        if (invoices && invoices.length > 0) {
-          const inv = invoices[0];
-          await supabase
-            .from("lease_invoice")
-            .update({
-              status: "paid",
-              paid_cents: inv.amount_cents,
-              paid_on: new Date().toISOString().split("T")[0],
-            })
-            .eq("id", inv.id);
-        }
-
+    results.forEach((result, i) => {
+      const tx = matchedTxs[i];
+      if (result.status === "fulfilled") {
         tx.status = "reconciled";
         successCount++;
-      } catch (err) {
-        console.error("Failed to reconcile tx", tx, err);
+        const inv = matchedInvoiceByTxId.get(tx.id);
+        if (inv) {
+          invoiceUpdates.push({
+            id: inv.id,
+            status: "paid",
+            paid_cents: inv.amount_cents,
+            paid_on: paidOn,
+          });
+        }
+      } else {
+        console.error("Failed to reconcile tx", tx, result.reason);
         tx.status = "failed";
+      }
+    });
+
+    if (invoiceUpdates.length > 0) {
+      const { error: invoiceError } = await supabase.from("lease_invoice").upsert(invoiceUpdates);
+      if (invoiceError) {
+        toast.error(`Some invoices could not be marked paid: ${invoiceError.message}`);
       }
     }
 
