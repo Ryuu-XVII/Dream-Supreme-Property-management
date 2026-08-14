@@ -75,15 +75,18 @@ function statusOf(expiry: string | null | undefined): { status: FfcStatus; days:
   return { status: "Valid", days };
 }
 
+const FFC_STATUS_BADGE: Record<
+  FfcStatus,
+  { cls: string; icon: React.ComponentType<{ className?: string }> }
+> = {
+  Valid: { cls: "border-success/30 bg-success/10 text-success", icon: ShieldCheck },
+  "Expiring Soon": { cls: "border-warning/40 bg-warning/15 text-warning", icon: ShieldAlert },
+  Expired: { cls: "border-destructive/30 bg-destructive/10 text-destructive", icon: ShieldX },
+  Missing: { cls: "border-border bg-muted text-muted-foreground", icon: ShieldQuestion },
+};
+
 function StatusBadge({ status }: { status: FfcStatus }) {
-  const map: Record<FfcStatus, { cls: string; icon: React.ComponentType<{ className?: string }> }> =
-    {
-      Valid: { cls: "border-success/30 bg-success/10 text-success", icon: ShieldCheck },
-      "Expiring Soon": { cls: "border-warning/40 bg-warning/15 text-warning", icon: ShieldAlert },
-      Expired: { cls: "border-destructive/30 bg-destructive/10 text-destructive", icon: ShieldX },
-      Missing: { cls: "border-border bg-muted text-muted-foreground", icon: ShieldQuestion },
-    };
-  const { cls, icon: Icon } = map[status];
+  const { cls, icon: Icon } = FFC_STATUS_BADGE[status];
   return (
     <Badge variant="outline" className={cn("gap-1", cls)}>
       <Icon className="size-3" /> {status}

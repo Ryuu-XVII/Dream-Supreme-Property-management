@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { Sidebar, MobileNav } from "./sidebar";
 import { Header } from "./header";

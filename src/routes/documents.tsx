@@ -45,6 +45,19 @@ const categories = [
   "other",
 ];
 
+async function download(storageKey: string, filename: string) {
+  try {
+    const url = await getR2FileUrl(storageKey);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.rel = "noopener";
+    anchor.click();
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : "Download failed");
+  }
+}
+
 function DocumentsPage() {
   const { activeAccount, isReadOnly } = useAuth();
   const dealsQuery = usePipelineDeals();
@@ -66,19 +79,6 @@ function DocumentsPage() {
       toast.success(`${file.name} uploaded`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed");
-    }
-  }
-
-  async function download(storageKey: string, filename: string) {
-    try {
-      const url = await getR2FileUrl(storageKey);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = filename;
-      anchor.rel = "noopener";
-      anchor.click();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Download failed");
     }
   }
 

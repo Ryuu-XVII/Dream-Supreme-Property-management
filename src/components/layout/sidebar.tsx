@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   FileText,
@@ -129,7 +129,11 @@ export function MobileNav() {
               <span className="font-display font-semibold text-sidebar-accent-foreground">
                 Menu
               </span>
-              <button onClick={() => setOpen(false)} className="text-sidebar-foreground">
+              <button
+                onClick={() => setOpen(false)}
+                aria-label="Close menu"
+                className="text-sidebar-foreground"
+              >
                 <X className="size-5" />
               </button>
             </div>

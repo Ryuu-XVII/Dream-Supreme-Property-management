@@ -10,6 +10,7 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { LazyMotion, MotionConfig } from "framer-motion";
 import { Toaster } from "@/components/ui/sonner";
 import { AppProvider } from "@/lib/app-state";
 import { AuthProvider, useAuth } from "@/lib/auth";
@@ -17,6 +18,8 @@ import { isActiveAccount, isPublicPathname } from "@/lib/auth-routing";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+
+const loadMotionFeatures = () => import("framer-motion").then((mod) => mod.domMax);
 
 function NotFoundComponent() {
   return (
@@ -148,8 +151,24 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AppProvider>
-          <AuthenticatedOutlet />
-          <Toaster position="top-right" richColors closeButton />
+          {/* Every framer-motion usage in the app imports `m` (not the full `motion`
+              proxy) and relies on this LazyMotion provider for animation features.
+              `features` is a dynamic import so the animation engine loads as its
+              own async chunk instead of being bundled into the critical, never-
+              code-split root chunk that loads on every single page — passing the
+              feature set directly (e.g. `features={domMax}`) measurably regressed
+              the main bundle here (confirmed via `vite build` output) because it
+              forces an eager, synchronous import at the app root. domMax (not the
+              smaller domAnimation) is required because the sidebars' active-item
+              indicator uses layoutId shared-layout animation. Also respects the
+              OS-level "reduce motion" accessibility setting for every animation
+              instead of forcing motion on everyone regardless of that preference. */}
+          <LazyMotion features={loadMotionFeatures}>
+            <MotionConfig reducedMotion="user">
+              <AuthenticatedOutlet />
+              <Toaster position="top-right" richColors closeButton />
+            </MotionConfig>
+          </LazyMotion>
         </AppProvider>
       </AuthProvider>
     </QueryClientProvider>

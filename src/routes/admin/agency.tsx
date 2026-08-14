@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { GlassCard, EmptyState } from "@/components/ui-kit";
 import { TRANSFER_DUTY_FALLBACK } from "@/lib/financial-config";

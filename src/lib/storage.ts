@@ -7,7 +7,6 @@ const DOCUMENT_BUCKET = "mandate-documents";
 // otherwise uploads that pass client-side checks are rejected server-side with a
 // confusing error instead of a clear one.
 export const MAX_SINGLE_FILE_BYTES = 20 * 1024 * 1024; // 20MB max per document
-export const MAX_BUCKET_STORAGE_BYTES = 8 * 1024 * 1024 * 1024; // 8GB total storage cap
 export const DEFAULT_USER_STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024; // 1GB default storage limit per user
 export const ALLOWED_DOCUMENT_MIME_TYPES = [
   "image/jpeg",

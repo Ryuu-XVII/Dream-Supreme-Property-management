@@ -10,6 +10,33 @@ export const Route = createFileRoute("/reports/")({
   component: ReportsHub,
 });
 
+const REPORT_CARDS = [
+  {
+    key: "pipeline",
+    title: "Pipeline",
+    description: "Live active deals by stage and value.",
+    icon: GitBranch,
+  },
+  {
+    key: "fall-through",
+    title: "Fall-through",
+    description: "Cancelled deals and recorded reasons.",
+    icon: BarChart3,
+  },
+  {
+    key: "commission",
+    title: "Commission",
+    description: "Live deal commission exposure.",
+    icon: Wallet,
+  },
+  {
+    key: "compliance",
+    title: "Compliance",
+    description: "Current FFC coverage across visible users.",
+    icon: ShieldCheck,
+  },
+];
+
 function ReportsHub() {
   const dashboard = useDashboardData();
   const deals = dashboard.data?.deals ?? [];
@@ -23,32 +50,6 @@ function ReportsHub() {
   const ffcIssues = users.filter(
     (user) => !user.ffc || !user.ffc.expiry || new Date(user.ffc.expiry) <= new Date(),
   ).length;
-  const cards = [
-    {
-      key: "pipeline",
-      title: "Pipeline",
-      description: "Live active deals by stage and value.",
-      icon: GitBranch,
-    },
-    {
-      key: "fall-through",
-      title: "Fall-through",
-      description: "Cancelled deals and recorded reasons.",
-      icon: BarChart3,
-    },
-    {
-      key: "commission",
-      title: "Commission",
-      description: "Live deal commission exposure.",
-      icon: Wallet,
-    },
-    {
-      key: "compliance",
-      title: "Compliance",
-      description: "Current FFC coverage across visible users.",
-      icon: ShieldCheck,
-    },
-  ];
   return (
     <AppShell title="Reports" description="Reports calculated from live agency records.">
       <div className="grid gap-4 sm:grid-cols-3">
@@ -74,7 +75,7 @@ function ReportsHub() {
         </GlassCard>
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          {cards.map(({ key, title, description, icon: Icon }) => (
+          {REPORT_CARDS.map(({ key, title, description, icon: Icon }) => (
             <Link key={key} to="/reports/$report" params={{ report: key }}>
               <GlassCard className="h-full transition-colors hover:border-primary/40">
                 <Icon className="size-5 text-primary" />

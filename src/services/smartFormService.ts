@@ -1,5 +1,3 @@
-import { supabase } from "@/lib/supabase";
-
 export interface SmartFormFieldMap {
   [key: string]: string | number;
 }
@@ -39,25 +37,4 @@ export async function computeDocumentSha256(payload: string): Promise<string> {
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-/**
- * Invokes public.review_compliance_item RPC via Supabase.
- */
-export async function reviewComplianceItem(
-  checklistId: string,
-  status: "approved" | "rejected",
-  rejectionNotes?: string,
-) {
-  const { data, error } = await supabase.rpc("review_compliance_item", {
-    p_checklist_id: checklistId,
-    p_status: status,
-    p_rejection_notes: rejectionNotes || null,
-  });
-
-  if (error) {
-    throw new Error(`Failed to review compliance item: ${error.message}`);
-  }
-
-  return data;
 }

@@ -40,27 +40,33 @@ function ProfilePage() {
     if (!account || !fullName.trim() || !email.trim())
       return toast.error("Name and email are required.");
     setSaving(true);
-    const normalizedEmail = email.trim().toLowerCase();
-    const { error } = await supabase
-      .from("user_account")
-      .update({ full_name: fullName.trim(), email: normalizedEmail, mobile: mobile.trim() || null })
-      .eq("id", account.id);
-    if (!error && normalizedEmail !== account.email) {
-      const authResult = await supabase.auth.updateUser({ email: normalizedEmail });
-      if (authResult.error) {
-        setSaving(false);
-        return toast.error(authResult.error.message);
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+      const { error } = await supabase
+        .from("user_account")
+        .update({
+          full_name: fullName.trim(),
+          email: normalizedEmail,
+          mobile: mobile.trim() || null,
+        })
+        .eq("id", account.id);
+      if (!error && normalizedEmail !== account.email) {
+        const authResult = await supabase.auth.updateUser({ email: normalizedEmail });
+        if (authResult.error) {
+          return toast.error(authResult.error.message);
+        }
       }
-    }
-    setSaving(false);
-    if (error) toast.error(error.message);
-    else {
-      await refreshAccount();
-      toast.success(
-        normalizedEmail !== account.email
-          ? "Profile saved. Confirm the new email from your inbox."
-          : "Profile saved",
-      );
+      if (error) toast.error(error.message);
+      else {
+        await refreshAccount();
+        toast.success(
+          normalizedEmail !== account.email
+            ? "Profile saved. Confirm the new email from your inbox."
+            : "Profile saved",
+        );
+      }
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -71,22 +77,24 @@ function ProfilePage() {
     if (newPassword !== confirmPassword) return toast.error("Passwords do not match.");
     if (!currentPassword || !account?.email) return toast.error("Enter your current password.");
     setPasswordSaving(true);
-    const verified = await supabase.auth.signInWithPassword({
-      email: account.email,
-      password: currentPassword,
-    });
-    if (verified.error) {
+    try {
+      const verified = await supabase.auth.signInWithPassword({
+        email: account.email,
+        password: currentPassword,
+      });
+      if (verified.error) {
+        return toast.error("Current password is incorrect.");
+      }
+      const result = await supabase.auth.updateUser({ password: newPassword });
+      if (result.error) toast.error(result.error.message);
+      else {
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        toast.success("Password updated");
+      }
+    } finally {
       setPasswordSaving(false);
-      return toast.error("Current password is incorrect.");
-    }
-    const result = await supabase.auth.updateUser({ password: newPassword });
-    setPasswordSaving(false);
-    if (result.error) toast.error(result.error.message);
-    else {
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      toast.success("Password updated");
     }
   }
 

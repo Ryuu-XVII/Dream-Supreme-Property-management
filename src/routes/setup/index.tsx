@@ -130,11 +130,14 @@ function SetupPage() {
             const isActive = s.id === step;
             const isDone = s.id < step;
             return (
-              <div
+              <button
                 key={s.id}
-                onClick={() => isDone && setStep(s.id)}
+                type="button"
+                disabled={!isDone}
+                onClick={() => setStep(s.id)}
+                aria-current={isActive ? "step" : undefined}
                 className={`flex flex-col items-center gap-1.5 rounded-lg p-2 text-center transition-colors ${
-                  isDone ? "cursor-pointer hover:bg-muted" : ""
+                  isDone ? "cursor-pointer hover:bg-muted" : "cursor-default"
                 }`}
               >
                 <div
@@ -153,7 +156,7 @@ function SetupPage() {
                 >
                   {s.title}
                 </span>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -326,9 +329,11 @@ function SetupPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div
+                <button
+                  type="button"
+                  aria-pressed={form.initialImportChoice === "manual"}
                   onClick={() => update("initialImportChoice", "manual")}
-                  className={`lift cursor-pointer rounded-xl border p-4 transition-colors ${
+                  className={`lift cursor-pointer rounded-xl border p-4 text-left transition-colors ${
                     form.initialImportChoice === "manual"
                       ? "border-primary bg-primary/5"
                       : "border-border"
@@ -345,11 +350,13 @@ function SetupPage() {
                   <p className="text-xs text-muted-foreground">
                     Start with a clean database and add new deals as they arrive.
                   </p>
-                </div>
+                </button>
 
-                <div
+                <button
+                  type="button"
+                  aria-pressed={form.initialImportChoice === "csv"}
                   onClick={() => update("initialImportChoice", "csv")}
-                  className={`lift cursor-pointer rounded-xl border p-4 transition-colors ${
+                  className={`lift cursor-pointer rounded-xl border p-4 text-left transition-colors ${
                     form.initialImportChoice === "csv"
                       ? "border-primary bg-primary/5"
                       : "border-border"
@@ -367,7 +374,7 @@ function SetupPage() {
                     Upload your active Excel/CSV pipeline to bulk-import practitioners, properties &
                     deals.
                   </p>
-                </div>
+                </button>
               </div>
             </div>
           )}

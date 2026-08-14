@@ -259,7 +259,7 @@ export function QuickDealModal({
                 <div className="flex flex-wrap items-center gap-2">
                   {photos.map((url, i) => (
                     <div
-                      key={i}
+                      key={url}
                       className="group relative size-16 overflow-hidden rounded-lg border border-border"
                     >
                       <img
@@ -270,6 +270,7 @@ export function QuickDealModal({
                       <button
                         type="button"
                         onClick={() => removePhoto(i)}
+                        aria-label={`Remove property photo ${i + 1}`}
                         className="absolute top-1 right-1 grid size-4 place-items-center rounded-full bg-black/70 text-white opacity-0 transition-opacity group-hover:opacity-100"
                       >
                         <X className="size-3" />

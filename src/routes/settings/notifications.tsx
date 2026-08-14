@@ -76,19 +76,22 @@ function NotificationsPage() {
     if (isReadOnly) return toast.info("Read-only mode: exit impersonation to edit preferences.");
     if (!account) return;
     setSaving(true);
-    const { error } = await supabase.from("user_notification_preference").upsert(
-      preferences.map((item) => ({
-        user_id: account.id,
-        event_type: item.type,
-        email_enabled: item.email,
-        in_app_enabled: item.inApp,
-        updated_at: new Date().toISOString(),
-      })),
-      { onConflict: "user_id,event_type" },
-    );
-    setSaving(false);
-    if (error) toast.error(error.message);
-    else toast.success("Notification preferences saved");
+    try {
+      const { error } = await supabase.from("user_notification_preference").upsert(
+        preferences.map((item) => ({
+          user_id: account.id,
+          event_type: item.type,
+          email_enabled: item.email,
+          in_app_enabled: item.inApp,
+          updated_at: new Date().toISOString(),
+        })),
+        { onConflict: "user_id,event_type" },
+      );
+      if (error) toast.error(error.message);
+      else toast.success("Notification preferences saved");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (

@@ -29,6 +29,19 @@ const categories = [
   "other",
 ];
 
+async function download(key: string, filename: string) {
+  try {
+    const url = await getR2FileUrl(key);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.rel = "noopener";
+    anchor.click();
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : "Download failed");
+  }
+}
+
 export function DealDocumentsTab({ deal }: { deal: Deal }) {
   const { account } = useAuth();
   const documents = useDocuments(deal.id);
@@ -42,18 +55,6 @@ export function DealDocumentsTab({ deal }: { deal: Deal }) {
       toast.success(`${file.name} uploaded`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed");
-    }
-  }
-  async function download(key: string, filename: string) {
-    try {
-      const url = await getR2FileUrl(key);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = filename;
-      anchor.rel = "noopener";
-      anchor.click();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Download failed");
     }
   }
   const rows = documents.data ?? [];

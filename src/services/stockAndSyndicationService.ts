@@ -1,5 +1,3 @@
-import { supabase } from "@/lib/supabase";
-
 export interface PropertyXmlFeedItem {
   id: string;
   title: string;
@@ -43,19 +41,4 @@ export function generatePropertyXmlFeed(
   <properties>${itemsXml}
   </properties>
 </feed>`;
-}
-
-/**
- * Invokes public.match_buyers_for_mandate RPC via Supabase.
- */
-export async function matchBuyersForMandate(mandateId: string): Promise<BuyerMatchResult[]> {
-  const { data, error } = await supabase.rpc("match_buyers_for_mandate", {
-    p_mandate_id: mandateId,
-  });
-
-  if (error) {
-    throw new Error(`Failed to match buyers for mandate: ${error.message}`);
-  }
-
-  return (data || []) as BuyerMatchResult[];
 }

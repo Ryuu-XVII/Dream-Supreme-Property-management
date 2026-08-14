@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { toast } from "sonner";
 import { Lock, Mail, User, Phone, Upload, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -233,7 +233,7 @@ function RegisterPage() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {/* Profile Picture Upload */}
             <div className="flex flex-col items-center justify-center space-y-2">
-              <Label>Profile Picture</Label>
+              <Label htmlFor="avatar-upload">Profile Picture</Label>
               <div className="relative group size-20 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center overflow-hidden bg-muted/40 hover:bg-muted/60 transition-colors">
                 {avatarPreview ? (
                   <img
@@ -245,6 +245,7 @@ function RegisterPage() {
                   <Upload className="size-6 text-muted-foreground group-hover:scale-110 transition-transform" />
                 )}
                 <input
+                  id="avatar-upload"
                   type="file"
                   accept="image/*"
                   onChange={handleFileChange}
@@ -341,6 +342,7 @@ function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}

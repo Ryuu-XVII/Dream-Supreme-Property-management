@@ -1,5 +1,3 @@
-import { supabase } from "@/lib/supabase";
-
 export interface TieredCommissionResult {
   deal_id: string;
   gross_commission_cents: number;
@@ -49,21 +47,4 @@ export function calculateTieredCommissionPreview(
     agentPayoutCents,
     agencyRetentionCents,
   };
-}
-
-/**
- * Invokes public.calculate_tiered_commission_splits RPC via Supabase.
- */
-export async function calculateTieredCommissionSplits(
-  dealId: string,
-): Promise<TieredCommissionResult> {
-  const { data, error } = await supabase.rpc("calculate_tiered_commission_splits", {
-    p_deal_id: dealId,
-  });
-
-  if (error) {
-    throw new Error(`Failed to calculate tiered commission splits: ${error.message}`);
-  }
-
-  return data as TieredCommissionResult;
 }

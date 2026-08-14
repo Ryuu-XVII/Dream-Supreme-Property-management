@@ -46,23 +46,6 @@ export const entityTypeFromDb: Record<string, EntityType> = {
   deceased_estate: "Deceased Estate",
 };
 
-export const cancellationReasonToDb: Record<string, string> = {
-  "Bond declined": "bond_declined",
-  "Bond not applied in time": "bond_not_applied_in_time",
-  "Sale of purchaser property failed": "sale_of_purchasers_property_failed",
-  "Purchaser withdrew": "purchaser_withdrew",
-  "Seller withdrew": "seller_withdrew",
-  "Property defect": "property_defect",
-  "Compliance certificate failure": "compliance_certificate_failure",
-  "Price renegotiation failed": "price_renegotiation_failed",
-  "Purchaser death or insolvency": "purchaser_death_or_insolvency",
-  "Seller death or insolvency": "seller_death_or_insolvency",
-  "Deceased estate or trust complication": "deceased_estate_or_trust_complication",
-  "Title or boundary defect": "title_or_boundary_defect",
-  "Municipal or clearance obstruction": "municipal_or_clearance_obstruction",
-  Other: "other",
-};
-
 export interface TransferDutyBracket {
   from: number;
   to: number | null;

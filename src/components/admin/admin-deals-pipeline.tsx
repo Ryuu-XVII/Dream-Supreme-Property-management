@@ -13,6 +13,15 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 
+// Simplified stages for visualization
+const pipelineStages = [
+  "Mandate Signed",
+  "OTP Signed",
+  "Conditions Pending",
+  "Conveyancer Instructed",
+  "Registered",
+];
+
 export function AdminDealsPipeline() {
   const [inspectingDeal, setInspectingDeal] = useState<PipelineDeal | null>(null);
   const { data: deals = [], isLoading } = usePipelineDeals();
@@ -40,15 +49,6 @@ export function AdminDealsPipeline() {
       </GlassCard>
     );
   }
-
-  // Simplified stages for visualization
-  const pipelineStages = [
-    "Mandate Signed",
-    "OTP Signed",
-    "Conditions Pending",
-    "Conveyancer Instructed",
-    "Registered",
-  ];
 
   return (
     <>
@@ -106,7 +106,7 @@ export function AdminDealsPipeline() {
                 <div className="relative pt-2 pb-8">
                   <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-200 dark:bg-slate-800 -translate-y-1/2 rounded-full" />
                   <div
-                    className="absolute top-1/2 left-0 h-0.5 bg-indigo-500 -translate-y-1/2 transition-all duration-500 rounded-full"
+                    className="absolute top-1/2 left-0 h-0.5 bg-indigo-500 -translate-y-1/2 transition-[width] duration-500 rounded-full"
                     style={{ width: `${(currentStageIdx / (pipelineStages.length - 1)) * 100}%` }}
                   />
 

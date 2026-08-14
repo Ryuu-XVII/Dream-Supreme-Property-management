@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { type User, type Session } from "@supabase/supabase-js";
 import { supabase, impersonationState } from "./supabase";
 
@@ -124,28 +132,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const activeAccount = impersonatedAccount ?? account;
   const isReadOnly = !!impersonatedAccount;
 
-  const startImpersonating = (user: UserAccount) => {
+  const startImpersonating = useCallback((user: UserAccount) => {
     setImpersonatedAccount(user);
     impersonationState.active = true;
     if (typeof window !== "undefined") {
       sessionStorage.setItem(IMPERSONATION_SESSION_KEY, JSON.stringify(user));
     }
-  };
+  }, []);
 
-  const stopImpersonating = () => {
+  const stopImpersonating = useCallback(() => {
     setImpersonatedAccount(null);
     impersonationState.active = false;
     if (typeof window !== "undefined") {
       sessionStorage.removeItem(IMPERSONATION_SESSION_KEY);
     }
-  };
+  }, []);
 
-  const setMasterAdminAccount = (masterAcc: UserAccount) => {
+  const setMasterAdminAccount = useCallback((masterAcc: UserAccount) => {
     setAccount(masterAcc);
     if (typeof window !== "undefined") {
       localStorage.setItem(MASTER_SESSION_KEY, JSON.stringify(masterAcc));
     }
-  };
+  }, []);
 
   const refreshAccount = useCallback(async () => {
     try {
@@ -222,7 +230,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [refreshAccount]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem(MASTER_SESSION_KEY);
     }
@@ -234,29 +242,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setImpersonatedAccount(null);
     impersonationState.active = false;
     setPasswordRecovery(false);
-  };
+  }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        account,
-        activeAccount,
-        impersonatedAccount,
-        isReadOnly,
-        startImpersonating,
-        stopImpersonating,
-        setMasterAdminAccount,
-        refreshAccount,
-        passwordRecovery,
-        loading,
-        signOut,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const contextValue = useMemo(
+    () => ({
+      user,
+      session,
+      account,
+      activeAccount,
+      impersonatedAccount,
+      isReadOnly,
+      startImpersonating,
+      stopImpersonating,
+      setMasterAdminAccount,
+      refreshAccount,
+      passwordRecovery,
+      loading,
+      signOut,
+    }),
+    [
+      user,
+      session,
+      account,
+      activeAccount,
+      impersonatedAccount,
+      isReadOnly,
+      startImpersonating,
+      stopImpersonating,
+      setMasterAdminAccount,
+      refreshAccount,
+      passwordRecovery,
+      loading,
+      signOut,
+    ],
   );
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => {

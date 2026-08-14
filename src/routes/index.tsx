@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { Activity, AlertTriangle, Banknote, Calendar, ShieldAlert } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { GlassCard, KpiCard, CardSkeleton, EmptyState } from "@/components/ui-kit";
@@ -37,6 +37,10 @@ export const Route = createFileRoute("/")({
   }),
   component: Index,
 });
+
+// TODO: always empty — no code path populates a registration forecast yet, so
+// the "Registration Forecast" chart permanently shows its empty state.
+const forecast: Array<{ month: string; projected: number }> = [];
 
 const shortStage: Record<string, string> = {
   "Mandate Signed": "Mandate",
@@ -84,7 +88,6 @@ function Index() {
     () => dashboard.data?.auditEvents ?? [],
     [dashboard.data?.auditEvents],
   );
-  const forecast: Array<{ month: string; projected: number }> = [];
   const today = useMemo(() => new Date(), []);
 
   const activeDeals = useMemo(

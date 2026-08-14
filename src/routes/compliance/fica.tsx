@@ -71,8 +71,8 @@ function FicaPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((row, index) => (
-                <TableRow key={`${row.id}-${row.dealId}-${index}`}>
+              {rows.map((row) => (
+                <TableRow key={`${row.id}-${row.dealId}`}>
                   <TableCell className="font-medium">{row.name}</TableCell>
                   <TableCell>{row.role}</TableCell>
                   <TableCell>{row.entityType?.replaceAll("_", " ")}</TableCell>

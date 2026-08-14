@@ -24,6 +24,16 @@ export const Route = createFileRoute("/mandates")({
   component: MandatesRegister,
 });
 
+function getExpiryWarning(expiresOn: string | null) {
+  if (!expiresOn) return null;
+  const daysLeft = Math.ceil((new Date(expiresOn).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+
+  if (daysLeft < 0) return <Badge variant="destructive">Expired</Badge>;
+  if (daysLeft <= 14)
+    return <Badge className="bg-amber-500 hover:bg-amber-600">Expires in {daysLeft} days</Badge>;
+  return <span className="text-muted-foreground">{dateFmt(expiresOn)}</span>;
+}
+
 function MandatesRegister() {
   const { account, isReadOnly } = useAuth();
   const navigate = useNavigate();
@@ -53,18 +63,6 @@ function MandatesRegister() {
       return data;
     },
   });
-
-  const getExpiryWarning = (expiresOn: string | null) => {
-    if (!expiresOn) return null;
-    const daysLeft = Math.ceil(
-      (new Date(expiresOn).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-    );
-
-    if (daysLeft < 0) return <Badge variant="destructive">Expired</Badge>;
-    if (daysLeft <= 14)
-      return <Badge className="bg-amber-500 hover:bg-amber-600">Expires in {daysLeft} days</Badge>;
-    return <span className="text-muted-foreground">{dateFmt(expiresOn)}</span>;
-  };
 
   return (
     <AppShell

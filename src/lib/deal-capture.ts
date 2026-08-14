@@ -3,6 +3,10 @@ import type { EntityType } from "@/types";
 export type FicaStatus = "Complete" | "Partial" | "Not Started";
 
 export interface DealPartyInput {
+  // Client-only stable identity for React list rendering (add/remove/reorder
+  // party rows). Never sent to the server — partyPayload() in src/data/deals.ts
+  // builds the submission payload field-by-field and does not include it.
+  _key: string;
   name: string;
   sharePercent: string;
   entityType: EntityType;
@@ -105,6 +109,7 @@ const dateValue = (daysFromNow = 0) => {
 
 export function createEmptyParty(): DealPartyInput {
   return {
+    _key: crypto.randomUUID(),
     name: "",
     sharePercent: "100",
     entityType: "Natural Person",

@@ -546,11 +546,14 @@ function NewDealPage() {
             const isActive = s.id === step;
             const isDone = s.id < step;
             return (
-              <div
+              <button
                 key={s.id}
-                onClick={() => isDone && setStep(s.id)}
+                type="button"
+                disabled={!isDone}
+                onClick={() => setStep(s.id)}
+                aria-current={isActive ? "step" : undefined}
                 className={`flex flex-col items-center gap-1.5 rounded-lg p-2 text-center transition-colors ${
-                  isDone ? "cursor-pointer hover:bg-muted" : ""
+                  isDone ? "cursor-pointer hover:bg-muted" : "cursor-default"
                 }`}
               >
                 <div
@@ -571,7 +574,7 @@ function NewDealPage() {
                 >
                   {s.name}
                 </span>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -890,7 +893,7 @@ function NewDealPage() {
               <div className="space-y-4">
                 {formData.sellers.map((party, index) => (
                   <PartyEditor
-                    key={`seller-${index}`}
+                    key={party._key}
                     title={`Seller / transferor ${index + 1}`}
                     party={party}
                     purchaser={false}
@@ -907,7 +910,7 @@ function NewDealPage() {
               <div className="space-y-4">
                 {formData.purchasers.map((party, index) => (
                   <PartyEditor
-                    key={`purchaser-${index}`}
+                    key={party._key}
                     title={`Purchaser / transferee ${index + 1}`}
                     party={party}
                     purchaser

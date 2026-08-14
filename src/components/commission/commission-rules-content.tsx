@@ -86,18 +86,21 @@ function computePreview(rs: RuleSet, sampleSale: number) {
   const net = rs.vatInclusive ? gross - vat : gross;
 
   const steps: {
+    id: string;
     label: string;
     formula: string;
     amount: number;
     kind: "base" | "deduct" | "subtotal" | "final";
   }[] = [
     {
+      id: "gross",
       label: "Gross commission",
       formula: `${zar(sampleSale)} × ${(rs.defaultBps / 100).toFixed(2)}%`,
       amount: gross,
       kind: "base",
     },
     {
+      id: "vat",
       label: rs.vatInclusive
         ? `Less VAT (${DEFAULT_VAT_PERCENT}%, incl.)`
         : `Plus VAT (${DEFAULT_VAT_PERCENT}%, excl.)`,
@@ -108,6 +111,7 @@ function computePreview(rs: RuleSet, sampleSale: number) {
       kind: "deduct",
     },
     {
+      id: "net",
       label: "Net commission",
       formula: rs.vatInclusive ? "gross − VAT" : "gross (VAT added separately)",
       amount: net,
@@ -131,6 +135,7 @@ function computePreview(rs: RuleSet, sampleSale: number) {
     }
     running -= amt;
     steps.push({
+      id: `deduction-${line.id}`,
       label: `Less ${line.type}${line.payee ? ` → ${line.payee}` : ""}`,
       formula,
       amount: -amt,
@@ -138,6 +143,7 @@ function computePreview(rs: RuleSet, sampleSale: number) {
     });
   }
   steps.push({
+    id: "distributable-pool",
     label: "Distributable pool",
     formula: "net − deductions",
     amount: running,
@@ -147,12 +153,14 @@ function computePreview(rs: RuleSet, sampleSale: number) {
   const office = Math.round((running * rs.officeSharePct) / 100);
   const agentPool = running - office;
   steps.push({
+    id: "office-share",
     label: `Office share (${rs.officeSharePct}%)`,
     formula: `pool × ${rs.officeSharePct}%`,
     amount: -office,
     kind: "deduct",
   });
   steps.push({
+    id: "agent-pool",
     label: "Agent pool (net payable)",
     formula: "pool − office share",
     amount: agentPool,
@@ -713,9 +721,9 @@ export function CommissionRulesContent() {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        {preview.map((step, i) => (
+                        {preview.map((step) => (
                           <div
-                            key={i}
+                            key={step.id}
                             className={
                               step.kind === "final"
                                 ? "flex items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2"

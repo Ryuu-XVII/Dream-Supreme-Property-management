@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { GlassCard } from "@/components/ui-kit";
 import { NOTIFICATION_EVENT_TYPES as notificationTypes } from "@/lib/notification-events";

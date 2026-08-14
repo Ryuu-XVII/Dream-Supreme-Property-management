@@ -179,10 +179,10 @@ function TransferCalculatorPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transferDutyBrackets.map((b, i) => {
+              {transferDutyBrackets.map((b) => {
                 const applied = !vatVendor && b === bracket;
                 return (
-                  <TableRow key={i} className={cn(applied && "bg-primary/5")}>
+                  <TableRow key={b.from} className={cn(applied && "bg-primary/5")}>
                     <TableCell className="money">{zarFmt(b.from / 100)}</TableCell>
                     <TableCell className="money">
                       {b.to ? zarFmt(b.to / 100) : "and above"}

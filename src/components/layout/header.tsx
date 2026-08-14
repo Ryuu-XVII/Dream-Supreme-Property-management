@@ -333,5 +333,3 @@ export function Header() {
     </header>
   );
 }
-
-export { relative };

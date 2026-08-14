@@ -65,18 +65,21 @@ function ConveyancerPage() {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.rpc("submit_conveyancer_status", {
-      p_token: token,
-      p_lodged_on: date,
-    });
-    setSubmitting(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const { error } = await supabase.rpc("submit_conveyancer_status", {
+        p_token: token,
+        p_lodged_on: date,
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      setSubmitted(true);
+      setRequest(null);
+      toast.success("Status update submitted");
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitted(true);
-    setRequest(null);
-    toast.success("Status update submitted");
   }
 
   const displayStage = request

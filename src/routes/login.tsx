@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { toast } from "sonner";
 import { Lock, Mail, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,14 @@ function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const isAdmin = isAdminDomain();
+  // isAdminDomain() reads window.location.hostname, which doesn't exist during
+  // server rendering — start with the server-safe default (false) so the
+  // first client render matches the SSR output, then flip to the real value
+  // once mounted, instead of causing a hydration mismatch on every load.
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    setIsAdmin(isAdminDomain());
+  }, []);
 
   const form = useForm<CredentialsForm>({
     resolver: zodResolver(credentialsSchema),
@@ -199,7 +206,7 @@ function LoginPage() {
                   id="email"
                   type="email"
                   placeholder={isAdmin ? "admin@dreamsupreme.co.za" : "agent@dreamsupreme.co.za"}
-                  className="h-11 rounded-xl bg-background/50 pl-10.5 text-sm transition-all focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/40"
+                  className="h-11 rounded-xl bg-background/50 pl-10.5 text-sm transition focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/40"
                   {...form.register("email")}
                 />
               </div>
@@ -233,7 +240,7 @@ function LoginPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••••••"
-                  className="h-11 rounded-xl bg-background/50 pl-10.5 pr-10 text-sm transition-all focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/40"
+                  className="h-11 rounded-xl bg-background/50 pl-10.5 pr-10 text-sm transition focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/40"
                   {...form.register("password")}
                 />
                 <button
@@ -255,7 +262,7 @@ function LoginPage() {
 
             <Button
               type="submit"
-              className="h-11 w-full rounded-xl bg-primary font-display font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:bg-primary/90 hover:shadow-lg active:scale-[0.99]"
+              className="h-11 w-full rounded-xl bg-primary font-display font-semibold text-primary-foreground shadow-md shadow-primary/20 transition hover:bg-primary/90 hover:shadow-lg active:scale-[0.99]"
               disabled={submitting}
             >
               {submitting ? "Authenticating…" : "Sign in to Console"}

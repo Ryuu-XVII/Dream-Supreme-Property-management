@@ -129,7 +129,14 @@ export function ReconciliationContent() {
     }
 
     setIsProcessing(true);
+    try {
+      await reconcileMatchedTransactions(matchedTxs);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
+  const reconcileMatchedTransactions = async (matchedTxs: ParsedTransaction[]) => {
     // Fetch every outstanding invoice for the matched leases in one batched
     // query instead of one query per transaction, then deterministically hand
     // out invoices in due-on order per lease (mirrors the old per-tx
@@ -203,7 +210,6 @@ export function ReconciliationContent() {
     }
 
     setTransactions([...transactions]);
-    setIsProcessing(false);
     queryClient.invalidateQueries({ queryKey: ["leases-for-recon"] });
     toast.success(`Successfully reconciled ${successCount} transactions.`);
   };

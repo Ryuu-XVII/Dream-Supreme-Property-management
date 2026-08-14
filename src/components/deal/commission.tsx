@@ -81,9 +81,9 @@ export function DealCommissionTab({ deal }: { deal: Deal }) {
       <GlassCard>
         <h3 className="mb-4 font-display text-base font-semibold">Commission waterfall</h3>
         <div className="space-y-1.5">
-          {steps.map((step, i) => (
+          {steps.map((step) => (
             <div
-              key={i}
+              key={step.label}
               className={cn(
                 "flex items-center justify-between gap-3 rounded-lg px-3 py-2.5",
                 step.kind === "subtotal" && "bg-muted/60 font-medium",

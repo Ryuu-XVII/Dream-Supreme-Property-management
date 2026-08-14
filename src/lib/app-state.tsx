@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import type { Role } from "@/types";
 import { useAuth } from "@/lib/auth";
 
@@ -63,70 +71,65 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => mql.removeEventListener("change", apply);
   }, [theme]);
 
-  const setTheme = (t: Theme) => {
+  const setTheme = useCallback((t: Theme) => {
     setThemeState(t);
     localStorage.setItem("dsp-theme", t);
-  };
-  const setRole = (r: Role) => {
-    // Kept for API compatibility with existing components. The authenticated
-    // database profile remains the source of truth for authorization.
-    if (!activeAccount) setRoleState(r);
-  };
+  }, []);
+  const setRole = useCallback(
+    (r: Role) => {
+      // Kept for API compatibility with existing components. The authenticated
+      // database profile remains the source of truth for authorization.
+      if (!activeAccount) setRoleState(r);
+    },
+    [activeAccount],
+  );
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("dsp-sidebar", sidebarCollapsed ? "1" : "0");
     }
   }, [sidebarCollapsed]);
 
-  const toggleSidebar = () => setCollapsed((prev) => !prev);
+  const toggleSidebar = useCallback(() => setCollapsed((prev) => !prev), []);
 
-  const toggleCalculator = (open?: boolean, context?: CalculatorContext | null) => {
+  const toggleCalculator = useCallback((open?: boolean, context?: CalculatorContext | null) => {
     setCalculatorOpen((o) => open ?? !o);
     if (context !== undefined) {
       setCalculatorContext(context);
     }
-  };
+  }, []);
 
-  return (
-    <Ctx.Provider
-      value={{
-        theme,
-        setTheme,
-        resolved,
-        role,
-        setRole,
-        sidebarCollapsed,
-        toggleSidebar,
-        calculatorOpen,
-        calculatorContext,
-        toggleCalculator,
-      }}
-    >
-      {children}
-    </Ctx.Provider>
+  const contextValue = useMemo(
+    () => ({
+      theme,
+      setTheme,
+      resolved,
+      role,
+      setRole,
+      sidebarCollapsed,
+      toggleSidebar,
+      calculatorOpen,
+      calculatorContext,
+      toggleCalculator,
+    }),
+    [
+      theme,
+      setTheme,
+      resolved,
+      role,
+      setRole,
+      sidebarCollapsed,
+      toggleSidebar,
+      calculatorOpen,
+      calculatorContext,
+      toggleCalculator,
+    ],
   );
+
+  return <Ctx.Provider value={contextValue}>{children}</Ctx.Provider>;
 }
 
 export function useApp() {
   const c = useContext(Ctx);
   if (!c) throw new Error("useApp must be used within AppProvider");
   return c;
-}
-
-export const permissions: Record<Role, string[]> = {
-  Agent: ["view.own", "reports.all"],
-  Admin: ["view.all", "commission.approve", "settings.manage", "users.manage", "reports.all"],
-  "Admin & Agent": [
-    "view.all",
-    "view.own",
-    "commission.approve",
-    "settings.manage",
-    "users.manage",
-    "reports.all",
-  ],
-};
-
-export function useCan(perm: string) {
-  const { role } = useApp();
-  return permissions[role].includes(perm);
 }

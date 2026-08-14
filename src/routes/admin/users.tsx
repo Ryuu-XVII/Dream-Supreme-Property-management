@@ -66,6 +66,69 @@ function formatStorageBytes(bytes: number): string {
   return `${(bytes / 1048576).toFixed(0)} MB`;
 }
 
+function roleTone(r: Role) {
+  switch (r) {
+    case "Admin":
+      return "border-slate-500/30 text-slate-600 bg-slate-500/10";
+    case "Agent":
+      return "border-indigo-500/30 text-indigo-600 bg-indigo-500/10";
+    default:
+      return "";
+  }
+}
+
+async function exportAgentTimeline(userId: string, userName: string) {
+  try {
+    // Fetch deal timeline
+    const { data: deals, error: dErr } = await supabase
+      .from("deal_timeline")
+      .select(
+        `
+          occurred_at,
+          stage,
+          deal!inner(
+            title,
+            deal_participant!inner(user_account_id)
+          )
+        `,
+      )
+      .eq("deal.deal_participant.user_account_id", userId)
+      .order("occurred_at", { ascending: false });
+
+    if (dErr) throw dErr;
+
+    // Map to CSV structure
+    const exportData = (deals || []).map((d: any) => ({
+      Agent: userName,
+      Date: new Date(d.occurred_at).toLocaleString(),
+      Type: "Deal Stage Update",
+      Property: d.deal.title,
+      Detail: `Moved to ${d.stage}`,
+    }));
+
+    if (exportData.length === 0) {
+      toast.info("No timeline data found for this agent.");
+      return;
+    }
+
+    const csv = Papa.unparse(exportData);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `timeline_${userName.replace(/ /g, "_")}_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success("Timeline data exported successfully.");
+  } catch (err: any) {
+    console.error(err);
+    toast.error("Failed to export timeline data.");
+  }
+}
+
 export const Route = createFileRoute("/admin/users")({
   component: AdminUsers,
 });
@@ -136,57 +199,6 @@ function AdminUsers() {
     }
   };
 
-  const exportAgentTimeline = async (userId: string, userName: string) => {
-    try {
-      // Fetch deal timeline
-      const { data: deals, error: dErr } = await supabase
-        .from("deal_timeline")
-        .select(
-          `
-          occurred_at,
-          stage,
-          deal!inner(
-            title,
-            deal_participant!inner(user_account_id)
-          )
-        `,
-        )
-        .eq("deal.deal_participant.user_account_id", userId)
-        .order("occurred_at", { ascending: false });
-
-      if (dErr) throw dErr;
-
-      // Map to CSV structure
-      const exportData = (deals || []).map((d: any) => ({
-        Agent: userName,
-        Date: new Date(d.occurred_at).toLocaleString(),
-        Type: "Deal Stage Update",
-        Property: d.deal.title,
-        Detail: `Moved to ${d.stage}`,
-      }));
-
-      if (exportData.length === 0) {
-        toast.info("No timeline data found for this agent.");
-        return;
-      }
-
-      const csv = Papa.unparse(exportData);
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `timeline_${userName.replace(/ /g, "_")}_${new Date().toISOString().split("T")[0]}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      toast.success("Timeline data exported successfully.");
-    } catch (err: any) {
-      console.error(err);
-      toast.error("Failed to export timeline data.");
-    }
-  };
-
   const bulkExportTimeline = async () => {
     if (selectedIds.length === 0) return;
     try {
@@ -249,17 +261,6 @@ function AdminUsers() {
     } catch (err: any) {
       console.error(err);
       toast.error("Failed to bulk export timeline data.");
-    }
-  };
-
-  const roleTone = (r: Role) => {
-    switch (r) {
-      case "Admin":
-        return "border-slate-500/30 text-slate-600 bg-slate-500/10";
-      case "Agent":
-        return "border-indigo-500/30 text-indigo-600 bg-indigo-500/10";
-      default:
-        return "";
     }
   };
 
