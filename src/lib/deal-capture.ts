@@ -1,4 +1,9 @@
 import type { EntityType } from "@/types";
+import {
+  validateEmailFormat,
+  validateSouthAfricanId,
+  validateSouthAfricanPhone,
+} from "./sa-validation";
 
 export type FicaStatus = "Complete" | "Partial" | "Not Started";
 
@@ -208,6 +213,15 @@ function validateParty(party: DealPartyInput, label: string, salePrice: number) 
   if (!party.email.trim() && !party.mobile.trim()) {
     errors.push(`${label}: an email address or mobile number is required.`);
   }
+  if (party.email.trim() && !validateEmailFormat(party.email)) {
+    errors.push(`${label}: enter a valid email address.`);
+  }
+  if (party.mobile.trim()) {
+    const phoneRes = validateSouthAfricanPhone(party.mobile);
+    if (!phoneRes.valid) {
+      errors.push(`${label}: ${phoneRes.error}`);
+    }
+  }
   if (!party.sanctionsScreened) {
     errors.push(`${label}: targeted-financial-sanctions screening must be completed.`);
   }
@@ -215,6 +229,18 @@ function validateParty(party: DealPartyInput, label: string, salePrice: number) 
     errors.push(`${label}: ownership share must be above 0% and at most 100%.`);
   }
   if (party.entityType === "Natural Person") {
+    if (
+      party.isSaResident ||
+      party.nationality.toLowerCase().includes("south africa") ||
+      !party.passportNumber.trim()
+    ) {
+      const idRes = validateSouthAfricanId(party.idNumber);
+      if (!idRes.valid) {
+        errors.push(
+          `${label}: ${idRes.error || "Valid 13-digit South African ID number is required."}`,
+        );
+      }
+    }
     if (!party.dateOfBirth) errors.push(`${label}: date of birth is required.`);
     if (!party.maritalStatus) errors.push(`${label}: marital status is required.`);
     if (!party.isSaResident && (!party.passportNumber.trim() || !party.passportCountry.trim())) {
@@ -248,7 +274,14 @@ export function validateDealStep(form: DealCaptureForm, step: number): string[] 
     if (!form.legalDescription.trim())
       errors.push("The deeds-search legal description is required.");
     if (!form.titleDeedNumber.trim()) errors.push("The current title deed number is required.");
-    if (!positiveMoney(form.listingPrice)) errors.push("Enter a valid listing price.");
+    const listingPriceNum = Number(form.listingPrice);
+    if (!positiveMoney(form.listingPrice) || listingPriceNum > 1_000_000_000) {
+      errors.push("Enter a valid listing price (up to R1 billion).");
+    }
+    const commissionBpsNum = Number(form.commissionBps);
+    if (isNaN(commissionBpsNum) || commissionBpsNum < 0 || commissionBpsNum > 10000) {
+      errors.push("Commission rate must be between 0% and 100% (0 to 10,000 bps).");
+    }
     const share = Number(form.transferSharePercent);
     if (!(share > 0 && share <= 100))
       errors.push("The ownership share must be above 0% and at most 100%.");
@@ -288,7 +321,10 @@ export function validateDealStep(form: DealCaptureForm, step: number): string[] 
   }
 
   if (step === 3) {
-    if (!positiveMoney(form.salePrice)) errors.push("Enter a valid agreed sale price.");
+    const salePriceNum = Number(form.salePrice);
+    if (!positiveMoney(form.salePrice) || salePriceNum > 1_000_000_000) {
+      errors.push("Enter a valid agreed sale price (up to R1 billion).");
+    }
     if (!form.effectiveDate) errors.push("The agreement effective date is required.");
     if (form.offerExpiresOn && form.effectiveDate && form.offerExpiresOn < form.effectiveDate) {
       errors.push("Offer expiry cannot be before the agreement effective date.");

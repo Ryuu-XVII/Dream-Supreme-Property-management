@@ -14,6 +14,13 @@ import {
 } from "@/components/ui/select";
 import { createDeal } from "@/data/deals";
 import { useAgents } from "@/data/reference";
+import { supabase } from "@/lib/supabase";
+import { uploadFileToR2, getUserStorageUsage, recordStorageUsageDelta } from "@/lib/storage";
+import {
+  validateEmailFormat,
+  validateSouthAfricanId,
+  validateSouthAfricanPhone,
+} from "@/lib/sa-validation";
 import {
   Home,
   User,
@@ -96,17 +103,51 @@ function NewMandatePage() {
   };
 
   const handleNext = () => {
-    if (step === 1 && !form.address) {
-      toast.error("Please enter the property street address.");
-      return;
+    if (step === 1) {
+      if (!form.address.trim() || !form.suburb.trim()) {
+        toast.error("Please enter the property street address and suburb.");
+        return;
+      }
     }
-    if (step === 2 && (!form.listingPrice || !form.mandateExpiryDate)) {
-      toast.error("Please enter the asking price and mandate expiry date.");
-      return;
+    if (step === 2) {
+      const price = Number(form.listingPrice);
+      if (!price || price <= 0 || price > 1_000_000_000) {
+        toast.error("Please enter a valid asking price (up to R1 billion).");
+        return;
+      }
+      const commPct = Number(form.agreedCommissionPct);
+      if (isNaN(commPct) || commPct < 0 || commPct > 100) {
+        toast.error("Please enter a valid commission percentage (0% to 100%).");
+        return;
+      }
+      if (!form.mandateExpiryDate || form.mandateExpiryDate < form.mandateStartDate) {
+        toast.error("Mandate expiry date cannot be before the start date.");
+        return;
+      }
     }
-    if (step === 3 && !form.sellerName) {
-      toast.error("Please enter the seller / mandator full name.");
-      return;
+    if (step === 3) {
+      if (!form.sellerName.trim()) {
+        toast.error("Please enter the seller / mandator full name.");
+        return;
+      }
+      if (form.sellerEmail.trim() && !validateEmailFormat(form.sellerEmail)) {
+        toast.error("Please enter a valid seller email address.");
+        return;
+      }
+      if (form.sellerMobile.trim()) {
+        const phoneRes = validateSouthAfricanPhone(form.sellerMobile);
+        if (!phoneRes.valid) {
+          toast.error(phoneRes.error || "Please enter a valid South African mobile number.");
+          return;
+        }
+      }
+      if (form.sellerIdNumber.trim()) {
+        const idRes = validateSouthAfricanId(form.sellerIdNumber);
+        if (!idRes.valid) {
+          toast.error(idRes.error || "Please enter a valid South African ID number.");
+          return;
+        }
+      }
     }
     setStep((s) => Math.min(s + 1, STEPS.length));
   };
@@ -123,7 +164,7 @@ function NewMandatePage() {
 
       const commissionBps = (parseFloat(form.agreedCommissionPct || "5") * 100).toString();
 
-      await createDeal({
+      const dealId = await createDeal({
         ...form,
         commissionBps,
         buyerName: "Unassigned Purchaser",
@@ -137,6 +178,55 @@ function NewMandatePage() {
         ficaRequired: true,
         ficaDueDate: form.mandateStartDate,
       });
+
+      // Upload attached documents if any
+      const docsToUpload: Array<{ file: File; category: string }> = [];
+      if (form.mandateDoc)
+        docsToUpload.push({ file: form.mandateDoc, category: "mandate_agreement" });
+      if (form.sellerIdDoc) docsToUpload.push({ file: form.sellerIdDoc, category: "fica_id" });
+      if (form.titleDeedDoc) docsToUpload.push({ file: form.titleDeedDoc, category: "title_deed" });
+
+      if (docsToUpload.length > 0 && dealId) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          const { data: userAccount } = await supabase
+            .from("user_account")
+            .select("id, agency_id")
+            .eq("auth_user_id", user.id)
+            .maybeSingle();
+
+          if (userAccount) {
+            const agencyId = userAccount.agency_id;
+            const { usedBytes, limitBytes } = await getUserStorageUsage(userAccount.id);
+            let currentUsed = usedBytes;
+
+            for (const { file, category } of docsToUpload) {
+              const path = `${agencyId}/${dealId}/${crypto.randomUUID()}-${file.name}`;
+              const storageKey = await uploadFileToR2(file, path, {
+                currentStorageUsedBytes: currentUsed,
+                storageLimitBytes: limitBytes,
+              });
+              await recordStorageUsageDelta(userAccount.id, file.size);
+              currentUsed += file.size;
+
+              await supabase.from("document").insert({
+                agency_id: agencyId,
+                deal_id: dealId,
+                category,
+                filename: file.name,
+                storage_key: storageKey,
+                mime_type: file.type || "application/pdf",
+                size_bytes: file.size,
+                version: 1,
+                uploaded_by: userAccount.id,
+              });
+            }
+          }
+        }
+      }
 
       toast.success("Mandate registered successfully!", { id: "new-mandate" });
       navigate({ to: "/mandates" });

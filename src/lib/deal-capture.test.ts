@@ -10,9 +10,10 @@ function validParty() {
   return {
     ...createEmptyParty(),
     name: "Nomsa Dlamini",
-    idNumber: "8001015009087",
+    idNumber: "9505155000085",
     email: "nomsa@example.co.za",
-    dateOfBirth: "1980-01-01",
+    mobile: "0821234567",
+    dateOfBirth: "1995-05-15",
     taxNumber: "0123456789",
     sourceOfFunds: "Salary savings and approved home loan",
     sanctionsScreened: true,
@@ -51,6 +52,22 @@ describe("deal capture validation", () => {
         "The current title deed number is required.",
       ]),
     );
+  });
+
+  it("validates South African ID Luhn checksum for natural persons", () => {
+    const deal = validDeal();
+    deal.sellers[0].idNumber = "8001015009089"; // invalid checksum
+    const errors = validateDealStep(deal, 2);
+    expect(
+      errors.some((err) => err.includes("Luhn check failed") || err.includes("ID number")),
+    ).toBe(true);
+  });
+
+  it("validates email formatting", () => {
+    const deal = validDeal();
+    deal.sellers[0].email = "invalid-email";
+    const errors = validateDealStep(deal, 2);
+    expect(errors).toContain("Seller 1: enter a valid email address.");
   });
 
   it("requires tax numbers at the SARS R2 million threshold", () => {

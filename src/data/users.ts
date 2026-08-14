@@ -37,7 +37,7 @@ export function useAdminUsers() {
       // 2. Fetch pending invitations from PostgreSQL migration schema (public.user_invitation)
       const { data: invitations, error: inviteErr } = await supabase
         .from("user_invitation")
-        .select("id, email, role, agency_id, branch_id, accepted_at")
+        .select("id, email, role, agency_id, accepted_at")
         .is("accepted_at", null);
       if (inviteErr) throw inviteErr;
 
@@ -94,7 +94,7 @@ export function useAdminUsers() {
             active: false,
             colour: "#eab308",
             agencyId: typeof i.agency_id === "string" ? i.agency_id : "",
-            branchId: typeof i.branch_id === "string" ? i.branch_id : null,
+            branchId: null,
             commissionPct: 50,
             storageLimitBytes: DEFAULT_USER_STORAGE_LIMIT_BYTES,
             storageUsedBytes: 0,

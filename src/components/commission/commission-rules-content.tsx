@@ -243,6 +243,40 @@ export function CommissionRulesContent() {
 
   const saveEditing = async () => {
     if (!editing) return;
+
+    if (!editing.name.trim()) {
+      toast.error("Please enter a rule set name.");
+      return;
+    }
+    if (editing.defaultBps < 0 || editing.defaultBps > 10000) {
+      toast.error("Default commission rate must be between 0% and 100% (0 to 10,000 bps).");
+      return;
+    }
+    if (editing.officeSharePct < 0 || editing.officeSharePct > 100) {
+      toast.error("Office share percentage must be between 0% and 100%.");
+      return;
+    }
+    if (
+      editing.effectiveTo &&
+      editing.effectiveFrom &&
+      editing.effectiveTo < editing.effectiveFrom
+    ) {
+      toast.error("Effective To date cannot be before Effective From date.");
+      return;
+    }
+    for (const line of editing.deductions) {
+      if (line.bps !== undefined && (line.bps < 0 || line.bps > 10000)) {
+        toast.error(
+          `Deduction "${line.type}": rate must be between 0% and 100% (0 to 10,000 bps).`,
+        );
+        return;
+      }
+      if (line.fixed !== undefined && line.fixed < 0) {
+        toast.error(`Deduction "${line.type}": fixed amount cannot be negative.`);
+        return;
+      }
+    }
+
     const lineTypes: Record<DeductionLine["type"], string> = {
       "Franchise Fee": "franchise_fee",
       "Referral Fee": "referral_fee",

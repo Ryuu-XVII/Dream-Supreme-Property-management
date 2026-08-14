@@ -217,15 +217,41 @@ export function LeaseOnboardingWizard({ open, onOpenChange }: LeaseOnboardingWiz
       setActiveStep("step2");
       return;
     }
+    if (endDate <= startDate) {
+      toast.error("Lease end date must be after the start date.");
+      setActiveStep("step2");
+      return;
+    }
+
+    const rentNum = parseFloat(rentAmount);
+    if (!rentNum || rentNum <= 0 || rentNum > 10_000_000) {
+      toast.error("Please enter a valid monthly rent amount (up to R10,000,000).");
+      setActiveStep("step2");
+      return;
+    }
+
+    const mgmtPct = parseFloat(managementFeePct) || 0;
+    if (mgmtPct < 0 || mgmtPct > 100) {
+      toast.error("Management fee percentage must be between 0% and 100%.");
+      setActiveStep("step3");
+      return;
+    }
+
+    const escPct = parseFloat(escalationRatePct) || 0;
+    if (escPct < 0 || escPct > 100) {
+      toast.error("Escalation rate percentage must be between 0% and 100%.");
+      setActiveStep("step2");
+      return;
+    }
 
     try {
-      const rentCents = Math.round(parseFloat(rentAmount) * 100);
-      const depCents = Math.round((parseFloat(depositAmount) || 0) * 100);
-      const procCents = Math.round((parseFloat(procurementFeeRand) || 0) * 100);
-      const adminCents = Math.round((parseFloat(adminFeeRand) || 1500) * 100);
-      const proRataCents = Math.round((parseFloat(proRataRentRand) || 0) * 100);
-      const mgmtBps = Math.round((parseFloat(managementFeePct) || 8.0) * 100);
-      const escBps = Math.round((parseFloat(escalationRatePct) || 8.0) * 100);
+      const rentCents = Math.round(rentNum * 100);
+      const depCents = Math.max(0, Math.round((parseFloat(depositAmount) || 0) * 100));
+      const procCents = Math.max(0, Math.round((parseFloat(procurementFeeRand) || 0) * 100));
+      const adminCents = Math.max(0, Math.round((parseFloat(adminFeeRand) || 1500) * 100));
+      const proRataCents = Math.max(0, Math.round((parseFloat(proRataRentRand) || 0) * 100));
+      const mgmtBps = Math.min(10000, Math.max(0, Math.round(mgmtPct * 100)));
+      const escBps = Math.min(10000, Math.max(0, Math.round(escPct * 100)));
 
       const newLeaseId = await createLeaseMutation.mutateAsync({
         propertyId,

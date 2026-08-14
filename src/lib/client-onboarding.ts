@@ -1,3 +1,9 @@
+import {
+  validateEmailFormat,
+  validateSouthAfricanId,
+  validateSouthAfricanPhone,
+} from "./sa-validation";
+
 export type ClientRole = "seller" | "purchaser" | "landlord" | "tenant" | "referrer";
 
 export type ClientEntityType =
@@ -90,6 +96,15 @@ export function validateClientCapture(form: ClientCaptureForm): string[] {
   if (!form.email.trim() && !form.mobile.trim()) {
     errors.push("An email address or mobile number is required.");
   }
+  if (form.email.trim() && !validateEmailFormat(form.email)) {
+    errors.push("Please enter a valid email address.");
+  }
+  if (form.mobile.trim()) {
+    const phoneRes = validateSouthAfricanPhone(form.mobile);
+    if (!phoneRes.valid) {
+      errors.push(phoneRes.error || "Please enter a valid South African phone number.");
+    }
+  }
   if (form.preferredContactChannel === "email" && !form.email.trim()) {
     errors.push("An email address is required when email is the preferred contact method.");
   }
@@ -120,6 +135,16 @@ export function validateClientCapture(form: ClientCaptureForm): string[] {
     errors.push("Domestic/foreign prominent-person screening must be completed at client take-on.");
   }
   if (form.entityType === "natural_person") {
+    if (
+      form.isSaResident ||
+      form.nationality.toLowerCase().includes("south africa") ||
+      !form.passportNumber.trim()
+    ) {
+      const idRes = validateSouthAfricanId(form.idNumber);
+      if (!idRes.valid) {
+        errors.push(idRes.error || "Valid 13-digit South African ID number is required.");
+      }
+    }
     if (!form.dateOfBirth) errors.push("Date of birth is required for a natural person.");
     if (!form.nationality.trim()) errors.push("Nationality is required for a natural person.");
     if (!form.isSaResident && (!form.passportNumber.trim() || !form.passportCountry.trim())) {

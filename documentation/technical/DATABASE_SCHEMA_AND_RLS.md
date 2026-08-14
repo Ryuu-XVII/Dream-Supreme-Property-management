@@ -36,7 +36,8 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 
 ### `commission_rule_set`, `commission_calculation`, & `agency_system_setting`
 
-- **`commission_rule_set`**: Defines global agency rules (e.g., Office Share %, Franchise Fees, Marketing Deductions).
+- **`commission_rule_set`**: Defines global agency rules (e.g., Office Share %, Franchise Fees, Marketing Deductions). Bounded by database `CHECK` constraints ensuring `default_commission_rate_bps` and `office_share_bps` remain within `0` and `10000` (0% to 100%).
+- **`commission_rule_line`**: Specific deduction line items within a rule set. Bounded by database `CHECK` constraints on `rate_bps` (0–10000) and `fixed_amount_cents >= 0` to prevent negative deductions.
 - **`commission_calculation`**: Triggered when a deal registers. Calculates the gross commission, subtracts deductions, and allocates the remaining net commission to the agents (`commission_allocation`).
 - **`agency_system_setting`**: Stores agency-wide System Governance configurations (Global agent storage quota limit MB, single upload ceiling MB, session idle timeouts, MFA enforcement, registration approval policies, automated event notification toggles, and archival/idle agent maintenance retention windows). RLS restricts reads/writes to agency members and admins.
 
@@ -65,6 +66,7 @@ High-cardinality multi-tenant composite B-tree indexes are implemented across co
 - `idx_ffc_certificate_user_expires`: FFC certificate status & expiry (`user_account_id`, `expires_on DESC`).
 - `idx_party_agency_name`: Party search by name (`agency_id`, `full_name`).
 - `idx_document_agency_deal`: Document deal & category association (`agency_id`, `deal_id`, `category`).
+- `idx_document_user_account_category`: User compliance document lookup (`agency_id`, `user_account_id`, `category`, `uploaded_at DESC`).
 - `idx_document_maintenance_job`: Links photo evidence to a maintenance job (`maintenance_job_id`).
 - `idx_commission_allocation_calc_user`: Commission allocation payee (`calculation_id`, `user_account_id`).
 
@@ -171,4 +173,3 @@ Adjusts a user's `storage_used_bytes` by `bytes_delta` (clamped to a minimum of 
 - **`user_notification_preference` RLS Enforcement**: Secured via migration `20260809000000_enable_rls_user_notification_preference.sql` with strict row-level policies permitting users to manage only their own notification preference overrides matching `user_id = get_current_user_account_id()`.
 - **`get_current_user_role()` Helper Function**: Defined in migration `20260811000001_system_governance_settings.sql` as a `SECURITY DEFINER` function returning `user_account.role::text` for `auth.uid()`, ensuring RLS policies (e.g. `agency_system_setting`) can safely evaluate caller roles without circular dependencies.
 - **Supabase CLI DB Push Migrations**: Migrations `20260807000000_seed_master_admin.sql` and `20260807000001_cleanup_manual_admin.sql` provision `pgcrypto` in `extensions` schema and handle archiving master admin accounts cleanly for remote Supabase CLI synchronization.
-

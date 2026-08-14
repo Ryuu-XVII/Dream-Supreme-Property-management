@@ -35,6 +35,12 @@ import {
   X,
 } from "lucide-react";
 
+import {
+  validateEmailFormat,
+  validateSouthAfricanId,
+  validateSouthAfricanPhone,
+} from "@/lib/sa-validation";
+
 interface QuickDealModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -58,7 +64,17 @@ export function QuickDealModal({
     const files = e.target.files;
     if (!files) return;
     const newPhotos: string[] = [];
+    const maxPhotoSize = 10 * 1024 * 1024; // 10MB cap
+
     Array.from(files).forEach((file) => {
+      if (!file.type.startsWith("image/")) {
+        toast.error(`File "${file.name}" is not an image.`);
+        return;
+      }
+      if (file.size > maxPhotoSize) {
+        toast.error(`Image "${file.name}" exceeds maximum allowed size of 10MB.`);
+        return;
+      }
       const reader = new FileReader();
       reader.onload = () => {
         if (reader.result) {
@@ -131,14 +147,78 @@ export function QuickDealModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isReadOnly) return toast.info("Read-only mode: exit impersonation to save records.");
-    if (!form.address || !form.sellerName) {
-      toast.error("Please fill in property address and seller/mandator name.");
+
+    if (!form.address.trim() || !form.suburb.trim()) {
+      toast.error("Please fill in property street address and suburb.");
+      return;
+    }
+    if (!form.sellerName.trim()) {
+      toast.error("Please fill in seller/mandator full name.");
+      return;
+    }
+    if (form.sellerEmail.trim() && !validateEmailFormat(form.sellerEmail)) {
+      toast.error("Please enter a valid seller email address.");
+      return;
+    }
+    if (form.sellerMobile.trim()) {
+      const phoneRes = validateSouthAfricanPhone(form.sellerMobile);
+      if (!phoneRes.valid) {
+        toast.error(
+          phoneRes.error || "Please enter a valid South African mobile number for seller.",
+        );
+        return;
+      }
+    }
+    if (form.sellerIdNumber.trim()) {
+      const idRes = validateSouthAfricanId(form.sellerIdNumber);
+      if (!idRes.valid) {
+        toast.error(idRes.error || "Please enter a valid South African ID number for seller.");
+        return;
+      }
+    }
+
+    const listingPriceNum = Number(form.listingPrice);
+    if (!listingPriceNum || listingPriceNum <= 0 || listingPriceNum > 1_000_000_000) {
+      toast.error("Please enter a valid listing price (up to R1 billion).");
       return;
     }
 
-    if (entryType === "deal" && !form.buyerName) {
-      toast.error("Please fill in purchaser name for an active deal.");
+    const commPct = Number(form.agreedCommissionPct);
+    if (isNaN(commPct) || commPct < 0 || commPct > 100) {
+      toast.error("Commission percentage must be between 0% and 100%.");
       return;
+    }
+
+    if (entryType === "deal") {
+      if (!form.buyerName.trim()) {
+        toast.error("Please fill in purchaser name for an active deal.");
+        return;
+      }
+      if (form.buyerEmail.trim() && !validateEmailFormat(form.buyerEmail)) {
+        toast.error("Please enter a valid purchaser email address.");
+        return;
+      }
+      if (form.buyerMobile.trim()) {
+        const phoneRes = validateSouthAfricanPhone(form.buyerMobile);
+        if (!phoneRes.valid) {
+          toast.error(
+            phoneRes.error || "Please enter a valid South African mobile number for purchaser.",
+          );
+          return;
+        }
+      }
+      if (form.buyerIdNumber.trim()) {
+        const idRes = validateSouthAfricanId(form.buyerIdNumber);
+        if (!idRes.valid) {
+          toast.error(idRes.error || "Please enter a valid South African ID number for purchaser.");
+          return;
+        }
+      }
+      const salePriceNum = Number(form.salePrice);
+      if (!salePriceNum || salePriceNum <= 0 || salePriceNum > 1_000_000_000) {
+        toast.error("Please enter a valid agreed sale price (up to R1 billion).");
+        return;
+      }
     }
 
     try {

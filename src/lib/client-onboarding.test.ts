@@ -69,8 +69,8 @@ describe("client onboarding validation", () => {
       mobile: "+27 82 123 4567",
       privacyNoticeDelivered: true,
       startFica: true,
-      idNumber: "8001015009087",
-      dateOfBirth: "1980-01-01",
+      idNumber: "9505155000085",
+      dateOfBirth: "1995-05-15",
       addressLine: "1 Main Road",
       city: "Johannesburg",
       sanctionsScreened: true,
@@ -79,5 +79,25 @@ describe("client onboarding validation", () => {
     expect(validateClientCapture(form)).toContain(
       "Source of funds is required when onboarding a purchaser.",
     );
+  });
+
+  it("validates South African ID format and Luhn checksum during FICA", () => {
+    const form = {
+      ...createInitialClientCapture(),
+      name: "Nomsa Dlamini",
+      mobile: "+27 82 123 4567",
+      privacyNoticeDelivered: true,
+      startFica: true,
+      idNumber: "9505155000089", // Invalid Luhn checksum
+      dateOfBirth: "1995-05-15",
+      addressLine: "1 Main Road",
+      city: "Johannesburg",
+      sanctionsScreened: true,
+      prominentPersonScreened: true,
+    };
+    const errors = validateClientCapture(form);
+    expect(
+      errors.some((err) => err.includes("Luhn check failed") || err.includes("ID number")),
+    ).toBe(true);
   });
 });

@@ -62,6 +62,12 @@ import { Plus, Pencil, Archive, Building2, Scale, Percent, Landmark } from "luci
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 
+import {
+  validateEmailFormat,
+  validateSouthAfricanPhone,
+  validateSouthAfricanVat,
+} from "@/lib/sa-validation";
+
 export const Route = createFileRoute("/admin/agency")({
   head: () => ({
     meta: [
@@ -84,7 +90,12 @@ const agencySchema = z.object({
   name: z.string().min(2, "Required"),
   registration: z.string().min(2, "Required"),
   ppra: z.string().min(2, "Required"),
-  vatNumber: z.string().min(2, "Required"),
+  vatNumber: z
+    .string()
+    .min(2, "Required")
+    .refine((v) => !v || validateSouthAfricanVat(v).valid, {
+      message: "South African VAT number must be 10 digits starting with 4.",
+    }),
   vatVendor: z.boolean(),
   address: z.string().min(5, "Required"),
 });
@@ -646,6 +657,17 @@ function ConveyancerSection({
       toast.error("Firm name and email are required.");
       return;
     }
+    if (!validateEmailFormat(draft.email)) {
+      toast.error("Please enter a valid email address for the conveyancer firm.");
+      return;
+    }
+    if (draft.tel.trim()) {
+      const phoneRes = validateSouthAfricanPhone(draft.tel);
+      if (!phoneRes.valid) {
+        toast.error(phoneRes.error || "Please enter a valid South African phone number.");
+        return;
+      }
+    }
     if (!account) return;
     const values = {
       name: draft.name.trim(),
@@ -803,6 +825,16 @@ function TransferDutySection({
     setBrackets((prev) => prev.filter((b) => b.id !== id));
   }
   async function saveBrackets() {
+    for (const b of brackets) {
+      if (b.from < 0 || b.rate < 0 || b.rate > 100) {
+        toast.error("Bracket amounts must be positive and rate between 0% and 100%.");
+        return;
+      }
+      if (b.to != null && b.to <= b.from) {
+        toast.error("Bracket upper limit ('To') must be greater than lower limit ('From').");
+        return;
+      }
+    }
     const sorted = [...brackets].sort((a, b) => a.from - b.from);
     let base = 0;
     const bracketsJson = sorted.map((bracket, index) => {

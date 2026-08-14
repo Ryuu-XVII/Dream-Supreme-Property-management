@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
+import { AgentComplianceDocuments } from "@/components/settings/agent-compliance-documents";
+
 export const Route = createFileRoute("/settings/profile")({
   head: () => ({ meta: [{ title: "My Profile | Dream Supreme Properties" }] }),
   component: ProfilePage,
@@ -169,6 +171,7 @@ function ProfilePage() {
             </div>
           </dl>
         </GlassCard>
+        <AgentComplianceDocuments />
         <GlassCard className="lg:col-span-3">
           <h2 className="mb-1 flex items-center gap-2 font-display text-base font-semibold">
             <ShieldCheck className="size-4 text-primary" /> Password
