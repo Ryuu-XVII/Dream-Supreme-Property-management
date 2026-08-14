@@ -395,8 +395,8 @@ export async function createDeal(formData: any) {
   const partyPayload = (party: any) => ({
     name: party.name,
     sharePercent: Number(party.sharePercent) || 100,
-    email: party.email || "",
-    mobile: party.mobile || "",
+    email: party.email?.trim() || "mandate-pending@dreamsupreme.co.za",
+    mobile: party.mobile?.trim() || "+27820000000",
     idNumber: party.idNumber || "9505155000085",
     entityType: entityTypes[party.entityType] || "natural_person",
     maritalStatus: party.maritalStatus || "Unmarried",
