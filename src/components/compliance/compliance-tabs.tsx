@@ -1,11 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import { ShieldCheck, Users, ScrollText } from "lucide-react";
+import { ShieldCheck, Users, ScrollText, Lock } from "lucide-react";
 
 const tabs = [
   { to: "/compliance/ffc", label: "FFC Register", icon: ShieldCheck },
   { to: "/compliance/fica", label: "FICA Register", icon: Users },
   { to: "/compliance/audit", label: "Audit Log", icon: ScrollText },
+  { to: "/compliance/popia", label: "POPIA Requests", icon: Lock },
 ] as const;
 
 export function ComplianceTabs() {

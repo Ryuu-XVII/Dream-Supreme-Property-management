@@ -41,6 +41,14 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 - **`commission_calculation`**: Triggered when a deal registers. Calculates the gross commission, subtracts deductions, and allocates the remaining net commission to the agents (`commission_allocation`).
 - **`agency_system_setting`**: Stores agency-wide System Governance configurations (Global agent storage quota limit MB, single upload ceiling MB, session idle timeouts, MFA enforcement, registration approval policies, automated event notification toggles, and archival/idle agent maintenance retention windows). RLS restricts reads/writes to agency members and admins.
 
+### `rate_limit_hit` (Rate Limiting)
+
+Tracks call counts for anon-callable public RPCs (`submit_public_lead`, `get_status_request`, `submit_conveyancer_status`, `create_user_invitation`, `validate_user_invitation`, `prepare_invited_registration`, `get_current_transfer_duty_brackets`, plus the e-sign signer RPCs), keyed by the identity already present in each call's own parameters (email/token) since PostgREST does not forward caller IP into RPCs. RLS enabled with no policies (default-deny) — only the `check_rate_limit()` `SECURITY DEFINER` function touches it. Added in `20260817000000_rate_limiting.sql`.
+
+### `esign_envelope_recipient` (Click-to-Sign E-Signatures)
+
+Per-recipient anonymous-access token for the self-built e-signature flow, mirroring the `status_request_token` pattern: `token_hash`, `expires_at`, `signed_at`, `declined_at`. `esign_envelope`/`esign_audit_log` (from `20260803000004_transaction_and_esign_schema.sql`) already had agency-scoped RLS, but that only covers authenticated agency users — a signer opening `/sign?token=...` has no Supabase Auth session, so this table plus the `SECURITY DEFINER` RPCs below are what actually let signing happen. `signature_record` intentionally has no insert/update policy for any role — all writes go through `submit_esign_signature()`. Added in `20260817000001_esign_signing_flow.sql`.
+
 ## 2. Migration Ordering Strategy
 
 All Supabase schema migrations are stored sequentially in `supabase/migrations/` using 14-digit ISO-like UTC timestamps (`YYYYMMDDhhmmss_description.sql`).
@@ -139,6 +147,24 @@ Executes server-side document merge substitution on template markdown, creates t
 ### `create_mandate(p_payload jsonb)`
 
 Registers a bare property mandate: `property` + a seller `party` + listing terms only (added in `20260814000004_lightweight_mandate_registration.sql`). Deliberately separate from `create_deal`, which requires a purchaser and FICA/OTP-grade party data that doesn't exist yet at listing intake. The Mandates Register's "New Listing" flow and the `/mandates/new` wizard both call this instead of `create_deal`. "Convert to Deal" (`/deals/new?mandateId=...`) later prefills a full deal capture from the mandate's `property`/`seller_party_id`/terms.
+
+**Convert-to-deal duplication fix (`20260817000005_fix_convert_mandate_duplication.sql`)**: the client already prefilled from and sent a `sourceMandateId` on conversion, but `create_deal()` never read it — every conversion unconditionally inserted a brand-new `property` + `mandate`, leaving the original mandate behind as an orphaned duplicate in the Mandate Register. `create_deal()` now reuses (updates in place) the source mandate's `property_id`/`mandate_id` when `sourceMandateId` is present, instead of inserting new rows. Behavior for deals captured without a source mandate is unchanged.
+
+### `check_rate_limit(p_key text, p_max_attempts int, p_window interval)`
+
+Counts `rate_limit_hit` rows for `p_key` within `p_window`; returns `false` (and does not record a hit) once `p_max_attempts` is reached, else records the hit and returns `true`. `SECURITY DEFINER`, called from inside the anon-callable RPCs listed above. Added in `20260817000000_rate_limiting.sql`.
+
+### `create_esign_envelope_recipient` / `get_esign_envelope_for_signing` / `submit_esign_signature` / `decline_esign_envelope`
+
+The click-to-sign flow: an authenticated agency user calls `create_esign_envelope_recipient` to mint a signer token; the anonymous signer's `/sign?token=...` page calls `get_esign_envelope_for_signing` (logs an `esign_audit_log` `'viewed'` entry) then `submit_esign_signature` (verifies the client-supplied document hash against `esign_envelope.payload_sha256`, writes `signature_record` + `esign_audit_log` `'signed'`, and flips `esign_envelope.status` to `partially_signed`/`completed`) or `decline_esign_envelope`. The two signer-facing RPCs are wrapped in `check_rate_limit`. Added in `20260817000001_esign_signing_flow.sql`.
+
+### `popia_lookup_party` / `popia_export_party_data` / `popia_erase_party_data`
+
+Staff-only (`authenticated`, principal/admin gated), agency-scoped POPIA data-subject-access tooling surfaced at `/compliance/popia`. Lookup searches `party` by name/email/ID and returns linked-record counts; export aggregates `party` + related `document`/`signature_record`/`lead` rows to JSON; erase immediately anonymizes `party.full_name`/`email`/`mobile`/`id_or_reg_number` (manual trigger only, no auto-expiry) while leaving financial/deal/audit-linked foreign keys intact for FICA/tax retention. Both export and erase log to `audit_log` via new `audit_action` enum values `'popia_export'`/`'popia_erasure'`. Added in `20260817000002_popia_workflow.sql`.
+
+### `trigger_email_queue_dispatch()`
+
+Calls the `supabase/functions/send-queued-emails` Edge Function via `pg_net`/`net.http_post` (reading the function URL and service-role key from Supabase Vault, never hardcoded in SQL), scheduled every 5 minutes via `pg_cron`. This is the first consumer `email_queue` has ever had — `generate_daily_notification_digests()` and the invitation flow already produced rows, but nothing sent them until now. The Edge Function sends via SMTP (reusing the same relay configured for Supabase Auth). Added in `20260817000003_email_queue_dispatch.sql`, which also tightened `generate_daily_notification_digests()`'s aggregate-building loop.
 
 ### `create_lease_onboarding(p_payload jsonb)`
 

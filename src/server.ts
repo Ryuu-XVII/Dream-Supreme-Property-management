@@ -44,8 +44,33 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+// Per-IP token bucket for SSR page requests. In-memory and single-instance
+// only — fine at this project's traffic/deployment scale, but resets on
+// restart and won't be shared across multiple server replicas. The real
+// public attack surface (anon-callable Supabase RPCs, called directly from
+// the browser) is protected separately in Postgres, not here — see
+// supabase/migrations/20260817000000_rate_limiting.sql.
+const RATE_LIMIT_MAX_REQUESTS = 120;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const requestBuckets = new Map<string, { count: number; resetAt: number }>();
+
+function isRateLimited(request: Request): boolean {
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const now = Date.now();
+  const bucket = requestBuckets.get(ip);
+  if (!bucket || now >= bucket.resetAt) {
+    requestBuckets.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  bucket.count += 1;
+  return bucket.count > RATE_LIMIT_MAX_REQUESTS;
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    if (isRateLimited(request)) {
+      return new Response("Too many requests", { status: 429, headers: { "retry-after": "60" } });
+    }
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);

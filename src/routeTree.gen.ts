@@ -46,6 +46,7 @@ import { Route as CommissionReconciliationRouteImport } from './routes/commissio
 import { Route as ComplianceAuditRouteImport } from './routes/compliance/audit'
 import { Route as ComplianceFfcRouteImport } from './routes/compliance/ffc'
 import { Route as ComplianceFicaRouteImport } from './routes/compliance/fica'
+import { Route as CompliancePopiaRouteImport } from './routes/compliance/popia'
 import { Route as DealsDealIdRouteImport } from './routes/deals/$dealId'
 import { Route as DealsNewRouteImport } from './routes/deals/new'
 import { Route as MandatesNewRouteImport } from './routes/mandates/new'
@@ -250,6 +251,11 @@ const ComplianceFicaRoute = ComplianceFicaRouteImport.update({
   path: '/compliance/fica',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompliancePopiaRoute = CompliancePopiaRouteImport.update({
+  id: '/compliance/popia',
+  path: '/compliance/popia',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DealsDealIdRoute = DealsDealIdRouteImport.update({
   id: '/deals/$dealId',
   path: '/deals/$dealId',
@@ -367,6 +373,7 @@ export interface FileRoutesByFullPath {
   '/compliance/audit': typeof ComplianceAuditRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
   '/compliance/fica': typeof ComplianceFicaRoute
+  '/compliance/popia': typeof CompliancePopiaRoute
   '/deals/$dealId': typeof DealsDealIdRoute
   '/deals/new': typeof DealsNewRoute
   '/mandates/new': typeof MandatesNewRoute
@@ -421,6 +428,7 @@ export interface FileRoutesByTo {
   '/compliance/audit': typeof ComplianceAuditRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
   '/compliance/fica': typeof ComplianceFicaRoute
+  '/compliance/popia': typeof CompliancePopiaRoute
   '/deals/$dealId': typeof DealsDealIdRoute
   '/deals/new': typeof DealsNewRoute
   '/mandates/new': typeof MandatesNewRoute
@@ -477,6 +485,7 @@ export interface FileRoutesById {
   '/compliance/audit': typeof ComplianceAuditRoute
   '/compliance/ffc': typeof ComplianceFfcRoute
   '/compliance/fica': typeof ComplianceFicaRoute
+  '/compliance/popia': typeof CompliancePopiaRoute
   '/deals/$dealId': typeof DealsDealIdRoute
   '/deals/new': typeof DealsNewRoute
   '/mandates/new': typeof MandatesNewRoute
@@ -534,6 +543,7 @@ export interface FileRouteTypes {
     | '/compliance/audit'
     | '/compliance/ffc'
     | '/compliance/fica'
+    | '/compliance/popia'
     | '/deals/$dealId'
     | '/deals/new'
     | '/mandates/new'
@@ -588,6 +598,7 @@ export interface FileRouteTypes {
     | '/compliance/audit'
     | '/compliance/ffc'
     | '/compliance/fica'
+    | '/compliance/popia'
     | '/deals/$dealId'
     | '/deals/new'
     | '/mandates/new'
@@ -643,6 +654,7 @@ export interface FileRouteTypes {
     | '/compliance/audit'
     | '/compliance/ffc'
     | '/compliance/fica'
+    | '/compliance/popia'
     | '/deals/$dealId'
     | '/deals/new'
     | '/mandates/new'
@@ -687,6 +699,7 @@ export interface RootRouteChildren {
   ComplianceAuditRoute: typeof ComplianceAuditRoute
   ComplianceFfcRoute: typeof ComplianceFfcRoute
   ComplianceFicaRoute: typeof ComplianceFicaRoute
+  CompliancePopiaRoute: typeof CompliancePopiaRoute
   DealsDealIdRoute: typeof DealsDealIdRoute
   DealsNewRoute: typeof DealsNewRoute
   RentalsLeaseIdRoute: typeof RentalsLeaseIdRoute
@@ -963,6 +976,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComplianceFicaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/compliance/popia': {
+      id: '/compliance/popia'
+      path: '/compliance/popia'
+      fullPath: '/compliance/popia'
+      preLoaderRoute: typeof CompliancePopiaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/deals/$dealId': {
       id: '/deals/$dealId'
       path: '/deals/$dealId'
@@ -1154,6 +1174,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComplianceAuditRoute: ComplianceAuditRoute,
   ComplianceFfcRoute: ComplianceFfcRoute,
   ComplianceFicaRoute: ComplianceFicaRoute,
+  CompliancePopiaRoute: CompliancePopiaRoute,
   DealsDealIdRoute: DealsDealIdRoute,
   DealsNewRoute: DealsNewRoute,
   RentalsLeaseIdRoute: RentalsLeaseIdRoute,

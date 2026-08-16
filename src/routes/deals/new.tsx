@@ -552,6 +552,7 @@ function NewDealPage() {
       const dealId = await createDeal({
         ...formData,
         agentId: formData.agentId || users[0]?.id,
+        sourceMandateId: mandateId,
       });
       try {
         const usage = await getUserStorageUsage(account.id);

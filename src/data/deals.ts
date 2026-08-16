@@ -591,6 +591,11 @@ export async function createDeal(formData: any) {
     sellers: rawSellers.map(partyPayload),
     purchasers: rawPurchasers.map(partyPayload),
     conditions,
+    // When converting an existing mandate (Mandate Register > Convert to
+    // Deal), reuse its property/mandate rows instead of letting create_deal
+    // insert brand-new ones — otherwise every conversion silently duplicates
+    // the property and mandate.
+    sourceMandateId: formData.sourceMandateId || undefined,
   };
 
   const { data, error } = await supabase.rpc("create_deal", { p_payload: payload });

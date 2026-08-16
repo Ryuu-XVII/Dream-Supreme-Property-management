@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
@@ -58,6 +58,10 @@ function NewMandatePage() {
   const { data: agents = [] } = useAgents();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  // setLoading(true) doesn't disable this button until the next render, so a
+  // fast double-click can invoke handleSubmit twice before React re-renders
+  // `disabled`. A synchronous ref guard closes that gap.
+  const submittingRef = useRef(false);
 
   const [form, setForm] = useState({
     // Property Info
@@ -158,7 +162,9 @@ function NewMandatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
     try {
+      submittingRef.current = true;
       setLoading(true);
       toast.loading("Registering property mandate...", { id: "new-mandate" });
 
@@ -217,6 +223,7 @@ function NewMandatePage() {
     } catch (err: any) {
       toast.error(`Failed to register mandate: ${err.message}`, { id: "new-mandate" });
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };

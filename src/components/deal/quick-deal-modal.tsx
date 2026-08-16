@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -59,6 +59,11 @@ export function QuickDealModal({
   const [entryType, setEntryType] = useState<"deal" | "mandate">(initialType);
   const [loading, setLoading] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
+  // setLoading(true) doesn't disable the submit button until the next render,
+  // so a fast double-click (or a double form-submit event) can fire this
+  // handler twice before React re-renders `disabled`. A synchronous ref guard
+  // closes that gap and stops the RPC from being called twice.
+  const submittingRef = useRef(false);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -147,6 +152,7 @@ export function QuickDealModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
     if (isReadOnly) return toast.info("Read-only mode: exit impersonation to save records.");
 
     if (!form.address.trim() || !form.suburb.trim()) {
@@ -223,6 +229,7 @@ export function QuickDealModal({
     }
 
     try {
+      submittingRef.current = true;
       setLoading(true);
       toast.loading(
         entryType === "mandate" ? "Saving mandate record..." : "Saving deal record...",
@@ -252,6 +259,7 @@ export function QuickDealModal({
     } catch (err: any) {
       toast.error(`Failed to record mandate: ${err.message}`, { id: "quick-deal" });
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };
