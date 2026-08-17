@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -317,9 +318,9 @@ function PartyEditor({
         </div>
         <div className="space-y-3 pt-2 sm:col-span-2">
           <div className="flex items-start gap-3">
-            <Switch
+            <Checkbox
               checked={party.isVatVendor}
-              onCheckedChange={(value) => onChange("isVatVendor", value)}
+              onCheckedChange={(value) => onChange("isVatVendor", value === true)}
               className="mt-0.5"
             />
             <div className="space-y-0.5">
@@ -331,9 +332,9 @@ function PartyEditor({
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <Switch
+            <Checkbox
               checked={party.popiaConsent}
-              onCheckedChange={(value) => onChange("popiaConsent", value)}
+              onCheckedChange={(value) => onChange("popiaConsent", value === true)}
               className="mt-0.5"
             />
             <div className="space-y-0.5">
@@ -345,9 +346,9 @@ function PartyEditor({
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <Switch
+            <Checkbox
               checked={party.sanctionsScreened}
-              onCheckedChange={(value) => onChange("sanctionsScreened", value)}
+              onCheckedChange={(value) => onChange("sanctionsScreened", value === true)}
               className="mt-0.5"
             />
             <div className="space-y-0.5">
@@ -355,15 +356,15 @@ function PartyEditor({
               <p className="text-xs text-muted-foreground">
                 Confirms this party has actually been checked against Targeted Financial Sanctions
                 (TFS) and sanctions watchlists, as FICA requires before a deal can proceed. Only
-                enable this once that check has genuinely been done — the deal cannot be submitted
+                check this once that check has genuinely been done — the deal cannot be submitted
                 without it.
               </p>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <Switch
+            <Checkbox
               checked={party.isProminentPerson}
-              onCheckedChange={(value) => onChange("isProminentPerson", value)}
+              onCheckedChange={(value) => onChange("isProminentPerson", value === true)}
               className="mt-0.5"
             />
             <div className="space-y-0.5">
