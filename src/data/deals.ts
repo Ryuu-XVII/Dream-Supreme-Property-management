@@ -27,6 +27,8 @@ export interface PipelineDeal {
   daysInStage: number;
   cancelled: { reason: string; at: string } | null;
   conditions: any[]; // To be expanded later
+  commissionBps: number;
+  grossCommissionCents: number;
 }
 
 export function usePipelineDeals() {
@@ -48,6 +50,7 @@ export function usePipelineDeals() {
           branch:branch_id ( name ),
           cancellation_reason,
           cancelled_on,
+          mandate:mandate_id ( commission_rate_bps ),
           property:property_id ( address_line, suburb, city ),
           participants:deal_participant ( 
             role, 
@@ -73,6 +76,7 @@ export function usePipelineDeals() {
         const agent = agentParticipant?.user || { id: "unknown", name: "Unassigned" };
         const stageSince = d.updated_at;
         const daysInStage = Math.round((Date.now() - new Date(stageSince).getTime()) / 86400000);
+        const commissionBps = d.mandate?.commission_rate_bps ?? 0;
 
         return {
           id: d.id,
@@ -82,6 +86,8 @@ export function usePipelineDeals() {
           salePrice: d.sale_price_cents, // Should be divided by 100 for display, handled in format.ts if it expects cents? wait, mock has salePrice. zar() divides by 100? No, zar(cents) takes cents. So salePrice is cents.
           stageSince,
           daysInStage,
+          commissionBps,
+          grossCommissionCents: Math.round((d.sale_price_cents * commissionBps) / 10000),
           property: {
             address: d.property?.address_line || "Unknown Address",
             suburb: d.property?.suburb || "",
