@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { GlassCard } from "@/components/ui-kit";
-import { zar } from "@/lib/format";
+import { zar, dateFmt } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  XCircle,
   Home,
   User,
   FileText,
@@ -376,6 +377,107 @@ function PartyEditor({
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+const DOCUMENT_LABELS: Record<string, string> = {
+  mandate: "Signed mandate",
+  otp: "Signed OTP",
+  property_disclosure: "PPRA disclosure",
+  seller_fica: "Seller FICA",
+  purchaser_fica: "Purchaser FICA",
+  title_deed: "Title deed",
+  municipal_account: "Municipal account",
+};
+
+function ReviewSection({
+  title,
+  span,
+  children,
+}: {
+  title: string;
+  span?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={`rounded-lg border border-border p-4 space-y-2.5 ${span ? "sm:col-span-2" : ""}`}
+    >
+      <h4 className="font-display text-xs font-semibold uppercase tracking-wide text-primary">
+        {title}
+      </h4>
+      {children}
+    </div>
+  );
+}
+
+function ReviewRow({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 text-sm">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="text-right font-medium">{value ?? "—"}</span>
+    </div>
+  );
+}
+
+function ReviewFlag({ label, on }: { label: string; on: boolean }) {
+  return (
+    <div className="flex items-center gap-1.5 text-xs">
+      {on ? (
+        <CheckCircle2 className="size-3.5 text-success" />
+      ) : (
+        <XCircle className="size-3.5 text-muted-foreground/50" />
+      )}
+      <span className={on ? "" : "text-muted-foreground"}>{label}</span>
+    </div>
+  );
+}
+
+function ReviewPartyCard({
+  party,
+  index,
+  purchaser,
+}: {
+  party: DealPartyInput;
+  index: number;
+  purchaser: boolean;
+}) {
+  return (
+    <div className="rounded-md border border-border/70 bg-card/50 p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold">
+          {party.name || `${purchaser ? "Purchaser" : "Seller"} ${index + 1}`}
+        </p>
+        <Badge variant="outline" className="text-xs">
+          {party.sharePercent}% share
+        </Badge>
+      </div>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <span>{party.entityType}</span>
+        <span className="text-right">{party.idNumber || "No ID/reg number"}</span>
+        <span>{party.email || "No email"}</span>
+        <span className="text-right">{party.mobile || "No mobile"}</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/50 pt-2">
+        <Badge
+          variant="outline"
+          className={
+            party.fica === "Complete"
+              ? "border-success/30 bg-success/10 text-success"
+              : "border-amber-500/30 bg-amber-500/10 text-amber-500"
+          }
+        >
+          FICA: {party.fica}
+        </Badge>
+        <Badge variant="outline" className="text-xs">
+          Risk: {party.riskRating}
+        </Badge>
+        <ReviewFlag label="VAT vendor" on={party.isVatVendor} />
+        <ReviewFlag label="POPIA acknowledged" on={party.popiaConsent} />
+        <ReviewFlag label="Sanctions screened" on={party.sanctionsScreened} />
+        {party.isProminentPerson && <ReviewFlag label="Prominent person" on={true} />}
       </div>
     </div>
   );
@@ -1519,70 +1621,217 @@ function NewDealPage() {
                   Step 6: Review Deal Summary & Checklist
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Verify deal attributes before saving into pipeline.
+                  Verify every captured detail below before saving into the pipeline.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="rounded-lg border border-border p-3 space-y-1">
-                  <span className="text-xs text-muted-foreground">Property</span>
+                <ReviewSection title="Property">
                   <p className="text-sm font-semibold">{formData.address || "N/A"}</p>
                   <p className="text-xs text-muted-foreground">
-                    {formData.suburb}, {formData.city}
+                    {[formData.suburb, formData.city, formData.province, formData.postalCode]
+                      .filter(Boolean)
+                      .join(", ")}
                   </p>
-                </div>
+                  <div className="space-y-1 border-t border-border/50 pt-2">
+                    <ReviewRow label="Type" value={formData.propertyType} />
+                    <ReviewRow label="Use" value={formData.propertyUse} />
+                    <ReviewRow
+                      label="Size"
+                      value={`${formData.beds} bed · ${formData.baths} bath · ${formData.garages} garage`}
+                    />
+                    <ReviewRow
+                      label="Floor / erf size"
+                      value={`${formData.floorSize} m² / ${formData.erfSize} m²`}
+                    />
+                    <ReviewRow label="Erf number" value={formData.erfNumber} />
+                    <ReviewRow label="Title deed" value={formData.titleDeedNumber} />
+                    <ReviewRow label="Deeds office" value={formData.deedsOffice} />
+                  </div>
+                  {formData.legalDescription && (
+                    <p className="border-t border-border/50 pt-2 text-xs text-muted-foreground">
+                      {formData.legalDescription}
+                    </p>
+                  )}
+                </ReviewSection>
 
-                <div className="rounded-lg border border-border p-3 space-y-1">
-                  <span className="text-xs text-muted-foreground">Sale & Mandate Price</span>
-                  <p className="text-sm font-semibold text-primary">
-                    {zar(parseFloat(formData.salePrice) || 0, { decimals: false })}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Listing: {zar(parseFloat(formData.listingPrice) || 0, { decimals: false })} (
-                    {formData.mandateType})
-                  </p>
-                </div>
+                <ReviewSection title="Mandate & Pricing">
+                  <ReviewRow
+                    label="Listing price"
+                    value={zar(parseFloat(formData.listingPrice) || 0, { decimals: false })}
+                  />
+                  <ReviewRow
+                    label="Sale price"
+                    value={
+                      <span className="text-primary">
+                        {zar(parseFloat(formData.salePrice) || 0, { decimals: false })}
+                      </span>
+                    }
+                  />
+                  <ReviewRow
+                    label="Commission"
+                    value={`${(Number(formData.commissionBps) / 100).toFixed(2)}%`}
+                  />
+                  <ReviewRow label="Mandate type" value={formData.mandateType} />
+                  <ReviewRow
+                    label="Mandate signed"
+                    value={formData.mandateSigned ? dateFmt(formData.mandateSigned) : undefined}
+                  />
+                  <ReviewRow
+                    label="Mandate expiry"
+                    value={formData.mandateExpiry ? dateFmt(formData.mandateExpiry) : undefined}
+                  />
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 border-t border-border/50 pt-2">
+                    <ReviewFlag label="VAT sale" on={formData.isVatSale} />
+                    {formData.isVatSale && (
+                      <ReviewFlag label="VAT inclusive" on={formData.vatInclusive} />
+                    )}
+                    <ReviewFlag label="Parties connected" on={formData.partiesConnected} />
+                    <ReviewFlag label="Seller non-resident" on={formData.sellerIsNonResident} />
+                  </div>
+                </ReviewSection>
 
-                <div className="rounded-lg border border-border p-3 space-y-1">
-                  <span className="text-xs text-muted-foreground">Seller(s)</span>
-                  <p className="text-sm font-semibold">
-                    {formData.sellers.map((party) => party.name).join(", ") || "N/A"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {formData.sellers.length} transferor record(s)
-                  </p>
-                </div>
+                <ReviewSection title={`Seller(s) — ${formData.sellers.length}`}>
+                  <div className="space-y-2">
+                    {formData.sellers.map((party, i) => (
+                      <ReviewPartyCard key={party._key} party={party} index={i} purchaser={false} />
+                    ))}
+                  </div>
+                </ReviewSection>
 
-                <div className="rounded-lg border border-border p-3 space-y-1">
-                  <span className="text-xs text-muted-foreground">Purchaser(s)</span>
-                  <p className="text-sm font-semibold">
-                    {formData.purchasers.map((party) => party.name).join(", ") || "N/A"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {formData.purchasers.length} transferee record(s)
-                  </p>
-                </div>
+                <ReviewSection title={`Purchaser(s) — ${formData.purchasers.length}`}>
+                  <div className="space-y-2">
+                    {formData.purchasers.map((party, i) => (
+                      <ReviewPartyCard key={party._key} party={party} index={i} purchaser={true} />
+                    ))}
+                  </div>
+                </ReviewSection>
 
-                <div className="rounded-lg border border-border p-3 space-y-1 sm:col-span-2">
-                  <span className="text-xs text-muted-foreground">Agreement terms</span>
-                  <p className="text-sm font-semibold">
-                    Effective {formData.effectiveDate} · {formData.transferSharePercent}% share
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Deposit {zar(Number(formData.depositAmount) || 0, { decimals: false })}; bond{" "}
-                    {formData.bondRequired
-                      ? zar(Number(formData.bondAmount) || 0, { decimals: false })
-                      : "not required"}
-                  </p>
-                </div>
+                <ReviewSection title="Agreement & Occupation Terms" span>
+                  <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <ReviewRow
+                        label="Effective date"
+                        value={formData.effectiveDate ? dateFmt(formData.effectiveDate) : undefined}
+                      />
+                      <ReviewRow
+                        label="Offer expires"
+                        value={
+                          formData.offerExpiresOn ? dateFmt(formData.offerExpiresOn) : undefined
+                        }
+                      />
+                      <ReviewRow
+                        label="Transfer share"
+                        value={`${formData.transferSharePercent}%`}
+                      />
+                      <ReviewRow label="Sale method" value={formData.saleMethod} />
+                    </div>
+                    <div className="space-y-1">
+                      <ReviewRow
+                        label="Deposit"
+                        value={zar(Number(formData.depositAmount) || 0, { decimals: false })}
+                      />
+                      <ReviewRow
+                        label="Deposit due"
+                        value={formData.depositDueOn ? dateFmt(formData.depositDueOn) : undefined}
+                      />
+                      <ReviewRow label="Deposit holder" value={formData.depositHolder} />
+                      <ReviewRow label="Balance payment" value={formData.balancePaymentMethod} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-x-6 border-t border-border/50 pt-2 sm:grid-cols-2">
+                    <ReviewRow
+                      label="Occupation date"
+                      value={formData.occupationDate ? dateFmt(formData.occupationDate) : undefined}
+                    />
+                    <ReviewRow
+                      label="Occupational rent"
+                      value={
+                        formData.occupationalRent
+                          ? zar(Number(formData.occupationalRent) || 0, { decimals: false })
+                          : undefined
+                      }
+                    />
+                  </div>
+                </ReviewSection>
 
-                <div className="rounded-lg border border-border p-3 space-y-1 sm:col-span-2">
-                  <span className="text-xs text-muted-foreground">Conveyancer & Lead Agent</span>
-                  <p className="text-sm font-semibold">{formData.conveyancer}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Agent: {users.find((u) => u.id === formData.agentId)?.name || "Current user"}
-                  </p>
-                </div>
+                <ReviewSection title="Suspensive Conditions" span>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="space-y-1 rounded-md border border-border/70 bg-card/50 p-2.5">
+                      <ReviewFlag label="Bond required" on={formData.bondRequired} />
+                      {formData.bondRequired && (
+                        <>
+                          <ReviewRow
+                            label="Amount"
+                            value={zar(Number(formData.bondAmount) || 0, { decimals: false })}
+                          />
+                          <ReviewRow
+                            label="Due"
+                            value={formData.bondDueDate ? dateFmt(formData.bondDueDate) : undefined}
+                          />
+                        </>
+                      )}
+                    </div>
+                    <div className="space-y-1 rounded-md border border-border/70 bg-card/50 p-2.5">
+                      <ReviewFlag label="FICA clearance" on={true} />
+                      <ReviewRow
+                        label="Due"
+                        value={formData.ficaDueDate ? dateFmt(formData.ficaDueDate) : undefined}
+                      />
+                    </div>
+                    <div className="space-y-1 rounded-md border border-border/70 bg-card/50 p-2.5">
+                      <ReviewFlag label="Subject to sale" on={formData.subjectToSale} />
+                      {formData.subjectToSale && (
+                        <>
+                          <ReviewRow label="Property" value={formData.subjectToSaleDesc} />
+                          <ReviewRow
+                            label="Due"
+                            value={
+                              formData.subjectToSaleDueDate
+                                ? dateFmt(formData.subjectToSaleDueDate)
+                                : undefined
+                            }
+                          />
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </ReviewSection>
+
+                <ReviewSection title="Fixtures, Special Conditions & Disclosure" span>
+                  <ReviewFlag
+                    label="PPRA property condition disclosure completed"
+                    on={formData.propertyDisclosureCompleted}
+                  />
+                  {formData.disclosureDefects && (
+                    <p className="text-xs text-muted-foreground">
+                      Disclosed defects: {formData.disclosureDefects}
+                    </p>
+                  )}
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-1 border-t border-border/50 pt-2 sm:grid-cols-2">
+                    <ReviewRow label="Fixtures included" value={formData.fixturesIncluded} />
+                    <ReviewRow label="Fixtures excluded" value={formData.fixturesExcluded} />
+                  </div>
+                  {formData.specialConditions && (
+                    <p className="border-t border-border/50 pt-2 text-xs text-muted-foreground">
+                      {formData.specialConditions}
+                    </p>
+                  )}
+                </ReviewSection>
+
+                <ReviewSection title="Conveyancer, Agent & Documents" span>
+                  <ReviewRow label="Conveyancer" value={formData.conveyancer} />
+                  <ReviewRow label="Reference" value={formData.conveyancerReference} />
+                  <ReviewRow
+                    label="Lead agent"
+                    value={users.find((u) => u.id === formData.agentId)?.name || "Current user"}
+                  />
+                  <div className="flex flex-wrap gap-x-3 gap-y-1.5 border-t border-border/50 pt-2">
+                    {Object.entries(DOCUMENT_LABELS).map(([category, label]) => (
+                      <ReviewFlag key={category} label={label} on={!!baselineFiles[category]} />
+                    ))}
+                  </div>
+                </ReviewSection>
               </div>
             </div>
           )}
