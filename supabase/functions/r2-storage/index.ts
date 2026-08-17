@@ -18,7 +18,16 @@ interface RequestBody {
   action: "status" | "presign-put" | "presign-get" | "delete";
   key?: string;
   contentType?: string;
-  isPublic?: boolean;
+}
+
+// A well-formed object key is a series of non-empty, `/`-joined segments. Reject
+// anything with an empty segment (leading/trailing/double slash), a "." or ".."
+// segment (path-traversal shapes), or a leading slash, so a crafted key can never
+// resolve outside the caller's authorized `<agencyId>/…` or `users/<id>/…` prefix.
+function isSafeKey(key: string): boolean {
+  if (key.length === 0 || key.length > 1024) return false;
+  const parts = key.split("/");
+  return parts.every((p) => p.length > 0 && p !== "." && p !== "..");
 }
 
 function r2Config() {
@@ -101,9 +110,13 @@ async function deleteObject(
 async function authorizeKey(
   authHeader: string | null,
   key: string,
-  isPublic: boolean | undefined,
 ): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
-  if (isPublic || key.startsWith("public/")) return { ok: true };
+  // SECURITY: authorization is decided solely from the authenticated session and
+  // the requested key. It deliberately does NOT trust any client-supplied
+  // "isPublic" flag or "public/" key prefix — an earlier version did, which let
+  // any caller holding the (public) anon key read, overwrite, or delete every
+  // object in the bucket simply by sending `isPublic: true`. Every object in this
+  // bucket is private; there is no unauthenticated access path.
   if (!authHeader) return { ok: false, status: 401, error: "Missing Authorization header" };
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -166,7 +179,11 @@ Deno.serve(async (req) => {
     return json({ error: "Missing key" }, 400);
   }
 
-  const authResult = await authorizeKey(req.headers.get("Authorization"), body.key, body.isPublic);
+  if (!isSafeKey(body.key)) {
+    return json({ error: "Malformed key" }, 400);
+  }
+
+  const authResult = await authorizeKey(req.headers.get("Authorization"), body.key);
   if (!authResult.ok) {
     return json({ error: authResult.error }, authResult.status);
   }

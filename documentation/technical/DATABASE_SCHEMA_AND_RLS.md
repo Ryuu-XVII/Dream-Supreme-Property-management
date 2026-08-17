@@ -250,3 +250,44 @@ the fault to the seeded row rather than to GoTrue or the anon key.
 `''` is exactly what GoTrue writes itself). `20260807000000_seed_master_admin.sql` was
 also amended to supply `''` for these columns on insert, so a rebuilt environment does
 not reproduce the broken row.
+
+## 9. Security Fix: Invitation Privilege Escalation (`20260817000010`) and Master Admin Reactivation (`20260817000011`)
+
+Two linked issues found during an authorized penetration test.
+
+**Privilege escalation via `create_user_invitation`.** The authorization guard was
+`if v_user_account_id is not null and v_role not in ('admin','admin_agent') then raise …`.
+It only rejected callers that *had* an account, so an unauthenticated caller — anyone
+holding the public anon key that ships in the browser bundle — passed straight through
+(their `get_current_user_account_id()` is NULL). This let an anonymous attacker mint a
+valid `admin` invitation token and provision a full admin account through the public
+`/register` flow. Verified exploitable against the live project, then fixed: the function
+now requires an authenticated `admin`/`admin_agent` to invite, with a single narrow
+exception for genuine first-run bootstrap (zero `user_account` rows).
+
+**Master admin left archived.** `20260807000000_seed_master_admin.sql` creates
+`admin@dreamsupreme.co.za` as `active`, but `20260807000001_cleanup_manual_admin.sql`
+then archived it. Since `get_current_user_account_id()` and `get_current_role()` filter
+on `status = 'active'`, the database returned NULL for the master admin session — it was
+never recognized as an admin server-side. The app's admin behaviour therefore only
+functioned through insecure side doors (the hardcoded client-side password bypass in
+`login.tsx` and the anonymous invitation path above), and the normal login flow bounced
+back to `/login`. `20260817000011` restores the account to `active`, which is what the
+seed intended and what server-side authorization requires.
+
+Both fixes were verified: an authenticated admin can still create invitations, an
+anonymous caller is rejected with "Only managers can invite users", and the master admin
+session now resolves `get_current_role() = 'admin'`.
+
+## 10. Storage Edge Function: `isPublic` Authorization Bypass (r2-storage)
+
+Not a database migration, but part of the same pentest and recorded here for completeness.
+The `r2-storage` Supabase Edge Function trusted a client-supplied `isPublic` flag (and a
+`public/` key prefix) and returned `{ ok: true }` before any authentication check. Anyone
+with the public anon key could therefore read, overwrite, or delete **every** object in
+the `dream-supreme-documents` bucket (FICA IDs, FFC certificates, deal contracts, avatars)
+across all agencies by sending `isPublic: true`. Verified by exfiltrating a real private
+document with no user session. Fixed by removing the `isPublic`/`public/` bypass entirely
+— authorization is now decided solely from the authenticated session and the requested
+key — and by adding key hardening that rejects path-traversal shapes (`..`, empty
+segments, leading slash).
