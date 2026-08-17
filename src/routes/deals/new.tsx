@@ -315,34 +315,64 @@ function PartyEditor({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-3 pt-2">
-          <div className="flex items-center gap-2">
+        <div className="space-y-3 pt-2 sm:col-span-2">
+          <div className="flex items-start gap-3">
             <Switch
               checked={party.isVatVendor}
               onCheckedChange={(value) => onChange("isVatVendor", value)}
+              className="mt-0.5"
             />
-            <Label>VAT vendor</Label>
+            <div className="space-y-0.5">
+              <Label>VAT vendor</Label>
+              <p className="text-xs text-muted-foreground">
+                This party is registered for VAT with SARS. Required if this is a VAT sale — at
+                least one seller must be a VAT vendor.
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-3">
             <Switch
               checked={party.popiaConsent}
               onCheckedChange={(value) => onChange("popiaConsent", value)}
+              className="mt-0.5"
             />
-            <Label>POPIA processing notice acknowledged</Label>
+            <div className="space-y-0.5">
+              <Label>POPIA processing notice acknowledged</Label>
+              <p className="text-xs text-muted-foreground">
+                Confirms this party was given the POPIA notice explaining how their personal
+                information will be processed for this transaction, and consented to it.
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-3">
             <Switch
               checked={party.sanctionsScreened}
               onCheckedChange={(value) => onChange("sanctionsScreened", value)}
+              className="mt-0.5"
             />
-            <Label>TFS / sanctions screening completed *</Label>
+            <div className="space-y-0.5">
+              <Label>TFS / sanctions screening completed *</Label>
+              <p className="text-xs text-muted-foreground">
+                Confirms this party has actually been checked against Targeted Financial Sanctions
+                (TFS) and sanctions watchlists, as FICA requires before a deal can proceed. Only
+                enable this once that check has genuinely been done — the deal cannot be submitted
+                without it.
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-3">
             <Switch
               checked={party.isProminentPerson}
               onCheckedChange={(value) => onChange("isProminentPerson", value)}
+              className="mt-0.5"
             />
-            <Label>Domestic/foreign prominent person</Label>
+            <div className="space-y-0.5">
+              <Label>Domestic/foreign prominent person</Label>
+              <p className="text-xs text-muted-foreground">
+                This party is a Politically Exposed Person (PEP) — a prominent public official,
+                their family member, or close associate. Triggers enhanced FICA due diligence.
+              </p>
+            </div>
           </div>
         </div>
       </div>
