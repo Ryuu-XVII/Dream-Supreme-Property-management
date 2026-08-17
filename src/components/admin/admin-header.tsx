@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Bell, Sun, Moon, Monitor, LogOut } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useApp } from "@/lib/app-state";
-import { initials } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
 
 export function AdminHeader() {
@@ -63,11 +62,11 @@ export function AdminHeader() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 rounded-full pl-1 pr-2 transition-colors hover:bg-accent">
-              <Avatar className="size-8">
-                <AvatarFallback className="bg-indigo-600 text-xs text-white">
-                  {initials(me.name)}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar
+                avatarKey={account?.avatarKey}
+                name={me.name}
+                fallbackClassName="bg-indigo-600 text-xs text-white"
+              />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">

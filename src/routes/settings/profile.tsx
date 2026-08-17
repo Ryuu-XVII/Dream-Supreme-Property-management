@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
 import { AgentComplianceDocuments } from "@/components/settings/agent-compliance-documents";
+import { ProfilePhoto } from "@/components/settings/profile-photo";
 
 export const Route = createFileRoute("/settings/profile")({
   head: () => ({ meta: [{ title: "My Profile | Dream Supreme Properties" }] }),
@@ -104,6 +105,7 @@ function ProfilePage() {
     <AppShell title="Settings" description="Manage your persisted account information.">
       <SettingsTabs />
       <div className="grid gap-6 lg:grid-cols-3">
+        <ProfilePhoto />
         <GlassCard className="lg:col-span-2">
           <h2 className="mb-1 flex items-center gap-2 font-display text-base font-semibold">
             <User className="size-4 text-primary" /> Personal information

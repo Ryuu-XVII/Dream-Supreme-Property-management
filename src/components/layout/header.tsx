@@ -3,7 +3,7 @@ import { Bell, Search, Sun, Moon, Monitor, LogOut, Calculator, PlusCircle } from
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +25,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useApp } from "@/lib/app-state";
 import { useAuth } from "@/lib/auth";
-import { initials, zar, relative, dateFmt } from "@/lib/format";
+import { zar, relative, dateFmt } from "@/lib/format";
 import { useDealSearch } from "@/data/deals";
 import { supabase } from "@/lib/supabase";
 import { navItems } from "./sidebar";
@@ -246,11 +246,11 @@ export function Header() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="flex items-center gap-2 rounded-full pl-1 pr-2 transition-colors hover:bg-accent">
-            <Avatar className="size-8">
-              <AvatarFallback className="bg-primary text-xs text-primary-foreground">
-                {initials(me.name)}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              avatarKey={activeAccount?.avatarKey}
+              name={me.name}
+              fallbackClassName="bg-primary text-xs text-primary-foreground"
+            />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">

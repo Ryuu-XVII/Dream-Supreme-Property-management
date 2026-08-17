@@ -35,6 +35,10 @@ export interface UserAccount {
   telephone?: string | null;
   role: "admin" | "agent" | "admin_agent" | "admin & agent";
   status: "active" | "suspended" | "archived";
+  /** R2 storage key for the profile photo set during registration. Resolve to a
+   * displayable URL with `useAvatarUrl` (src/data/avatar.ts) — it is a private
+   * object key, not a URL, so it cannot be used directly as an <img> src. */
+  avatarKey?: string | null;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -47,7 +51,7 @@ async function fetchAccount(nextSession: Session | null): Promise<UserAccount | 
 
   const { data: byAuthId, error } = await supabase
     .from("user_account")
-    .select("id, agency_id, branch_id, full_name, email, mobile, role, status")
+    .select("id, agency_id, branch_id, full_name, email, mobile, role, status, avatar_key")
     .eq("auth_user_id", nextSession.user.id)
     .maybeSingle();
 
@@ -61,7 +65,9 @@ async function fetchAccount(nextSession: Session | null): Promise<UserAccount | 
   if (!data && nextSession.user.email && nextSession.user.email_confirmed_at) {
     const { data: byEmail } = await supabase
       .from("user_account")
-      .select("id, agency_id, branch_id, full_name, email, mobile, role, status, auth_user_id")
+      .select(
+        "id, agency_id, branch_id, full_name, email, mobile, role, status, avatar_key, auth_user_id",
+      )
       .eq("email", nextSession.user.email)
       .maybeSingle();
     if (byEmail) {
@@ -87,6 +93,7 @@ async function fetchAccount(nextSession: Session | null): Promise<UserAccount | 
     telephone: data.mobile,
     role: data.role as UserAccount["role"],
     status: data.status,
+    avatarKey: (data as { avatar_key?: string | null }).avatar_key ?? null,
   };
 }
 
