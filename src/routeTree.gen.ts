@@ -28,14 +28,11 @@ import { Route as AdminAgencyRouteImport } from './routes/admin/agency'
 import { Route as AdminCommissionRulesRouteImport } from './routes/admin/commission-rules'
 import { Route as AdminDealsRouteImport } from './routes/admin/deals'
 import { Route as AdminFinancialsRouteImport } from './routes/admin/financials'
-import { Route as AdminFranchiseRouteImport } from './routes/admin/franchise'
 import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminPropertiesRouteImport } from './routes/admin/properties'
 import { Route as AdminReconRouteImport } from './routes/admin/recon'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
-import { Route as AdminTrustRouteImport } from './routes/admin/trust'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
-import { Route as AdminWhatsappRouteImport } from './routes/admin/whatsapp'
 import { Route as CalculatorsAffordabilityRouteImport } from './routes/calculators/affordability'
 import { Route as CalculatorsBondRouteImport } from './routes/calculators/bond'
 import { Route as CalculatorsTransferRouteImport } from './routes/calculators/transfer'
@@ -60,9 +57,7 @@ import { Route as SettingsPreferencesRouteImport } from './routes/settings/prefe
 import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SetupIndexRouteImport } from './routes/setup/index'
 import { Route as SetupImportRouteImport } from './routes/setup/import'
-import { Route as AdminComplianceAuditRouteImport } from './routes/admin/compliance/audit'
 import { Route as AdminComplianceFfcRouteImport } from './routes/admin/compliance/ffc'
-import { Route as AdminComplianceFicaRouteImport } from './routes/admin/compliance/fica'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -159,11 +154,6 @@ const AdminFinancialsRoute = AdminFinancialsRouteImport.update({
   path: '/financials',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminFranchiseRoute = AdminFranchiseRouteImport.update({
-  id: '/franchise',
-  path: '/franchise',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
@@ -184,19 +174,9 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminTrustRoute = AdminTrustRouteImport.update({
-  id: '/trust',
-  path: '/trust',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminWhatsappRoute = AdminWhatsappRouteImport.update({
-  id: '/whatsapp',
-  path: '/whatsapp',
   getParentRoute: () => AdminRoute,
 } as any)
 const CalculatorsAffordabilityRoute =
@@ -321,19 +301,9 @@ const SetupImportRoute = SetupImportRouteImport.update({
   path: '/setup/import',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminComplianceAuditRoute = AdminComplianceAuditRouteImport.update({
-  id: '/compliance/audit',
-  path: '/compliance/audit',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminComplianceFfcRoute = AdminComplianceFfcRouteImport.update({
   id: '/compliance/ffc',
   path: '/compliance/ffc',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminComplianceFicaRoute = AdminComplianceFicaRouteImport.update({
-  id: '/compliance/fica',
-  path: '/compliance/fica',
   getParentRoute: () => AdminRoute,
 } as any)
 
@@ -356,14 +326,11 @@ export interface FileRoutesByFullPath {
   '/admin/commission-rules': typeof AdminCommissionRulesRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
-  '/admin/franchise': typeof AdminFranchiseRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/recon': typeof AdminReconRoute
   '/admin/settings': typeof AdminSettingsRoute
-  '/admin/trust': typeof AdminTrustRoute
   '/admin/users': typeof AdminUsersRoute
-  '/admin/whatsapp': typeof AdminWhatsappRoute
   '/calculators/affordability': typeof CalculatorsAffordabilityRoute
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
@@ -389,9 +356,7 @@ export interface FileRoutesByFullPath {
   '/rentals/': typeof RentalsIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/setup/': typeof SetupIndexRoute
-  '/admin/compliance/audit': typeof AdminComplianceAuditRoute
   '/admin/compliance/ffc': typeof AdminComplianceFfcRoute
-  '/admin/compliance/fica': typeof AdminComplianceFicaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -411,14 +376,11 @@ export interface FileRoutesByTo {
   '/admin/commission-rules': typeof AdminCommissionRulesRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
-  '/admin/franchise': typeof AdminFranchiseRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/recon': typeof AdminReconRoute
   '/admin/settings': typeof AdminSettingsRoute
-  '/admin/trust': typeof AdminTrustRoute
   '/admin/users': typeof AdminUsersRoute
-  '/admin/whatsapp': typeof AdminWhatsappRoute
   '/calculators/affordability': typeof CalculatorsAffordabilityRoute
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
@@ -444,9 +406,7 @@ export interface FileRoutesByTo {
   '/rentals': typeof RentalsIndexRoute
   '/reports': typeof ReportsIndexRoute
   '/setup': typeof SetupIndexRoute
-  '/admin/compliance/audit': typeof AdminComplianceAuditRoute
   '/admin/compliance/ffc': typeof AdminComplianceFfcRoute
-  '/admin/compliance/fica': typeof AdminComplianceFicaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -468,14 +428,11 @@ export interface FileRoutesById {
   '/admin/commission-rules': typeof AdminCommissionRulesRoute
   '/admin/deals': typeof AdminDealsRoute
   '/admin/financials': typeof AdminFinancialsRoute
-  '/admin/franchise': typeof AdminFranchiseRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/recon': typeof AdminReconRoute
   '/admin/settings': typeof AdminSettingsRoute
-  '/admin/trust': typeof AdminTrustRoute
   '/admin/users': typeof AdminUsersRoute
-  '/admin/whatsapp': typeof AdminWhatsappRoute
   '/calculators/affordability': typeof CalculatorsAffordabilityRoute
   '/calculators/bond': typeof CalculatorsBondRoute
   '/calculators/transfer': typeof CalculatorsTransferRoute
@@ -501,9 +458,7 @@ export interface FileRoutesById {
   '/rentals/': typeof RentalsIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/setup/': typeof SetupIndexRoute
-  '/admin/compliance/audit': typeof AdminComplianceAuditRoute
   '/admin/compliance/ffc': typeof AdminComplianceFfcRoute
-  '/admin/compliance/fica': typeof AdminComplianceFicaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -526,14 +481,11 @@ export interface FileRouteTypes {
     | '/admin/commission-rules'
     | '/admin/deals'
     | '/admin/financials'
-    | '/admin/franchise'
     | '/admin/notifications'
     | '/admin/properties'
     | '/admin/recon'
     | '/admin/settings'
-    | '/admin/trust'
     | '/admin/users'
-    | '/admin/whatsapp'
     | '/calculators/affordability'
     | '/calculators/bond'
     | '/calculators/transfer'
@@ -559,9 +511,7 @@ export interface FileRouteTypes {
     | '/rentals/'
     | '/reports/'
     | '/setup/'
-    | '/admin/compliance/audit'
     | '/admin/compliance/ffc'
-    | '/admin/compliance/fica'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -581,14 +531,11 @@ export interface FileRouteTypes {
     | '/admin/commission-rules'
     | '/admin/deals'
     | '/admin/financials'
-    | '/admin/franchise'
     | '/admin/notifications'
     | '/admin/properties'
     | '/admin/recon'
     | '/admin/settings'
-    | '/admin/trust'
     | '/admin/users'
-    | '/admin/whatsapp'
     | '/calculators/affordability'
     | '/calculators/bond'
     | '/calculators/transfer'
@@ -614,9 +561,7 @@ export interface FileRouteTypes {
     | '/rentals'
     | '/reports'
     | '/setup'
-    | '/admin/compliance/audit'
     | '/admin/compliance/ffc'
-    | '/admin/compliance/fica'
   id:
     | '__root__'
     | '/'
@@ -637,14 +582,11 @@ export interface FileRouteTypes {
     | '/admin/commission-rules'
     | '/admin/deals'
     | '/admin/financials'
-    | '/admin/franchise'
     | '/admin/notifications'
     | '/admin/properties'
     | '/admin/recon'
     | '/admin/settings'
-    | '/admin/trust'
     | '/admin/users'
-    | '/admin/whatsapp'
     | '/calculators/affordability'
     | '/calculators/bond'
     | '/calculators/transfer'
@@ -670,9 +612,7 @@ export interface FileRouteTypes {
     | '/rentals/'
     | '/reports/'
     | '/setup/'
-    | '/admin/compliance/audit'
     | '/admin/compliance/ffc'
-    | '/admin/compliance/fica'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -850,13 +790,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFinancialsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/franchise': {
-      id: '/admin/franchise'
-      path: '/franchise'
-      fullPath: '/admin/franchise'
-      preLoaderRoute: typeof AdminFranchiseRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/notifications': {
       id: '/admin/notifications'
       path: '/notifications'
@@ -885,25 +818,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/trust': {
-      id: '/admin/trust'
-      path: '/trust'
-      fullPath: '/admin/trust'
-      preLoaderRoute: typeof AdminTrustRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AdminUsersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/whatsapp': {
-      id: '/admin/whatsapp'
-      path: '/whatsapp'
-      fullPath: '/admin/whatsapp'
-      preLoaderRoute: typeof AdminWhatsappRouteImport
       parentRoute: typeof AdminRoute
     }
     '/calculators/affordability': {
@@ -1074,25 +993,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SetupImportRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/compliance/audit': {
-      id: '/admin/compliance/audit'
-      path: '/compliance/audit'
-      fullPath: '/admin/compliance/audit'
-      preLoaderRoute: typeof AdminComplianceAuditRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/compliance/ffc': {
       id: '/admin/compliance/ffc'
       path: '/compliance/ffc'
       fullPath: '/admin/compliance/ffc'
       preLoaderRoute: typeof AdminComplianceFfcRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/compliance/fica': {
-      id: '/admin/compliance/fica'
-      path: '/compliance/fica'
-      fullPath: '/admin/compliance/fica'
-      preLoaderRoute: typeof AdminComplianceFicaRouteImport
       parentRoute: typeof AdminRoute
     }
   }
@@ -1103,18 +1008,13 @@ interface AdminRouteChildren {
   AdminCommissionRulesRoute: typeof AdminCommissionRulesRoute
   AdminDealsRoute: typeof AdminDealsRoute
   AdminFinancialsRoute: typeof AdminFinancialsRoute
-  AdminFranchiseRoute: typeof AdminFranchiseRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminPropertiesRoute: typeof AdminPropertiesRoute
   AdminReconRoute: typeof AdminReconRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
-  AdminTrustRoute: typeof AdminTrustRoute
   AdminUsersRoute: typeof AdminUsersRoute
-  AdminWhatsappRoute: typeof AdminWhatsappRoute
   AdminIndexRoute: typeof AdminIndexRoute
-  AdminComplianceAuditRoute: typeof AdminComplianceAuditRoute
   AdminComplianceFfcRoute: typeof AdminComplianceFfcRoute
-  AdminComplianceFicaRoute: typeof AdminComplianceFicaRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -1122,18 +1022,13 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCommissionRulesRoute: AdminCommissionRulesRoute,
   AdminDealsRoute: AdminDealsRoute,
   AdminFinancialsRoute: AdminFinancialsRoute,
-  AdminFranchiseRoute: AdminFranchiseRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminPropertiesRoute: AdminPropertiesRoute,
   AdminReconRoute: AdminReconRoute,
   AdminSettingsRoute: AdminSettingsRoute,
-  AdminTrustRoute: AdminTrustRoute,
   AdminUsersRoute: AdminUsersRoute,
-  AdminWhatsappRoute: AdminWhatsappRoute,
   AdminIndexRoute: AdminIndexRoute,
-  AdminComplianceAuditRoute: AdminComplianceAuditRoute,
   AdminComplianceFfcRoute: AdminComplianceFfcRoute,
-  AdminComplianceFicaRoute: AdminComplianceFicaRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

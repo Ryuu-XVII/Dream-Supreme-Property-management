@@ -50,7 +50,6 @@ function AdminProperties() {
           <KpiCard
             label="Active Portfolio Value"
             value={`R ${(totalValue / 1000000).toFixed(1)}M`}
-            trend={0}
             sub="Currently on market"
             icon={TrendingUp}
             delay={0}
@@ -58,7 +57,6 @@ function AdminProperties() {
           <KpiCard
             label="Active Listings"
             value={activeProperties.length}
-            trend={0}
             sub="Across all agents"
             icon={Building2}
             delay={0.05}
@@ -66,7 +64,6 @@ function AdminProperties() {
           <KpiCard
             label="Avg Days on Market"
             value={avgDaysOnMarket}
-            trend={0}
             sub="For active properties"
             icon={Clock}
             delay={0.1}

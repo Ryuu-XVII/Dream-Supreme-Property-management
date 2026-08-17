@@ -38,10 +38,6 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-// TODO: always empty — no code path populates a registration forecast yet, so
-// the "Registration Forecast" chart permanently shows its empty state.
-const forecast: Array<{ month: string; projected: number }> = [];
-
 const shortStage: Record<string, string> = {
   "Mandate Signed": "Mandate",
   "Listed/Marketing": "Listed",
@@ -124,6 +120,44 @@ function Index() {
         .reduce((s, d) => s + Math.round((d.salePrice * d.commissionBps) / 10000), 0),
     [deals, today],
   );
+
+  // Projected gross commission by month, bucketed by each active deal's
+  // furthest-out open suspensive condition due date (the last thing that has
+  // to clear before it can register) — deals with no open conditions are
+  // assumed close to registering and land in the current month.
+  const forecast = useMemo(() => {
+    const monthWindow = 6;
+    const buckets: { key: string; month: string; projected: number }[] = Array.from(
+      { length: monthWindow },
+      (_, i) => {
+        const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+        return {
+          key: `${d.getFullYear()}-${d.getMonth()}`,
+          month: d.toLocaleDateString("en-ZA", { month: "short" }),
+          projected: 0,
+        };
+      },
+    );
+    const bucketByKey = new Map(buckets.map((b) => [b.key, b]));
+
+    activeDeals.forEach((deal) => {
+      const grossCommissionCents = Math.round((deal.salePrice * deal.commissionBps) / 10000);
+      if (!grossCommissionCents) return;
+
+      const dealConditions = openConditions.filter((c) => c.dealId === deal.id);
+      const latestDueDate = dealConditions.reduce<Date | null>((latest, c) => {
+        const due = new Date(c.dueDate);
+        return !latest || due > latest ? due : latest;
+      }, null);
+
+      const target = latestDueDate && latestDueDate > today ? latestDueDate : today;
+      const key = `${target.getFullYear()}-${target.getMonth()}`;
+      const bucket = bucketByKey.get(key) ?? buckets[buckets.length - 1];
+      bucket.projected += grossCommissionCents;
+    });
+
+    return buckets.map(({ month, projected }) => ({ month, projected }));
+  }, [activeDeals, openConditions, today]);
 
   const stageCounts = useMemo(
     () =>
@@ -240,7 +274,7 @@ function Index() {
             <p className="text-xs text-muted-foreground">Projected gross commission</p>
             {loading ? (
               <div className="mt-4 h-64 animate-pulse rounded-lg bg-muted" />
-            ) : forecast.length === 0 ? (
+            ) : forecast.every((f) => f.projected === 0) ? (
               <EmptyState
                 title="No forecast data"
                 message="No projected deals in the current forecast timeline."

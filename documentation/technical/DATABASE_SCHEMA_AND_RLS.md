@@ -69,7 +69,6 @@ High-cardinality multi-tenant composite B-tree indexes are implemented across co
 - `idx_lease_payment_ref`: Auto-matching for bank feed reconciliations (`payment_reference`).
 - `idx_trust_ledger_agency_account`: Trust sub-ledger compliance (`agency_id`, `account_type`, `created_at DESC`).
 - `idx_email_queue_status_attempts`: Email queue dispatcher (`status`, `attempts`, `created_at`).
-- `idx_whatsapp_queue_status_attempts`: WhatsApp queue dispatcher (`status`, `attempts`, `created_at`).
 - `idx_party_agency_fica_status`: FICA compliance status (`agency_id`, `fica_status`, `party_type`).
 - `idx_ffc_certificate_user_expires`: FFC certificate status & expiry (`user_account_id`, `expires_on DESC`).
 - `idx_party_agency_name`: Party search by name (`agency_id`, `full_name`).
@@ -125,14 +124,6 @@ Calculates statutory 95%/5% interest splits on Section 86(4) trust investment ba
 ### `review_compliance_item(p_checklist_id, p_status, p_rejection_notes)`
 
 Enforces agency admin approval or rejection of mandatory transaction compliance checklist items (FICA, PPA Section 67 disclosure, FFC validation), recording review status and audit timestamps.
-
-### `match_buyers_for_mandate(p_mandate_id)`
-
-Cross-references new property mandates against registered buyer criteria profiles (budget ranges, preferred suburbs, property types, room counts) and calculates a 0-100% weighted match score.
-
-### `calculate_tiered_commission_splits(p_deal_id)`
-
-Calculates complex multi-tiered sliding scale commission splits. It dynamically fetches the agency's default commission rate from `commission_rule_set` and VAT rate from `get_vat_rate()`. Deducts VAT, franchise royalty fees, and desk fees before outputting exact agent net payouts and agency retention balances.
 
 ### `assign_lead_round_robin(p_lead_id)`
 
@@ -192,7 +183,6 @@ Adjusts a user's `storage_used_bytes` by `bytes_delta` (clamped to a minimum of 
 
 - **`deal_stage_history`**: A Postgres trigger automatically records an entry in `deal_timeline` whenever a deal's `stage` column is updated.
 - **`notify_agency_admins()` Trigger**: An automated trigger on `public.deal` and `public.audit_log` that instantly broadcasts in-app notifications (`public.notification`) and enqueues HTML email notifications (`public.email_queue`) to all agency `admin`/`admin_agent` accounts whenever a deal is registered (closed), cancelled, transitioned, or tagged with an operational progress note. Fixed in `20260814000005_fix_deal_notification_address_column.sql`, which also fired on every `deal` insert: it queried `property.address`, a column that has always been named `address_line`, so it broke every deal creation until fixed. Its `role in ('admin', 'principal')` recipient filter was also stale — fixed in `20260817000006_remove_principal_candidate_roles.sql` (see §3 RBAC).
-- **`trigger_deal_stage_whatsapp_notification()` Trigger**: Fires on `deal.stage` transitions to `bond_approved`/`registered` and queues `whatsapp_queue` messages to the buyer/seller. Also fixed in `20260814000005_fix_deal_notification_address_column.sql` — it referenced a non-existent function, `dp.role = 'buyer'` when `deal_party.role` only has `'purchaser'`, and `p.phone`/`deal.address`, none of which exist (the party phone column is `mobile`; address must be joined via `property_id`).
 - **`audit_log`**: Crucial actions (like commission finalization, user archival, entity updates) write to `audit_log` for complete financial transparency. `action` is a `public.audit_action` enum; `20260814000006_add_progress_note_audit_action.sql` added the `'progress_note_added'` value that `notify_agency_admins()` compared against — the missing value broke the cast on **every** `audit_log` insert app-wide (not just progress notes) until fixed.
 - **`pg_cron` (Scheduled Jobs)**: Used for automated daily background tasks. For example, `run_daily_sweeps()` runs every night at midnight to check all FFC certificates and automatically suspends accounts if their FFC has expired.
 
@@ -208,3 +198,19 @@ Adjusts a user's `storage_used_bytes` by `bytes_delta` (clamped to a minimum of 
 - **`user_notification_preference` RLS Enforcement**: Secured via migration `20260809000000_enable_rls_user_notification_preference.sql` with strict row-level policies permitting users to manage only their own notification preference overrides matching `user_id = get_current_user_account_id()`.
 - **`get_current_user_role()` Helper Function**: Defined in migration `20260811000001_system_governance_settings.sql` as a `SECURITY DEFINER` function returning `user_account.role::text` for `auth.uid()`, ensuring RLS policies (e.g. `agency_system_setting`) can safely evaluate caller roles without circular dependencies.
 - **Supabase CLI DB Push Migrations**: Migrations `20260807000000_seed_master_admin.sql` and `20260807000001_cleanup_manual_admin.sql` provision `pgcrypto` in `extensions` schema and handle archiving master admin accounts cleanly for remote Supabase CLI synchronization.
+
+## 6. Removed: Orphaned/Never-Wired Modules (`20260817000007_remove_orphaned_erp_modules.sql`)
+
+A stale-feature audit found several modules that were scaffolded at the schema level — tables, RLS, and in some cases a RPC — but never had any consumer in `src/`. Verified via exhaustive grep (no `.from(...)`, `.rpc(...)`, or other reference anywhere in the app) and a reverse-FK search (nothing else in the schema depended on them) before removal. Dropped in this migration:
+
+- **WhatsApp Gateway**: `whatsapp_queue` (fed by a real `deal.stage` trigger and a daily cron job, but no dispatch function ever existed — messages queued forever at `status = 'pending'`), its trigger `trg_deal_stage_whatsapp` / `trigger_deal_stage_whatsapp_notification()`, the `queue_tenant_rent_reminders()` cron job, and `whatsapp_message_log` (a second, entirely unwritten table from an earlier abandoned design of the same feature).
+- **Tiered commission engine & CDA** (Module 3): `commission_tier_rule`, `calculate_tiered_commission_splits()`, `commission_disbursement_instruction`.
+- **Bank reconciliation / GL sync / EFT payouts** (Module 5): `bank_statement_import`, `accounting_sync_log`, `eft_payout_batch`.
+- **Property syndication & buyer matching** (Module 2): `portal_syndication_feed`, `buyer_criteria_profile`, `match_buyers_for_mandate()`.
+- **CRM drip marketing**: `drip_campaign`, `drip_campaign_step` — no processor ever consumed a campaign step.
+- **Smart-form document merge tokens**: `document_field_token` — superseded in practice by the actually-used `generate_document_from_template()`.
+- **Inbound portal-lead webhook log**: `portal_lead_webhook_log` — its client handler (`portalWebhookService.ts`) was already deleted in an earlier cleanup; this table is what was left behind.
+- **`register_new_agent(text, text, text, text)`**: revoked from every role in `20260729000005_operational_hardening.sql`, never re-granted, no caller. Superseded by the invitation-based registration flow.
+- **`is_principal_or_admin()`**: its only caller (a policy on `public.deal`) was dropped by `20260729000005_operational_hardening.sql`, replaced by `can_access_deal()`. Unreachable ever since.
+
+The matching frontend routes (`/admin/whatsapp`, `/admin/franchise`, `/admin/trust`) and `src/services/*` files for the above were removed from `src/` in the same pass. **Not touched**: Section 86 trust accounting (`trust_account_ledger`, `record_trust_transaction()`, `process_monthly_section_86_4_interest_allocation()`) is real, working, PPRA-mandated functionality — only its `/admin/trust` UI page was removed (product decision, not a staleness finding). `src/data/trust.ts` was trimmed rather than deleted: it still exports `useRecordTrustTransaction()`, which `src/components/commission/reconciliation-content.tsx` genuinely consumes (the removed `useTrustLedger()` read hook had no remaining caller). The backend and its monthly cron job are untouched and keep running.

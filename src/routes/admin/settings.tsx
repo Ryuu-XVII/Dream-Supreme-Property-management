@@ -12,12 +12,10 @@ import {
   Globe,
   Lock,
   Mail,
-  MessageSquare,
   Building2,
   Archive,
   Trash2,
   UserMinus,
-  Radio,
   FileCheck,
   Cpu,
   Sliders,
@@ -54,7 +52,6 @@ function AdminSettings() {
   const [pingLoading, setPingLoading] = useState(false);
   const [pingResult, setPingResult] = useState<{
     dbMs: number;
-    whatsappQueueCount: number;
     userCount: number;
   } | null>(null);
 
@@ -128,20 +125,14 @@ function AdminSettings() {
 
       if (dbErr) throw dbErr;
 
-      // 2. Query Live WhatsApp Queue Count
-      const { count: waCount } = await supabase
-        .from("whatsapp_queue")
-        .select("*", { count: "exact", head: true });
-
       setPingResult({
         dbMs,
-        whatsappQueueCount: waCount ?? 0,
         userCount: usersCount ?? 0,
       });
 
       if (showToast) {
         toast.success("Live Diagnostics Complete", {
-          description: `Database Latency: ${dbMs}ms | Active Users: ${usersCount ?? 0} | WhatsApp Queue: ${waCount ?? 0} messages`,
+          description: `Database Latency: ${dbMs}ms | Active Users: ${usersCount ?? 0}`,
         });
       }
     } catch (err: any) {
@@ -300,31 +291,6 @@ function AdminSettings() {
               </div>
               <p className="text-xs text-muted-foreground">
                 Supabase Auth with role-based JWT claims (Admin, Agent).
-              </p>
-            </GlassCard>
-
-            <GlassCard className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="size-5 text-emerald-400" />
-                  <span className="font-semibold text-sm">WhatsApp Business API</span>
-                </div>
-                {import.meta.env.VITE_WHATSAPP_API_TOKEN ||
-                import.meta.env.VITE_WHATSAPP_PHONE_NUMBER_ID ? (
-                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-                    <Radio className="size-3 mr-1 animate-pulse" /> Ready
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-muted-foreground border-border/40">
-                    Not Configured
-                  </Badge>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {import.meta.env.VITE_WHATSAPP_API_TOKEN ||
-                import.meta.env.VITE_WHATSAPP_PHONE_NUMBER_ID
-                  ? "Automated document & lead notification webhook gateway listening."
-                  : "Meta WhatsApp API token missing in environment variables."}
               </p>
             </GlassCard>
 
@@ -615,8 +581,7 @@ function AdminSettings() {
               Notifications & Third-Party Gateway Integration
             </h2>
             <p className="text-sm text-muted-foreground">
-              Configure automated event dispatchers, WhatsApp bot webhooks, and email mailer
-              triggers.
+              Configure automated event dispatchers and email mailer triggers.
             </p>
           </div>
 
@@ -662,7 +627,7 @@ function AdminSettings() {
                   <div>
                     <Label className="text-sm font-medium">Commission Payout Reconciliations</Label>
                     <p className="text-xs text-muted-foreground">
-                      Send automated WhatsApp & email receipts upon payout clearance.
+                      Send automated email receipts upon payout clearance.
                     </p>
                   </div>
                   <Switch
@@ -700,23 +665,6 @@ function AdminSettings() {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between items-center p-3 border rounded-lg border-border/50">
                   <div className="flex items-center gap-2">
-                    <MessageSquare className="size-4 text-emerald-400" />
-                    <span>WhatsApp Gateway</span>
-                  </div>
-                  {import.meta.env.VITE_WHATSAPP_API_TOKEN ||
-                  import.meta.env.VITE_WHATSAPP_PHONE_NUMBER_ID ? (
-                    <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-                      Active
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-muted-foreground border-border/40">
-                      Not Configured
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="flex justify-between items-center p-3 border rounded-lg border-border/50">
-                  <div className="flex items-center gap-2">
                     <Mail className="size-4 text-indigo-400" />
                     <span>Supabase Auth Mailer</span>
                   </div>
@@ -739,22 +687,6 @@ function AdminSettings() {
                   {import.meta.env.VITE_CONVEYANCER_WEBHOOK_URL ? (
                     <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20">
                       Listening
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-muted-foreground border-border/40">
-                      Not Configured
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="flex justify-between items-center p-3 border rounded-lg border-border/50">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="size-4 text-purple-400" />
-                    <span>Xero / Sage Accounting Sync</span>
-                  </div>
-                  {import.meta.env.VITE_XERO_CLIENT_ID || import.meta.env.VITE_SAGE_API_KEY ? (
-                    <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20">
-                      Configured
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="text-muted-foreground border-border/40">
