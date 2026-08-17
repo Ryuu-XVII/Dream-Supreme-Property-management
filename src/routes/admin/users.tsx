@@ -10,11 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { type Role } from "@/types";
+import { type AgentSeniority, type Role } from "@/types";
+import { seniorityToDb } from "@/lib/domain";
 import { useAdminUsers, useUpdateUserStorageQuota, type AdminUser } from "@/data/users";
 import { DEFAULT_USER_STORAGE_LIMIT_BYTES } from "@/lib/storage";
 
 const ROLES: Role[] = ["Agent", "Admin", "Admin & Agent"];
+const SENIORITIES: AgentSeniority[] = ["Junior", "Mid-level", "Senior"];
 import {
   Table,
   TableBody,
@@ -273,7 +275,14 @@ function AdminUsers() {
 
   const startNew = () => {
     setEditing(null);
-    setDraft({ name: "", email: "", role: "Agent", active: true, commissionPct: 50 });
+    setDraft({
+      name: "",
+      email: "",
+      role: "Agent",
+      seniority: "Junior",
+      active: true,
+      commissionPct: 50,
+    });
     setGeneratedLink(null);
     setDialogOpen(true);
   };
@@ -283,6 +292,8 @@ function AdminUsers() {
     const email = draft.email?.trim() ?? "";
     const role = (draft.role ?? "Agent") as Role;
     const dbRole = role === "Admin & Agent" ? "admin_agent" : role.toLowerCase();
+    const seniority = draft.seniority ?? "Junior";
+    const dbSeniority = seniorityToDb[seniority];
 
     if (!name || !email) {
       toast.error("Full name and email address are required.");
@@ -298,6 +309,7 @@ function AdminUsers() {
             .update({
               role: dbRole as any,
               email: email,
+              seniority: dbSeniority as any,
             })
             .eq("id", realInviteId);
 
@@ -310,6 +322,7 @@ function AdminUsers() {
               full_name: name,
               email: email,
               role: dbRole as any,
+              seniority: dbSeniority as any,
               commission_pct: draft.commissionPct,
               status: draft.active ? "active" : "suspended",
             })
@@ -336,6 +349,7 @@ function AdminUsers() {
         const { data: inviteToken, error: rpcErr } = await supabase.rpc("create_user_invitation", {
           p_email: email,
           p_role: dbRole as any,
+          p_seniority: dbSeniority as any,
         });
 
         if (rpcErr) throw rpcErr;
@@ -573,6 +587,7 @@ function AdminUsers() {
                   </TableHead>
                   <TableHead>Team Member</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Seniority</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Performance</TableHead>
 
@@ -609,6 +624,13 @@ function AdminUsers() {
                       <Badge variant="outline" className={roleTone(u.role)}>
                         {u.role}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {u.role !== "Admin" ? (
+                        <span className="text-sm text-muted-foreground">{u.seniority}</span>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">N/A</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -874,6 +896,30 @@ function AdminUsers() {
                 </div>
               </div>
             </div>
+
+            {draft.role !== "Admin" && (
+              <div className="space-y-2">
+                <Label>Seniority</Label>
+                <Select
+                  value={draft.seniority ?? "Junior"}
+                  onValueChange={(v: AgentSeniority) => setDraft((d) => ({ ...d, seniority: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SENIORITIES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Experience-tier label shown on team and compliance views. Independent of role.
+                </p>
+              </div>
+            )}
 
             {draft.role !== "Admin" && (
               <div className="space-y-2">

@@ -1,4 +1,4 @@
-import type { ConditionStatus, ConditionType, EntityType, Stage } from "@/types";
+import type { AgentSeniority, ConditionStatus, ConditionType, EntityType, Stage } from "@/types";
 
 export const stageToDb: Record<Stage, string> = {
   "Mandate Signed": "mandate_signed",
@@ -62,6 +62,18 @@ export const ficaStatusFromDb: Record<string, "Complete" | "Partial" | "Not Star
   partial: "Partial",
   not_started: "Not Started",
   expired: "Not Started",
+};
+
+export const seniorityFromDb: Record<string, AgentSeniority> = {
+  junior: "Junior",
+  mid_level: "Mid-level",
+  senior: "Senior",
+};
+
+export const seniorityToDb: Record<AgentSeniority, string> = {
+  Junior: "junior",
+  "Mid-level": "mid_level",
+  Senior: "senior",
 };
 
 export interface TransferDutyBracket {

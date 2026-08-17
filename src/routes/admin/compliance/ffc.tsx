@@ -344,7 +344,7 @@ function FfcRegister() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead>Seniority</TableHead>
                   <TableHead>Certificate No.</TableHead>
                   <TableHead>Issued</TableHead>
                   <TableHead>Expiry</TableHead>

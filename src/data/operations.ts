@@ -1,6 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { conditionStatusFromDb, conditionTypeFromDb, stageFromDb } from "@/lib/domain";
+import {
+  conditionStatusFromDb,
+  conditionTypeFromDb,
+  seniorityFromDb,
+  stageFromDb,
+} from "@/lib/domain";
 
 import { useAuth } from "@/lib/auth";
 
@@ -34,7 +39,7 @@ export function useDashboardData() {
         supabase
           .from("user_account")
           .select(
-            "id, full_name, email, role, status, ppra_reference, is_candidate, ffc:ffc_certificate(id, certificate_number, issued_on, expires_on, document:document_id(storage_key))",
+            "id, full_name, email, role, status, ppra_reference, is_candidate, seniority, ffc:ffc_certificate(id, certificate_number, issued_on, expires_on, document:document_id(storage_key))",
           )
           .neq("status", "archived")
           .neq("status", "suspended"),
@@ -121,8 +126,7 @@ export function useDashboardData() {
           name: user.full_name,
           email: user.email,
           role: role as any,
-          seniority: (user.role === "admin" ? "Admin" : "Senior") as
-            "Senior" | "Mid-level" | "Admin",
+          seniority: seniorityFromDb[user.seniority] ?? "Junior",
           colour: "#1f7a52",
           ppra: user.ppra_reference || "Not captured",
           ffc: primaryFfc

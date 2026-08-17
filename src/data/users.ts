@@ -1,13 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { type Role } from "@/types";
+import { type AgentSeniority, type Role } from "@/types";
 import { DEFAULT_USER_STORAGE_LIMIT_BYTES } from "@/lib/storage";
+import { seniorityFromDb } from "@/lib/domain";
 
 export interface AdminUser {
   id: string;
   name: string;
   email: string;
   role: Role;
+  seniority: AgentSeniority;
   active: boolean;
   colour: string;
   agencyId?: string;
@@ -27,7 +29,7 @@ export function useAdminUsers() {
       const { data: accounts, error: accountErr } = await supabase
         .from("user_account")
         .select(
-          `id, full_name, email, role, status, agency_id, branch_id, commission_pct,
+          `id, full_name, email, role, seniority, status, agency_id, branch_id, commission_pct,
            storage_limit_bytes, storage_used_bytes`,
         )
         .neq("status", "archived")
@@ -37,7 +39,7 @@ export function useAdminUsers() {
       // 2. Fetch pending invitations from PostgreSQL migration schema (public.user_invitation)
       const { data: invitations, error: inviteErr } = await supabase
         .from("user_invitation")
-        .select("id, email, role, agency_id, accepted_at")
+        .select("id, email, role, seniority, agency_id, accepted_at")
         .is("accepted_at", null);
       if (inviteErr) throw inviteErr;
 
@@ -65,6 +67,7 @@ export function useAdminUsers() {
                 : String(u.email || "Team Member"),
             email: typeof u.email === "string" ? u.email : "unknown@example.com",
             role: formattedRole,
+            seniority: seniorityFromDb[u.seniority as string] ?? "Junior",
             active: u.status === "active",
             colour: "#4f46e5",
             agencyId: typeof u.agency_id === "string" ? u.agency_id : "",
@@ -91,6 +94,7 @@ export function useAdminUsers() {
             name: `${typeof i.email === "string" ? i.email.split("@")[0] : "Invited"} (Pending Invite)`,
             email: typeof i.email === "string" ? i.email : "",
             role: formattedRole,
+            seniority: seniorityFromDb[i.seniority as string] ?? "Junior",
             active: false,
             colour: "#eab308",
             agencyId: typeof i.agency_id === "string" ? i.agency_id : "",
