@@ -24,7 +24,7 @@ Dream Supreme is a multi-tenant platform. Supabase handles authentication, and P
 
 ### `trust_account_ledger` & `document_template` (Trust & Compliance Operations)
 
-- **`trust_account_ledger`**: Audited sub-ledger for Section 86(2) General and Section 86(4) Investment trust deposits, managing 95%/5% client vs PPRA statutory interest allocations and principal sign-offs.
+- **`trust_account_ledger`**: Audited sub-ledger for Section 86(2) General and Section 86(4) Investment trust deposits, managing 95%/5% client vs PPRA statutory interest allocations and administrator sign-offs.
 - **`document_template`**: Template repository for auto-generating ECTA-compliant mandates, lease agreements, and OTP legal documents.
 
 ### `notification`, `notification_preference`, `user_notification_preference` & `email_queue` (System & User Alert Engine)
@@ -91,10 +91,12 @@ Most SELECT policies start with: `agency_id = public.get_current_agency_id()`.
 
 Another helper `public.get_current_role()` extracts the user's role from their `user_account`.
 
-- **Principals & Admins**: Can view, edit, and delete almost all records within their `agency_id`.
-- **Agents & Candidates**: Can only view and edit records they are explicitly assigned to (e.g., a `deal` where they exist in `deal_participant`).
+- **Admins**: Can view, edit, and delete almost all records within their `agency_id`. Includes both the plain `admin` role and the dual-role `admin_agent`.
+- **Agents**: Can only view and edit records they are explicitly assigned to (e.g., a `deal` where they exist in `deal_participant`).
 
-**`is_manager()` vs `get_current_role()`**: `public.is_manager()` is the correct helper for any "is this caller a manager?" check — it recognizes `admin`, `principal`, `admin_agent`, and `admin & agent` (dual-role) accounts. `get_current_role() in ('principal', 'admin')` misses dual-role accounts entirely and previously caused `create_deal`, `create_client`, and (pre-emptively, in `create_mandate`) to wrongly block a legitimate manager from reassigning a record; all three now use `is_manager()`.
+**`is_manager()` vs `get_current_role()`**: `public.is_manager()` is the correct helper for any "is this caller a manager?" check — it recognizes `admin`, `admin_agent`, and `admin & agent` (dual-role) accounts. `get_current_role() in ('admin', 'admin_agent')` misses dual-role accounts entirely and previously caused `create_deal`, `create_client`, and (pre-emptively, in `create_mandate`) to wrongly block a legitimate manager from reassigning a record; all three now use `is_manager()`.
+
+**`principal`/`candidate` role removal (`20260817000006_remove_principal_candidate_roles.sql`)**: the `user_role` enum still defines legacy `principal` and `candidate` values, but only `agent`, `admin`, and `admin_agent` accounts are ever issued (a prior migration, `20260811000002_consolidate_principal_role_to_admin.sql`, already converted every existing row away from them). This migration strips the resulting stale `'principal'`/`'candidate'` literal from every live RLS policy and RPC across the schema. Several of those checks required a role that could no longer exist and were silently broken as a result — `save_commission_rule_set` (no one could edit commission rules), `transition_deal`'s stage-override gate, `process_monthly_section_86_4_interest_allocation`'s approver lookup, and the admin notification broadcasts in `run_daily_sweeps`/`notify_agency_admins` — all now correctly recognize `admin`/`admin_agent` again. The enum type itself is left untouched (Postgres can't drop an enum value without recreating every dependent function signature); the `principal`/`candidate` labels remain defined but unreachable through any code path.
 
 ### `managed_by` Edit Rights (Rentals)
 
@@ -106,7 +108,7 @@ We utilize Postgres functions (RPCs) to handle complex transactions that require
 
 ### `calculate_deal_commission(p_deal_id, p_rule_set_id)`
 
-Calculates the exact net payable amounts for all participants on a deal using a cascading waterfall approach. Supports dynamically calculating franchise/marketing fees based on the remaining commission pool (`percentage_of_remaining`). Re-runnable (archives previous calculations). Restricted to Principals and Admins.
+Calculates the exact net payable amounts for all participants on a deal using a cascading waterfall approach. Supports dynamically calculating franchise/marketing fees based on the remaining commission pool (`percentage_of_remaining`). Re-runnable (archives previous calculations). Restricted to Admins (including `admin_agent`).
 
 ### `get_vat_rate()`
 
@@ -114,15 +116,15 @@ A central configuration function that returns the current VAT rate (`0.15`). Use
 
 ### `record_trust_transaction(p_deal_id, p_lease_id, p_account_type, p_transaction_type, ...)`
 
-Enforces single-principal approval for Section 86 trust sub-ledger transactions, automatically stamping approval metadata and writing structured records to `audit_log`.
+Enforces admin-only approval for Section 86 trust sub-ledger transactions, automatically stamping approval metadata and writing structured records to `audit_log`.
 
 ### `process_monthly_section_86_4_interest_allocation(p_agency_id, p_period_date)`
 
-Calculates statutory 95%/5% interest splits on Section 86(4) trust investment balances under the Property Practitioners Act 22 of 2019. Automatically posts dual ledger transactions (`interest_credit` and `ppra_levy_deduction`), logs audit trail entries, and generates principal notifications. Scheduled via `pg_cron` (`0 1 1 * *`).
+Calculates statutory 95%/5% interest splits on Section 86(4) trust investment balances under the Property Practitioners Act 22 of 2019. Automatically posts dual ledger transactions (`interest_credit` and `ppra_levy_deduction`), logs audit trail entries, and generates administrator notifications. Scheduled via `pg_cron` (`0 1 1 * *`).
 
 ### `review_compliance_item(p_checklist_id, p_status, p_rejection_notes)`
 
-Enforces agency principal/admin approval or rejection of mandatory transaction compliance checklist items (FICA, PPA Section 67 disclosure, FFC validation), recording review status and audit timestamps.
+Enforces agency admin approval or rejection of mandatory transaction compliance checklist items (FICA, PPA Section 67 disclosure, FFC validation), recording review status and audit timestamps.
 
 ### `match_buyers_for_mandate(p_mandate_id)`
 
@@ -138,7 +140,7 @@ Distributes incoming omnichannel leads dynamically among active agents using an 
 
 ### `approve_maintenance_work_order(p_ticket_id, p_contractor_amount_cents)`
 
-Enforces agency principal approval for tenant maintenance work orders and contractor quotes, updating ticket status and auto-logging contractor invoice deductions for landlord trust disbursements.
+Enforces agency admin approval for tenant maintenance work orders and contractor quotes, updating ticket status and auto-logging contractor invoice deductions for landlord trust disbursements.
 
 ### `generate_document_from_template(p_template_id, p_deal_id, p_lease_id)`
 
@@ -160,7 +162,7 @@ The click-to-sign flow: an authenticated agency user calls `create_esign_envelop
 
 ### `popia_lookup_party` / `popia_export_party_data` / `popia_erase_party_data`
 
-Staff-only (`authenticated`, principal/admin gated), agency-scoped POPIA data-subject-access tooling surfaced at `/compliance/popia`. Lookup searches `party` by name/email/ID and returns linked-record counts; export aggregates `party` + related `document`/`signature_record`/`lead` rows to JSON; erase immediately anonymizes `party.full_name`/`email`/`mobile`/`id_or_reg_number` (manual trigger only, no auto-expiry) while leaving financial/deal/audit-linked foreign keys intact for FICA/tax retention. Both export and erase log to `audit_log` via new `audit_action` enum values `'popia_export'`/`'popia_erasure'`. Added in `20260817000002_popia_workflow.sql`.
+Staff-only (`authenticated`, admin/admin_agent gated), agency-scoped POPIA data-subject-access tooling surfaced at `/compliance/popia`. Lookup searches `party` by name/email/ID and returns linked-record counts; export aggregates `party` + related `document`/`signature_record`/`lead` rows to JSON; erase immediately anonymizes `party.full_name`/`email`/`mobile`/`id_or_reg_number` (manual trigger only, no auto-expiry) while leaving financial/deal/audit-linked foreign keys intact for FICA/tax retention. Both export and erase log to `audit_log` via new `audit_action` enum values `'popia_export'`/`'popia_erasure'`. Added in `20260817000002_popia_workflow.sql`.
 
 ### `trigger_email_queue_dispatch()`
 
@@ -189,14 +191,14 @@ Adjusts a user's `storage_used_bytes` by `bytes_delta` (clamped to a minimum of 
 ## 4. Triggers & Automation
 
 - **`deal_stage_history`**: A Postgres trigger automatically records an entry in `deal_timeline` whenever a deal's `stage` column is updated.
-- **`notify_agency_admins()` Trigger**: An automated trigger on `public.deal` and `public.audit_log` that instantly broadcasts in-app notifications (`public.notification`) and enqueues HTML email notifications (`public.email_queue`) to all agency `admin` and `principal` accounts whenever a deal is registered (closed), cancelled, transitioned, or tagged with an operational progress note. Fixed in `20260814000005_fix_deal_notification_address_column.sql`, which also fired on every `deal` insert: it queried `property.address`, a column that has always been named `address_line`, so it broke every deal creation until fixed.
+- **`notify_agency_admins()` Trigger**: An automated trigger on `public.deal` and `public.audit_log` that instantly broadcasts in-app notifications (`public.notification`) and enqueues HTML email notifications (`public.email_queue`) to all agency `admin`/`admin_agent` accounts whenever a deal is registered (closed), cancelled, transitioned, or tagged with an operational progress note. Fixed in `20260814000005_fix_deal_notification_address_column.sql`, which also fired on every `deal` insert: it queried `property.address`, a column that has always been named `address_line`, so it broke every deal creation until fixed. Its `role in ('admin', 'principal')` recipient filter was also stale — fixed in `20260817000006_remove_principal_candidate_roles.sql` (see §3 RBAC).
 - **`trigger_deal_stage_whatsapp_notification()` Trigger**: Fires on `deal.stage` transitions to `bond_approved`/`registered` and queues `whatsapp_queue` messages to the buyer/seller. Also fixed in `20260814000005_fix_deal_notification_address_column.sql` — it referenced a non-existent function, `dp.role = 'buyer'` when `deal_party.role` only has `'purchaser'`, and `p.phone`/`deal.address`, none of which exist (the party phone column is `mobile`; address must be joined via `property_id`).
 - **`audit_log`**: Crucial actions (like commission finalization, user archival, entity updates) write to `audit_log` for complete financial transparency. `action` is a `public.audit_action` enum; `20260814000006_add_progress_note_audit_action.sql` added the `'progress_note_added'` value that `notify_agency_admins()` compared against — the missing value broke the cast on **every** `audit_log` insert app-wide (not just progress notes) until fixed.
 - **`pg_cron` (Scheduled Jobs)**: Used for automated daily background tasks. For example, `run_daily_sweeps()` runs every night at midnight to check all FFC certificates and automatically suspends accounts if their FFC has expired.
 
 ## 5. User Invitations & Security Functions
 
-- **`create_user_invitation(text, user_role)`**: Generates a secure invite token, automatically cleans up prior unaccepted invitations for the target email, auto-provisions a default agency if needed, enforces `principal`/`admin` authorization checks, revokes public/anonymous execution, and grants `EXECUTE` to authenticated callers only.
+- **`create_user_invitation(text, user_role)`**: Generates a secure invite token, automatically cleans up prior unaccepted invitations for the target email, auto-provisions a default agency if needed, enforces `admin`/`admin_agent` authorization checks and rejects any `p_role` outside `agent`/`admin`/`admin_agent`, revokes public/anonymous execution, and grants `EXECUTE` to authenticated callers only.
 - **`prepare_invited_registration(text, text)`**: Validates an invitation token and email pairing, detects any orphan Supabase `auth.users` rows created by prior incomplete registration attempts, automatically cleans them up server-side, and returns validation status. Granted `EXECUTE` to `anon` and `authenticated`.
 - **`validate_user_invitation(text, text)`**: Validates invite token and email pairing with `EXECUTE` granted to `anon`, `authenticated`, and `service_role`.
 - **`accept_user_invitation(text, text, text, text)`**: Completes registration by creating/updating the `user_account` profile (with `ON CONFLICT` handling for existing auth users) and marking the invitation as accepted.

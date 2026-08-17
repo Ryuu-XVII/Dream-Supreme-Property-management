@@ -352,6 +352,10 @@ export function QuickDealModal({
 
               <div className="col-span-2 space-y-1.5">
                 <Label className="text-xs font-semibold">Property Photos</Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Preview only — photos are not saved with this record. Attach property images from
+                  the deal&apos;s Documents tab after creation.
+                </p>
                 <div className="flex flex-wrap items-center gap-2">
                   {photos.map((url, i) => (
                     <div

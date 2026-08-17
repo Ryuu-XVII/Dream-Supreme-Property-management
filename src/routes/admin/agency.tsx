@@ -61,12 +61,16 @@ import {
 import { Plus, Pencil, Archive, Building2, Scale, Percent, Landmark } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
+import { uploadFileToR2, getR2FileUrl } from "@/lib/storage";
 
 import {
   validateEmailFormat,
   validateSouthAfricanPhone,
   validateSouthAfricanVat,
 } from "@/lib/sa-validation";
+
+const MAX_LOGO_BYTES = 5 * 1024 * 1024; // 5MB cap for agency branding images
+const ALLOWED_LOGO_MIME_TYPES = ["image/jpeg", "image/png"];
 
 export const Route = createFileRoute("/admin/agency")({
   head: () => ({
@@ -128,7 +132,9 @@ interface Bracket {
 
 function AgencyProfilePage() {
   const { account } = useAuth();
-  const [logo, setLogo] = useState<string | null>(null);
+  const [logoKey, setLogoKey] = useState<string | null>(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
   const [branchList, setBranchList] = useState<Branch[]>([]);
   const [firmList, setFirmList] = useState<Firm[]>([]);
   const [brackets, setBrackets] = useState<Bracket[]>(
@@ -191,7 +197,7 @@ function AgencyProfilePage() {
       vatVendor: !!data.agency.is_vat_vendor,
       address: data.agency.address || "",
     });
-    setLogo(data.agency.logo_key || null);
+    setLogoKey(data.agency.logo_key || null);
     if (data.agency.default_management_fee_bps !== undefined) {
       setDefaultMgmtFeePct((data.agency.default_management_fee_bps / 100).toFixed(1));
     }
@@ -230,6 +236,24 @@ function AgencyProfilePage() {
     }
   }, [form, settingsQuery.data]);
 
+  useEffect(() => {
+    if (!logoKey) {
+      setLogoPreviewUrl(null);
+      return;
+    }
+    let cancelled = false;
+    getR2FileUrl(logoKey)
+      .then((url) => {
+        if (!cancelled) setLogoPreviewUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setLogoPreviewUrl(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [logoKey]);
+
   async function onSubmit(values: AgencyForm) {
     if (!account) return;
     const { error } = await supabase
@@ -252,13 +276,39 @@ function AgencyProfilePage() {
     toast.success("Agency profile updated", { description: `${values.name} details saved.` });
   }
 
-  function handleLogo(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleLogo(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setLogo(reader.result as string);
-    reader.readAsDataURL(file);
-    toast.info("Logo preview only; upload support is not enabled for agency branding yet.");
+    e.target.value = "";
+    if (!file || !account) return;
+
+    if (!ALLOWED_LOGO_MIME_TYPES.includes(file.type)) {
+      toast.error("Agency logo must be a JPEG or PNG image.");
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      toast.error(`Logo file (${(file.size / (1024 * 1024)).toFixed(1)}MB) exceeds the 5MB limit.`);
+      return;
+    }
+
+    setLogoUploading(true);
+    try {
+      const ext = file.type === "image/png" ? "png" : "jpg";
+      const storageKey = await uploadFileToR2(
+        file,
+        `${account.agencyId}/branding/logo-${crypto.randomUUID()}.${ext}`,
+      );
+      const { error } = await supabase
+        .from("agency")
+        .update({ logo_key: storageKey })
+        .eq("id", account.agencyId);
+      if (error) throw error;
+      setLogoKey(storageKey);
+      toast.success("Agency logo updated");
+    } catch (err: any) {
+      toast.error(`Failed to upload logo: ${err.message}`);
+    } finally {
+      setLogoUploading(false);
+    }
   }
 
   return (
@@ -283,8 +333,12 @@ function AgencyProfilePage() {
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div className="flex items-center gap-4 sm:col-span-2">
                     <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted">
-                      {logo ? (
-                        <img src={logo} alt="Agency logo" className="size-full object-cover" />
+                      {logoPreviewUrl ? (
+                        <img
+                          src={logoPreviewUrl}
+                          alt="Agency logo"
+                          className="size-full object-cover"
+                        />
                       ) : (
                         <Building2 className="size-6 text-muted-foreground" />
                       )}
@@ -296,8 +350,9 @@ function AgencyProfilePage() {
                       <Input
                         id="logo-upload"
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg,image/png"
                         onChange={handleLogo}
+                        disabled={logoUploading}
                         className="mt-1 max-w-xs"
                       />
                     </div>
