@@ -289,12 +289,12 @@ function AdminSettings() {
               </div>
               <p className="text-xs text-muted-foreground">
                 Bucket: <code className="text-cyan-300">{R2_BUCKET_NAME}</code>. File bytes are
-                never held in the browser or in Supabase — the{" "}
-                <code className="text-cyan-300">r2-storage</code> Edge Function holds the R2
-                credentials server-side and hands the browser short-lived presigned upload/download
-                URLs, so files go straight to Cloudflare R2 and nowhere else. Only metadata
-                (filename, size, mime type, storage key) is stored in Postgres. There is no fallback
-                storage backend — uploads/downloads fail outright if R2 is unreachable.
+                never stored in Supabase — the <code className="text-cyan-300">r2-storage</code>{" "}
+                Edge Function keeps the R2 credentials server-side (they are never sent to the
+                browser) and hands out short-lived presigned upload/download URLs, so the browser
+                transfers files straight to Cloudflare R2 and nowhere else. Only metadata (filename,
+                size, mime type, storage key) is stored in Postgres. There is no fallback storage
+                backend — uploads/downloads fail outright if R2 is unreachable.
               </p>
               <div
                 className={`text-xs font-mono p-2 rounded border ${
