@@ -291,3 +291,29 @@ document with no user session. Fixed by removing the `isPublic`/`public/` bypass
 — authorization is now decided solely from the authenticated session and the requested
 key — and by adding key hardening that rejects path-traversal shapes (`..`, empty
 segments, leading slash).
+
+## 11. Security Fix: NULL-role Guard Bypass in Admin RPCs (`20260817000012`)
+
+Also found during the authorized pentest. The `admin_*` SECURITY DEFINER functions
+guarded themselves with `if not (get_current_role() in ('admin','admin_agent') and …)`
+or `if get_current_role() not in ('admin','admin_agent')`. For an unauthenticated caller
+`get_current_role()` is NULL, and in Postgres three-valued logic `NULL in (…)` /
+`NULL not in (…)` evaluate to NULL, so `IF NULL THEN raise` never fired — the privileged
+body ran as the definer. Confirmed live: an anonymous caller reached
+`admin_empty_recycle_bin` and it executed rather than rejecting. Affected functions
+permanently purge the recycle bin, archive deals, suspend/retire users, and reset
+commissions.
+
+Fixed in two independent layers on all five functions (`admin_archive_old_deals`,
+`admin_deactivate_idle_agents`, `admin_empty_recycle_bin`, `admin_bulk_reset_commission`,
+`admin_bulk_retire_users`): (1) the guard is rewritten NULL-safe — `coalesce(role::text,'')
+not in (…)` is TRUE for a NULL role and agency scoping uses `is distinct from`, so a NULL
+role always raises; (2) EXECUTE is revoked from `anon`/`public` and granted only to
+`authenticated`. Verified: anon now receives `permission denied` (42501), the NULL-role
+guard raises, and an authenticated admin still succeeds.
+
+Note the same `get_current_role() not in (…)` guard shape exists in several functions that
+are NOT granted to `anon` (e.g. the `popia_*` PII export/erase functions, `upsert_ffc_certificate`,
+`save_commission_rule_set`, `transition_deal`). They are not currently reachable
+unauthenticated, but the guard shape is latently NULL-unsafe and should be migrated to the
+`coalesce(role::text,'')` form as defense-in-depth.
