@@ -30,10 +30,19 @@ function r2Config() {
   return { accountId, accessKeyId, secretAccessKey, bucket };
 }
 
+// Browsers send a preflight OPTIONS request before the actual POST and refuse to
+// expose the response unless these headers come back, so without them every call
+// from the app fails even though the same request succeeds from curl.
+const CORS_HEADERS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-headers": "authorization, x-client-info, apikey, content-type",
+  "access-control-allow-methods": "POST, OPTIONS",
+};
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json" },
+    headers: { ...CORS_HEADERS, "content-type": "application/json" },
   });
 }
 
@@ -132,6 +141,10 @@ async function authorizeKey(
 }
 
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+
   const config = r2Config();
 
   let body: RequestBody;
