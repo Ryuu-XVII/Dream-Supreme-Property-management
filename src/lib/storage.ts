@@ -31,19 +31,51 @@ export const R2_BUCKET_NAME =
   "dream-supreme-documents";
 
 /**
- * Direct R2 access from the browser is intentionally disabled: Cloudflare R2 has no
+ * Direct R2 access from the browser is intentionally impossible: Cloudflare R2 has no
  * browser-safe (RLS-scoped) auth mode comparable to Supabase's anon key, so any IAM
- * credential capable of signing R2 requests must never be shipped in client JS —
- * Vite inlines every `VITE_`-prefixed env var into the built bundle regardless of
- * whether the code path using it actually runs, so simply gating usage at runtime
- * isn't sufficient. Object storage always goes through Supabase Storage below, which
- * is protected by the agency-scoped RLS policies in
- * supabase/migrations/20260730000001_secure_storage_buckets.sql. Re-introducing R2
- * requires proxying uploads/downloads through a server-side function (e.g. a Supabase
- * Edge Function) that holds the R2 credentials outside the client bundle.
+ * credential capable of signing R2 requests must never be shipped in client JS — Vite
+ * inlines every `VITE_`-prefixed env var into the built bundle regardless of whether
+ * the code path using it actually runs. Instead, the `r2-storage` Supabase Edge
+ * Function (supabase/functions/r2-storage) holds the R2 credentials as server-side
+ * secrets and hands the browser short-lived presigned PUT/GET URLs; the actual file
+ * bytes then flow directly between the browser and R2, never through Supabase. This
+ * function is kept only so callers/tests can check whether a client-side R2 SDK
+ * instance exists — it always does not, by design.
  */
 export function getR2Client(): null {
   return null;
+}
+
+async function isR2Configured(): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.functions.invoke("r2-storage", {
+      body: { action: "status" },
+    });
+    return !error && !!data?.configured;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Invoke the r2-storage edge function for a presign/delete action. Returns null when
+ * R2 is not configured (missing secrets, function not deployed) so callers can fall
+ * back to Supabase Storage; throws for any other failure so a real, configured R2
+ * error is never silently swallowed into a fallback that would put bytes in the
+ * wrong place.
+ */
+async function callR2Proxy<T>(
+  body: Record<string, unknown>,
+): Promise<{ data: T; usedR2: true } | { data: null; usedR2: false }> {
+  if (!(await isR2Configured())) return { data: null, usedR2: false };
+
+  const { data, error } = await supabase.functions.invoke("r2-storage", { body });
+  if (error) {
+    throw new Error(
+      `R2 storage operation failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+  return { data: data as T, usedR2: true };
 }
 
 /**
@@ -185,6 +217,25 @@ export async function uploadFileToR2(
     );
   }
 
+  const r2 = await callR2Proxy<{ url: string; key: string }>({
+    action: "presign-put",
+    key: path,
+    contentType,
+    isPublic: quotaOptions?.isPublic,
+  });
+
+  if (r2.usedR2) {
+    const putRes = await fetch(r2.data.url, {
+      method: "PUT",
+      headers: { "content-type": contentType },
+      body: file,
+    });
+    if (!putRes.ok) {
+      throw new Error(`R2 upload failed with status ${putRes.status}`);
+    }
+    return r2.data.key;
+  }
+
   const { data, error } = await supabase.storage.from(DOCUMENT_BUCKET).upload(path, file, {
     upsert: false,
     contentType,
@@ -239,6 +290,13 @@ export async function getR2FileUrl(
 
   await verifyStorageAccessAuthorization(key, options);
 
+  const r2 = await callR2Proxy<{ url: string }>({
+    action: "presign-get",
+    key,
+    isPublic: options?.isPublic,
+  });
+  if (r2.usedR2) return r2.data.url;
+
   const { data, error } = await supabase.storage.from(DOCUMENT_BUCKET).createSignedUrl(key, 300);
   if (error) throw error;
   return data.signedUrl;
@@ -252,6 +310,13 @@ export async function removeStoredFile(
   options?: { isPublic?: boolean },
 ): Promise<void> {
   await verifyStorageAccessAuthorization(key, options);
+
+  const r2 = await callR2Proxy<{ deleted: boolean }>({
+    action: "delete",
+    key,
+    isPublic: options?.isPublic,
+  });
+  if (r2.usedR2) return;
 
   const { error } = await supabase.storage.from(DOCUMENT_BUCKET).remove([key]);
   if (error) throw error;

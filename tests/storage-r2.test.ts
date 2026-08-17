@@ -8,8 +8,26 @@ import {
 } from "@/lib/storage";
 import { supabase } from "@/lib/supabase";
 
+// `supabase.functions` is a getter that returns a brand-new FunctionsClient on
+// every access (unlike `supabase.storage`, which is a stable instance property),
+// so `vi.spyOn(supabase.functions, "invoke")` only stubs a throwaway instance and
+// never intercepts the real calls made from src/lib/storage.ts. Overriding the
+// getter itself is what actually works.
+function mockFunctionsInvoke(impl: (name: string, opts: any) => Promise<any>) {
+  const invoke = vi.fn(impl);
+  Object.defineProperty(supabase, "functions", {
+    configurable: true,
+    get: () => ({ invoke }),
+  });
+  return invoke;
+}
+
 describe("Cloudflare R2 Storage Adapter", () => {
   const originalEnv = process.env;
+  const functionsDescriptor = Object.getOwnPropertyDescriptor(
+    Object.getPrototypeOf(supabase),
+    "functions",
+  );
 
   beforeEach(() => {
     vi.resetModules();
@@ -19,6 +37,11 @@ describe("Cloudflare R2 Storage Adapter", () => {
   afterEach(() => {
     process.env = originalEnv;
     vi.restoreAllMocks();
+    if (functionsDescriptor) {
+      Object.defineProperty(supabase, "functions", functionsDescriptor);
+    } else {
+      delete (supabase as any).functions;
+    }
   });
 
   it("returns null for getR2Client when env vars are missing", () => {
@@ -51,9 +74,8 @@ describe("Cloudflare R2 Storage Adapter", () => {
     );
   });
 
-  it("successfully falls back to Supabase storage when R2 credentials are not set", async () => {
-    delete process.env.VITE_R2_ACCOUNT_ID;
-    delete process.env.CLOUDFLARE_R2_ACCOUNT_ID;
+  it("falls back to Supabase storage when the r2-storage edge function reports not configured", async () => {
+    mockFunctionsInvoke(async () => ({ data: { configured: false }, error: null }));
 
     vi.spyOn(supabase.storage, "from").mockReturnValue({
       upload: vi.fn().mockResolvedValue({ data: { path: "mandates/doc.pdf" }, error: null }),
@@ -73,6 +95,58 @@ describe("Cloudflare R2 Storage Adapter", () => {
     expect(signedUrl).toContain("https://example.com/test.pdf");
 
     await expect(removeStoredFile("mandates/doc.pdf")).resolves.not.toThrow();
+  });
+
+  it("uploads real file bytes directly to Cloudflare R2 via a presigned URL when configured", async () => {
+    const invokeSpy = mockFunctionsInvoke(async (_name, opts: any) => {
+      if (opts.body.action === "status") return { data: { configured: true }, error: null };
+      if (opts.body.action === "presign-put") {
+        return {
+          data: {
+            url: "https://accountid.r2.cloudflarestorage.com/bucket/mandates/doc.pdf?sig=x",
+            key: "mandates/doc.pdf",
+          },
+          error: null,
+        };
+      }
+      if (opts.body.action === "presign-get") {
+        return {
+          data: {
+            url: "https://accountid.r2.cloudflarestorage.com/bucket/mandates/doc.pdf?sig=get",
+          },
+          error: null,
+        };
+      }
+      if (opts.body.action === "delete") {
+        return { data: { deleted: true }, error: null };
+      }
+      throw new Error(`Unexpected action ${opts.body.action}`);
+    });
+
+    const realFetch = globalThis.fetch.bind(globalThis);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      if (url.includes("r2.cloudflarestorage.com")) {
+        return new Response(null, { status: 200 });
+      }
+      return realFetch(input as any, init);
+    });
+
+    const dummyFile = new File(["%PDF-1.4 test content"], "doc.pdf", {
+      type: "application/pdf",
+    });
+    const uploadedPath = await uploadFileToR2(dummyFile, "mandates/doc.pdf");
+    expect(uploadedPath).toBe("mandates/doc.pdf");
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.stringContaining("r2.cloudflarestorage.com"),
+      expect.objectContaining({ method: "PUT" }),
+    );
+
+    const signedUrl = await getR2FileUrl("mandates/doc.pdf");
+    expect(signedUrl).toContain("r2.cloudflarestorage.com");
+
+    await expect(removeStoredFile("mandates/doc.pdf")).resolves.not.toThrow();
+    expect(invokeSpy).toHaveBeenCalled();
   });
 
   it("returns empty string when key is empty or null for getR2FileUrl", async () => {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   Server,
   HardDrive,
@@ -58,6 +59,19 @@ function AdminSettings() {
   // Database System Settings Hooks
   const { data: dbSettings } = useAgencySystemSettings();
   const saveSettings = useSaveAgencySystemSettings();
+
+  const { data: r2Status } = useQuery({
+    queryKey: ["r2-storage-status"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("r2-storage", {
+        body: { action: "status" },
+      });
+      if (error) return { configured: false };
+      return data as { configured: boolean };
+    },
+    staleTime: 60_000,
+  });
+  const r2Configured = r2Status?.configured ?? false;
 
   // Storage Settings State
   const [globalQuotaMb, setGlobalQuotaMb] = useState<number>(1024);
@@ -262,21 +276,29 @@ function AdminSettings() {
                   <HardDrive className="size-5 text-cyan-500" />
                   <span className="font-semibold text-sm">Document Storage</span>
                 </div>
-                <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
-                  <CheckCircle2 className="size-3 mr-1" /> Supabase Storage
-                </Badge>
+                {r2Configured ? (
+                  <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20">
+                    <CheckCircle2 className="size-3 mr-1" /> Cloudflare R2
+                  </Badge>
+                ) : (
+                  <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
+                    <CheckCircle2 className="size-3 mr-1" /> Supabase Storage
+                  </Badge>
+                )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Bucket: <code className="text-cyan-300">{R2_BUCKET_NAME}</code>. Direct R2 access
-                from the browser is disabled — Cloudflare R2 credentials cannot be scoped safely to
-                the client, so uploads/downloads go through Supabase Storage's agency-scoped RLS
-                policies instead.
+                Bucket: <code className="text-cyan-300">{R2_BUCKET_NAME}</code>. File bytes are
+                never held in the browser or in Supabase — the{" "}
+                <code className="text-cyan-300">r2-storage</code> Edge Function holds the R2
+                credentials server-side and hands the browser short-lived presigned upload/download
+                URLs, so files go straight to Cloudflare R2. Only metadata (filename, size, mime
+                type, storage key) is stored in Postgres.
               </p>
-              {pingResult && (
-                <div className="text-xs font-mono bg-muted/30 p-2 rounded border text-cyan-400">
-                  R2 Adapter: Disabled (Supabase Storage fallback active)
-                </div>
-              )}
+              <div className="text-xs font-mono bg-muted/30 p-2 rounded border text-cyan-400">
+                {r2Configured
+                  ? "R2 Adapter: Active (files stored in Cloudflare R2)"
+                  : "R2 Adapter: Not configured — set R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY secrets on the r2-storage Edge Function (Supabase Storage fallback active)"}
+              </div>
             </GlassCard>
 
             <GlassCard className="space-y-3">
@@ -358,13 +380,19 @@ function AdminSettings() {
                 <div className="flex justify-between items-center py-2 border-b border-border/40">
                   <span className="text-muted-foreground">Active Storage Backend</span>
                   <span className="font-medium text-cyan-400">
-                    Supabase Storage (`mandate-documents`)
+                    {r2Configured
+                      ? `Cloudflare R2 (\`${R2_BUCKET_NAME}\`, via r2-storage Edge Function)`
+                      : "Supabase Storage (`mandate-documents`) — R2 fallback"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-border/40">
                   <span className="text-muted-foreground">Cloudflare R2</span>
-                  <span className="font-medium text-muted-foreground">
-                    Disabled (client-side R2 credentials can't be scoped safely)
+                  <span
+                    className={`font-medium ${r2Configured ? "text-emerald-400" : "text-muted-foreground"}`}
+                  >
+                    {r2Configured
+                      ? "Active (presigned URLs signed server-side by r2-storage)"
+                      : "Not configured (secrets missing on r2-storage Edge Function)"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-border/40">
