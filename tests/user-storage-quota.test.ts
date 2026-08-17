@@ -37,17 +37,49 @@ describe("Per-Agent Storage Isolation & Quota Limits", () => {
       type: "application/pdf",
     });
 
-    // uploadFileToR2 always goes through Supabase Storage now (see src/lib/storage.ts);
-    // stub it so this quota-logic test doesn't depend on a live, authenticated session.
-    vi.spyOn(supabase.storage, "from").mockReturnValue({
-      upload: async (path: string) => ({ data: { path }, error: null }),
-    } as unknown as ReturnType<typeof supabase.storage.from>);
-
-    await expect(
-      uploadFileToR2(newFile, "users/agent-1/small.pdf", {
-        currentStorageUsedBytes: currentUsed,
-        storageLimitBytes: limit,
+    // uploadFileToR2 always goes through the r2-storage Edge Function now (see
+    // src/lib/storage.ts). `supabase.functions` is a getter that returns a fresh
+    // FunctionsClient on every access, so the getter itself must be stubbed for the
+    // mock to actually intercept the real call.
+    const functionsDescriptor = Object.getOwnPropertyDescriptor(
+      Object.getPrototypeOf(supabase),
+      "functions",
+    );
+    Object.defineProperty(supabase, "functions", {
+      configurable: true,
+      get: () => ({
+        invoke: async (_name: string, opts: any) =>
+          opts.body.action === "presign-put"
+            ? {
+                data: {
+                  url: "https://accountid.r2.cloudflarestorage.com/bucket/small.pdf",
+                  key: opts.body.key,
+                },
+                error: null,
+              }
+            : { data: { error: "unexpected action" }, error: null },
       }),
-    ).resolves.toBe("users/agent-1/small.pdf");
+    });
+    const realFetch = globalThis.fetch.bind(globalThis);
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      if (url.includes("r2.cloudflarestorage.com")) return new Response(null, { status: 200 });
+      return realFetch(input as any, init);
+    });
+
+    try {
+      await expect(
+        uploadFileToR2(newFile, "users/agent-1/small.pdf", {
+          currentStorageUsedBytes: currentUsed,
+          storageLimitBytes: limit,
+        }),
+      ).resolves.toBe("users/agent-1/small.pdf");
+    } finally {
+      if (functionsDescriptor) {
+        Object.defineProperty(supabase, "functions", functionsDescriptor);
+      } else {
+        delete (supabase as any).functions;
+      }
+    }
   });
 });

@@ -1,9 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
-const DOCUMENT_BUCKET = "mandate-documents";
-
-// Must stay in sync with the `mandate-documents` bucket's file_size_limit and
-// allowed_mime_types in supabase/migrations/20260730000001_secure_storage_buckets.sql —
+// Must stay in sync with the r2-storage Edge Function's allowed content types —
 // otherwise uploads that pass client-side checks are rejected server-side with a
 // confusing error instead of a clear one.
 export const MAX_SINGLE_FILE_BYTES = 20 * 1024 * 1024; // 20MB max per document
@@ -46,36 +43,26 @@ export function getR2Client(): null {
   return null;
 }
 
-async function isR2Configured(): Promise<boolean> {
-  try {
-    const { data, error } = await supabase.functions.invoke("r2-storage", {
-      body: { action: "status" },
-    });
-    return !error && !!data?.configured;
-  } catch {
-    return false;
-  }
-}
-
 /**
- * Invoke the r2-storage edge function for a presign/delete action. Returns null when
- * R2 is not configured (missing secrets, function not deployed) so callers can fall
- * back to Supabase Storage; throws for any other failure so a real, configured R2
- * error is never silently swallowed into a fallback that would put bytes in the
- * wrong place.
+ * Invoke the r2-storage edge function for a presign/delete action. There is no
+ * Supabase Storage fallback: if R2 isn't configured (missing secrets, function not
+ * deployed) or the call fails for any other reason, this throws — files must only
+ * ever end up in Cloudflare R2, never silently in Supabase.
  */
-async function callR2Proxy<T>(
-  body: Record<string, unknown>,
-): Promise<{ data: T; usedR2: true } | { data: null; usedR2: false }> {
-  if (!(await isR2Configured())) return { data: null, usedR2: false };
-
+async function callR2Proxy<T>(body: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke("r2-storage", { body });
   if (error) {
     throw new Error(
       `R2 storage operation failed: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
-  return { data: data as T, usedR2: true };
+  if (data?.error === "r2_not_configured") {
+    throw new Error(
+      "Cloudflare R2 is not configured. Set R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / " +
+        "R2_SECRET_ACCESS_KEY / R2_BUCKET_NAME secrets on the r2-storage Edge Function.",
+    );
+  }
+  return data as T;
 }
 
 /**
@@ -176,8 +163,9 @@ async function verifyFileSignature(file: File | Blob, mimeType: string): Promise
 }
 
 /**
- * Upload a file/blob to Supabase Storage with per-user quota checking and
- * database authorization verification.
+ * Upload a file/blob to Cloudflare R2 with per-user quota checking and database
+ * authorization verification. Throws if R2 is not configured — there is no
+ * fallback storage backend.
  */
 export async function uploadFileToR2(
   file: File | Blob,
@@ -224,24 +212,15 @@ export async function uploadFileToR2(
     isPublic: quotaOptions?.isPublic,
   });
 
-  if (r2.usedR2) {
-    const putRes = await fetch(r2.data.url, {
-      method: "PUT",
-      headers: { "content-type": contentType },
-      body: file,
-    });
-    if (!putRes.ok) {
-      throw new Error(`R2 upload failed with status ${putRes.status}`);
-    }
-    return r2.data.key;
-  }
-
-  const { data, error } = await supabase.storage.from(DOCUMENT_BUCKET).upload(path, file, {
-    upsert: false,
-    contentType,
+  const putRes = await fetch(r2.url, {
+    method: "PUT",
+    headers: { "content-type": contentType },
+    body: file,
   });
-  if (error) throw error;
-  return data.path;
+  if (!putRes.ok) {
+    throw new Error(`R2 upload failed with status ${putRes.status}`);
+  }
+  return r2.key;
 }
 
 /**
@@ -278,7 +257,7 @@ export async function recordStorageUsageDelta(userId: string, deltaBytes: number
 }
 
 /**
- * Get a presigned download URL for a file stored in Supabase Storage after
+ * Get a presigned download URL for a file stored in Cloudflare R2 after
  * verifying database authorization.
  */
 export async function getR2FileUrl(
@@ -295,15 +274,11 @@ export async function getR2FileUrl(
     key,
     isPublic: options?.isPublic,
   });
-  if (r2.usedR2) return r2.data.url;
-
-  const { data, error } = await supabase.storage.from(DOCUMENT_BUCKET).createSignedUrl(key, 300);
-  if (error) throw error;
-  return data.signedUrl;
+  return r2.url;
 }
 
 /**
- * Delete a file from Supabase Storage after verifying authorization.
+ * Delete a file from Cloudflare R2 after verifying authorization.
  */
 export async function removeStoredFile(
   key: string,
@@ -311,13 +286,9 @@ export async function removeStoredFile(
 ): Promise<void> {
   await verifyStorageAccessAuthorization(key, options);
 
-  const r2 = await callR2Proxy<{ deleted: boolean }>({
+  await callR2Proxy<{ deleted: boolean }>({
     action: "delete",
     key,
     isPublic: options?.isPublic,
   });
-  if (r2.usedR2) return;
-
-  const { error } = await supabase.storage.from(DOCUMENT_BUCKET).remove([key]);
-  if (error) throw error;
 }

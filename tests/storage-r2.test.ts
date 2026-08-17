@@ -74,32 +74,29 @@ describe("Cloudflare R2 Storage Adapter", () => {
     );
   });
 
-  it("falls back to Supabase storage when the r2-storage edge function reports not configured", async () => {
-    mockFunctionsInvoke(async () => ({ data: { configured: false }, error: null }));
-
-    vi.spyOn(supabase.storage, "from").mockReturnValue({
-      upload: vi.fn().mockResolvedValue({ data: { path: "mandates/doc.pdf" }, error: null }),
-      createSignedUrl: vi
-        .fn()
-        .mockResolvedValue({ data: { signedUrl: "https://example.com/test.pdf" }, error: null }),
-      remove: vi.fn().mockResolvedValue({ data: [], error: null }),
-    } as any);
+  it("throws instead of falling back to Supabase storage when R2 is not configured", async () => {
+    mockFunctionsInvoke(async () => ({ data: { error: "r2_not_configured" }, error: null }));
+    const storageSpy = vi.spyOn(supabase.storage, "from");
 
     const dummyFile = new File(["%PDF-1.4 test content"], "doc.pdf", {
       type: "application/pdf",
     });
-    const uploadedPath = await uploadFileToR2(dummyFile, "mandates/doc.pdf");
-    expect(uploadedPath).toBe("mandates/doc.pdf");
+    await expect(uploadFileToR2(dummyFile, "mandates/doc.pdf")).rejects.toThrow(
+      /Cloudflare R2 is not configured/,
+    );
+    await expect(getR2FileUrl("mandates/doc.pdf")).rejects.toThrow(
+      /Cloudflare R2 is not configured/,
+    );
+    await expect(removeStoredFile("mandates/doc.pdf")).rejects.toThrow(
+      /Cloudflare R2 is not configured/,
+    );
 
-    const signedUrl = await getR2FileUrl("mandates/doc.pdf");
-    expect(signedUrl).toContain("https://example.com/test.pdf");
-
-    await expect(removeStoredFile("mandates/doc.pdf")).resolves.not.toThrow();
+    // Confirms no request ever reaches Supabase Storage as a silent fallback.
+    expect(storageSpy).not.toHaveBeenCalled();
   });
 
   it("uploads real file bytes directly to Cloudflare R2 via a presigned URL when configured", async () => {
     const invokeSpy = mockFunctionsInvoke(async (_name, opts: any) => {
-      if (opts.body.action === "status") return { data: { configured: true }, error: null };
       if (opts.body.action === "presign-put") {
         return {
           data: {

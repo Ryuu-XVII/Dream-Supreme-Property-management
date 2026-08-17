@@ -20,6 +20,7 @@ import {
   FileCheck,
   Cpu,
   Sliders,
+  TriangleAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
@@ -281,8 +282,8 @@ function AdminSettings() {
                     <CheckCircle2 className="size-3 mr-1" /> Cloudflare R2
                   </Badge>
                 ) : (
-                  <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
-                    <CheckCircle2 className="size-3 mr-1" /> Supabase Storage
+                  <Badge className="bg-red-500/10 text-red-400 border-red-500/20">
+                    <TriangleAlert className="size-3 mr-1" /> Not Configured
                   </Badge>
                 )}
               </div>
@@ -291,13 +292,20 @@ function AdminSettings() {
                 never held in the browser or in Supabase — the{" "}
                 <code className="text-cyan-300">r2-storage</code> Edge Function holds the R2
                 credentials server-side and hands the browser short-lived presigned upload/download
-                URLs, so files go straight to Cloudflare R2. Only metadata (filename, size, mime
-                type, storage key) is stored in Postgres.
+                URLs, so files go straight to Cloudflare R2 and nowhere else. Only metadata
+                (filename, size, mime type, storage key) is stored in Postgres. There is no fallback
+                storage backend — uploads/downloads fail outright if R2 is unreachable.
               </p>
-              <div className="text-xs font-mono bg-muted/30 p-2 rounded border text-cyan-400">
+              <div
+                className={`text-xs font-mono p-2 rounded border ${
+                  r2Configured
+                    ? "bg-muted/30 text-cyan-400"
+                    : "bg-red-500/10 text-red-400 border-red-500/30"
+                }`}
+              >
                 {r2Configured
                   ? "R2 Adapter: Active (files stored in Cloudflare R2)"
-                  : "R2 Adapter: Not configured — set R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY secrets on the r2-storage Edge Function (Supabase Storage fallback active)"}
+                  : "R2 Adapter: Not configured — uploads/downloads WILL FAIL until R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET_NAME secrets are set on the r2-storage Edge Function"}
               </div>
             </GlassCard>
 
@@ -379,16 +387,18 @@ function AdminSettings() {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between items-center py-2 border-b border-border/40">
                   <span className="text-muted-foreground">Active Storage Backend</span>
-                  <span className="font-medium text-cyan-400">
+                  <span
+                    className={`font-medium ${r2Configured ? "text-cyan-400" : "text-red-400"}`}
+                  >
                     {r2Configured
                       ? `Cloudflare R2 (\`${R2_BUCKET_NAME}\`, via r2-storage Edge Function)`
-                      : "Supabase Storage (`mandate-documents`) — R2 fallback"}
+                      : "None — uploads/downloads will fail"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-border/40">
                   <span className="text-muted-foreground">Cloudflare R2</span>
                   <span
-                    className={`font-medium ${r2Configured ? "text-emerald-400" : "text-muted-foreground"}`}
+                    className={`font-medium ${r2Configured ? "text-emerald-400" : "text-red-400"}`}
                   >
                     {r2Configured
                       ? "Active (presigned URLs signed server-side by r2-storage)"
