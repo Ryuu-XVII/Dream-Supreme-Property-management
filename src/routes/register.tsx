@@ -247,12 +247,17 @@ function RegisterPage() {
                 <input
                   id="avatar-upload"
                   type="file"
-                  accept="image/*"
+                  // Must match ALLOWED_DOCUMENT_MIME_TYPES in src/lib/storage.ts.
+                  // "image/*" let users pick HEIC/WebP/GIF files that the upload
+                  // then rejected with a confusing "type is not supported" error.
+                  accept="image/jpeg,image/png"
                   onChange={handleFileChange}
                   className="absolute inset-0 opacity-0 cursor-pointer"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">Click to upload photo (Cloudflare R2)</p>
+              <p className="text-xs text-muted-foreground">
+                Click to upload photo — JPEG or PNG (Cloudflare R2)
+              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

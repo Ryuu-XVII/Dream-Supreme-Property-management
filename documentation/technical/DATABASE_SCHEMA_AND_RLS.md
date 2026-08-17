@@ -224,3 +224,29 @@ Before this migration, seniority was entirely fake: `src/data/operations.ts` com
 - `create_user_invitation(text, public.user_role)` gained an optional third `p_seniority public.agent_seniority default 'junior'` parameter. The old two-argument signature was dropped first — Postgres's `CREATE OR REPLACE FUNCTION` cannot change a function's parameter list, only its body.
 - `accept_user_invitation(...)` now copies `v_invite.seniority` onto the new `user_account` row (and keeps it in sync on the pre-existing `ON CONFLICT (auth_user_id) DO UPDATE` path for a prior partial registration).
 - Set at invite time (Admin > Team Members > Invite) and editable afterward from the same screen's Edit dialog, via a direct `user_account`/`user_invitation` update — no new RLS policy needed, since admins/admin_agent already have update access to both tables.
+
+## 8. Fix: Master Admin Login 500 (`20260817000009_fix_master_admin_null_auth_tokens.sql`)
+
+The seeded master admin (`admin@dreamsupreme.co.za`) could not log in at all: every
+attempt returned HTTP 500 `{"code":500,"error_code":"unexpected_failure","msg":"Database
+error querying schema"}`. The account was otherwise valid — the password hash, the
+`user_account` profile, and the `admin` role were all correct.
+
+**Root cause.** `20260807000000_seed_master_admin.sql` `INSERT`s directly into
+`auth.users` and did not supply the token/email-change columns, so they defaulted to
+`NULL`. GoTrue is written in Go and scans `confirmation_token`, `recovery_token`,
+`email_change`, `email_change_token_new`, `email_change_token_current`, `phone_change`,
+`phone_change_token`, and `reauthentication_token` into non-nullable `string` fields;
+a `NULL` makes that scan fail. GoTrue reports the failure as a generic
+"Database error querying schema" 500 rather than an auth error, which is why the
+symptom looked like a schema/permissions problem rather than a bad row.
+
+Accounts created through the normal signup/invitation flow are unaffected, because
+GoTrue itself writes `''` (not `NULL`) for "no token pending" — only hand-seeded rows
+are broken. A nonexistent-email login correctly returned a 400, which is what isolated
+the fault to the seeded row rather than to GoTrue or the anon key.
+
+**Fix.** The migration normalises `NULL` -> `''` on all eight columns (idempotent, and
+`''` is exactly what GoTrue writes itself). `20260807000000_seed_master_admin.sql` was
+also amended to supply `''` for these columns on insert, so a rebuilt environment does
+not reproduce the broken row.

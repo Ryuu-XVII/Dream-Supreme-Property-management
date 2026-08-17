@@ -53,7 +53,18 @@ BEGIN
       raw_app_meta_data,
       raw_user_meta_data,
       created_at,
-      updated_at
+      updated_at,
+      -- GoTrue scans these columns into non-nullable Go strings, so leaving them
+      -- NULL makes every login attempt fail with a 500 "Database error querying
+      -- schema". '' is what GoTrue itself writes for "no token pending".
+      confirmation_token,
+      recovery_token,
+      email_change,
+      email_change_token_new,
+      email_change_token_current,
+      phone_change,
+      phone_change_token,
+      reauthentication_token
     ) VALUES (
       v_auth_user_id,
       '00000000-0000-0000-0000-000000000000'::uuid,
@@ -65,7 +76,8 @@ BEGIN
       '{"provider":"email","providers":["email"]}'::jsonb,
       '{"full_name":"Master Admin"}'::jsonb,
       now(),
-      now()
+      now(),
+      '', '', '', '', '', '', '', ''
     );
   END IF;
 
