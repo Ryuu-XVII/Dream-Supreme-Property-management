@@ -317,3 +317,19 @@ are NOT granted to `anon` (e.g. the `popia_*` PII export/erase functions, `upser
 `save_commission_rule_set`, `transition_deal`). They are not currently reachable
 unauthenticated, but the guard shape is latently NULL-unsafe and should be migrated to the
 `coalesce(role::text,'')` form as defense-in-depth.
+
+## 12. Security Fix: Quota Tampering & Cron Function Exposure (`20260817000013`)
+
+Final cluster from the pentest.
+
+- `update_user_storage_quota(target_user_id, new_limit_bytes)` used the same NULL-unsafe
+  `caller_role not in ('admin','admin_agent')` guard. Verified live: an anonymous caller
+  changed the master admin's `storage_limit_bytes` from 1 GB to 777 GB. Fixed with a
+  NULL-safe `coalesce(caller_role::text,'')` guard and EXECUTE revoked from anon/public
+  (granted to authenticated).
+- `process_monthly_section_86_4_interest_allocation(p_agency_id, p_period_date)` and
+  `generate_daily_notification_digests()` had no authorization check at all. They are
+  pg_cron-only ('monthly-trust-interest-allocation', 'generate_daily_notification_digests')
+  but were also anon-callable, so anyone could trigger a trust-interest allocation run or a
+  notification-digest sweep. EXECUTE revoked from anon/public; pg_cron runs them as the job
+  owner, so the scheduled runs are unaffected (both jobs confirmed still active).
