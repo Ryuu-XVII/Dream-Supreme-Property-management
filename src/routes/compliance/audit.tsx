@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { Navigate, createFileRoute } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth";
+import { canAccessAdmin } from "@/lib/auth-routing";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { ComplianceTabs } from "@/components/compliance/compliance-tabs";
@@ -39,7 +41,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/compliance/audit")({
-  component: AuditLog,
+  component: AuditLogRoute,
   head: () => ({
     meta: [
       { title: "Audit Log | Dream Supreme Properties" },
@@ -174,6 +176,14 @@ function AuditRow({
 function toCsvValue(v: unknown) {
   const s = String(v ?? "");
   return `"${s.replace(/"/g, '""')}"`;
+}
+
+function AuditLogRoute() {
+  // audit_log's RLS policy admits administrators only, so an agent reached
+  // this page and saw a permanently empty table with no explanation.
+  const { activeAccount } = useAuth();
+  if (!canAccessAdmin(activeAccount)) return <Navigate to="/compliance/ffc" replace />;
+  return <AuditLog />;
 }
 
 function AuditLog() {

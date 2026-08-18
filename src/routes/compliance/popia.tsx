@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { Navigate, createFileRoute } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth";
+import { canAccessAdmin } from "@/lib/auth-routing";
 import { toast } from "sonner";
 import { Download, Lock, Search, ShieldAlert } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
@@ -30,7 +32,7 @@ import {
 import { usePopiaLookup, usePopiaExport, usePopiaErase, type PopiaPartyMatch } from "@/data/popia";
 
 export const Route = createFileRoute("/compliance/popia")({
-  component: PopiaRequests,
+  component: PopiaRequestsRoute,
   head: () => ({
     meta: [
       { title: "POPIA Requests | Dream Supreme Properties" },
@@ -122,6 +124,14 @@ function PartyRow({ party }: { party: PopiaPartyMatch }) {
       </TableCell>
     </TableRow>
   );
+}
+
+function PopiaRequestsRoute() {
+  // POPIA data-subject requests export and erase a person's data across the
+  // whole agency — an administrator responsibility, not an individual agent's.
+  const { activeAccount } = useAuth();
+  if (!canAccessAdmin(activeAccount)) return <Navigate to="/compliance/ffc" replace />;
+  return <PopiaRequests />;
 }
 
 function PopiaRequests() {

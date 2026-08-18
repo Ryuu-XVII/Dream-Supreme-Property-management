@@ -451,3 +451,33 @@ Neither was exploitable in practice at the time of the audit: `save_commission_r
 The commission inputs in the deal capture form (`src/routes/deals/new.tsx`) and the quick capture modal (`src/components/deal/quick-deal-modal.tsx`) are now read-only for non-administrators, so the form matches what the database will actually save. The Commission Rules screen itself was already administrator-only, being under the `canAccessAdmin`-guarded `/admin` route.
 
 Verified against the live database: a non-administrator update of `mandate.commission_rate_bps` leaves the value unchanged, while an administrator can still change it (500 → 750 → 500 via PostgREST).
+
+## 17. Compliance Visibility in the Agent Portal (`20260818000009_scope_ffc_visibility.sql`)
+
+The agent portal's Compliance section showed every practitioner in the agency — names, PPRA references, FFC numbers and expiry dates — to any signed-in agent.
+
+### The FFC leak was in RLS, not the UI
+
+`ffc_certificate` carried **two permissive SELECT policies**:
+
+| Policy | Effect |
+|---|---|
+| `Agency FFCs are readable` | any agency member — **no role check** |
+| `Users view own or agency FFCs` | own record, or an administrator's agency-wide view |
+
+Postgres ORs permissive policies together, so the broad one governed and the stricter one was dead weight. Every agent could read every colleague's certificate regardless of the second policy's intent. The broad policy is dropped; the stricter one is left to govern.
+
+Administrators keep the agency-wide register through the surviving policy, which is what Admin > Compliance renders. Nothing else needed the broad policy: the FFC checks inside `calculate_deal_commission` run in `SECURITY DEFINER` functions and bypass RLS entirely.
+
+### The rest is presentation, deliberately
+
+The practitioner name and PPRA reference come from `user_account`, whose SELECT policy (`Users can view own account or their agency's directory`) is intentionally agency-wide — agent pickers, deal participant lists and the team directory all depend on it. Narrowing it to fix a compliance screen would break those. The FFC register therefore filters to the signed-in user in the client for non-administrators, while the certificate data itself is protected in the database.
+
+The other two tabs are administrator-only:
+
+- **Audit Log** — `audit_log`'s SELECT policy already admitted administrators only, so an agent reached the page and saw a permanently empty table with no explanation. The tab is now hidden and the route redirects.
+- **POPIA Requests** — exporting and erasing a data subject's records across the agency is an administrator responsibility.
+
+**FICA Register is unchanged**: it reads `deal_party`, whose policy is `can_access_deal(deal_id)`, so an agent already saw only parties on deals they are on. That is client data scoped by deal access, not colleague data.
+
+Both route guards live in small wrapper components rather than inside the page components. Placing an early return above a component's own `useState`/`useMemo` calls violates the rules of hooks — ESLint caught 16 such errors on the first attempt.

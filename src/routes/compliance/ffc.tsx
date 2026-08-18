@@ -12,21 +12,48 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useDashboardData } from "@/data/operations";
+import { useAuth } from "@/lib/auth";
+import { canAccessAdmin } from "@/lib/auth-routing";
 import { dateFmt, daysUntil } from "@/lib/format";
 
 export const Route = createFileRoute("/compliance/ffc")({ component: FfcPage });
 
 function FfcPage() {
   const dashboard = useDashboardData();
-  const users = dashboard.data?.users ?? [];
+  const { activeAccount } = useAuth();
+  const isAdmin = canAccessAdmin(activeAccount);
+
+  // An agent has no business seeing a colleague's PPRA reference or FFC
+  // number. Administrators keep the agency-wide register, which is also what
+  // Admin > Compliance shows. The database enforces the same split for the
+  // certificate itself (see 20260818000009); the practitioner name and PPRA
+  // reference come from the agency directory, which stays readable for agent
+  // pickers, so this scoping is done here.
+  const allUsers = dashboard.data?.users ?? [];
+  const users = isAdmin ? allUsers : allUsers.filter((u) => u.id === activeAccount?.id);
+
   return (
-    <AppShell title="Compliance" description="Live Fidelity Fund Certificate records.">
+    <AppShell
+      title="Compliance"
+      description={
+        isAdmin
+          ? "Live Fidelity Fund Certificate records."
+          : "Your Fidelity Fund Certificate record."
+      }
+    >
       <ComplianceTabs />
       {dashboard.isLoading ? (
         <TableSkeleton rows={6} cols={5} />
       ) : users.length === 0 ? (
         <GlassCard>
-          <EmptyState title="No users found" message="No visible team members have been loaded." />
+          <EmptyState
+            title={isAdmin ? "No users found" : "No FFC record"}
+            message={
+              isAdmin
+                ? "No visible team members have been loaded."
+                : "Your Fidelity Fund Certificate has not been captured yet."
+            }
+          />
         </GlassCard>
       ) : (
         <GlassCard className="overflow-x-auto p-0">
