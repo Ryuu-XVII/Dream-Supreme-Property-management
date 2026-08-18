@@ -181,6 +181,24 @@ export interface Property24ListingRow {
 
 type Tile = ReturnType<cheerio.CheerioAPI>;
 
+// Property24 lazy-loads result images: only the first few tiles carry the real
+// URL in `src`, and every tile below the fold ships `src="/blank.gif"` with the
+// actual image in `lazy-src`. Reading `src` alone stored the placeholder for
+// most listings, so they rendered as broken thumbnails.
+function tileImageUrl(tile: Tile): string | null {
+  const image = tile.find('img[itemprop="image"]').first();
+  for (const attribute of ["lazy-src", "data-src", "data-original", "src"]) {
+    const value = clean(image.attr(attribute));
+    if (!value || value.includes("blank.gif")) continue;
+    try {
+      return new URL(value, P24_ORIGIN).toString();
+    } catch {
+      // Malformed candidate — fall through to the next attribute.
+    }
+  }
+  return null;
+}
+
 function featureNumber(tile: Tile, title: string): number | null {
   const raw = clean(tile.find(`.p24_featureDetails[title="${title}"] span`).first().text());
   if (!raw) return null;
@@ -216,7 +234,7 @@ function parseFeedPage(html: string, purpose: "sale" | "rent") {
       excerpt: clean(tile.find(".p24_excerpt").first().text()) || null,
       price_zar: Number.isFinite(priceZar) && priceZar > 0 ? priceZar : null,
       price_label: clean(price.clone().children("meta").remove().end().text()) || null,
-      image_url: tile.find('img[itemprop="image"]').first().attr("src") ?? null,
+      image_url: tileImageUrl(tile),
       bedrooms: featureNumber(tile, "Bedrooms"),
       bathrooms: featureNumber(tile, "Bathrooms"),
       parking: featureNumber(tile, "Parking Spaces"),
