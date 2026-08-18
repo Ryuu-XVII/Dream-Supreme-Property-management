@@ -135,6 +135,55 @@ export function useSetProperty24Url() {
   });
 }
 
+export interface AgencyProperty24Listing extends Property24Listing {
+  agentName: string;
+}
+
+/**
+ * Every synced Property24 listing the caller can see. No agency filter is
+ * applied here on purpose — the `agent_property24_listing` select policy
+ * already scopes rows to `get_current_agency_id()`, so adding one in the
+ * client would only risk drifting from it.
+ */
+export function useAgencyProperty24Listings() {
+  return useQuery<AgencyProperty24Listing[]>({
+    queryKey: ["agency-property24-listings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("agent_property24_listing")
+        .select(
+          `id, listing_number, purpose, url, title, location, excerpt,
+           price_zar, price_label, image_url, bedrooms, bathrooms, parking,
+           size_label, size_kind, last_seen_at,
+           agent:user_account_id(full_name)`,
+        )
+        .order("price_zar", { ascending: false, nullsFirst: false });
+
+      if (error) throw error;
+
+      return (data ?? []).map((row: any) => ({
+        id: row.id,
+        listingNumber: row.listing_number,
+        purpose: row.purpose,
+        url: row.url,
+        title: row.title,
+        location: row.location,
+        excerpt: row.excerpt,
+        priceZar: row.price_zar === null ? null : Number(row.price_zar),
+        priceLabel: row.price_label,
+        imageUrl: row.image_url,
+        bedrooms: row.bedrooms === null ? null : Number(row.bedrooms),
+        bathrooms: row.bathrooms === null ? null : Number(row.bathrooms),
+        parking: row.parking === null ? null : Number(row.parking),
+        sizeLabel: row.size_label,
+        sizeKind: row.size_kind,
+        lastSeenAt: row.last_seen_at,
+        agentName: row.agent?.full_name ?? "Unknown agent",
+      }));
+    },
+  });
+}
+
 export interface Property24SyncResult {
   ok: true;
   syncedAt: string;
