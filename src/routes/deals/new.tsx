@@ -62,6 +62,53 @@ function parseP24Size(label: string | null | undefined): number | null {
   return match[2].toLowerCase() === "ha" ? Math.round(value * 10_000) : Math.round(value);
 }
 
+// Only the exact strings the province Select offers. A value outside this list
+// would leave the field looking empty while actually holding something the
+// user never chose.
+const P24_PROVINCE_BY_SLUG: Record<string, string> = {
+  "eastern-cape": "Eastern Cape",
+  "free-state": "Free State",
+  gauteng: "Gauteng",
+  "kwazulu-natal": "KwaZulu-Natal",
+  limpopo: "Limpopo",
+  mpumalanga: "Mpumalanga",
+  "north-west": "North West",
+  "northern-cape": "Northern Cape",
+  "western-cape": "Western Cape",
+};
+
+const titleCaseSlug = (slug: string) =>
+  slug
+    .split("-")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
+/**
+ * Property24 listing URLs carry the location the tile itself does not:
+ * /for-sale/{suburb}/{city}/{province}/{areaId}/{listingId}. That is the only
+ * published source for city and province, so it is worth reading.
+ */
+function parseP24ListingUrl(url: string | null | undefined): {
+  suburb?: string;
+  city?: string;
+  province?: string;
+} {
+  if (!url) return {};
+  try {
+    const parts = new URL(url).pathname.split("/").filter(Boolean);
+    // [for-sale|to-rent, suburb, city, province, areaId, listingId]
+    if (parts.length < 6) return {};
+    return {
+      suburb: titleCaseSlug(parts[1]),
+      city: titleCaseSlug(parts[2]),
+      province: P24_PROVINCE_BY_SLUG[parts[3].toLowerCase()],
+    };
+  } catch {
+    return {};
+  }
+}
+
 /**
  * Best-effort property type from a Property24 tile title such as
  * "4 Bedroom House" or "Commercial Property". Returns null when nothing
@@ -600,7 +647,7 @@ function NewDealPage() {
         .from("agent_property24_listing")
         .select(
           `id, title, location, excerpt, url, price_zar, bedrooms, bathrooms,
-           size_label, size_kind, user_account_id`,
+           parking, size_label, size_kind, user_account_id`,
         )
         .eq("id", p24ListingId!)
         .maybeSingle();
@@ -624,12 +671,30 @@ function NewDealPage() {
     const price = sourceP24Listing.price_zar ? String(Number(sourceP24Listing.price_zar)) : "";
     const size = parseP24Size(sourceP24Listing.size_label);
 
+    const location = parseP24ListingUrl(sourceP24Listing.url);
+    const propertyType = propertyTypeFromP24Title(sourceP24Listing.title);
+
     setFormData((prev) => ({
       ...prev,
-      suburb: sourceP24Listing.location || prev.suburb,
-      propertyType: propertyTypeFromP24Title(sourceP24Listing.title) ?? prev.propertyType,
+      // `location` on the tile is the nicely-cased suburb ("Strydfontein AH");
+      // the URL slug is only the fallback.
+      suburb: sourceP24Listing.location || location.suburb || prev.suburb,
+      city: location.city || prev.city,
+      province: location.province || prev.province,
+      propertyType: propertyType ?? prev.propertyType,
+      propertyUse:
+        propertyType === "Vacant Land"
+          ? "Vacant land"
+          : propertyType === "Commercial" || propertyType === "Industrial"
+            ? "Business use"
+            : prev.propertyUse,
+      isImproved: propertyType === "Vacant Land" ? false : prev.isImproved,
       beds: sourceP24Listing.bedrooms ?? prev.beds,
       baths: sourceP24Listing.bathrooms ?? prev.baths,
+      // Property24 counts "Parking Spaces", which lumps garages and open bays
+      // together, so this is the closest available figure rather than an exact
+      // garage count — worth a glance before sign-off.
+      garages: sourceP24Listing.parking ?? prev.garages,
       // "Floor Size" and "Erf Size" are different measurements; only fill the
       // one Property24 actually labelled.
       floorSize:
