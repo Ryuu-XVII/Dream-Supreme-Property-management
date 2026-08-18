@@ -126,6 +126,16 @@ export function AgentProperty24Listings({
       { userAccountId: userId },
       {
         onSuccess: (result) => {
+          // A suspected parser failure is not a success worth celebrating —
+          // the cached listings were kept rather than wiped, and someone
+          // needs to look at it.
+          if (result.staleWarning) {
+            toast.warning("Property24 returned no listings", {
+              id: "p24-sync",
+              description: result.staleWarning,
+            });
+            return;
+          }
           toast.success(
             `Synced ${result.counts.total} listing${result.counts.total === 1 ? "" : "s"}`,
             {

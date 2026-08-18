@@ -134,23 +134,50 @@ async function syncAccount(admin: SupabaseAdmin, account: SyncableAccount) {
 
     // Anything not seen in this run has come off Property24 (sold, let, or
     // withdrawn), so drop it rather than leaving stale stock on the profile.
-    const { error: pruneError } = await admin
-      .from("agent_property24_listing")
-      .delete()
-      .eq("user_account_id", account.id)
-      .lt("last_seen_at", startedAt);
-    if (pruneError) throw new Error(`Could not prune old listings: ${pruneError.message}`);
+    //
+    // Except when the run found nothing at all. A Property24 redesign would
+    // still return HTTP 200 while matching none of the `p24_*` selectors, and
+    // pruning on that would silently wipe every listing this agent has. An
+    // agent genuinely dropping to zero stock is possible but rare, so treat a
+    // 0-result run against a non-empty cache as a parser failure: keep what we
+    // have, flag it, and let a human look rather than destroying the data.
+    let staleWarning: string | null = null;
+    if (listings.length === 0) {
+      const { count } = await admin
+        .from("agent_property24_listing")
+        .select("id", { count: "exact", head: true })
+        .eq("user_account_id", account.id);
+
+      if ((count ?? 0) > 0) {
+        staleWarning =
+          `Property24 returned no listings but ${count} are cached — keeping the cached ` +
+          `listings. This usually means Property24 changed its page markup and the parser ` +
+          `needs updating.`;
+        console.error(`property24-sync: ${staleWarning} (account ${account.id})`);
+      }
+    }
+
+    if (!staleWarning) {
+      const { error: pruneError } = await admin
+        .from("agent_property24_listing")
+        .delete()
+        .eq("user_account_id", account.id)
+        .lt("last_seen_at", startedAt);
+      if (pruneError) throw new Error(`Could not prune old listings: ${pruneError.message}`);
+    }
 
     await admin
       .from("user_account")
       .update({
         property24_profile: profile,
         property24_synced_at: startedAt,
-        property24_sync_error: null,
+        // A suspected parser failure is surfaced the same way a hard failure
+        // is, so it shows on the profile instead of passing as a clean sync.
+        property24_sync_error: staleWarning,
       })
       .eq("id", account.id);
 
-    return { ok: true as const, syncedAt: startedAt, profile, counts, pagesFetched };
+    return { ok: true as const, syncedAt: startedAt, profile, counts, pagesFetched, staleWarning };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Property24 sync failed";
     console.error(`property24-sync failed for account ${account.id}:`, error);
@@ -246,6 +273,10 @@ export default {
         profile: result.profile,
         counts: result.counts,
         pagesFetched: result.pagesFetched,
+        // Present when the run looked like a parser failure rather than a
+        // genuinely empty portfolio, so the caller can warn instead of
+        // reporting a clean "synced 0 listings".
+        staleWarning: result.staleWarning,
       },
       200,
       cors,

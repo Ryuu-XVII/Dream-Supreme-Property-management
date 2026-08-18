@@ -101,6 +101,12 @@ export interface Property24SyncResult {
   profile: Property24Profile;
   counts: { total: number; sale: number; rent: number };
   pagesFetched: number;
+  /**
+   * Set when the sync returned no listings while some were already cached —
+   * a shape that means Property24 changed its markup far more often than it
+   * means the agent genuinely has no stock. The cached listings are kept.
+   */
+  staleWarning?: string | null;
 }
 
 /**
