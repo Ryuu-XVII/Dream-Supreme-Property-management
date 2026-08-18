@@ -1,0 +1,19 @@
+{
+  "name": "property24-sync-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.111.0",
+    "cheerio": "^1.1.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260815.1",
+    "typescript": "^5.8.3",
+    "wrangler": "^4.118.0"
+  }
+}

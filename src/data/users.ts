@@ -19,6 +19,8 @@ export interface AdminUser {
   ytdRevenue?: number;
   storageLimitBytes: number;
   storageUsedBytes: number;
+  /** Public Property24 estate-agent profile URL, if the admin captured one. */
+  property24Url?: string | null;
 }
 
 export function useAdminUsers() {
@@ -30,7 +32,7 @@ export function useAdminUsers() {
         .from("user_account")
         .select(
           `id, full_name, email, role, seniority, status, agency_id, branch_id, commission_pct,
-           storage_limit_bytes, storage_used_bytes`,
+           storage_limit_bytes, storage_used_bytes, property24_url`,
         )
         .neq("status", "archived")
         .neq("status", "suspended");
@@ -39,7 +41,7 @@ export function useAdminUsers() {
       // 2. Fetch pending invitations from PostgreSQL migration schema (public.user_invitation)
       const { data: invitations, error: inviteErr } = await supabase
         .from("user_invitation")
-        .select("id, email, role, seniority, agency_id, accepted_at")
+        .select("id, email, role, seniority, agency_id, accepted_at, property24_url")
         .is("accepted_at", null);
       if (inviteErr) throw inviteErr;
 
@@ -75,6 +77,7 @@ export function useAdminUsers() {
             commissionPct: typeof u.commission_pct === "number" ? u.commission_pct : 50,
             storageLimitBytes: limit,
             storageUsedBytes: used,
+            property24Url: typeof u.property24_url === "string" ? u.property24_url : null,
           };
         },
       );
@@ -102,6 +105,7 @@ export function useAdminUsers() {
             commissionPct: 50,
             storageLimitBytes: DEFAULT_USER_STORAGE_LIMIT_BYTES,
             storageUsedBytes: 0,
+            property24Url: typeof i.property24_url === "string" ? i.property24_url : null,
           };
         },
       );

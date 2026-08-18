@@ -17,6 +17,12 @@ import { DEFAULT_USER_STORAGE_LIMIT_BYTES } from "@/lib/storage";
 
 const ROLES: Role[] = ["Agent", "Admin", "Admin & Agent"];
 const SENIORITIES: AgentSeniority[] = ["Junior", "Mid-level", "Senior"];
+
+// Mirrors the CHECK constraint and the RPC guard in
+// supabase/migrations/20260818000005_property24_agent_sync.sql, so a typo is
+// caught in the dialog rather than coming back as a Postgres error.
+const PROPERTY24_URL_SHAPE =
+  /^https:\/\/(www\.)?property24\.com\/estate-agents\/[^/]+\/[^/]+\/\d+$/;
 import {
   Table,
   TableBody,
@@ -55,6 +61,7 @@ import {
   CheckCircle2,
   Send,
   HardDrive,
+  Globe,
 } from "lucide-react";
 
 import Papa from "papaparse";
@@ -282,6 +289,7 @@ function AdminUsers() {
       seniority: "Junior",
       active: true,
       commissionPct: 50,
+      property24Url: "",
     });
     setGeneratedLink(null);
     setDialogOpen(true);
@@ -295,8 +303,17 @@ function AdminUsers() {
     const seniority = draft.seniority ?? "Junior";
     const dbSeniority = seniorityToDb[seniority];
 
+    const property24Url = draft.property24Url?.trim() || null;
+
     if (!name || !email) {
       toast.error("Full name and email address are required.");
+      return;
+    }
+
+    if (property24Url && !PROPERTY24_URL_SHAPE.test(property24Url)) {
+      toast.error("Enter a valid Property24 agent profile URL.", {
+        description: "It should look like property24.com/estate-agents/{agency}/{agent}/{id}",
+      });
       return;
     }
 
@@ -310,6 +327,7 @@ function AdminUsers() {
               role: dbRole as any,
               email: email,
               seniority: dbSeniority as any,
+              property24_url: property24Url,
             })
             .eq("id", realInviteId);
 
@@ -325,6 +343,7 @@ function AdminUsers() {
               seniority: dbSeniority as any,
               commission_pct: draft.commissionPct,
               status: draft.active ? "active" : "suspended",
+              property24_url: property24Url,
             })
             .eq("id", editing.id);
 
@@ -346,10 +365,14 @@ function AdminUsers() {
         toast.success("User updated successfully", { description: name });
       } else {
         // Step 1: Generate new invitation token via RPC (RPC handles cleaning up prior unaccepted invites)
+        // The Property24 URL rides along on the invitation and is copied onto
+        // the agent's user_account by accept_user_invitation, so their listings
+        // can be synced the moment their profile exists.
         const { data: inviteToken, error: rpcErr } = await supabase.rpc("create_user_invitation", {
           p_email: email,
           p_role: dbRole as any,
           p_seniority: dbSeniority as any,
+          p_property24_url: property24Url,
         });
 
         if (rpcErr) throw rpcErr;
@@ -917,6 +940,25 @@ function AdminUsers() {
                 </Select>
                 <p className="text-xs text-muted-foreground">
                   Experience-tier label shown on team and compliance views. Independent of role.
+                </p>
+              </div>
+            )}
+
+            {draft.role !== "Admin" && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <Globe className="size-4 text-indigo-500" /> Property24 Profile URL
+                  <span className="font-normal text-muted-foreground">(optional)</span>
+                </Label>
+                <Input
+                  value={draft.property24Url ?? ""}
+                  onChange={(e) => setDraft((d) => ({ ...d, property24Url: e.target.value }))}
+                  placeholder="https://www.property24.com/estate-agents/agency/agent-name/123456"
+                  className="font-mono text-xs"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Paste the agent&apos;s public Property24 profile link. Their photo, bio and live
+                  listings are pulled in automatically once they complete registration.
                 </p>
               </div>
             )}

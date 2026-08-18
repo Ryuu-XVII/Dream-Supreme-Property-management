@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { uploadFileToR2, recordStorageUsageDelta } from "@/lib/storage";
+import { triggerInitialProperty24Sync } from "@/data/property24";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/register")({
@@ -184,6 +185,13 @@ function RegisterPage() {
           .eq("id", createdAccount.id);
         if (avatarUpdateError) throw avatarUpdateError;
       }
+
+      // Step 6: If the admin captured a Property24 profile URL on the
+      // invitation, accept_user_invitation has just copied it onto this
+      // account — pull the agent's photo, bio and listings now so their
+      // profile is populated the first time they open it. Not awaited:
+      // fetching Property24 takes seconds and must never hold up sign-in.
+      void triggerInitialProperty24Sync();
 
       toast.success("Welcome to Dream Supreme Properties!", { id: "register" });
       navigate({ to: "/" });

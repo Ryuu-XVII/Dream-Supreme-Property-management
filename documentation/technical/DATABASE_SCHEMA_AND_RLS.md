@@ -97,6 +97,12 @@ Another helper `public.get_current_role()` extracts the user's role from their `
 
 **`principal`/`candidate` role removal (`20260817000006_remove_principal_candidate_roles.sql`)**: the `user_role` enum still defines legacy `principal` and `candidate` values, but only `agent`, `admin`, and `admin_agent` accounts are ever issued (a prior migration, `20260811000002_consolidate_principal_role_to_admin.sql`, already converted every existing row away from them). This migration strips the resulting stale `'principal'`/`'candidate'` literal from every live RLS policy and RPC across the schema. Several of those checks required a role that could no longer exist and were silently broken as a result — `save_commission_rule_set` (no one could edit commission rules), `transition_deal`'s stage-override gate, `process_monthly_section_86_4_interest_allocation`'s approver lookup, and the admin notification broadcasts in `run_daily_sweeps`/`notify_agency_admins` — all now correctly recognize `admin`/`admin_agent` again. The enum type itself is left untouched (Postgres can't drop an enum value without recreating every dependent function signature); the `principal`/`candidate` labels remain defined but unreachable through any code path.
 
+**`save_commission_rule_set` VAT Enum Cast (`20260818000000_fix_save_commission_rule_set_vat_cast.sql`)**: Explicitly casts the `CASE` statement output evaluating `vatInclusive` boolean to `::public.vat_treatment` to prevent PostgreSQL type mismatch errors (`vat_treatment` vs `text`) when inserting or updating commission rule sets.
+
+**`calculate_deal_commission` Rule Set Fallback (`20260818000001_fix_commission_ruleset_lookup_fallback.sql`)**: Implements multi-tier fallback resolution for commission rule sets when transitioning deals to `registered`. If no default rule set covering the exact registration date is found, it gracefully falls back to: (1) any active rule set covering the registration date, (2) any default rule set for the agency, and (3) the most recent rule set for the agency.
+
+**FFC Check & Admin Override Propagation (`20260818000002_fix_ffc_check_and_override_propagation.sql`, `20260818000003_fix_document_category_enum_in_ffc_check.sql` & `20260818000004_robust_ffc_lookup.sql`)**: Enhances practitioner FFC verification during deal registration by recognizing valid `ffc_certificate` date ranges, user account correlation (via ID, email, or name matching), uploaded compliance documents (`category = 'ffc_certificate'::public.document_category`), PPRA reference numbers, and existing certificate records. Also propagates `p_override` from `transition_deal` through to `calculate_deal_commission`, ensuring administrator stage-gate overrides are honored without blocking commission calculations.
+
 ### `managed_by` Edit Rights (Rentals)
 
 For the Rentals module, read access is granted to the entire agency for transparency, but write/edit access on a `lease` (and its invoices/maintenance) is strictly limited to the `managed_by` agent via the `public.can_edit_lease()` RLS helper function.
@@ -333,3 +339,29 @@ Final cluster from the pentest.
   but were also anon-callable, so anyone could trigger a trust-interest allocation run or a
   notification-digest sweep. EXECUTE revoked from anon/public; pg_cron runs them as the job
   owner, so the scheduled runs are unaffected (both jobs confirmed still active).
+
+## 13. Property24 Agent Sync (`20260818000005_property24_agent_sync.sql`)
+
+Lets an admin paste an agent's **public** Property24 estate-agent profile URL when inviting them, so that agent's photo, bio, areas serviced and live sale/rental listings appear on their own profile page once they register.
+
+The URL is carried invitation → account using exactly the pattern established by seniority in §7:
+
+- `public.user_invitation.property24_url` and `public.user_account.property24_url` (both `text`, nullable), each guarded by a `CHECK` constraint matching `^https://(www\.)?property24\.com/estate-agents/[^/]+/[^/]+/\d+$`. This is a data-hygiene guard, not a security boundary — the Worker re-validates before fetching.
+- `create_user_invitation` gained an optional fourth `p_property24_url text default null` parameter (the prior three-argument signature was dropped first, since `CREATE OR REPLACE FUNCTION` cannot change a parameter list). It re-checks the URL shape and raises on a malformed value. Because the new parameter has a default, existing three-argument callers still resolve.
+- `accept_user_invitation(...)` copies `v_invite.property24_url` onto the new `user_account` row, and on the `ON CONFLICT (auth_user_id) DO UPDATE` path uses `coalesce(excluded.property24_url, public.user_account.property24_url)` so a re-run never blanks an existing value.
+
+Cached results live on `user_account` (`property24_profile jsonb`, `property24_synced_at timestamptz`, `property24_sync_error text`) and in a new table:
+
+- `public.agent_property24_listing` — one row per listing per agent, keyed by a unique index on `(user_account_id, listing_number)`. Purpose is deliberately **not** part of that key: Property24 can surface the same listing under both the sale and rental feeds for dual-mandate stock, so the later feed updates the row rather than duplicating it. `first_seen_at` is preserved across upserts; `last_seen_at` is stamped each run and anything older than the current run is pruned, so stock that has come off Property24 (sold, let, withdrawn) disappears from the profile.
+- RLS: a single `select` policy, `"Agency members view Property24 listings"`, scoped by `agency_id = public.get_current_agency_id()`. There is deliberately **no** insert/update/delete policy for `authenticated` — all writes come from the service role inside the sync Worker, so nothing in the browser can forge listings. `grant select` to `authenticated`, `grant all` to `service_role`.
+
+### Where the sync runs, and why
+
+Fetching happens in a standalone **Cloudflare Worker** (`workers/property24-sync/`), not in a Supabase Edge Function and not in the app:
+
+- Property24 answers Supabase's egress with its own branded "Server unavailable" **HTTP 503** page (verified: no `cf-ray`/`server` header, so not a Cloudflare bot wall — Property24 itself declining cloud traffic). Cloudflare Workers are served normally.
+- The app deploys as a **static SPA** (`vite build` → `dist/` → nginx/Vercel), so it has no server runtime that could host this. Note this also means TanStack Start `server.handlers` route blocks — including the pre-existing `src/routes/sitemap[.]xml.ts` — never execute in production.
+
+The browser calls the Worker with the signed-in user's Supabase access token; the Worker verifies it via the publishable key (so Supabase Auth validates it rather than the Worker trusting the request), then authorizes: an agent may sync themselves, an admin may sync anyone **whose `agency_id` matches the caller's**. The `SUPABASE_SECRET_KEY` never leaves the Worker. A nightly cron (`0 2 * * *` UTC = 04:00 SAST) refreshes the least-recently-synced active agents in batches, since cheerio parsing consumes the Worker's bounded CPU budget.
+
+Nothing in this path logs in, solves CAPTCHAs, or retries past a refusal: a 401/403 aborts immediately, and a repeated 503 is reported as Property24 declining the request rather than worked around.

@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dream-supreme-property24-sync",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-03",
+  "compatibility_flags": ["nodejs_compat"],
+  // 02:00 UTC = 04:00 SAST — refreshes listings overnight, well outside
+  // South African business hours and off Property24's daytime peak.
+  "triggers": { "crons": ["0 2 * * *"] },
+  "observability": { "enabled": true }
+}
