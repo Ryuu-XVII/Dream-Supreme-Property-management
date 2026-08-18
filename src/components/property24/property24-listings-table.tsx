@@ -92,19 +92,10 @@ export function Property24ListingsTable({ className }: { className?: string }) {
                         />
                       )}
                       <div>
-                        {/* The link to Property24 moved here from the actions
-                            column so that column can carry the primary action
-                            (Convert to Deal), matching the mandate register. */}
-                        <a
-                          href={listing.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group inline-flex items-center gap-1.5 font-medium hover:text-primary"
-                          title="View this listing on Property24"
-                        >
-                          {listing.title ?? "Listing"}
-                          <ExternalLink className="size-3 opacity-0 transition-opacity group-hover:opacity-100" />
-                        </a>
+                        {/* Plain text: the link to Property24 is an explicit
+                            button in the actions column, so linking the title
+                            as well would just duplicate it. */}
+                        <div className="font-medium">{listing.title ?? "Listing"}</div>
                         <div className="text-xs text-muted-foreground">{listing.location}</div>
                       </div>
                     </div>
@@ -151,17 +142,24 @@ export function Property24ListingsTable({ className }: { className?: string }) {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={isReadOnly}
-                      onClick={() =>
-                        navigate({ to: "/deals/new", search: { p24ListingId: listing.id } })
-                      }
-                      className="text-primary hover:bg-primary/10 hover:text-primary/90"
-                    >
-                      Convert to Deal <ArrowRight className="ml-2 size-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="sm" asChild className="text-muted-foreground">
+                        <a href={listing.url} target="_blank" rel="noopener noreferrer">
+                          View on P24 <ExternalLink className="ml-1.5 size-3.5" />
+                        </a>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={isReadOnly}
+                        onClick={() =>
+                          navigate({ to: "/deals/new", search: { p24ListingId: listing.id } })
+                        }
+                        className="text-primary hover:bg-primary/10 hover:text-primary/90"
+                      >
+                        Convert to Deal <ArrowRight className="ml-2 size-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
