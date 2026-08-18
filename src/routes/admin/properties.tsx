@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/table";
 import { Search, MapPin, Building2, TrendingUp, Clock, History, Loader2 } from "lucide-react";
 import { useAdminProperties } from "@/data/properties";
+import { zar } from "@/lib/format";
+import { Property24ListingsTable } from "@/components/property24/property24-listings-table";
 
 export const Route = createFileRoute("/admin/properties")({
   component: AdminProperties,
@@ -29,8 +31,14 @@ function AdminProperties() {
       p.agent.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const activeProperties = propertyList.filter(
-    (p) => p.status === "Available" || p.status === "Under Offer",
+  // These KPIs previously matched on "Available"/"Under Offer", which are not
+  // values this data ever carries: useAdminProperties derives status from the
+  // deal (active/registered/cancelled/lapsed/archived) or falls back to
+  // "mandated"/"unlisted". Nothing matched, so all three tiles always read
+  // zero even with live stock on the table below.
+  const ON_MARKET_STATUSES = new Set(["active", "mandated"]);
+  const activeProperties = propertyList.filter((p) =>
+    ON_MARKET_STATUSES.has((p.status ?? "").toLowerCase()),
   );
   const totalValue = activeProperties.reduce((acc, curr) => acc + curr.price, 0);
   const avgDaysOnMarket = Math.round(
@@ -49,7 +57,7 @@ function AdminProperties() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <KpiCard
             label="Active Portfolio Value"
-            value={`R ${(totalValue / 1000000).toFixed(1)}M`}
+            value={`R ${(totalValue / 100 / 1_000_000).toFixed(1)}M`}
             sub="Currently on market"
             icon={TrendingUp}
             delay={0}
@@ -127,8 +135,12 @@ function AdminProperties() {
                         </div>
                       </TableCell>
                       <TableCell className="font-medium text-sm">{p.agent}</TableCell>
+                      {/* `price` is *cents* (sale_price_cents /
+                          listing_price_cents). Rendering it raw overstated
+                          every property by 100x — R2 500 000 showed as
+                          R250 000 000. */}
                       <TableCell className="font-mono text-sm tabular-nums">
-                        R {p.price.toLocaleString()}
+                        {zar(p.price, { decimals: false })}
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -165,6 +177,8 @@ function AdminProperties() {
             </div>
           )}
         </GlassCard>
+
+        <Property24ListingsTable />
       </div>
     </>
   );
