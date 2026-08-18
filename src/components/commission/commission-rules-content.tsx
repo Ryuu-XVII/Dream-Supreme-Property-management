@@ -237,8 +237,57 @@ export function CommissionRulesContent() {
   };
 
   const openNew = () => {
-    setEditing(blankRuleSet());
+    const hasDefault = ruleSets.some((r) => r.isDefault);
+    setEditing({
+      ...blankRuleSet(),
+      isDefault: !hasDefault || ruleSets.length === 0,
+    });
     setEditorOpen(true);
+  };
+
+  const makeDefault = async (rs: RuleSet) => {
+    try {
+      const { error } = await supabase.rpc("save_commission_rule_set", {
+        p_payload: {
+          ...rs,
+          isDefault: true,
+          roundingMode:
+            rs.rounding === "Nearest cent"
+              ? "half_up"
+              : rs.rounding === "Nearest rand"
+                ? "bankers"
+                : "half_down",
+          deductions: rs.deductions.map((line, index) => {
+            const lineTypes: Record<DeductionLine["type"], string> = {
+              "Franchise Fee": "franchise_fee",
+              "Referral Fee": "referral_fee",
+              "Marketing Recovery": "marketing_recovery",
+              "Co-mandate Share": "comandate_share",
+              "Desk Fee": "desk_fee",
+            };
+            return {
+              sequence: index,
+              lineType: lineTypes[line.type],
+              basis:
+                line.basis === "Percentage of Remaining"
+                  ? "percentage_of_remaining"
+                  : line.basis === "Percentage"
+                    ? "percentage"
+                    : "fixed",
+              rateBps: line.bps || 0,
+              fixedCents: line.fixed || 0,
+              payee: line.payee,
+              description: line.type,
+            };
+          }),
+        },
+      });
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ["commission-rule-sets"] });
+      toast.success(`Rule set "${rs.name}" is now the default.`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to set as default");
+    }
   };
 
   const saveEditing = async () => {
@@ -405,7 +454,14 @@ export function CommissionRulesContent() {
                             Default
                           </Badge>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                            onClick={() => makeDefault(rs)}
+                          >
+                            Set as Default
+                          </Button>
                         )}
                       </TableCell>
                       <TableCell className="text-right">

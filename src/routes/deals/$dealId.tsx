@@ -71,8 +71,6 @@ function DealDetailPage() {
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [stageReason, setStageReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
-  const [stageOverride, setStageOverride] = useState(false);
-  const [gateError, setGateError] = useState("");
 
   if (error) {
     return (
@@ -98,57 +96,6 @@ function DealDetailPage() {
     ? deal.stage
     : stageFromDb[deal.stage] || "Mandate Signed";
   const currentStageIdx = STAGES.findIndex((s) => s === humanStage);
-
-  const handleAdvanceStage = async () => {
-    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to change deal stage.");
-    if (currentStageIdx >= STAGES.length - 1) return;
-    const nextStage = STAGES[currentStageIdx + 1];
-    try {
-      toast.loading("Advancing stage...");
-      const { error } = await supabase.rpc("transition_deal", {
-        p_deal_id: dealId,
-        p_to_stage: stageToDb[nextStage],
-        p_reason: stageReason || null,
-        p_override: stageOverride,
-      });
-      if (error) {
-        if (error.message.includes("GATE_FAILED")) {
-          setGateError(error.message.replace("GATE_FAILED: ", ""));
-          toast.dismiss();
-          return; // leave modal open
-        }
-        throw error;
-      }
-      setDeal((prev: any) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          stage: nextStage,
-          timeline: [
-            {
-              id: `h_${Date.now()}`,
-              at: new Date().toISOString(),
-              from_stage: prev.stage,
-              to_stage: stageToDb[nextStage],
-              actor: "Current User",
-              action: `Advanced stage to ${nextStage}`,
-              reason: stageReason || "Stage advanced",
-            },
-            ...prev.timeline,
-          ],
-        };
-      });
-      toast.dismiss();
-      toast.success(`Deal advanced to ${nextStage}`);
-      setStageModal(null);
-      setStageReason("");
-      setStageOverride(false);
-      setGateError("");
-    } catch (err: any) {
-      toast.dismiss();
-      toast.error(`Failed: ${err.message}`);
-    }
-  };
 
   const handleRevertStage = async () => {
     if (isReadOnly) return toast.info("Read-only mode: exit impersonation to change deal stage.");
@@ -399,7 +346,12 @@ function DealDetailPage() {
           </TabsContent>
 
           <TabsContent value="conditions">
-            <DealConditionsTab deal={deal} />
+            <DealConditionsTab
+              deal={deal}
+              onConditionsChange={(updated) => {
+                setDeal((prev: any) => (prev ? { ...prev, conditions: updated } : prev));
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="documents">
@@ -423,69 +375,6 @@ function DealDetailPage() {
           </TabsContent>
         </Tabs>
       </div>
-
-      {/* Advance Stage Modal */}
-      <Dialog
-        open={stageModal === "advance"}
-        onOpenChange={(open) => {
-          if (!open) {
-            setStageModal(null);
-            setGateError("");
-            setStageOverride(false);
-            setStageReason("");
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Advance Stage</DialogTitle>
-            <DialogDescription>
-              Advance deal <strong>{deal.ref}</strong> from{" "}
-              <strong>{STAGES[currentStageIdx]}</strong> to{" "}
-              <strong>{STAGES[currentStageIdx + 1]}</strong>.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <Label>Note / Gate condition confirmation (optional)</Label>
-            <Textarea
-              placeholder="e.g. All suspensive conditions fulfilled, contract signed..."
-              value={stageReason}
-              onChange={(e) => setStageReason(e.target.value)}
-            />
-            {gateError && (
-              <div className="mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-                <p className="font-semibold mb-1">Stage Gate Blocked</p>
-                <p>{gateError}</p>
-                <div className="mt-3 flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="override"
-                    checked={stageOverride}
-                    onChange={(e) => setStageOverride(e.target.checked)}
-                    className="size-4 rounded border-destructive/50 text-destructive focus:ring-destructive"
-                  />
-                  <Label htmlFor="override" className="text-destructive font-medium cursor-pointer">
-                    Force override (Admin only)
-                  </Label>
-                </div>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setStageModal(null);
-                setGateError("");
-                setStageOverride(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleAdvanceStage}>Confirm Advance</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Revert Stage Modal */}
       <Dialog open={stageModal === "revert"} onOpenChange={() => setStageModal(null)}>
@@ -594,14 +483,10 @@ function DealDetailPage() {
         <StageGateModal
           open={true}
           onOpenChange={(open) => {
-            if (!open) {
-              setStageModal(null);
-              setGateError("");
-            }
+            if (!open) setStageModal(null);
           }}
           deal={deal}
           targetStage={STAGES[currentStageIdx + 1]}
-          gateError={gateError}
           onSuccess={(nextStage) => {
             setDeal((prev: any) => {
               if (!prev) return prev;
@@ -623,7 +508,6 @@ function DealDetailPage() {
               };
             });
             setStageModal(null);
-            setGateError("");
           }}
         />
       )}

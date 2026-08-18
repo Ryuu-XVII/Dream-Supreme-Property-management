@@ -1394,7 +1394,7 @@ begin
       v_agency_id, trim(p_payload->>'name'), (p_payload->>'effectiveFrom')::date,
       nullif(p_payload->>'effectiveTo', '')::date,
       coalesce((p_payload->>'isDefault')::boolean, false),
-      case when coalesce((p_payload->>'vatInclusive')::boolean, true) then 'inclusive' else 'exclusive' end,
+      (case when coalesce((p_payload->>'vatInclusive')::boolean, true) then 'inclusive' else 'exclusive' end)::public.vat_treatment,
       (p_payload->>'defaultBps')::int, round((p_payload->>'officeSharePct')::numeric * 100)::int,
       coalesce(nullif(p_payload->>'roundingMode', '')::public.rounding_mode, 'half_up'),
       public.get_current_user_account_id()
@@ -1404,7 +1404,7 @@ begin
       name = trim(p_payload->>'name'), effective_from = (p_payload->>'effectiveFrom')::date,
       effective_to = nullif(p_payload->>'effectiveTo', '')::date,
       is_default = coalesce((p_payload->>'isDefault')::boolean, false),
-      vat_treatment = case when coalesce((p_payload->>'vatInclusive')::boolean, true) then 'inclusive' else 'exclusive' end,
+      vat_treatment = (case when coalesce((p_payload->>'vatInclusive')::boolean, true) then 'inclusive' else 'exclusive' end)::public.vat_treatment,
       default_commission_rate_bps = (p_payload->>'defaultBps')::int,
       office_share_bps = round((p_payload->>'officeSharePct')::numeric * 100)::int,
       rounding_mode = coalesce(nullif(p_payload->>'roundingMode', '')::public.rounding_mode, 'half_up')

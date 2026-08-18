@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { GlassCard } from "@/components/ui-kit";
 import { UrgencyBadge } from "@/components/badges";
 import type { Deal, Condition, ConditionStatus } from "@/types";
@@ -55,12 +56,23 @@ const typeIcons: Record<Condition["type"], React.ComponentType<{ className?: str
   "Electrical Compliance": Zap,
 };
 
-export function DealConditionsTab({ deal }: { deal: Deal }) {
-  const [conditions, setConditions] = useState<Condition[]>(deal.conditions);
+export function DealConditionsTab({
+  deal,
+  onConditionsChange,
+}: {
+  deal: Deal;
+  onConditionsChange?: (conditions: Condition[]) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [conditions, setConditions] = useState<Condition[]>(deal.conditions || []);
   const [extendTarget, setExtendTarget] = useState<Condition | null>(null);
   const [newDate, setNewDate] = useState("");
   const [reason, setReason] = useState("");
-  const [bondStatus, setBondStatus] = useState(deal.bond.status);
+  const [bondStatus, setBondStatus] = useState(deal.bond?.status);
+
+  useEffect(() => {
+    setConditions(deal.conditions || []);
+  }, [deal.conditions]);
 
   const setStatus = async (id: string, status: ConditionStatus) => {
     const statusMap: Record<ConditionStatus, string> = {
@@ -77,7 +89,11 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
       p_reason: null,
     });
     if (error) return toast.error(error.message);
-    setConditions((cs) => cs.map((c) => (c.id === id ? { ...c, status } : c)));
+    const updated = conditions.map((c) => (c.id === id ? { ...c, status } : c));
+    setConditions(updated);
+    onConditionsChange?.(updated);
+    void queryClient.invalidateQueries({ queryKey: ["deal", deal.id] });
+    void queryClient.invalidateQueries({ queryKey: ["pipeline"] });
     toast.success(`Condition marked as ${status}`);
   };
 
@@ -94,18 +110,20 @@ export function DealConditionsTab({ deal }: { deal: Deal }) {
       p_reason: reason.trim(),
     });
     if (error) return toast.error(error.message);
-    setConditions((cs) =>
-      cs.map((c) =>
-        c.id === extendTarget.id
-          ? {
-              ...c,
-              status: "Extended",
-              originalDueDate: c.originalDueDate ?? c.dueDate,
-              dueDate: newDate,
-            }
-          : c,
-      ),
+    const updated = conditions.map((c) =>
+      c.id === extendTarget.id
+        ? {
+            ...c,
+            status: "Extended" as ConditionStatus,
+            originalDueDate: c.originalDueDate ?? c.dueDate,
+            dueDate: newDate,
+          }
+        : c,
     );
+    setConditions(updated);
+    onConditionsChange?.(updated);
+    void queryClient.invalidateQueries({ queryKey: ["deal", deal.id] });
+    void queryClient.invalidateQueries({ queryKey: ["pipeline"] });
     toast.success("Condition extended");
     setExtendTarget(null);
     setNewDate("");
