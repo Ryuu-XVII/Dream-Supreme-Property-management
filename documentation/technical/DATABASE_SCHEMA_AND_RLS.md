@@ -365,3 +365,28 @@ Fetching happens in a standalone **Cloudflare Worker** (`workers/property24-sync
 The browser calls the Worker with the signed-in user's Supabase access token; the Worker verifies it via the publishable key (so Supabase Auth validates it rather than the Worker trusting the request), then authorizes: an agent may sync themselves, an admin may sync anyone **whose `agency_id` matches the caller's**. The `SUPABASE_SECRET_KEY` never leaves the Worker. A nightly cron (`0 2 * * *` UTC = 04:00 SAST) refreshes the least-recently-synced active agents in batches, since cheerio parsing consumes the Worker's bounded CPU budget.
 
 Nothing in this path logs in, solves CAPTCHAs, or retries past a refusal: a 401/403 aborts immediately, and a repeated 503 is reported as Property24 declining the request rather than worked around.
+
+## 14. Reconciling Live Database Drift (`20260818000006_reconcile_live_drift.sql`)
+
+`supabase db diff --linked --schema public` reported **19 functions that existed only in the production database and in no migration**. They had been applied directly to the database at some point rather than through the migration flow, which meant `supabase db reset` did not reproduce production and any fresh environment silently differed from it.
+
+This was not cosmetic. The live copies are the **more hardened** ones, and several are authorization logic:
+
+`is_manager`, `can_access_deal`, `can_edit_lease`, `protect_user_account_sensitive_fields`, `prevent_hard_delete`, `create_deal`, `create_client`, `create_mandate`, `assign_lead_round_robin`, `bootstrap_principal`, `notify_agency_admins`, `record_trust_transaction`, `review_compliance_item`, `run_daily_sweeps`, `upsert_ffc_certificate`, `process_monthly_section_86_4_interest_allocation`, `popia_lookup_party`, `popia_export_party_data`, `popia_erase_party_data`.
+
+Two concrete examples of the divergence:
+
+- Live `protect_user_account_sensitive_fields` additionally honours `current_setting('role')` for `service_role`/`postgres`/`supabase_admin` and defers to `public.is_manager()`; the migration copy in `20260730000000` has neither.
+- Live `prevent_hard_delete` raises **unconditionally**. The copy in `20260729000005` still has an `app.workflow_change = 'allowed'` escape hatch, so the repo described a materially weaker guard than production enforced.
+
+The danger was directional: because the repo held the *older, weaker* definitions, any future `CREATE OR REPLACE` written against them would have silently reverted a production security fix without anyone noticing.
+
+`20260818000006` therefore captures **production as the source of truth**. It is a no-op against the live database — every statement restates what is already there — and exists so a fresh environment matches production. The ~530 `revoke`/`grant` statements the diff also emitted were deliberately omitted: each was a `revoke all …` immediately followed by a `grant` of the same privileges, i.e. a restatement of current state rather than a change. The 15 `alter default privileges … revoke all` statements **were** kept, since those genuinely control whether newly created objects are auto-exposed to the API roles.
+
+### Preventing recurrence
+
+`scripts/check-schema-drift.mjs` (`npm run check:drift`) runs `supabase db diff --linked`, filters the privilege restatement noise described above, and exits non-zero when anything else remains — naming the offending objects. It runs in CI (`.github/workflows/ci.yml`, `database_checks` job) on `main`, and skips with a warning when `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` / `SUPABASE_PROJECT_ID` are unset so that forks and outside PRs are not blocked by a missing secret.
+
+It has been verified in both directions: it passes against the reconciled database, and exits 1 identifying the function when an object present only in the database is introduced.
+
+**The rule this encodes:** never apply schema changes straight to the database. If it has already happened, capture it with `npx supabase db diff --linked -f <describe_the_change>` and review the result — production is usually the more-hardened side, so the migration should adopt production rather than overwrite it.
