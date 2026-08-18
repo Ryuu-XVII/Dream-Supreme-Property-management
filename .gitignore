@@ -34,3 +34,8 @@ dist-ssr
 .env*
 coverage/
 
+# Generated knowledge graph - rebuilt with `graphify update .`, not source.
+graphify-out/
+
+# Local Claude Code instructions, personal to this working copy.
+CLAUDE.md
