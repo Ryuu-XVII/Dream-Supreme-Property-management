@@ -1,4 +1,6 @@
-import { Globe, ExternalLink, BedDouble, Bath, Ruler } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { Globe, ExternalLink, BedDouble, Bath, Ruler, ArrowRight } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 import { GlassCard } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +29,8 @@ import { useAgencyProperty24Listings } from "@/data/property24";
  */
 export function Property24ListingsTable({ className }: { className?: string }) {
   const { data: listings = [], isLoading } = useAgencyProperty24Listings();
+  const navigate = useNavigate();
+  const { isReadOnly } = useAuth();
 
   // Nothing synced yet — stay out of the way rather than showing an empty
   // table for a feature this agency may not use.
@@ -88,7 +92,19 @@ export function Property24ListingsTable({ className }: { className?: string }) {
                         />
                       )}
                       <div>
-                        <div className="font-medium">{listing.title ?? "Listing"}</div>
+                        {/* The link to Property24 moved here from the actions
+                            column so that column can carry the primary action
+                            (Convert to Deal), matching the mandate register. */}
+                        <a
+                          href={listing.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group inline-flex items-center gap-1.5 font-medium hover:text-primary"
+                          title="View this listing on Property24"
+                        >
+                          {listing.title ?? "Listing"}
+                          <ExternalLink className="size-3 opacity-0 transition-opacity group-hover:opacity-100" />
+                        </a>
                         <div className="text-xs text-muted-foreground">{listing.location}</div>
                       </div>
                     </div>
@@ -135,10 +151,16 @@ export function Property24ListingsTable({ className }: { className?: string }) {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" asChild className="text-primary">
-                      <a href={listing.url} target="_blank" rel="noopener noreferrer">
-                        View on P24 <ExternalLink className="ml-2 size-3.5" />
-                      </a>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={isReadOnly}
+                      onClick={() =>
+                        navigate({ to: "/deals/new", search: { p24ListingId: listing.id } })
+                      }
+                      className="text-primary hover:bg-primary/10 hover:text-primary/90"
+                    >
+                      Convert to Deal <ArrowRight className="ml-2 size-4" />
                     </Button>
                   </TableCell>
                 </TableRow>

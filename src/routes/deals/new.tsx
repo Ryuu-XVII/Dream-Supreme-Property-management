@@ -48,9 +48,49 @@ import {
 import { entityTypeFromDb, ficaStatusFromDb, propertyTypeFromDb } from "@/lib/domain";
 import type { EntityType } from "@/types";
 
+/**
+ * Property24 size labels look like "1 960 m²", "2 552 m²" or "9.15 ha".
+ * Returns square metres, or null when the label cannot be read confidently —
+ * a wrong erf size is worse than a blank one on a transfer instruction.
+ */
+function parseP24Size(label: string | null | undefined): number | null {
+  if (!label) return null;
+  const match = /([\d\s.,]+)\s*(m²|ha)/i.exec(label);
+  if (!match) return null;
+  const value = Number(match[1].replace(/[\s,]/g, ""));
+  if (!Number.isFinite(value) || value <= 0) return null;
+  return match[2].toLowerCase() === "ha" ? Math.round(value * 10_000) : Math.round(value);
+}
+
+/**
+ * Best-effort property type from a Property24 tile title such as
+ * "4 Bedroom House" or "Commercial Property". Returns null when nothing
+ * matches, so the form keeps its own default rather than being told something
+ * untrue.
+ */
+function propertyTypeFromP24Title(
+  title: string | null | undefined,
+): DealCaptureForm["propertyType"] | null {
+  const text = (title ?? "").toLowerCase();
+  if (!text) return null;
+  if (text.includes("farm") || text.includes("smallholding")) return "Farm";
+  if (text.includes("commercial") || text.includes("office") || text.includes("retail"))
+    return "Commercial";
+  if (text.includes("industrial") || text.includes("warehouse")) return "Industrial";
+  if (text.includes("vacant land") || text.includes("plot") || text.includes("stand"))
+    return "Vacant Land";
+  if (text.includes("townhouse")) return "Townhouse";
+  if (text.includes("apartment") || text.includes("flat")) return "Sectional Title";
+  if (text.includes("house")) return "Freehold House";
+  return null;
+}
+
 export const Route = createFileRoute("/deals/new")({
-  validateSearch: (search: Record<string, unknown>): { mandateId?: string } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { mandateId?: string; p24ListingId?: string } => ({
     mandateId: search.mandateId as string | undefined,
+    p24ListingId: search.p24ListingId as string | undefined,
   }),
   head: () => ({
     meta: [
@@ -486,7 +526,7 @@ function ReviewPartyCard({
 function NewDealPage() {
   const { account } = useAuth();
   const navigate = useNavigate();
-  const { mandateId } = Route.useSearch();
+  const { mandateId, p24ListingId } = Route.useSearch();
   const [step, setStep] = useState(1);
   const [baselineFiles, setBaselineFiles] = useState<Record<string, File | null>>({
     mandate: null,
@@ -552,8 +592,59 @@ function NewDealPage() {
     },
   });
 
+  const { data: sourceP24Listing } = useQuery({
+    queryKey: ["p24-listing-for-conversion", p24ListingId],
+    enabled: !!p24ListingId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("agent_property24_listing")
+        .select(
+          `id, title, location, excerpt, url, price_zar, bedrooms, bathrooms,
+           size_label, size_kind, user_account_id`,
+        )
+        .eq("id", p24ListingId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+  });
+
   const [formData, setFormData] = useState<DealCaptureForm>(createInitialDealCapture);
   const prefilledMandateId = useRef<string | null>(null);
+  const prefilledP24Id = useRef<string | null>(null);
+
+  // A Property24 listing carries far less than a mandate: a suburb but no
+  // street address, no erf or title deed, no seller, no mandate dates. Fill in
+  // what is genuinely there and leave the rest blank rather than guessing —
+  // these fields end up on legal documents.
+  useEffect(() => {
+    if (!sourceP24Listing || !p24ListingId || prefilledP24Id.current === p24ListingId) return;
+    prefilledP24Id.current = p24ListingId;
+
+    const price = sourceP24Listing.price_zar ? String(Number(sourceP24Listing.price_zar)) : "";
+    const size = parseP24Size(sourceP24Listing.size_label);
+
+    setFormData((prev) => ({
+      ...prev,
+      suburb: sourceP24Listing.location || prev.suburb,
+      propertyType: propertyTypeFromP24Title(sourceP24Listing.title) ?? prev.propertyType,
+      beds: sourceP24Listing.bedrooms ?? prev.beds,
+      baths: sourceP24Listing.bathrooms ?? prev.baths,
+      // "Floor Size" and "Erf Size" are different measurements; only fill the
+      // one Property24 actually labelled.
+      floorSize:
+        size !== null && sourceP24Listing.size_kind === "Floor Size" ? size : prev.floorSize,
+      erfSize: size !== null && sourceP24Listing.size_kind === "Erf Size" ? size : prev.erfSize,
+      listingPrice: price || prev.listingPrice,
+      salePrice: price || prev.salePrice,
+      agentId: sourceP24Listing.user_account_id || prev.agentId,
+    }));
+
+    toast.success("Property24 listing loaded", {
+      description:
+        "Street address, erf number and seller details are not published on Property24 — please complete them.",
+    });
+  }, [sourceP24Listing, p24ListingId]);
 
   useEffect(() => {
     if (!sourceMandate || !mandateId || prefilledMandateId.current === mandateId) return;
