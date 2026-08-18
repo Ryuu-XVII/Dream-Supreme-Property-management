@@ -8,8 +8,8 @@
 // It also has to run from Cloudflare specifically. Property24 serves its own
 // branded "Server unavailable" 503 page to some cloud egress — Supabase Edge
 // Functions are refused outright — while Cloudflare Workers are served
-// normally. That is why this lives in a TanStack Start server route rather
-// than in supabase/functions/.
+// normally. That is why this lives in a standalone Worker rather than in
+// supabase/functions/ or in the app, which deploys as a static SPA.
 //
 // Nothing here logs in, solves CAPTCHAs, or retries past a refusal. Only
 // public pages are read, at a deliberately conservative rate.
@@ -122,7 +122,7 @@ export interface Property24Profile {
 // the sibling rows that follow it up to the next heading. Both halves of that
 // are needed: the page footer is full of `/for-sale/...` links that would
 // otherwise be swept up as areas.
-function parseAreasServiced($: cheerio.CheerioAPI): string[] {
+export function parseAreasServiced($: cheerio.CheerioAPI): string[] {
   const heading = $("h5")
     .toArray()
     .find((el) => clean($(el).text()).toLowerCase() === "areas serviced");
@@ -140,7 +140,7 @@ function parseAreasServiced($: cheerio.CheerioAPI): string[] {
   return [...new Set(names)];
 }
 
-function parseProfile(html: string, agent: AgentRef): Property24Profile {
+export function parseProfile(html: string, agent: AgentRef): Property24Profile {
   const $ = cheerio.load(html);
   // e.g. "Aaron Fanie Sithabela | Real Estate Services | Property24"
   const metaTitle = clean($('meta[name="title"]').attr("content"));
@@ -185,7 +185,7 @@ type Tile = ReturnType<cheerio.CheerioAPI>;
 // URL in `src`, and every tile below the fold ships `src="/blank.gif"` with the
 // actual image in `lazy-src`. Reading `src` alone stored the placeholder for
 // most listings, so they rendered as broken thumbnails.
-function tileImageUrl(tile: Tile): string | null {
+export function tileImageUrl(tile: Tile): string | null {
   const image = tile.find('img[itemprop="image"]').first();
   for (const attribute of ["lazy-src", "data-src", "data-original", "src"]) {
     const value = clean(image.attr(attribute));
@@ -209,7 +209,7 @@ function featureNumber(tile: Tile, title: string): number | null {
 // Property24's result tiles carry schema.org microdata and stable `p24_*`
 // class names, so everything below is a direct read rather than a guess at
 // which ancestor happens to be "the card".
-function parseFeedPage(html: string, purpose: "sale" | "rent") {
+export function parseFeedPage(html: string, purpose: "sale" | "rent") {
   const $ = cheerio.load(html);
   const listings: Property24ListingRow[] = [];
 

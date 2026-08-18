@@ -7,5 +7,5 @@
   // 02:00 UTC = 04:00 SAST — refreshes listings overnight, well outside
   // South African business hours and off Property24's daytime peak.
   "triggers": { "crons": ["0 2 * * *"] },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
 }
