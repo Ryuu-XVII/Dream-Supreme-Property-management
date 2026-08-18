@@ -54,7 +54,10 @@ export function QuickDealModal({
   onSuccess,
   initialType = "deal",
 }: QuickDealModalProps) {
-  const { isReadOnly } = useAuth();
+  const { isReadOnly, account } = useAuth();
+  // Mirrors enforce_admin_only_commission_rate in the database: an agent may
+  // capture a mandate or deal, but not set what the agency earns on it.
+  const canEditCommission = (account?.role ?? "").toLowerCase().includes("admin");
   const { data: agents = [] } = useAgents();
   const [entryType, setEntryType] = useState<"deal" | "mandate">(initialType);
   const [loading, setLoading] = useState(false);
@@ -421,7 +424,17 @@ export function QuickDealModal({
                   step="0.1"
                   value={form.agreedCommissionPct}
                   onChange={(e) => update("agreedCommissionPct", e.target.value)}
+                  readOnly={!canEditCommission}
+                  disabled={!canEditCommission}
+                  className={
+                    canEditCommission ? undefined : "cursor-not-allowed bg-muted/60 opacity-70"
+                  }
                 />
+                {!canEditCommission && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Set by your agency&apos;s commission rules.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1">

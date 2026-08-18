@@ -572,6 +572,9 @@ function ReviewPartyCard({
 
 function NewDealPage() {
   const { account } = useAuth();
+  // Mirrors enforce_admin_only_commission_rate in the database: agents may
+  // capture a deal but not choose what the agency earns on it.
+  const canEditCommission = (account?.role ?? "").toLowerCase().includes("admin");
   const navigate = useNavigate();
   const { mandateId, p24ListingId } = Route.useSearch();
   const [step, setStep] = useState(1);
@@ -1247,20 +1250,39 @@ function NewDealPage() {
 
                 <div className="space-y-1.5">
                   <Label>Commission Rate (% or basis points)</Label>
-                  <Select
-                    value={formData.commissionBps}
-                    onValueChange={(v) => updateForm("commissionBps", v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="500">5.0% (500 bps)</SelectItem>
-                      <SelectItem value="550">5.5% (550 bps)</SelectItem>
-                      <SelectItem value="600">6.0% (600 bps)</SelectItem>
-                      <SelectItem value="700">7.0% (700 bps)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {/* Only administrators set commission. The database enforces
+                      this too (enforce_admin_only_commission_rate), so an agent
+                      submitting a rate has it replaced by the agency default
+                      rather than silently applied — showing it read-only keeps
+                      the form honest about what will actually be saved. */}
+                  {canEditCommission ? (
+                    <Select
+                      value={formData.commissionBps}
+                      onValueChange={(v) => updateForm("commissionBps", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="500">5.0% (500 bps)</SelectItem>
+                        <SelectItem value="550">5.5% (550 bps)</SelectItem>
+                        <SelectItem value="600">6.0% (600 bps)</SelectItem>
+                        <SelectItem value="700">7.0% (700 bps)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <>
+                      <Input
+                        readOnly
+                        value={`${(Number(formData.commissionBps) / 100).toFixed(2)}%`}
+                        className="cursor-not-allowed bg-muted/60 opacity-70"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Set by your agency&apos;s commission rules. Contact an administrator to
+                        change it.
+                      </p>
+                    </>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">

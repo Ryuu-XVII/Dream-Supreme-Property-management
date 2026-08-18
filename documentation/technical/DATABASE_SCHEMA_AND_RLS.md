@@ -405,3 +405,49 @@ The cleanup deliberately runs in the database rather than the client:
 `clear_property24_data_on_unlink()` is `security definer` and fires `before update of property24_url on public.user_account`, guarded so it only acts on the actual transition from a set URL to NULL rather than on every profile save. Because it is a BEFORE trigger it clears the three cached columns on `NEW` directly, so the whole unlink is a single write.
 
 Verified against the live database: with a linked agent holding 33 synced listings, setting `property24_url` to NULL left `property24_profile` NULL, `property24_synced_at` NULL and zero listing rows.
+
+## 16. Commission Is Administrator-Only (`20260818000008_admin_only_commission.sql`)
+
+An audit of the commission system found that agents could set the number that drives the money, and that two administrator guards did not fail closed.
+
+### The material finding: a mandate's rate overrides the rule set
+
+`calculate_deal_commission` computes gross commission as:
+
+```
+sale_price_cents * coalesce(nullif(mandate.commission_rate_bps, 0),
+                            rule_set.default_commission_rate_bps) / 10000
+```
+
+The mandate's own rate therefore **takes precedence over the administrator's commission rule set**, and agents could set it freely by three routes:
+
+- the mandate INSERT policy (`Agency users can create mandates`) checks only `agency_id = get_current_agency_id()`;
+- `create_mandate(p_payload)` reads `commissionRateBps` straight from the client payload with no role check on that field;
+- the mandate UPDATE policy (`Managers can update mandates`) admits, besides administrators, *any agent who can access a linked deal* — and its WITH CHECK validates only the agency, not which columns changed.
+
+An agent could therefore raise the commission rate on their own deals and bypass the configured rule set entirely.
+
+This is fixed with a trigger, `enforce_admin_only_commission_rate`, rather than by rewriting `create_mandate`, so the rule holds for **every** write path — the RPC, a direct PostgREST insert, a future bulk import — instead of only the one function:
+
+- on INSERT by a non-administrator, `commission_rate_bps` is overwritten with the agency's default rule-set rate (falling back to 500 bps), so a client-supplied rate is ignored rather than trusted;
+- on UPDATE by a non-administrator, any change to `commission_rate_bps` raises.
+
+It uses `public.is_manager()`, which is `exists()`-based and so returns false — never NULL — for a caller with no active account, and honours the existing `app.admin_override` escape used elsewhere for administrative scripts.
+
+### Guard hardening
+
+Both `save_commission_rule_set` and `calculate_deal_commission` guarded with:
+
+```sql
+if public.get_current_role() not in ('admin', 'admin_agent') then raise exception ...
+```
+
+`get_current_role()` returns NULL for any caller without an **active** `user_account` — a suspended agent whose JWT has not yet expired, or somebody who completed `supabase.auth.signUp` but never accepted an invitation. `NULL not in (...)` evaluates to NULL rather than true, so the guard fell through instead of raising.
+
+Neither was exploitable in practice at the time of the audit: `save_commission_rule_set` then hit a NOT NULL `agency_id`, and `calculate_deal_commission` then failed `can_access_deal`. Both are fixed regardless — each was one schema change away from becoming real, and a line that reads as an authorization check should behave like one. This is the same defect class as `20260817000012`.
+
+### Frontend
+
+The commission inputs in the deal capture form (`src/routes/deals/new.tsx`) and the quick capture modal (`src/components/deal/quick-deal-modal.tsx`) are now read-only for non-administrators, so the form matches what the database will actually save. The Commission Rules screen itself was already administrator-only, being under the `canAccessAdmin`-guarded `/admin` route.
+
+Verified against the live database: a non-administrator update of `mandate.commission_rate_bps` leaves the value unchanged, while an administrator can still change it (500 → 750 → 500 via PostgREST).
