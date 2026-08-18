@@ -392,3 +392,16 @@ The danger was directional: because the repo held the *older, weaker* definition
 It has been verified in both directions: it passes against the reconciled database, and exits 1 identifying the function when an object present only in the database is introduced.
 
 **The rule this encodes:** never apply schema changes straight to the database. If it has already happened, capture it with `npx supabase db diff --linked -f <describe_the_change>` and review the result — production is usually the more-hardened side, so the migration should adopt production rather than overwrite it.
+
+## 15. Clearing Property24 Data on Unlink (`20260818000007_clear_property24_data_on_unlink.sql`)
+
+Removing an agent's `user_account.property24_url` — by clearing the field in Admin > Team Members, or via **Remove** on the Property24 card in Settings > Profile — previously left `property24_profile`, `property24_synced_at` and every row in `agent_property24_listing` behind. An unlinked agent's stock therefore kept appearing on the Listings and admin Property Portfolio pages indefinitely.
+
+The cleanup deliberately runs in the database rather than the client:
+
+- `agent_property24_listing` carries a **select-only** policy for `authenticated` (see §13). Only the sync Worker's service role writes listings. Adding a delete policy so the browser could clean up would let any authenticated user delete listing rows directly, which is a worse trade than a trigger.
+- A trigger also cannot be forgotten by some future code path that clears the URL another way — a bulk update, an admin RPC, or a support fix applied by hand.
+
+`clear_property24_data_on_unlink()` is `security definer` and fires `before update of property24_url on public.user_account`, guarded so it only acts on the actual transition from a set URL to NULL rather than on every profile save. Because it is a BEFORE trigger it clears the three cached columns on `NEW` directly, so the whole unlink is a single write.
+
+Verified against the live database: with a linked agent holding 33 synced listings, setting `property24_url` to NULL left `property24_profile` NULL, `property24_synced_at` NULL and zero listing rows.

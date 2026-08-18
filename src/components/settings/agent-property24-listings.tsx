@@ -11,6 +11,7 @@ import {
   MapPin,
   Ruler,
   RefreshCw,
+  Unlink,
 } from "lucide-react";
 import { GlassCard, EmptyState } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
@@ -144,6 +145,30 @@ export function AgentProperty24Listings({
     runSync();
   };
 
+  // Clearing the URL also drops the cached listings and profile — the
+  // clear_property24_data_on_unlink trigger handles that server-side, so the
+  // browser only has to null the link.
+  const disconnect = async () => {
+    if (!userId) return;
+    const count = data?.listings.length ?? 0;
+    if (
+      !confirm(
+        `Remove this Property24 link?\n\n${count} synced listing${count === 1 ? "" : "s"} will be removed from the app. The Property24 profile itself is not affected, and you can reconnect at any time.`,
+      )
+    ) {
+      return;
+    }
+    try {
+      await saveUrl.mutateAsync({ userId, url: null });
+      setUrlDraft("");
+      toast.success("Property24 link removed");
+    } catch (error) {
+      toast.error("Could not remove the Property24 link", {
+        description: error instanceof Error ? error.message : undefined,
+      });
+    }
+  };
+
   const runSync = () => {
     toast.loading("Fetching listings from Property24…", { id: "p24-sync" });
     sync.mutate(
@@ -265,16 +290,28 @@ export function AgentProperty24Listings({
             </a>
           </Button>
           {canSync && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={runSync}
-              disabled={sync.isPending}
-              className="text-xs"
-            >
-              <RefreshCw className={`mr-1 size-3 ${sync.isPending ? "animate-spin" : ""}`} />
-              {sync.isPending ? "Syncing…" : "Sync now"}
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={runSync}
+                disabled={sync.isPending}
+                className="text-xs"
+              >
+                <RefreshCw className={`mr-1 size-3 ${sync.isPending ? "animate-spin" : ""}`} />
+                {sync.isPending ? "Syncing…" : "Sync now"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={disconnect}
+                disabled={saveUrl.isPending || sync.isPending}
+                className="text-xs text-destructive hover:text-destructive"
+              >
+                <Unlink className="mr-1 size-3" />
+                {saveUrl.isPending ? "Removing…" : "Remove"}
+              </Button>
+            </>
           )}
         </div>
       </div>
