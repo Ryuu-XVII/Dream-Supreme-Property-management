@@ -47,6 +47,12 @@ export function ReconciliationContent() {
   const [transactions, setTransactions] = useState<ParsedTransaction[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Only payment-reference matches can be posted automatically — see
+  // handleReconcileAll — so this is what the button actually acts on.
+  const readyCount = transactions.filter(
+    (t) => t.status === "pending" && t.matchBasis === "reference" && t.matchedLeaseId,
+  ).length;
+
   // Fetch active leases with payment references
   const leasesQuery = useQuery({
     queryKey: ["leases-for-recon", account?.agencyId],
@@ -343,9 +349,23 @@ export function ReconciliationContent() {
       <GlassCard className="p-0">
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="font-semibold text-lg">Imported Transactions</h3>
-          <Button onClick={handleReconcileAll} disabled={isProcessing || transactions.length === 0}>
+          <Button
+            onClick={handleReconcileAll}
+            disabled={isProcessing || readyCount === 0}
+            // Say why it is unavailable instead of just greying out: the
+            // reasons are different (nothing uploaded / nothing matched / only
+            // name matches, which need a human) and the user cannot tell them
+            // apart from a disabled button alone.
+            title={
+              transactions.length === 0
+                ? "Upload a bank statement CSV first"
+                : readyCount === 0
+                  ? "No transactions matched on payment reference. Name-only and ambiguous matches must be confirmed manually."
+                  : `Reconcile ${readyCount} transaction(s) matched on payment reference`
+            }
+          >
             {isProcessing && <Loader2 className="mr-2 size-4 animate-spin" />}
-            Reconcile Matched
+            {readyCount > 0 ? `Reconcile ${readyCount} Matched` : "Reconcile Matched"}
           </Button>
         </div>
         <Table>
