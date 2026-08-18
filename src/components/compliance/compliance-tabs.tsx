@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { ShieldCheck, Users, ScrollText, Lock } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { canAccessAdmin } from "@/lib/auth-routing";
+import { canAccessAdmin, isAdminDomain } from "@/lib/auth-routing";
 
 // The audit log and POPIA data-subject requests are agency-wide records about
 // everyone, and audit_log's RLS policy already admits administrators only — an
@@ -18,7 +18,7 @@ const tabs = [
 export function ComplianceTabs() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { activeAccount } = useAuth();
-  const isAdmin = canAccessAdmin(activeAccount);
+  const isAdmin = isAdminDomain() && canAccessAdmin(activeAccount);
   const visibleTabs = tabs.filter((t) => !t.adminOnly || isAdmin);
   return (
     <div className="mb-6 flex flex-wrap gap-1 border-b border-border pb-1">

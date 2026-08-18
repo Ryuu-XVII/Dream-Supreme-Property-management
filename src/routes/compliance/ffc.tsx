@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { useDashboardData } from "@/data/operations";
 import { useAuth } from "@/lib/auth";
-import { canAccessAdmin } from "@/lib/auth-routing";
+import { canAccessAdmin, isAdminDomain } from "@/lib/auth-routing";
 import { dateFmt, daysUntil } from "@/lib/format";
 
 export const Route = createFileRoute("/compliance/ffc")({ component: FfcPage });
@@ -21,7 +21,12 @@ export const Route = createFileRoute("/compliance/ffc")({ component: FfcPage });
 function FfcPage() {
   const dashboard = useDashboardData();
   const { activeAccount } = useAuth();
-  const isAdmin = canAccessAdmin(activeAccount);
+  // Both conditions matter. Role alone is not enough: an Admin & Agent working
+  // in the agent portal is acting as an agent, and the agency-wide register
+  // belongs to the Admin Console (/admin/compliance/ffc). Portal alone is not
+  // enough either — a plain agent must not get the full register by visiting
+  // the admin domain.
+  const isAdmin = isAdminDomain() && canAccessAdmin(activeAccount);
 
   // An agent has no business seeing a colleague's PPRA reference or FFC
   // number. Administrators keep the agency-wide register, which is also what
