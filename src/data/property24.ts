@@ -95,6 +95,46 @@ export function useAgentProperty24(userId?: string) {
   });
 }
 
+/**
+ * Same shape as the CHECK constraint in
+ * supabase/migrations/20260818000005_property24_agent_sync.sql, so a typo is
+ * caught before the round trip.
+ */
+export const PROPERTY24_URL_SHAPE =
+  /^https:\/\/(www\.)?property24\.com\/estate-agents\/[^/]+\/[^/]+\/\d+$/;
+
+/**
+ * Saves the Property24 profile URL against a user_account. Existing RLS covers
+ * this: a user may update their own row, and admins may update anyone in their
+ * agency — `property24_url` is not one of the fields the
+ * protect_user_account_sensitive_fields trigger restricts.
+ */
+export function useSetProperty24Url() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, { userId: string; url: string | null }>({
+    mutationFn: async ({ userId, url }) => {
+      const trimmed = url?.trim() || null;
+      if (trimmed && !PROPERTY24_URL_SHAPE.test(trimmed)) {
+        throw new Error(
+          "That does not look like a Property24 agent profile link. It should look like " +
+            "https://www.property24.com/estate-agents/{agency}/{agent}/{id}",
+        );
+      }
+      const { error } = await supabase
+        .from("user_account")
+        .update({ property24_url: trimmed })
+        .eq("id", userId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: property24QueryKey(variables.userId) });
+      void queryClient.invalidateQueries({ queryKey: ["agent-property24"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+  });
+}
+
 export interface Property24SyncResult {
   ok: true;
   syncedAt: string;

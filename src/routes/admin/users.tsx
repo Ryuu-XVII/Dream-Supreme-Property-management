@@ -944,24 +944,26 @@ function AdminUsers() {
               </div>
             )}
 
-            {draft.role !== "Admin" && (
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1.5">
-                  <Globe className="size-4 text-indigo-500" /> Property24 Profile URL
-                  <span className="font-normal text-muted-foreground">(optional)</span>
-                </Label>
-                <Input
-                  value={draft.property24Url ?? ""}
-                  onChange={(e) => setDraft((d) => ({ ...d, property24Url: e.target.value }))}
-                  placeholder="https://www.property24.com/estate-agents/agency/agent-name/123456"
-                  className="font-mono text-xs"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Paste the agent&apos;s public Property24 profile link. Their photo, bio and live
-                  listings are pulled in automatically once they complete registration.
-                </p>
-              </div>
-            )}
+            {/* Shown for every role. Unlike commission split or seniority this
+                is not an agent-only concept — an admin can have their own
+                Property24 agent profile and listings too. */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Globe className="size-4 text-indigo-500" /> Property24 Profile URL
+                <span className="font-normal text-muted-foreground">(optional)</span>
+              </Label>
+              <Input
+                value={draft.property24Url ?? ""}
+                onChange={(e) => setDraft((d) => ({ ...d, property24Url: e.target.value }))}
+                placeholder="https://www.property24.com/estate-agents/agency/agent-name/123456"
+                className="font-mono text-xs"
+              />
+              <p className="text-xs text-muted-foreground">
+                Paste the public Property24 profile link. The photo, bio and live listings are
+                pulled in automatically — on registration for a new invite, or on the next sync for
+                an existing member.
+              </p>
+            </div>
 
             {draft.role !== "Admin" && (
               <div className="space-y-2">

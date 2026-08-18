@@ -29,6 +29,26 @@ export interface Env {
 // over successive nights instead of one run timing out part-way through.
 const SCHEDULED_BATCH_SIZE = 10;
 
+// Any loopback origin, on any port, is the developer's own machine — a remote
+// attacker cannot serve a page from it. Allowing it by pattern avoids having
+// to enumerate every dev origin: the app runs on localhost:5173 and the admin
+// console on admin.localhost:5173, and missing one silently breaks the sync
+// with a CORS error that never reaches this Worker at all.
+function isLoopbackOrigin(origin: string): boolean {
+  try {
+    const { protocol, hostname } = new URL(origin);
+    if (protocol !== "http:" && protocol !== "https:") return false;
+    return (
+      hostname === "localhost" ||
+      hostname.endsWith(".localhost") ||
+      hostname === "127.0.0.1" ||
+      hostname === "[::1]"
+    );
+  } catch {
+    return false;
+  }
+}
+
 function corsHeaders(origin: string | null, env: Env): Record<string, string> {
   const allowed = (env.ALLOWED_ORIGINS ?? "")
     .split(",")
@@ -36,7 +56,8 @@ function corsHeaders(origin: string | null, env: Env): Record<string, string> {
     .filter(Boolean);
   // Echo the caller's origin only when it is explicitly allowed. A wildcard
   // would let any site drive this Worker with a stolen token.
-  const allowOrigin = origin && allowed.includes(origin) ? origin : (allowed[0] ?? "");
+  const permitted = origin !== null && (allowed.includes(origin) || isLoopbackOrigin(origin));
+  const allowOrigin = permitted ? origin : (allowed[0] ?? "");
   return {
     "access-control-allow-origin": allowOrigin,
     "access-control-allow-headers": "authorization, content-type",

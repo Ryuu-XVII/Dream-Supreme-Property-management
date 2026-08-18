@@ -15,8 +15,14 @@ import {
 import { GlassCard, EmptyState } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { relative } from "@/lib/format";
-import { useAgentProperty24, useSyncProperty24, type Property24Listing } from "@/data/property24";
+import {
+  useAgentProperty24,
+  useSetProperty24Url,
+  useSyncProperty24,
+  type Property24Listing,
+} from "@/data/property24";
 
 type PurposeFilter = "all" | "sale" | "rent";
 
@@ -118,7 +124,25 @@ export function AgentProperty24Listings({
 }) {
   const { data, isLoading } = useAgentProperty24(userId);
   const sync = useSyncProperty24();
+  const saveUrl = useSetProperty24Url();
   const [filter, setFilter] = useState<PurposeFilter>("all");
+  const [urlDraft, setUrlDraft] = useState("");
+
+  // Saving the URL and syncing are one action from the user's point of view:
+  // pasting a link and then having to press a second button to see anything is
+  // exactly the confusion this replaced.
+  const connectAndSync = async () => {
+    if (!userId) return;
+    try {
+      await saveUrl.mutateAsync({ userId, url: urlDraft });
+    } catch (error) {
+      toast.error("Could not save the Property24 link", {
+        description: error instanceof Error ? error.message : undefined,
+      });
+      return;
+    }
+    runSync();
+  };
 
   const runSync = () => {
     toast.loading("Fetching listings from Property24…", { id: "p24-sync" });
@@ -161,8 +185,38 @@ export function AgentProperty24Listings({
     );
   }
 
-  // No URL captured at invite time — nothing to show, and nothing to sync.
-  if (!data?.profileUrl) return null;
+  // No URL captured yet. Previously this rendered nothing at all, which left
+  // no way to connect a profile outside the admin Team screen — and no clue
+  // that the feature existed. Offer the input here instead.
+  if (!data?.profileUrl) {
+    if (!canSync) return null;
+    return (
+      <GlassCard className="lg:col-span-3">
+        <h2 className="mb-1 flex items-center gap-2 font-display text-base font-semibold">
+          <Globe className="size-4 text-primary" /> Property24 listings
+        </h2>
+        <p className="mb-4 text-xs text-muted-foreground">
+          Paste a public Property24 agent profile link to show that agent&apos;s photo, bio and live
+          sale/rental listings here.
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            value={urlDraft}
+            onChange={(event) => setUrlDraft(event.target.value)}
+            placeholder="https://www.property24.com/estate-agents/agency/agent-name/123456"
+            className="font-mono text-xs"
+          />
+          <Button
+            onClick={connectAndSync}
+            disabled={!urlDraft.trim() || saveUrl.isPending || sync.isPending}
+            className="shrink-0"
+          >
+            {saveUrl.isPending || sync.isPending ? "Connecting…" : "Connect & sync"}
+          </Button>
+        </div>
+      </GlassCard>
+    );
+  }
 
   const listings = data.listings.filter((l) => filter === "all" || l.purpose === filter);
   const saleCount = data.listings.filter((l) => l.purpose === "sale").length;
