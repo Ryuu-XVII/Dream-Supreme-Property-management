@@ -18,11 +18,7 @@ import { execFileSync } from "node:child_process";
 // immediately followed by a `grant` of the same privileges. That is a
 // restatement of current state, not a difference, and it never goes away --
 // so treating it as drift would make this check fail permanently.
-const NOISE = [
-  /^set\s+local\s/i,
-  /^revoke\s+all\s+on\s/i,
-  /^grant\s+[a-z, ]+\s+on\s/i,
-];
+const NOISE = [/^set\s+local\s/i, /^revoke\s+all\s+on\s/i, /^grant\s+[a-z, ]+\s+on\s/i];
 
 function runDiff() {
   // shell: true so this resolves npx.cmd on Windows as well as npx on CI.
