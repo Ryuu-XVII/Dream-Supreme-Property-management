@@ -19,6 +19,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { zar } from "@/lib/format";
 import { useRecordTrustTransaction } from "@/data/trust";
+import { allocateDepositsToInvoices } from "@/lib/bank-reconciliation";
 import { Upload, CheckCircle2, CircleDashed, Loader2 } from "lucide-react";
 
 interface ParsedTransaction {
@@ -220,48 +221,22 @@ export function ReconciliationContent() {
       .in("status", ["draft", "issued", "overdue"])
       .order("due_on", { ascending: true });
 
+    // Allocation lives in src/lib/bank-reconciliation.ts so it can be tested
+    // directly — see tests/bank-reconciliation.test.ts.
+    const { invoiceUpdates, allocatedByDepositId } = allocateDepositsToInvoices(
+      matchedTxs.map((tx) => ({
+        id: tx.id,
+        leaseId: tx.matchedLeaseId!,
+        amountCents: Math.round(tx.amount * 100),
+      })),
+      (outstandingInvoices ?? []) as any[],
+    );
+
     const invoiceQueueByLease = new Map<string, any[]>();
     for (const inv of outstandingInvoices ?? []) {
       const queue = invoiceQueueByLease.get(inv.lease_id) ?? [];
-      queue.push({ ...inv });
+      queue.push(inv);
       invoiceQueueByLease.set(inv.lease_id, queue);
-    }
-
-    // Allocate each deposit across that lease's outstanding invoices by the
-    // amount actually received. The previous version marked the first invoice
-    // `paid` for its full value regardless of the deposit, so a R500 payment
-    // closed a R10 000 invoice and the shortfall vanished.
-    const invoiceUpdates = new Map<string, { paid_cents: number; status: string }>();
-    const allocationByTxId = new Map<string, number>();
-
-    for (const tx of matchedTxs) {
-      let remaining = Math.round(tx.amount * 100);
-      const queue = invoiceQueueByLease.get(tx.matchedLeaseId!) ?? [];
-
-      while (remaining > 0 && queue.length > 0) {
-        const invoice = queue[0];
-        const owed = invoice.total_cents - invoice.paid_cents;
-        if (owed <= 0) {
-          queue.shift();
-          continue;
-        }
-        const applied = Math.min(owed, remaining);
-        invoice.paid_cents += applied;
-        remaining -= applied;
-
-        invoiceUpdates.set(invoice.id, {
-          paid_cents: invoice.paid_cents,
-          // Only fully settled invoices become `paid`; a part payment stays
-          // outstanding so it still shows up as owing.
-          status: invoice.paid_cents >= invoice.total_cents ? "paid" : invoice.status,
-        });
-
-        if (invoice.paid_cents >= invoice.total_cents) queue.shift();
-      }
-
-      // Anything left over is still banked to the trust account — it is the
-      // tenant's money either way — it simply is not allocated to an invoice.
-      allocationByTxId.set(tx.id, Math.round(tx.amount * 100) - remaining);
     }
 
     const results = await Promise.allSettled(
@@ -287,7 +262,7 @@ export function ReconciliationContent() {
       if (result.status === "fulfilled") {
         tx.status = "reconciled";
         successCount++;
-        const allocated = allocationByTxId.get(tx.id) ?? 0;
+        const allocated = allocatedByDepositId.get(tx.id) ?? 0;
         const deposited = Math.round(tx.amount * 100);
         if (allocated < deposited) {
           tx.note = `${zar(deposited - allocated, { decimals: false })} not allocated to an invoice`;
