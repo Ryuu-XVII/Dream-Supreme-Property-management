@@ -146,7 +146,7 @@ jobs:
       # Skips (rather than fails) when the credentials are absent, so forks and
       # PRs from outside the repo are not blocked by a missing secret.
       - name: Check live schema matches migrations
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
