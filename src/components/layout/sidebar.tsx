@@ -28,7 +28,9 @@ export const navItems = [
   { label: "Rentals", to: "/rentals", icon: Home },
   { label: "Deal Flow", to: "/pipeline", icon: KanbanSquare },
   { label: "Countdown Board", to: "/countdown", icon: Timer },
-  { label: "Commission", to: "/commission", icon: Coins },
+  // Straight to earnings: /commission only redirects here now that rule
+  // configuration lives in the Admin Console.
+  { label: "Commission", to: "/commission/earnings", icon: Coins },
   { label: "Clients", to: "/clients", icon: Users },
   { label: "Compliance", to: "/compliance/ffc", icon: ShieldCheck },
   { label: "Documents", to: "/documents", icon: FolderOpen },

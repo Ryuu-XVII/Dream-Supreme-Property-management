@@ -1,26 +1,21 @@
 import { Navigate, createFileRoute } from "@tanstack/react-router";
-import { useAuth } from "@/lib/auth";
-import { canAccessAdmin } from "@/lib/auth-routing";
-import { AppShell } from "@/components/layout/app-shell";
-import { CommissionTabs } from "@/components/commission/commission-tabs";
-import { CommissionRulesContent } from "@/components/commission/commission-rules-content";
 
 export const Route = createFileRoute("/commission/")({
-  head: () => ({ meta: [{ title: "Commission Rules | Dream Supreme Properties" }] }),
+  head: () => ({ meta: [{ title: "Commission | Dream Supreme Properties" }] }),
   component: CommissionIndex,
 });
 
+/**
+ * Commission rule sets are configured in the Admin Console
+ * (/admin/commission-rules), not the agent portal.
+ *
+ * This route used to render the rule editor for anyone `canAccessAdmin`
+ * allowed, which meant an Admin & Agent saw "New Rule Set" while working in
+ * the agent portal — and a plain agent saw a "Rules Configuration" tab that
+ * only bounced them away. Commission is administrator-only (enforced by
+ * enforce_admin_only_commission_rate and the guard in
+ * save_commission_rule_set), so the agent portal simply opens on earnings.
+ */
 function CommissionIndex() {
-  const { activeAccount } = useAuth();
-
-  if (!canAccessAdmin(activeAccount)) {
-    return <Navigate to="/commission/earnings" replace />;
-  }
-
-  return (
-    <AppShell crumbs={[{ label: "Commission", to: "/commission" }, { label: "Rules" }]}>
-      <CommissionTabs />
-      <CommissionRulesContent />
-    </AppShell>
-  );
+  return <Navigate to="/commission/earnings" replace />;
 }

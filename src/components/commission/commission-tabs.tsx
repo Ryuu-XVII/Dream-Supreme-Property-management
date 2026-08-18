@@ -1,8 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
+// No "Rules Configuration" tab: commission rule sets are configured in the
+// Admin Console (/admin/commission-rules). Offering it here showed an
+// Admin & Agent a "New Rule Set" button inside the agent portal, and gave a
+// plain agent a tab that only redirected them away.
 const tabs = [
-  { label: "Rules Configuration", to: "/commission" as const },
   { label: "Monthly Reconciliation", to: "/commission/reconciliation" as const },
   { label: "Agent Earnings", to: "/commission/earnings" as const },
 ];
