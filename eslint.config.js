@@ -7,11 +7,10 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   // `.wrangler` holds bundles wrangler generates while running the
-  // property24-sync Worker locally; `property24-agent-sync` is the superseded
-  // standalone Express prototype. Both are build output or dead code, and
-  // linting them buries real findings under thousands of formatting errors.
+  // property24-sync Worker locally. Linting build output buries real findings
+  // under thousands of formatting errors.
   {
-    ignores: ["dist", ".output", ".vinxi", "**/.wrangler/**", "property24-agent-sync/**"],
+    ignores: ["dist", ".output", ".vinxi", "**/.wrangler/**"],
   },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
