@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Globe, ExternalLink, BedDouble, Bath, Ruler, ArrowRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -15,6 +16,8 @@ import {
 import { relative } from "@/lib/format";
 import { useAgencyProperty24Listings } from "@/data/property24";
 
+type PurposeFilter = "all" | "sale" | "rent";
+
 /**
  * Live Property24 stock for the agency, synced from each agent's public
  * Property24 profile. Shared by the agent Listings page and the admin
@@ -31,6 +34,7 @@ export function Property24ListingsTable({ className }: { className?: string }) {
   const { data: listings = [], isLoading } = useAgencyProperty24Listings();
   const navigate = useNavigate();
   const { isReadOnly } = useAuth();
+  const [filter, setFilter] = useState<PurposeFilter>("all");
 
   // Nothing synced yet — stay out of the way rather than showing an empty
   // table for a feature this agency may not use.
@@ -40,6 +44,11 @@ export function Property24ListingsTable({ className }: { className?: string }) {
     (latest, listing) => (!latest || listing.lastSeenAt > latest ? listing.lastSeenAt : latest),
     null,
   );
+
+  const saleCount = listings.filter((listing) => listing.purpose === "sale").length;
+  const rentCount = listings.filter((listing) => listing.purpose === "rent").length;
+  const visibleListings =
+    filter === "all" ? listings : listings.filter((listing) => listing.purpose === filter);
 
   return (
     <GlassCard className={className ? `p-0 ${className}` : "p-0"}>
@@ -54,9 +63,26 @@ export function Property24ListingsTable({ className }: { className?: string }) {
             mandated stock.
           </p>
         </div>
-        <Badge variant="outline" className="w-fit">
-          {listings.length} listing{listings.length === 1 ? "" : "s"}
-        </Badge>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {(
+            [
+              ["all", "All", listings.length],
+              ["sale", "For Sale", saleCount],
+              ["rent", "To Rent", rentCount],
+            ] as const
+          ).map(([value, label, count]) => (
+            <Button
+              key={value}
+              type="button"
+              variant={filter === value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter(value)}
+              className="h-7 text-xs"
+            >
+              {label} ({count})
+            </Button>
+          ))}
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -78,8 +104,14 @@ export function Property24ListingsTable({ className }: { className?: string }) {
                   Loading Property24 listings...
                 </TableCell>
               </TableRow>
+            ) : visibleListings.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                  No {filter === "sale" ? "for sale" : "to rent"} listings synced.
+                </TableCell>
+              </TableRow>
             ) : (
-              listings.map((listing) => (
+              visibleListings.map((listing) => (
                 <TableRow key={listing.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
