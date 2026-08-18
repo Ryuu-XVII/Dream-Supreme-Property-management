@@ -28,7 +28,15 @@ interface ParsedTransaction {
   amount: number;
   matchedLeaseId: string | null;
   matchedLeaseName: string | null;
-  status: "pending" | "reconciled" | "failed";
+  /**
+   * How the lease was identified. Only "reference" is auto-reconciled: a
+   * payment reference is issued by the agency and is unique, whereas a tenant
+   * name appearing in free-text bank narration is a guess. Misallocating money
+   * in a section 86 trust account is a regulatory problem, not a cosmetic one.
+   */
+  matchBasis: "reference" | "name" | "ambiguous" | null;
+  status: "pending" | "reconciled" | "failed" | "skipped";
+  note?: string;
 }
 
 export function ReconciliationContent() {
@@ -46,15 +54,18 @@ export function ReconciliationContent() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lease")
+        // Column names matter here: this query previously asked for
+        // `tenant_name`, `rent_amount_cents` and `lease_invoice.amount_cents`,
+        // none of which exist, so it returned HTTP 400 every time and nothing
+        // ever matched. The real columns are the tenant party's full_name,
+        // monthly_rent_cents and total_cents.
         .select(
           `
           id,
           payment_reference,
-          tenant_name,
-          rent_amount_cents,
-          lease_invoice (
-            id, status, amount_cents, due_on
-          )
+          monthly_rent_cents,
+          tenant:tenant_party_id ( full_name ),
+          lease_invoice ( id, status, total_cents, paid_cents, due_on )
         `,
         )
         .eq("agency_id", account!.agencyId)
@@ -91,6 +102,7 @@ export function ReconciliationContent() {
             amount,
             matchedLeaseId: null,
             matchedLeaseName: null,
+            matchBasis: null,
             status: "pending",
           };
         });
@@ -98,20 +110,58 @@ export function ReconciliationContent() {
         const deposits = parsed.filter((t) => t.amount > 0);
 
         if (leasesQuery.data) {
+          const leases = leasesQuery.data as any[];
           deposits.forEach((tx) => {
             const descLower = tx.description.toLowerCase();
-            const matchedLease = leasesQuery.data.find(
-              (l) =>
-                (l.payment_reference && descLower.includes(l.payment_reference.toLowerCase())) ||
-                (l.tenant_name && descLower.includes(l.tenant_name.toLowerCase())),
+
+            // A payment reference is issued by the agency and unique, so a hit
+            // is trustworthy on its own.
+            const byReference = leases.filter(
+              (l) => l.payment_reference && descLower.includes(l.payment_reference.toLowerCase()),
             );
 
-            if (matchedLease) {
-              tx.matchedLeaseId = matchedLease.id;
-              tx.matchedLeaseName = matchedLease.tenant_name;
+            // A tenant name inside free-text bank narration is a guess: common
+            // surnames collide, and the previous code silently took the first
+            // hit. Collect every candidate so an ambiguous one can be held
+            // back rather than allocated to whichever lease sorted first.
+            const byName = leases.filter((l) => {
+              const name: string = l.tenant?.full_name ?? "";
+              return name.length >= 4 && descLower.includes(name.toLowerCase());
+            });
+
+            const nameOf = (lease: any) => lease.tenant?.full_name ?? "Unknown tenant";
+
+            if (byReference.length === 1) {
+              tx.matchedLeaseId = byReference[0].id;
+              tx.matchedLeaseName = nameOf(byReference[0]);
+              tx.matchBasis = "reference";
+            } else if (byReference.length > 1) {
+              tx.matchBasis = "ambiguous";
+              tx.note = `${byReference.length} leases share this payment reference`;
+            } else if (byName.length === 1) {
+              tx.matchedLeaseId = byName[0].id;
+              tx.matchedLeaseName = nameOf(byName[0]);
+              tx.matchBasis = "name";
+              tx.note = "Matched on tenant name — confirm before reconciling";
+            } else if (byName.length > 1) {
+              tx.matchBasis = "ambiguous";
+              tx.note = `Matches ${byName.length} tenants by name`;
             }
           });
         }
+
+        // A bank statement re-uploaded by mistake would otherwise be recorded
+        // twice. Identical date+amount+description rows inside one file are
+        // usually genuine repeats, so flag rather than drop them.
+        const seen = new Map<string, number>();
+        deposits.forEach((tx) => {
+          const key = `${tx.date}|${tx.amount}|${tx.description}`;
+          const count = (seen.get(key) ?? 0) + 1;
+          seen.set(key, count);
+          if (count > 1) {
+            tx.note = `Duplicate of an earlier row in this file (#${count})`;
+          }
+        });
 
         setTransactions(deposits);
       },
@@ -122,10 +172,27 @@ export function ReconciliationContent() {
   };
 
   const handleReconcileAll = async () => {
-    const matchedTxs = transactions.filter((t) => t.matchedLeaseId && t.status === "pending");
+    // Reference matches only. A tenant-name match is a guess at whose money
+    // this is, and this writes to a section 86 trust account — so those are
+    // left for a human to confirm rather than posted automatically.
+    const matchedTxs = transactions.filter(
+      (t) => t.matchedLeaseId && t.status === "pending" && t.matchBasis === "reference",
+    );
+    const heldBack = transactions.filter(
+      (t) => t.status === "pending" && t.matchBasis !== "reference" && t.matchBasis !== null,
+    ).length;
+
     if (matchedTxs.length === 0) {
-      toast.error("No matched transactions to reconcile.");
+      toast.error(
+        heldBack > 0
+          ? "No transactions matched on payment reference. Name-only matches must be confirmed manually."
+          : "No matched transactions to reconcile.",
+      );
       return;
+    }
+
+    if (heldBack > 0) {
+      toast.info(`${heldBack} transaction(s) held back for manual review.`);
     }
 
     setIsProcessing(true);
@@ -137,15 +204,12 @@ export function ReconciliationContent() {
   };
 
   const reconcileMatchedTransactions = async (matchedTxs: ParsedTransaction[]) => {
-    // Fetch every outstanding invoice for the matched leases in one batched
-    // query instead of one query per transaction, then deterministically hand
-    // out invoices in due-on order per lease (mirrors the old per-tx
-    // "earliest outstanding invoice" lookup for leases with multiple matched
-    // deposits in the same batch, without a network round trip per tx).
+    // Outstanding invoices per lease, oldest first, so a deposit settles the
+    // longest-standing debt first.
     const leaseIds = [...new Set(matchedTxs.map((t) => t.matchedLeaseId!))];
     const { data: outstandingInvoices } = await supabase
       .from("lease_invoice")
-      .select("*")
+      .select("id, lease_id, total_cents, paid_cents, status, due_on")
       .in("lease_id", leaseIds)
       .in("status", ["draft", "issued", "overdue"])
       .order("due_on", { ascending: true });
@@ -153,14 +217,45 @@ export function ReconciliationContent() {
     const invoiceQueueByLease = new Map<string, any[]>();
     for (const inv of outstandingInvoices ?? []) {
       const queue = invoiceQueueByLease.get(inv.lease_id) ?? [];
-      queue.push(inv);
+      queue.push({ ...inv });
       invoiceQueueByLease.set(inv.lease_id, queue);
     }
 
-    const matchedInvoiceByTxId = new Map<string, any>();
+    // Allocate each deposit across that lease's outstanding invoices by the
+    // amount actually received. The previous version marked the first invoice
+    // `paid` for its full value regardless of the deposit, so a R500 payment
+    // closed a R10 000 invoice and the shortfall vanished.
+    const invoiceUpdates = new Map<string, { paid_cents: number; status: string }>();
+    const allocationByTxId = new Map<string, number>();
+
     for (const tx of matchedTxs) {
-      const inv = invoiceQueueByLease.get(tx.matchedLeaseId!)?.shift();
-      if (inv) matchedInvoiceByTxId.set(tx.id, inv);
+      let remaining = Math.round(tx.amount * 100);
+      const queue = invoiceQueueByLease.get(tx.matchedLeaseId!) ?? [];
+
+      while (remaining > 0 && queue.length > 0) {
+        const invoice = queue[0];
+        const owed = invoice.total_cents - invoice.paid_cents;
+        if (owed <= 0) {
+          queue.shift();
+          continue;
+        }
+        const applied = Math.min(owed, remaining);
+        invoice.paid_cents += applied;
+        remaining -= applied;
+
+        invoiceUpdates.set(invoice.id, {
+          paid_cents: invoice.paid_cents,
+          // Only fully settled invoices become `paid`; a part payment stays
+          // outstanding so it still shows up as owing.
+          status: invoice.paid_cents >= invoice.total_cents ? "paid" : invoice.status,
+        });
+
+        if (invoice.paid_cents >= invoice.total_cents) queue.shift();
+      }
+
+      // Anything left over is still banked to the trust account — it is the
+      // tenant's money either way — it simply is not allocated to an invoice.
+      allocationByTxId.set(tx.id, Math.round(tx.amount * 100) - remaining);
     }
 
     const results = await Promise.allSettled(
@@ -178,40 +273,59 @@ export function ReconciliationContent() {
     );
 
     const paidOn = new Date().toISOString().split("T")[0];
-    const invoiceUpdates: { id: string; status: string; paid_cents: number; paid_on: string }[] =
-      [];
     let successCount = 0;
+    const settledInvoiceIds = new Set<string>();
 
     results.forEach((result, i) => {
       const tx = matchedTxs[i];
       if (result.status === "fulfilled") {
         tx.status = "reconciled";
         successCount++;
-        const inv = matchedInvoiceByTxId.get(tx.id);
-        if (inv) {
-          invoiceUpdates.push({
-            id: inv.id,
-            status: "paid",
-            paid_cents: inv.amount_cents,
-            paid_on: paidOn,
-          });
+        const allocated = allocationByTxId.get(tx.id) ?? 0;
+        const deposited = Math.round(tx.amount * 100);
+        if (allocated < deposited) {
+          tx.note = `${zar(deposited - allocated, { decimals: false })} not allocated to an invoice`;
         }
       } else {
         console.error("Failed to reconcile tx", tx, result.reason);
         tx.status = "failed";
+        // The ledger entry failed, so its invoice allocation must not be
+        // written either.
+        for (const invoice of invoiceQueueByLease.get(tx.matchedLeaseId!) ?? []) {
+          settledInvoiceIds.add(invoice.id);
+        }
       }
     });
 
-    if (invoiceUpdates.length > 0) {
-      const { error: invoiceError } = await supabase.from("lease_invoice").upsert(invoiceUpdates);
-      if (invoiceError) {
-        toast.error(`Some invoices could not be marked paid: ${invoiceError.message}`);
-      }
+    // Update invoices individually: an upsert of partial columns fails the
+    // NOT NULL constraints on lease_id/period_start/total_cents, which is why
+    // the previous version could never mark anything paid.
+    const failedLeaseIds = new Set(
+      matchedTxs.filter((t) => t.status === "failed").map((t) => t.matchedLeaseId),
+    );
+    let invoiceErrors = 0;
+    for (const [invoiceId, update] of invoiceUpdates) {
+      const invoice = (outstandingInvoices ?? []).find((row: any) => row.id === invoiceId);
+      if (invoice && failedLeaseIds.has(invoice.lease_id)) continue;
+
+      const { error } = await supabase
+        .from("lease_invoice")
+        .update({
+          paid_cents: update.paid_cents,
+          status: update.status,
+          paid_on: update.status === "paid" ? paidOn : null,
+        })
+        .eq("id", invoiceId);
+      if (error) invoiceErrors++;
+    }
+
+    if (invoiceErrors > 0) {
+      toast.error(`${invoiceErrors} invoice(s) could not be updated.`);
     }
 
     setTransactions([...transactions]);
-    queryClient.invalidateQueries({ queryKey: ["leases-for-recon"] });
-    toast.success(`Successfully reconciled ${successCount} transactions.`);
+    void queryClient.invalidateQueries({ queryKey: ["leases-for-recon"] });
+    toast.success(`Reconciled ${successCount} of ${matchedTxs.length} transactions.`);
   };
 
   return (
@@ -259,15 +373,27 @@ export function ReconciliationContent() {
                   <TableCell className="font-medium text-sm">{tx.description}</TableCell>
                   <TableCell className="text-emerald-500 font-medium">+{zar(tx.amount)}</TableCell>
                   <TableCell>
-                    {tx.matchedLeaseName ? (
-                      <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20">
-                        {tx.matchedLeaseName}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-amber-500 border-amber-500/20">
-                        Unmatched
-                      </Badge>
-                    )}
+                    <div className="space-y-1">
+                      {tx.matchedLeaseName ? (
+                        <Badge
+                          className={
+                            tx.matchBasis === "reference"
+                              ? "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20"
+                              : "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border-amber-500/20"
+                          }
+                        >
+                          {tx.matchedLeaseName}
+                          {tx.matchBasis === "reference" ? " · ref" : " · name"}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-amber-500 border-amber-500/20">
+                          {tx.matchBasis === "ambiguous" ? "Ambiguous" : "Unmatched"}
+                        </Badge>
+                      )}
+                      {tx.note && (
+                        <p className="text-[11px] leading-snug text-muted-foreground">{tx.note}</p>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     {tx.status === "reconciled" ? (
