@@ -481,3 +481,27 @@ The other two tabs are administrator-only:
 **FICA Register is unchanged**: it reads `deal_party`, whose policy is `can_access_deal(deal_id)`, so an agent already saw only parties on deals they are on. That is client data scoped by deal access, not colleague data.
 
 Both route guards live in small wrapper components rather than inside the page components. Placing an early return above a component's own `useState`/`useMemo` calls violates the rules of hooks — ESLint caught 16 such errors on the first attempt.
+
+## 18. NULL-Role Guard Regression Was Still Live (`20260819140000`–`20260819140200`)
+
+CI's schema-drift check (`Check live schema matches migrations`, added for the incident described in `20260818000006`) had been failing on every push since 2026-08-18. Reconciling that drift — replaying it with `supabase db diff --linked` — surfaced a second, independent problem: production's `calculate_deal_commission(uuid, uuid)`, the two-argument overload directly granted to `authenticated` and callable as a PostgREST RPC, still had the *unguarded* form from before `20260818000008`.
+
+### Why the earlier fix didn't take
+
+`20260818000008` added a `p_override boolean default false` parameter to `calculate_deal_commission` and rewrote the guard to `coalesce(public.get_current_role()::text, '') not in (...)`. But `create or replace function` with a different argument list creates a **new overload** rather than replacing the existing one — Postgres resolves by signature, not by name. The two-argument function every other write path calls was left behind untouched, still carrying the pre-fix guard, alongside the new three-argument function that only the internal `transition_deal` → `calculate_deal_commission(id, null, p_override)` call path reaches.
+
+### The same defect class was live in four more functions
+
+Querying the live database for every function still matching the raw (uncoalesced) form turned up:
+
+- `transition_deal`'s own override guard — `p_override and public.get_current_role() not in (...)`, which is NULL (not true) when the role is NULL, so a caller in that state could pass `p_override = true` and skip stage-gate validation entirely;
+- `popia_lookup_party`, `popia_export_party_data`, `popia_erase_party_data` — all three POPIA subject-data RPCs;
+- `upsert_ffc_certificate`.
+
+None of these had ever been touched by a coalesce fix; they simply carried the same pattern the `20260817000012`/`20260818000008` fixes were written to eliminate, undetected because nothing was diffing the live database against the migration history until the CI check above existed — and that check itself only started failing loudly once this migration set tried to capture the drift.
+
+All five are now fixed with the same one-line change: `public.get_current_role()` → `coalesce(public.get_current_role()::text, '')` in the guard, signature and rest of the body unchanged. Verified against the live database that no function under `public` still matches the raw pattern.
+
+### CI itself was also broken
+
+Independently, the root Vitest run had been failing every push because it picked up `workers/property24-sync`'s tests without that package's own dependencies (`cheerio`, etc.) installed — it's a separate npm package with its own `package.json` and test script, never actually exercised in CI. `vite.config.ts` now excludes `workers/**` from the root run, and a dedicated CI job installs and runs that package's own 23 tests.
