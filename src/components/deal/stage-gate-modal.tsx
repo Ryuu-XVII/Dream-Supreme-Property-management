@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import type { ComponentType } from "react";
 import { STAGES } from "@/types";
 import { stageToDb } from "@/lib/domain";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -89,6 +91,87 @@ export function StageGateModal({
     targetStage === "Conveyancing" ||
     (stageToDb as Record<string, string>)[targetStage] === "conveyancing";
 
+  // Only the requirement that actually gates leaving the deal's *current*
+  // stage is shown — not every requirement that exists anywhere in the
+  // pipeline. transition_deal enforces exactly these same checks per stage
+  // (see DATABASE_SCHEMA_AND_RLS.md #22).
+  interface Requirement {
+    key: string;
+    label: string;
+    icon: ComponentType<{ className?: string }>;
+    met: boolean;
+    metLabel: string;
+    unmetLabel: string;
+  }
+  const hasMandateDoc = deal?.documents?.some((d: any) => d.category === "mandate");
+  const hasOtpDoc = deal?.documents?.some((d: any) => d.category === "otp");
+  const requirements: Requirement[] = (() => {
+    switch (deal?.stage) {
+      case "Listing & Negotiation":
+        return [
+          {
+            key: "mandate",
+            label: "Signed Mandate",
+            icon: FileText,
+            met: Boolean(deal?.mandateSigned && deal?.mandateExpiry),
+            metLabel: "Signed",
+            unmetLabel: "Not Signed",
+          },
+          {
+            key: "offer",
+            label: "Offer Captured",
+            icon: ShieldAlert,
+            met: (deal?.offers?.length ?? 0) > 0,
+            metLabel: "Captured",
+            unmetLabel: "None Yet",
+          },
+        ];
+      case "OTP Signed":
+        return [
+          {
+            key: "otp",
+            label: "Sale Price & OTP Date",
+            icon: FileText,
+            met: Boolean(deal?.salePrice > 0 && deal?.otpSigned),
+            metLabel: "Set",
+            unmetLabel: "Missing",
+          },
+          {
+            key: "docs",
+            label: "Signed Mandate & OTP Docs",
+            icon: FileText,
+            met: Boolean(hasMandateDoc && hasOtpDoc),
+            metLabel: "Uploaded",
+            unmetLabel: "Missing",
+          },
+        ];
+      case "Conditions Pending":
+        return [
+          {
+            key: "conditions",
+            label: "Suspensive Conditions",
+            icon: ShieldAlert,
+            met: !hasPendingConditions,
+            metLabel: "Fulfilled / Resolved",
+            unmetLabel: `${pendingConditions.length} Pending`,
+          },
+        ];
+      case "Conveyancing":
+        return [
+          {
+            key: "conveyancer",
+            label: "Appointed Conveyancer",
+            icon: Landmark,
+            met: Boolean(deal?.conveyancer && deal.conveyancer !== "Not appointed"),
+            metLabel: "Appointed",
+            unmetLabel: "Not Appointed",
+          },
+        ];
+      default:
+        return [];
+    }
+  })();
+
   const handleConfirmTransition = async () => {
     if (isReadOnly) {
       toast.info("Read-only mode: exit impersonation to advance stages.");
@@ -131,11 +214,19 @@ export function StageGateModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-display text-lg">
-            Advance to Stage: <Badge variant="secondary">{targetStage}</Badge>
+          <DialogTitle className="flex flex-wrap items-center gap-2 font-display text-lg">
+            {deal?.stage && (
+              <>
+                <Badge variant="outline" className="text-muted-foreground">
+                  {deal.stage}
+                </Badge>
+                <ArrowRight className="size-4 text-muted-foreground" />
+              </>
+            )}
+            <Badge variant="secondary">{targetStage}</Badge>
           </DialogTitle>
           <DialogDescription>
-            Review prerequisites and progress requirements before advancing deal{" "}
+            Review what's required before advancing deal{" "}
             <span className="font-mono font-semibold text-foreground">
               {deal?.reference || deal?.ref}
             </span>
@@ -184,76 +275,43 @@ export function StageGateModal({
             </div>
           )}
 
-          {/* Requirements Checklist Card */}
+          {/* Requirements Checklist Card — only what actually gates this transition */}
           <div className="rounded-xl border border-border bg-card/60 p-4 space-y-3">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <CheckCircle2 className="size-4 text-primary" /> Stage Checklist Highlights
+              <CheckCircle2 className="size-4 text-primary" /> Requirements to Advance
             </h4>
 
-            <div className="space-y-2.5 text-xs">
-              <div className="flex items-center justify-between border-b border-border/40 pb-2">
-                <span className="flex items-center gap-2 text-muted-foreground">
-                  <FileText className="size-3.5" /> Signed Mandate & OTP Docs
-                </span>
-                {deal?.documents?.some((d: any) => d.category === "otp") ? (
-                  <Badge
-                    variant="outline"
-                    className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+            {requirements.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                No additional requirements for this stage — ready to advance.
+              </p>
+            ) : (
+              <div className="space-y-2.5 text-xs">
+                {requirements.map((req, i) => (
+                  <div
+                    key={req.key}
+                    className={cn(
+                      "flex items-center justify-between",
+                      i < requirements.length - 1 && "border-b border-border/40 pb-2",
+                    )}
                   >
-                    Uploaded
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant="outline"
-                    className="bg-amber-500/10 text-amber-600 border-amber-500/30"
-                  >
-                    Pending OTP
-                  </Badge>
-                )}
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <req.icon className="size-3.5" /> {req.label}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className={
+                        req.met
+                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                          : "bg-amber-500/10 text-amber-600 border-amber-500/30"
+                      }
+                    >
+                      {req.met ? req.metLabel : req.unmetLabel}
+                    </Badge>
+                  </div>
+                ))}
               </div>
-
-              <div className="flex items-center justify-between border-b border-border/40 pb-2">
-                <span className="flex items-center gap-2 text-muted-foreground">
-                  <ShieldAlert className="size-3.5" /> Suspensive Conditions
-                </span>
-                {!hasPendingConditions ? (
-                  <Badge
-                    variant="outline"
-                    className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
-                  >
-                    Fulfilled / Resolved
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant="outline"
-                    className="bg-amber-500/10 text-amber-600 border-amber-500/30"
-                  >
-                    {pendingConditions.length} Pending
-                  </Badge>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-2 text-muted-foreground">
-                  <Landmark className="size-3.5" /> Appointed Conveyancer
-                </span>
-                {deal?.conveyancer && deal.conveyancer !== "Not appointed" ? (
-                  <Badge
-                    variant="outline"
-                    className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
-                  >
-                    Appointed
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant="outline"
-                    className="bg-amber-500/10 text-amber-600 border-amber-500/30"
-                  >
-                    Not Appointed
-                  </Badge>
-                )}
-              </div>
-            </div>
+            )}
           </div>
 
           <div className="space-y-1.5">
