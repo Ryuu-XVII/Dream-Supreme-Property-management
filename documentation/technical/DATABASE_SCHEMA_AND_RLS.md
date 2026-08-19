@@ -505,3 +505,15 @@ All five are now fixed with the same one-line change: `public.get_current_role()
 ### CI itself was also broken
 
 Independently, the root Vitest run had been failing every push because it picked up `workers/property24-sync`'s tests without that package's own dependencies (`cheerio`, etc.) installed — it's a separate npm package with its own `package.json` and test script, never actually exercised in CI. `vite.config.ts` now excludes `workers/**` from the root run, and a dedicated CI job installs and runs that package's own 23 tests.
+
+## 19. Missing `'archived'` Value on `commission_calc_status` (`20260819160000`)
+
+Every version of `calculate_deal_commission` since `20260731000000_cascading_commissions.sql` has superseded a deal's prior provisional commission calculation with:
+
+```sql
+update public.commission_calculation set status = 'archived' where deal_id = p_deal_id and status = 'provisional';
+```
+
+but `commission_calc_status` was only ever defined as `('provisional', 'confirmed', 'reversed')` — `'archived'` was never a member of the enum. Any deal being recalculated — re-advancing to `registered` after an earlier provisional calculation already existed for it — hit `invalid input value for enum commission_calc_status: "archived"` and the entire stage transition failed, surfaced to the agent as a generic "Stage Gate Requirement Pending" error with no indication the root cause was a schema defect rather than an unmet requirement.
+
+Fixed additively with `alter type public.commission_calc_status add value 'archived'`, which requires no data rewrite and does not affect any existing row.
