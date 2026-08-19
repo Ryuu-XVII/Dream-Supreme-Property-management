@@ -43,16 +43,10 @@ export interface Property {
 }
 
 export const STAGES = [
-  "Mandate Signed",
-  "Listed/Marketing",
-  "Offer Received",
+  "Listing & Negotiation",
   "OTP Signed",
   "Conditions Pending",
-  "Conveyancer Instructed",
-  "Compliance Certs",
-  "Transfer Duty",
-  "Rates & Levy Clearance",
-  "Documents & Guarantees",
+  "Conveyancing",
   "Lodged",
   "Registered",
   "Commission Released",

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Search, FileText, History, Loader2 } from "lucide-react";
 import { dateFmt } from "@/lib/format";
+import { stageFromDb } from "@/lib/domain";
 import { usePipelineDeals, type PipelineDeal } from "@/data/deals";
 
 export const Route = createFileRoute("/admin/deals")({
@@ -99,7 +100,7 @@ function AdminDeals() {
                           variant="outline"
                           className="border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
                         >
-                          {d.stage}
+                          {stageFromDb[d.stage] ?? d.stage}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">

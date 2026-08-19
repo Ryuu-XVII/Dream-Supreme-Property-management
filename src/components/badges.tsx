@@ -8,11 +8,11 @@ import type { User } from "@/types";
 export function StageBadge({ stage, large }: { stage: Stage; large?: boolean }) {
   const idx = STAGES.indexOf(stage);
   const tone =
-    idx >= 11
+    idx >= 5
       ? "bg-success/12 text-success border-success/30"
-      : idx >= 7
+      : idx >= 4
         ? "bg-info/12 text-info border-info/30"
-        : idx >= 4
+        : idx >= 2
           ? "bg-warning/15 text-warning border-warning/40"
           : "bg-muted text-muted-foreground border-border";
   return (

@@ -83,8 +83,8 @@ function ConveyancerPage() {
   }
 
   const displayStage = request
-    ? ((stageFromDb[request.stage] ?? "Documents & Guarantees") as Stage)
-    : "Documents & Guarantees";
+    ? ((stageFromDb[request.stage] ?? "Conveyancing") as Stage)
+    : "Conveyancing";
 
   return (
     <div className="flex min-h-screen flex-col bg-background">

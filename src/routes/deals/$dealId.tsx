@@ -94,7 +94,7 @@ function DealDetailPage() {
 
   const humanStage = STAGES.includes(deal.stage)
     ? deal.stage
-    : stageFromDb[deal.stage] || "Mandate Signed";
+    : stageFromDb[deal.stage] || "Listing & Negotiation";
   const currentStageIdx = STAGES.findIndex((s) => s === humanStage);
 
   const handleRevertStage = async () => {

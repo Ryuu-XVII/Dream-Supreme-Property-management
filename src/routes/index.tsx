@@ -39,16 +39,10 @@ export const Route = createFileRoute("/")({
 });
 
 const shortStage: Record<string, string> = {
-  "Mandate Signed": "Mandate",
-  "Listed/Marketing": "Listed",
-  "Offer Received": "Offer",
+  "Listing & Negotiation": "Listing",
   "OTP Signed": "OTP",
   "Conditions Pending": "Conditions",
-  "Conveyancer Instructed": "Conveyancer",
-  "Compliance Certs": "Compliance",
-  "Transfer Duty": "Duty",
-  "Rates & Levy Clearance": "Clearance",
-  "Documents & Guarantees": "Docs",
+  Conveyancing: "Conveyancing",
   Lodged: "Lodged",
   Registered: "Registered",
   "Commission Released": "Paid",
@@ -103,7 +97,7 @@ function Index() {
   const registeringThisMonth = useMemo(
     () =>
       deals.filter((d) => {
-        if (!d.registeredAt) return d.stage === "Lodged" || d.stage === "Documents & Guarantees";
+        if (!d.registeredAt) return d.stage === "Lodged" || d.stage === "Conveyancing";
         const r = new Date(d.registeredAt);
         return r.getMonth() === today.getMonth() && r.getFullYear() === today.getFullYear();
       }).length,

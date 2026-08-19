@@ -7,10 +7,11 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   // `.wrangler` holds bundles wrangler generates while running the
-  // property24-sync Worker locally. Linting build output buries real findings
-  // under thousands of formatting errors.
+  // property24-sync Worker locally, and `supabase/.temp` holds bundles
+  // `supabase start` generates while running the local dev stack. Linting
+  // build output buries real findings under thousands of formatting errors.
   {
-    ignores: ["dist", ".output", ".vinxi", "**/.wrangler/**"],
+    ignores: ["dist", ".output", ".vinxi", "**/.wrangler/**", "supabase/.temp/**"],
   },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],

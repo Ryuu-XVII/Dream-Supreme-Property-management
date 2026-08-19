@@ -675,7 +675,7 @@ export function useMyEarnings() {
         const grossComm = (d.sale_price_cents * (d.commission_rate_bps || 0)) / 10000;
         const netComm = Math.round((grossComm * splitPct) / 100);
 
-        if (d.stage === "registered" || d.stage === "commission_paid") {
+        if (d.stage === "registered" || d.stage === "commission_released") {
           ytdEarnings += netComm;
           registeredCount++;
           dealRows.push({

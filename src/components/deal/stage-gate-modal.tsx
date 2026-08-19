@@ -86,8 +86,8 @@ export function StageGateModal({
   });
   const hasPendingConditions = pendingConditions.length > 0;
   const isMovingPastConditions =
-    targetStage === "Conveyancer Instructed" ||
-    (stageToDb as Record<string, string>)[targetStage] === "conveyancer_instructed";
+    targetStage === "Conveyancing" ||
+    (stageToDb as Record<string, string>)[targetStage] === "conveyancing";
 
   const handleConfirmTransition = async () => {
     if (isReadOnly) {

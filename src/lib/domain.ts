@@ -1,24 +1,32 @@
 import type { AgentSeniority, ConditionStatus, ConditionType, EntityType, Stage } from "@/types";
 
 export const stageToDb: Record<Stage, string> = {
-  "Mandate Signed": "mandate_signed",
-  "Listed/Marketing": "listed_marketing",
-  "Offer Received": "offer_received",
+  "Listing & Negotiation": "listing_negotiation",
   "OTP Signed": "otp_signed",
   "Conditions Pending": "suspensive_conditions_pending",
-  "Conveyancer Instructed": "conveyancer_instructed",
-  "Compliance Certs": "compliance_certificates",
-  "Transfer Duty": "transfer_duty_vat",
-  "Rates & Levy Clearance": "rates_levy_clearance",
-  "Documents & Guarantees": "documents_signed_guarantees",
+  Conveyancing: "conveyancing",
   Lodged: "lodged",
   Registered: "registered",
   "Commission Released": "commission_released",
 };
 
-export const stageFromDb = Object.fromEntries(
-  Object.entries(stageToDb).map(([label, value]) => [value, label]),
-) as Record<string, Stage>;
+// Includes the pre-consolidation (2026-08-19) stage values, which never get
+// written to deal.stage anymore but still appear in deal_stage_history rows
+// that predate the consolidation and are never rewritten — this keeps that
+// history displaying a sensible current-model label instead of `undefined`.
+export const stageFromDb: Record<string, Stage> = {
+  ...(Object.fromEntries(
+    Object.entries(stageToDb).map(([label, value]) => [value, label]),
+  ) as Record<string, Stage>),
+  mandate_signed: "Listing & Negotiation",
+  listed_marketing: "Listing & Negotiation",
+  offer_received: "Listing & Negotiation",
+  conveyancer_instructed: "Conveyancing",
+  compliance_certificates: "Conveyancing",
+  transfer_duty_vat: "Conveyancing",
+  rates_levy_clearance: "Conveyancing",
+  documents_signed_guarantees: "Conveyancing",
+};
 
 export const conditionTypeFromDb: Record<string, ConditionType> = {
   bond_approval: "Bond Approval",

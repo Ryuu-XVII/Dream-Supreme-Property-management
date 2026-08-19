@@ -16,6 +16,17 @@ describe("database domain mapping", () => {
     }
   });
 
+  it("maps pre-consolidation stage values onto their merged label", () => {
+    expect(stageFromDb.mandate_signed).toBe("Listing & Negotiation");
+    expect(stageFromDb.listed_marketing).toBe("Listing & Negotiation");
+    expect(stageFromDb.offer_received).toBe("Listing & Negotiation");
+    expect(stageFromDb.conveyancer_instructed).toBe("Conveyancing");
+    expect(stageFromDb.compliance_certificates).toBe("Conveyancing");
+    expect(stageFromDb.transfer_duty_vat).toBe("Conveyancing");
+    expect(stageFromDb.rates_levy_clearance).toBe("Conveyancing");
+    expect(stageFromDb.documents_signed_guarantees).toBe("Conveyancing");
+  });
+
   it("maps condition and entity values used by Supabase", () => {
     expect(conditionStatusFromDb.pending).toBe("Open");
     expect(conditionStatusFromDb.extended).toBe("Extended");

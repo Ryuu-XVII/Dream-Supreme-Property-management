@@ -43,16 +43,10 @@ const REPORT_CARDS = [
 ];
 
 const shortStage: Record<string, string> = {
-  "Mandate Signed": "Mandate",
-  "Listed/Marketing": "Listed",
-  "Offer Received": "Offer",
+  "Listing & Negotiation": "Listing",
   "OTP Signed": "OTP",
   "Conditions Pending": "Conditions",
-  "Conveyancer Instructed": "Conveyancer",
-  "Compliance Certs": "Compliance",
-  "Transfer Duty": "Duty",
-  "Rates & Levy Clearance": "Clearance",
-  "Documents & Guarantees": "Docs",
+  Conveyancing: "Conveyancing",
   Lodged: "Lodged",
   Registered: "Registered",
   "Commission Released": "Paid",

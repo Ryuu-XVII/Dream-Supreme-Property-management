@@ -531,3 +531,29 @@ The "Check live schema matches migrations" CI job (§18) had never once passed s
 It was real, just not a schema difference: `pg_get_functiondef()` on these 8 functions showed literal `\r\n` (CRLF) byte sequences embedded in the stored function body — `chr(13) || chr(10)` inside `prosrc`, confirmed with `prosrc like '%' || chr(13) || '%'`. At some point these 8 were applied directly to production from a Windows checkout (this repo's local git config uses `core.autocrlf=true`), and Postgres stored exactly the bytes it was sent, CRLF included. A migration replay on the Linux CI runner produces LF-only bodies for the identical logic, so the diff tool was correctly reporting a genuine byte-level mismatch on every run — it was never a false positive, just a cosmetic one that nonetheless failed a byte-for-byte comparison. It didn't reproduce locally because the local shadow database (built from the same on-disk migration files, subject to the same OS/git line-ending handling) ended up with the same line endings as what was live.
 
 Fixed by re-declaring all 8 functions with identical logic, sourced directly from `pg_get_functiondef()` output and written with LF-only line endings (verified with a byte-level check before pushing: zero `\r` bytes in the migration file). Verified against the live database afterward that no function under `public` still contains an embedded `\r`, and that `supabase db diff --linked` reports zero drift.
+
+## 22. Deal Pipeline Consolidated from 13 Stages to 7 (`20260819180000`, `20260819180100`)
+
+The `deal_stage` pipeline had 13 stages, but only 5 ever had a stage-gate check in `transition_deal`, and several were never independent decision points an agent acted on — they were parallel conveyancer admin (compliance certs, transfer duty & VAT, rates & levy clearance, documents & guarantees) or pre-contract housekeeping (mandate signed, listed/marketing, offer received) that got flattened into one sequential list.
+
+Consolidated to 7, losing no legal or financial gate:
+
+| New stage | Replaces |
+|---|---|
+| Listing & Negotiation | Mandate Signed, Listed/Marketing, Offer Received |
+| OTP Signed | *(unchanged)* |
+| Conditions Pending | *(unchanged)* |
+| Conveyancing | Conveyancer Instructed, Compliance Certs, Transfer Duty, Rates & Levy Clearance, Documents & Guarantees |
+| Lodged | *(unchanged)* |
+| Registered | *(unchanged)* |
+| Commission Released | *(unchanged)* |
+
+**Enum change is two migrations, not one.** `ALTER TYPE ... ADD VALUE` cannot be used in the same transaction as a statement that references the new value, so `20260819180000` only adds `listing_negotiation` and `conveyancing` to `public.deal_stage`; `20260819180100` (a separate migration, separate transaction) does everything that uses them — backfilling existing `deal.stage` rows, moving the column default, and rewriting `transition_deal` and `submit_conveyancer_status`.
+
+**Gate logic was merged, not dropped.** Advancing past "Listing & Negotiation" now requires both a signed mandate with an expiry date *and* at least one captured offer — the union of the old `mandate_signed` and `offer_received` checks. Advancing past "Conveyancing" still requires an appointed conveyancer — the old `conveyancer_instructed` check, now gating the whole consolidated phase instead of just its first step.
+
+**History is not rewritten.** The 8 superseded enum values (`mandate_signed`, `listed_marketing`, `offer_received`, `conveyancer_instructed`, `compliance_certificates`, `transfer_duty_vat`, `rates_levy_clearance`, `documents_signed_guarantees`) stay valid enum members — Postgres cannot cheaply drop them — but are never written to `deal.stage` again. Existing `deal_stage_history` rows keep whatever stage was actually current at the time, which is the accurate record. `src/lib/domain.ts`'s `stageFromDb` maps all 8 legacy values onto their new consolidated label so old history still renders a sensible name instead of `undefined`.
+
+**Two pre-existing bugs surfaced and fixed while touching this code**, unrelated to the consolidation itself but found because they used the same stage values:
+- `src/components/admin/admin-deals-pipeline.tsx` compared `usePipelineDeals()`'s raw db-value stage (e.g. `"otp_signed"`) against UI labels (e.g. `"OTP Signed"`) — the comparison could never match, so its progress stepper always showed step 1 and its active/closed filter always treated every deal as active. Fixed by mapping through `stageFromDb` once per deal.
+- `src/data/deals.ts`'s agent-earnings query checked `d.stage === "commission_paid"`, which was never a valid `deal_stage` value (should have been `commission_released`) — a deal that reached Commission Released was silently excluded from YTD earnings. Fixed to check the real value.

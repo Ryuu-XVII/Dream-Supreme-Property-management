@@ -72,7 +72,7 @@ export function useDashboardData() {
         id: deal.id,
         ref: deal.reference,
         propertyId: deal.property?.id,
-        stage: stageFromDb[deal.stage] ?? "Mandate Signed",
+        stage: stageFromDb[deal.stage] ?? "Listing & Negotiation",
         cancelled:
           deal.status === "cancelled" ? { reason: "Cancelled", at: deal.updated_at } : undefined,
         salePrice: deal.sale_price_cents,

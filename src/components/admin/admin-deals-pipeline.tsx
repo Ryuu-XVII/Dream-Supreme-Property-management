@@ -3,6 +3,8 @@ import { GlassCard } from "@/components/ui-kit";
 import { usePipelineDeals, type PipelineDeal } from "@/data/deals";
 import { FileText, ArrowRight, Eye, History, Loader2 } from "lucide-react";
 import { dateFmt, dateTimeFmt } from "@/lib/format";
+import { stageFromDb } from "@/lib/domain";
+import { STAGES, type Stage } from "@/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,25 +15,16 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 
-// Simplified stages for visualization
-const pipelineStages = [
-  "Mandate Signed",
-  "OTP Signed",
-  "Conditions Pending",
-  "Conveyancer Instructed",
-  "Registered",
-];
-
 export function AdminDealsPipeline() {
   const [inspectingDeal, setInspectingDeal] = useState<PipelineDeal | null>(null);
   const { data: deals = [], isLoading } = usePipelineDeals();
 
-  // We'll show a simplified pipeline progression for active deals
-  // We can group deals by stage, or just list the active ones with a timeline stepper
-
-  const activeDeals = deals.filter(
-    (d) => d.stage !== "Registered" && d.stage !== "Commission Released",
-  );
+  // usePipelineDeals returns the raw db stage value (e.g. "otp_signed"), not
+  // the UI label -- map it once here so both the progress stepper and the
+  // active/closed filter below compare against the same thing.
+  const activeDeals = deals
+    .map((d) => ({ ...d, stageLabel: stageFromDb[d.stage] ?? d.stage }))
+    .filter((d) => d.stageLabel !== "Registered" && d.stageLabel !== "Commission Released");
 
   if (isLoading) {
     return (
@@ -62,18 +55,7 @@ export function AdminDealsPipeline() {
 
         <div className="space-y-6 flex-1">
           {activeDeals.map((deal) => {
-            // Find the best matching simplified stage
-            let currentStageIdx = 0;
-            if (deal.stage === "OTP Signed") currentStageIdx = 1;
-            else if (deal.stage === "Conditions Pending" || deal.stage === "Offer Received")
-              currentStageIdx = 2;
-            else if (
-              deal.stage === "Conveyancer Instructed" ||
-              deal.stage === "Compliance Certs" ||
-              deal.stage === "Lodged"
-            )
-              currentStageIdx = 3;
-            else if (deal.stage === "Registered") currentStageIdx = 4;
+            const currentStageIdx = Math.max(0, STAGES.indexOf(deal.stageLabel as Stage));
 
             return (
               <div
@@ -107,15 +89,15 @@ export function AdminDealsPipeline() {
                   <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-200 dark:bg-slate-800 -translate-y-1/2 rounded-full" />
                   <div
                     className="absolute top-1/2 left-0 h-0.5 bg-indigo-500 -translate-y-1/2 transition-[width] duration-500 rounded-full"
-                    style={{ width: `${(currentStageIdx / (pipelineStages.length - 1)) * 100}%` }}
+                    style={{ width: `${(currentStageIdx / (STAGES.length - 1)) * 100}%` }}
                   />
 
                   <div className="relative flex justify-between">
-                    {pipelineStages.map((stage, idx) => {
+                    {STAGES.map((stage, idx) => {
                       const isCompleted = idx <= currentStageIdx;
                       const isCurrent = idx === currentStageIdx;
                       const isFirst = idx === 0;
-                      const isLast = idx === pipelineStages.length - 1;
+                      const isLast = idx === STAGES.length - 1;
 
                       return (
                         <div key={stage} className="relative flex flex-col items-center">
@@ -152,7 +134,7 @@ export function AdminDealsPipeline() {
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground">Status:</span>
                     <span className="font-medium text-indigo-600 dark:text-indigo-400">
-                      {deal.stage}
+                      {deal.stageLabel}
                     </span>
                   </div>
                   <Button
@@ -202,7 +184,7 @@ export function AdminDealsPipeline() {
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Current Stage</p>
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                    {inspectingDeal.stage}
+                    {stageFromDb[inspectingDeal.stage] ?? inspectingDeal.stage}
                   </span>
                 </div>
                 <div>
