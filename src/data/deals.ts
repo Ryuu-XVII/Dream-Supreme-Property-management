@@ -653,7 +653,8 @@ export function useMyEarnings() {
         .from("deal")
         .select(
           `
-          id, sale_price_cents, commission_rate_bps, status, stage, registration_date,
+          id, sale_price_cents, status, stage, registration_date,
+          mandate:mandate_id ( commission_rate_bps ),
           property:property_id ( address_line ),
           participants:deal_participant!inner ( user_account_id, role, split_value )
         `,
@@ -672,7 +673,7 @@ export function useMyEarnings() {
       for (const d of myDeals) {
         const myParticipant = d.participants.find((p: any) => p.user_account_id === userAccountId);
         const splitPct = myParticipant?.split_value || 0;
-        const grossComm = (d.sale_price_cents * (d.commission_rate_bps || 0)) / 10000;
+        const grossComm = (d.sale_price_cents * (d.mandate?.commission_rate_bps || 0)) / 10000;
         const netComm = Math.round((grossComm * splitPct) / 100);
 
         if (d.stage === "registered" || d.stage === "commission_released") {
