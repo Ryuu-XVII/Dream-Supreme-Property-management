@@ -308,124 +308,132 @@ function Index() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          <GlassCard>
+          <GlassCard className="flex h-104 flex-col">
             <h3 className="font-display text-base font-semibold">Urgent Conditions</h3>
             <p className="text-xs text-muted-foreground">Top 5 by days remaining</p>
-            {loading ? (
-              <div className="mt-4 space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />
-                ))}
-              </div>
-            ) : urgentConditions.length === 0 ? (
-              <EmptyState
-                title="No open conditions"
-                message="Every suspensive condition is resolved."
-              />
-            ) : (
-              <div className="mt-4 space-y-1">
-                {urgentConditions.map((c, i) => (
-                  <Link
-                    key={c.id}
-                    to={"/pipeline" as any}
-                    className="flex min-w-0 items-center gap-3 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-muted"
-                  >
-                    <StatusDot tone={urgencyOf(daysUntil(c.dueDate))} />
-                    <span className="min-w-0 flex-1 truncate">
-                      <span className="font-mono text-xs text-muted-foreground">{c.deal.ref}</span>{" "}
-                      <span className="truncate">{c.type}</span>
-                    </span>
-                    <UrgencyBadge dueDate={c.dueDate} status={c.status} />
-                  </Link>
-                ))}
-              </div>
-            )}
+            <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
+              {loading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />
+                  ))}
+                </div>
+              ) : urgentConditions.length === 0 ? (
+                <EmptyState
+                  title="No open conditions"
+                  message="Every suspensive condition is resolved."
+                />
+              ) : (
+                <div className="space-y-1">
+                  {urgentConditions.map((c, i) => (
+                    <Link
+                      key={c.id}
+                      to={"/pipeline" as any}
+                      className="flex min-w-0 items-center gap-3 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-muted"
+                    >
+                      <StatusDot tone={urgencyOf(daysUntil(c.dueDate))} />
+                      <span className="min-w-0 flex-1 truncate">
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {c.deal.ref}
+                        </span>{" "}
+                        <span className="truncate">{c.type}</span>
+                      </span>
+                      <UrgencyBadge dueDate={c.dueDate} status={c.status} />
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </GlassCard>
 
-          <GlassCard>
+          <GlassCard className="flex h-104 flex-col">
             <div className="flex items-center gap-2">
               <ShieldAlert className="size-4 text-warning" />
               <h3 className="font-display text-base font-semibold">FFC Alerts</h3>
             </div>
             <p className="text-xs text-muted-foreground">Missing or expiring within 30 days</p>
-            {loading ? (
-              <div className="mt-4 space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />
-                ))}
-              </div>
-            ) : ffcAlerts.length === 0 ? (
-              <EmptyState
-                title="All FFCs valid"
-                message="No agents have expiring or missing certificates."
-              />
-            ) : (
-              <div className="mt-4 space-y-2">
-                {ffcAlerts.map((u) => {
-                  const status = !u.ffc
-                    ? "Missing"
-                    : !u.ffc.expiry
-                      ? "Unknown"
-                      : daysUntil(u.ffc.expiry) < 0
-                        ? "Expired"
-                        : `Expires in ${daysUntil(u.ffc.expiry)}d`;
-                  return (
-                    <div
-                      key={u.id}
-                      className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-border/60 px-3 py-2"
-                    >
-                      <span className="min-w-0 truncate text-sm">{u.name}</span>
-                      <span
-                        className={
-                          "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium " +
-                          (status === "Missing" || status === "Expired"
-                            ? "border-destructive/30 bg-destructive/10 text-destructive"
-                            : "border-warning/40 bg-warning/15 text-warning")
-                        }
+            <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
+              {loading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />
+                  ))}
+                </div>
+              ) : ffcAlerts.length === 0 ? (
+                <EmptyState
+                  title="All FFCs valid"
+                  message="No agents have expiring or missing certificates."
+                />
+              ) : (
+                <div className="space-y-2">
+                  {ffcAlerts.map((u) => {
+                    const status = !u.ffc
+                      ? "Missing"
+                      : !u.ffc.expiry
+                        ? "Unknown"
+                        : daysUntil(u.ffc.expiry) < 0
+                          ? "Expired"
+                          : `Expires in ${daysUntil(u.ffc.expiry)}d`;
+                    return (
+                      <div
+                        key={u.id}
+                        className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-border/60 px-3 py-2"
                       >
-                        {status}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                        <span className="min-w-0 truncate text-sm">{u.name}</span>
+                        <span
+                          className={
+                            "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium " +
+                            (status === "Missing" || status === "Expired"
+                              ? "border-destructive/30 bg-destructive/10 text-destructive"
+                              : "border-warning/40 bg-warning/15 text-warning")
+                          }
+                        >
+                          {status}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </GlassCard>
 
-          <GlassCard>
+          <GlassCard className="flex h-104 flex-col">
             <h3 className="font-display text-base font-semibold">Recent Activity</h3>
             <p className="text-xs text-muted-foreground">Last 10 audit events</p>
-            {loading ? (
-              <div className="mt-4 space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />
-                ))}
-              </div>
-            ) : recentEvents.length === 0 ? (
-              <EmptyState
-                title="No recent activity"
-                message="No recent system actions or audit logs recorded."
-              />
-            ) : (
-              <ol className="mt-4 space-y-0 border-l border-border pl-4">
-                {recentEvents.map((e, i) => (
-                  <motion.li
-                    key={e.id}
-                    initial={{ opacity: 0, x: -6 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.03 }}
-                    className="relative pb-4 last:pb-0"
-                  >
-                    <span className="absolute -left-5.25 top-1 size-2.5 rounded-full bg-primary" />
-                    <p className="min-w-0 truncate text-sm">{e.summary}</p>
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                      {e.user} · {e.entityRef} · {relative(e.at)}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground/70">{dateTimeFmt(e.at)}</p>
-                  </motion.li>
-                ))}
-              </ol>
-            )}
+            <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
+              {loading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />
+                  ))}
+                </div>
+              ) : recentEvents.length === 0 ? (
+                <EmptyState
+                  title="No recent activity"
+                  message="No recent system actions or audit logs recorded."
+                />
+              ) : (
+                <ol className="space-y-0 border-l border-border pl-4">
+                  {recentEvents.map((e, i) => (
+                    <motion.li
+                      key={e.id}
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      className="relative pb-4 last:pb-0"
+                    >
+                      <span className="absolute -left-5.25 top-1 size-2.5 rounded-full bg-primary" />
+                      <p className="min-w-0 truncate text-sm">{e.summary}</p>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {e.user} · {e.entityRef} · {relative(e.at)}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70">{dateTimeFmt(e.at)}</p>
+                    </motion.li>
+                  ))}
+                </ol>
+              )}
+            </div>
           </GlassCard>
         </div>
       </div>
