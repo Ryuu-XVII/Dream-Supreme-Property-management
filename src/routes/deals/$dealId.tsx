@@ -227,9 +227,9 @@ function DealDetailPage() {
               <StatusDot tone={deal.status === "cancelled" ? "lapsed" : "safe"} />
             </div>
             <p className="text-sm text-muted-foreground">
-              {property?.address_line}, {property?.suburb}, {property?.city} —{" "}
+              {property?.address}, {property?.suburb}, {property?.city} —{" "}
               <span className="font-medium text-foreground">
-                {zar(deal.sale_price_cents, { decimals: false })}
+                {zar(deal.salePrice, { decimals: false })}
               </span>
             </p>
           </div>
