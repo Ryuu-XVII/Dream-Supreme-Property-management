@@ -1,0 +1,5 @@
+# Force LF regardless of local core.autocrlf. Migration file bytes are sent
+# almost verbatim to Postgres and stored in function bodies -- CRLF here
+# becomes a permanent, hard-to-spot difference from what a fresh migration
+# replay on Linux produces (see DATABASE_SCHEMA_AND_RLS.md #21).
+*.sql text eol=lf
