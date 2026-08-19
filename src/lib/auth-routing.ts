@@ -7,6 +7,7 @@ const PUBLIC_ROUTE_PREFIXES = [
   "/calculators",
   "/conveyancer",
   "/sign",
+  "/privacy",
 ] as const;
 
 export function isPublicPathname(pathname: string): boolean {

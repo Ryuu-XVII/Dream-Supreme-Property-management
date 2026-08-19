@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { m as motion } from "framer-motion";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { Mail, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,9 @@ const contactSchema = z.object({
   name: z.string().min(2, "Enter your full name"),
   email: z.string().min(1, "Email is required").email("Enter a valid email address"),
   telephone: z.string().min(10, "Enter a valid telephone number"),
+  privacyConsent: z.literal(true, {
+    message: "Please confirm you've read the privacy policy",
+  }),
 });
 type ContactForm = z.infer<typeof contactSchema>;
 
@@ -48,7 +52,7 @@ export function CalculatorShell({
   const [open, setOpen] = useState(false);
   const form = useForm<ContactForm>({
     resolver: zodResolver(contactSchema),
-    defaultValues: { name: "", email: "", telephone: "" },
+    defaultValues: { name: "", email: "", telephone: "", privacyConsent: false as unknown as true },
   });
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -58,7 +62,12 @@ export function CalculatorShell({
       p_full_name: values.name,
       p_email: values.email,
       p_mobile: values.telephone,
-      p_payload: { calculator: name, requestedResults: true },
+      p_payload: {
+        calculator: name,
+        requestedResults: true,
+        privacyConsent: true,
+        privacyConsentAt: new Date().toISOString(),
+      },
     });
     if (error) {
       toast.error(error.message);
@@ -173,6 +182,38 @@ export function CalculatorShell({
                       </p>
                     )}
                   </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-start gap-2">
+                      <Controller
+                        control={form.control}
+                        name="privacyConsent"
+                        render={({ field }) => (
+                          <Checkbox
+                            id="privacyConsent"
+                            checked={field.value === true}
+                            onCheckedChange={(checked) => field.onChange(checked === true)}
+                          />
+                        )}
+                      />
+                      <Label htmlFor="privacyConsent" className="text-xs font-normal leading-snug">
+                        I agree to my details being used to respond to this request, as described in
+                        the{" "}
+                        <Link
+                          to="/privacy"
+                          target="_blank"
+                          className="text-primary hover:underline"
+                        >
+                          Privacy Policy
+                        </Link>
+                        .
+                      </Label>
+                    </div>
+                    {form.formState.errors.privacyConsent && (
+                      <p className="text-xs text-destructive">
+                        {form.formState.errors.privacyConsent.message}
+                      </p>
+                    )}
+                  </div>
                   <DialogFooter>
                     <Button type="submit" className="w-full sm:w-auto">
                       Send my results
@@ -187,6 +228,10 @@ export function CalculatorShell({
 
       <footer className="border-t border-white/20 py-6 text-center text-xs text-muted-foreground">
         Powered by <span className="font-medium text-foreground">Dream Supreme Properties</span>
+        {" · "}
+        <Link to="/privacy" className="hover:underline">
+          Privacy Policy
+        </Link>
       </footer>
     </div>
   );

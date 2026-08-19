@@ -49,6 +49,21 @@ function isErrorLike(value: unknown): value is Error {
   return value instanceof Error;
 }
 
+// No monitoring vendor is wired in yet (see RELEASE_READINESS.md). Rather than
+// hardcode one, every Error that reaches console.error is forwarded here too, so
+// dropping in any provider's browser snippet (Sentry, Bugsnag, ...) that sets
+// window.Sentry.captureException later lights this up with zero code changes.
+function reportToMonitoringSink(error: Error) {
+  if (typeof window === "undefined") return;
+  try {
+    (
+      window as typeof window & { Sentry?: { captureException?: (e: unknown) => void } }
+    ).Sentry?.captureException?.(error);
+  } catch {
+    // A misbehaving monitoring snippet must never break error logging itself.
+  }
+}
+
 // Wrap console.error so errors logged by any layer — including h3's internal
 // unhandled-error logging, which this file cannot hook directly — are both
 // recorded for consumeLastCapturedError and expanded before serialization.
@@ -57,6 +72,7 @@ console.error = (...args: unknown[]) => {
   const expanded = args.map((arg) => {
     if (!isErrorLike(arg)) return arg;
     record(arg);
+    reportToMonitoringSink(arg);
     return describeError(arg);
   });
   originalConsoleError(...expanded);

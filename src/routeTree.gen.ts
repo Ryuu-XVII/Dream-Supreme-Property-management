@@ -19,6 +19,7 @@ import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MandatesRouteImport } from './routes/mandates'
 import { Route as PipelineRouteImport } from './routes/pipeline'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignRouteImport } from './routes/sign'
@@ -107,6 +108,11 @@ const MandatesRoute = MandatesRouteImport.update({
 const PipelineRoute = PipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -318,6 +324,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mandates': typeof MandatesRouteWithChildren
   '/pipeline': typeof PipelineRoute
+  '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sign': typeof SignRoute
@@ -368,6 +375,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mandates': typeof MandatesRouteWithChildren
   '/pipeline': typeof PipelineRoute
+  '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sign': typeof SignRoute
@@ -420,6 +428,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mandates': typeof MandatesRouteWithChildren
   '/pipeline': typeof PipelineRoute
+  '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sign': typeof SignRoute
@@ -473,6 +482,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mandates'
     | '/pipeline'
+    | '/privacy'
     | '/register'
     | '/reset-password'
     | '/sign'
@@ -523,6 +533,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mandates'
     | '/pipeline'
+    | '/privacy'
     | '/register'
     | '/reset-password'
     | '/sign'
@@ -574,6 +585,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mandates'
     | '/pipeline'
+    | '/privacy'
     | '/register'
     | '/reset-password'
     | '/sign'
@@ -626,6 +638,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MandatesRoute: typeof MandatesRouteWithChildren
   PipelineRoute: typeof PipelineRoute
+  PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignRoute: typeof SignRoute
@@ -725,6 +738,13 @@ declare module '@tanstack/react-router' {
       path: '/pipeline'
       fullPath: '/pipeline'
       preLoaderRoute: typeof PipelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -1056,6 +1076,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MandatesRoute: MandatesRouteWithChildren,
   PipelineRoute: PipelineRoute,
+  PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignRoute: SignRoute,
