@@ -92,6 +92,16 @@ function FicaRegister() {
           label: item.label,
           done: documents.some((document: any) => item.categories.includes(document.category)),
         }));
+        // fica_status is set by whoever captured the deal, from a dropdown --
+        // nothing stops "Complete" being chosen with no supporting documents
+        // actually uploaded. A compliance register showing "Complete" has to
+        // mean the evidence is on file, so cap the displayed status at what
+        // the checklist actually supports: only trust the stored "Complete"/
+        // "Expired" value once all three required documents are present.
+        const docsComplete = checklist.every((item) => item.done);
+        const docsStarted = checklist.some((item) => item.done);
+        const storedFica = ficaNames[row.party.fica_status] || "Not Started";
+        const fica = docsComplete ? storedFica : docsStarted ? "Partial" : "Not Started";
         return {
           dealId: row.deal.id,
           dealRef: row.deal.reference,
@@ -100,7 +110,7 @@ function FicaRegister() {
             name: row.party.full_name,
             side: row.role === "purchaser" ? "Purchaser" : "Seller",
             entityType: entityNames[row.party.entity_type] || row.party.entity_type,
-            fica: ficaNames[row.party.fica_status] || "Not Started",
+            fica,
             popia: !!row.party.popia_consent_at,
             popiaAt: row.party.popia_consent_at,
             checklist,
