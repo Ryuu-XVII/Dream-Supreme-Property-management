@@ -25,12 +25,12 @@ export function AppShell({
   actions?: ReactNode;
 }) {
   return (
-    <div className="ambient-mesh flex min-h-screen">
+    <div className="ambient-mesh flex h-screen overflow-hidden">
       <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <ImpersonationBanner />
         <Header />
-        <main className="flex min-h-0 flex-1 flex-col px-3 pb-24 pt-5 sm:px-6 md:pb-10">
+        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-24 pt-5 sm:px-6 md:pb-10">
           {crumbs && crumbs.length > 0 && (
             <nav className="mb-3 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
               {crumbs.map((c, i) => (
