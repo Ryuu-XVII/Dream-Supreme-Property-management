@@ -45,7 +45,7 @@ export function AdminDealsPipeline() {
 
   return (
     <>
-      <GlassCard className="flex flex-col h-full">
+      <GlassCard className="flex flex-col">
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-display text-base font-semibold">Active Deals Pipeline</h3>
           <span className="text-xs font-medium px-2 py-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-full border border-indigo-500/20">
@@ -53,7 +53,7 @@ export function AdminDealsPipeline() {
           </span>
         </div>
 
-        <div className="space-y-6 flex-1">
+        <div className="space-y-6">
           {activeDeals.map((deal) => {
             const currentStageIdx = Math.max(0, STAGES.indexOf(deal.stageLabel as Stage));
 

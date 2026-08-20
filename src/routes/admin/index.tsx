@@ -37,7 +37,7 @@ function AdminDashboard() {
             icon={FileText}
           />
         </div>
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid items-start gap-4 lg:grid-cols-2">
           <AdminDealsPipeline />
           <GlassCard>
             <h3 className="font-display text-base font-semibold">Recent activity</h3>
