@@ -59,6 +59,7 @@ import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SetupIndexRouteImport } from './routes/setup/index'
 import { Route as SetupImportRouteImport } from './routes/setup/import'
 import { Route as AdminComplianceFfcRouteImport } from './routes/admin/compliance/ffc'
+import { Route as AdminDealsDealIdDetailsRouteImport } from './routes/admin/deals_.$dealId_.details'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -312,6 +313,11 @@ const AdminComplianceFfcRoute = AdminComplianceFfcRouteImport.update({
   path: '/compliance/ffc',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminDealsDealIdDetailsRoute = AdminDealsDealIdDetailsRouteImport.update({
+  id: '/deals_/$dealId_/details',
+  path: '/deals/$dealId/details',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -364,6 +370,7 @@ export interface FileRoutesByFullPath {
   '/reports/': typeof ReportsIndexRoute
   '/setup/': typeof SetupIndexRoute
   '/admin/compliance/ffc': typeof AdminComplianceFfcRoute
+  '/admin/deals/$dealId/details': typeof AdminDealsDealIdDetailsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -415,6 +422,7 @@ export interface FileRoutesByTo {
   '/reports': typeof ReportsIndexRoute
   '/setup': typeof SetupIndexRoute
   '/admin/compliance/ffc': typeof AdminComplianceFfcRoute
+  '/admin/deals/$dealId/details': typeof AdminDealsDealIdDetailsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -468,6 +476,7 @@ export interface FileRoutesById {
   '/reports/': typeof ReportsIndexRoute
   '/setup/': typeof SetupIndexRoute
   '/admin/compliance/ffc': typeof AdminComplianceFfcRoute
+  '/admin/deals_/$dealId_/details': typeof AdminDealsDealIdDetailsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -522,6 +531,7 @@ export interface FileRouteTypes {
     | '/reports/'
     | '/setup/'
     | '/admin/compliance/ffc'
+    | '/admin/deals/$dealId/details'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -573,6 +583,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/setup'
     | '/admin/compliance/ffc'
+    | '/admin/deals/$dealId/details'
   id:
     | '__root__'
     | '/'
@@ -625,6 +636,7 @@ export interface FileRouteTypes {
     | '/reports/'
     | '/setup/'
     | '/admin/compliance/ffc'
+    | '/admin/deals_/$dealId_/details'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1020,6 +1032,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminComplianceFfcRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/deals_/$dealId_/details': {
+      id: '/admin/deals_/$dealId_/details'
+      path: '/deals/$dealId/details'
+      fullPath: '/admin/deals/$dealId/details'
+      preLoaderRoute: typeof AdminDealsDealIdDetailsRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
@@ -1035,6 +1054,7 @@ interface AdminRouteChildren {
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminComplianceFfcRoute: typeof AdminComplianceFfcRoute
+  AdminDealsDealIdDetailsRoute: typeof AdminDealsDealIdDetailsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -1049,6 +1069,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminComplianceFfcRoute: AdminComplianceFfcRoute,
+  AdminDealsDealIdDetailsRoute: AdminDealsDealIdDetailsRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

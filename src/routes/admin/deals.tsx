@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { GlassCard, EmptyState } from "@/components/ui-kit";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -12,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, FileText, History, Loader2, ShieldAlert, Ban } from "lucide-react";
+import { Search, FileText, History, Loader2, ShieldAlert, Ban, ArrowRight } from "lucide-react";
 import { dateFmt, zar, pct } from "@/lib/format";
 import { stageFromDb } from "@/lib/domain";
 import { usePipelineDeals, type PipelineDeal } from "@/data/deals";
@@ -176,6 +177,12 @@ function AdminDeals() {
                     <p className="text-sm font-medium">{selectedDeal.daysInStage}</p>
                   </div>
                 </div>
+                <Button asChild className="mt-4 w-full" size="sm">
+                  <Link to="/admin/deals/$dealId/details" params={{ dealId: selectedDeal.id }}>
+                    View Full Details
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
               </GlassCard>
 
               {selectedDeal.conditions.length > 0 && (
