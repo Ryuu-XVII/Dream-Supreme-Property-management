@@ -379,6 +379,8 @@ function FfcRegister() {
                           size="sm"
                           variant="outline"
                           className="h-7 gap-1"
+                          disabled={!user.ffc}
+                          title={user.ffc ? undefined : "No certificate on file yet"}
                           onClick={async () => {
                             if (user.ffc?.storageKey) {
                               try {

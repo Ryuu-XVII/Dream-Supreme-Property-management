@@ -102,6 +102,7 @@ export function AdminDealsPipeline() {
                       return (
                         <div key={stage} className="relative flex flex-col items-center">
                           <div
+                            title={stage}
                             className={cn(
                               "size-3 rounded-full border-2 bg-background z-10 transition-colors",
                               isCompleted
@@ -110,21 +111,20 @@ export function AdminDealsPipeline() {
                               isCurrent && "ring-4 ring-indigo-500/20",
                             )}
                           />
-                          <span
-                            className={cn(
-                              "text-[10px] mt-2 font-medium absolute top-4 w-20 sm:w-24",
-                              isFirst
-                                ? "left-0 text-left"
-                                : isLast
-                                  ? "right-0 text-right"
-                                  : "left-1/2 -translate-x-1/2 text-center",
-                              isCurrent
-                                ? "text-foreground"
-                                : "text-muted-foreground opacity-70 hidden sm:block",
-                            )}
-                          >
-                            {stage}
-                          </span>
+                          {isCurrent && (
+                            <span
+                              className={cn(
+                                "text-[10px] mt-2 font-medium absolute top-4 w-24 text-foreground",
+                                isFirst
+                                  ? "left-0 text-left"
+                                  : isLast
+                                    ? "right-0 text-right"
+                                    : "left-1/2 -translate-x-1/2 text-center",
+                              )}
+                            >
+                              {stage}
+                            </span>
+                          )}
                         </div>
                       );
                     })}

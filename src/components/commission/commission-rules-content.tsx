@@ -455,9 +455,9 @@ export function CommissionRulesContent() {
                           </Badge>
                         ) : (
                           <Button
-                            variant="ghost"
+                            variant="link"
                             size="sm"
-                            className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                            className="h-6 px-2 text-xs underline underline-offset-2"
                             onClick={() => makeDefault(rs)}
                           >
                             Set as Default

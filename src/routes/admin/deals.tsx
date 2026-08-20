@@ -71,55 +71,91 @@ function AdminDeals() {
               <EmptyState title="No deals found" message="Try adjusting your search query." />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead>Reference</TableHead>
-                    <TableHead>Property</TableHead>
-                    <TableHead>Value (ZAR)</TableHead>
-                    <TableHead>Stage</TableHead>
-                    <TableHead>Updated</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredDeals.map((d) => (
-                    <TableRow
-                      key={d.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => setSelectedDeal(d)}
-                    >
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <FileText className="size-4 text-indigo-500" />
-                          <span className="font-mono text-sm">{d.ref}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell
-                        className="font-medium max-w-50 truncate"
-                        title={d.property?.address}
-                      >
-                        {d.property?.address || "No Address"}
-                      </TableCell>
-                      <TableCell className="font-mono tabular-nums">
-                        {zar(d.salePrice, { decimals: false })}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
-                        >
-                          {stageFromDb[d.stage] ?? d.stage}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {dateFmt(d.stageSince)}
-                      </TableCell>
+            <>
+              {/* Table for wider screens */}
+              <div className="hidden overflow-x-auto sm:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead>Reference</TableHead>
+                      <TableHead>Property</TableHead>
+                      <TableHead>Value (ZAR)</TableHead>
+                      <TableHead>Stage</TableHead>
+                      <TableHead>Updated</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredDeals.map((d) => (
+                      <TableRow
+                        key={d.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => setSelectedDeal(d)}
+                      >
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <FileText className="size-4 text-indigo-500" />
+                            <span className="font-mono text-sm">{d.ref}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell
+                          className="font-medium max-w-50 truncate"
+                          title={d.property?.address}
+                        >
+                          {d.property?.address || "No Address"}
+                        </TableCell>
+                        <TableCell className="font-mono tabular-nums">
+                          {zar(d.salePrice, { decimals: false })}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className="border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                          >
+                            {stageFromDb[d.stage] ?? d.stage}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {dateFmt(d.stageSince)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Stacked cards for narrow screens */}
+              <div className="space-y-2 p-4 sm:hidden">
+                {filteredDeals.map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => setSelectedDeal(d)}
+                    className="w-full rounded-lg border border-border/50 p-3 text-left hover:bg-muted/50"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <FileText className="size-4 shrink-0 text-indigo-500" />
+                        <span className="truncate font-mono text-sm">{d.ref}</span>
+                      </div>
+                      <span className="shrink-0 font-mono text-sm tabular-nums">
+                        {zar(d.salePrice, { decimals: false })}
+                      </span>
+                    </div>
+                    <p className="mt-1 truncate text-sm font-medium">
+                      {d.property?.address || "No Address"}
+                    </p>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <Badge
+                        variant="outline"
+                        className="border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                      >
+                        {stageFromDb[d.stage] ?? d.stage}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">{dateFmt(d.stageSince)}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
           )}
         </GlassCard>
 

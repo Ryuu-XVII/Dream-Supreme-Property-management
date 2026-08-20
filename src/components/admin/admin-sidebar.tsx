@@ -23,7 +23,7 @@ export const adminNavItems = [
   { label: "Team Members", to: "/admin/users", icon: Users },
   { label: "Properties", to: "/admin/properties", icon: Building2 },
   { label: "Deals", to: "/admin/deals", icon: FileText },
-  { label: "Financials", to: "/admin/financials", icon: FileText },
+  { label: "Financials", to: "/admin/recon", icon: FileText },
   { label: "Commission Rules", to: "/admin/commission-rules", icon: FileText },
   { label: "Compliance", to: "/admin/compliance/ffc", icon: ShieldCheck },
   { label: "Agency Config", to: "/admin/agency", icon: Building2 },

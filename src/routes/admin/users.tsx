@@ -47,6 +47,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import {
   Search,
@@ -62,6 +68,7 @@ import {
   Send,
   HardDrive,
   Globe,
+  MoreVertical,
 } from "lucide-react";
 
 import Papa from "papaparse";
@@ -731,64 +738,60 @@ function AdminUsers() {
                           </Button>
                         )}
                         {!u.id.startsWith("invite-") && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                startImpersonating({
-                                  id: u.id,
-                                  agencyId: u.agencyId || account?.agencyId || "",
-                                  branchId: u.branchId ?? null,
-                                  fullName: u.name,
-                                  email: u.email,
-                                  role: "agent",
-                                  status: u.active ? "active" : "suspended",
-                                });
-                                navigate({ to: "/" });
-                              }}
-                              className="text-xs mr-2"
-                            >
-                              <Eye className="size-3 mr-1" />
-                              View Portal
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => exportAgentTimeline(u.id, u.name)}
-                              className="text-xs mr-2"
-                            >
-                              <Download className="size-3 mr-1" />
-                              Export
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => startEdit(u)}
-                              className="text-xs mr-2"
-                            >
-                              <Percent className="size-3 mr-1" />
-                              Adjust Split
-                            </Button>
-                          </>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              startImpersonating({
+                                id: u.id,
+                                agencyId: u.agencyId || account?.agencyId || "",
+                                branchId: u.branchId ?? null,
+                                fullName: u.name,
+                                email: u.email,
+                                role: "agent",
+                                status: u.active ? "active" : "suspended",
+                              });
+                              navigate({ to: "/" });
+                            }}
+                            className="text-xs"
+                          >
+                            <Eye className="size-3 mr-1" />
+                            View Portal
+                          </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => startEdit(u)}
-                          className="h-8 w-8 text-slate-500 hover:text-indigo-600"
-                        >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => retireUser(u.id)}
-                          className="h-8 w-8 text-slate-500 hover:text-amber-600"
-                          title="Retire Agent"
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-500"
+                              aria-label="More actions"
+                            >
+                              <MoreVertical className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {!u.id.startsWith("invite-") && (
+                              <>
+                                <DropdownMenuItem onClick={() => exportAgentTimeline(u.id, u.name)}>
+                                  <Download className="size-4" /> Export
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => startEdit(u)}>
+                                  <Percent className="size-4" /> Adjust Split
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            <DropdownMenuItem onClick={() => startEdit(u)}>
+                              <Pencil className="size-4" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => retireUser(u.id)}
+                              className="text-amber-600 focus:text-amber-600"
+                            >
+                              <Trash2 className="size-4" /> Retire Agent
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>

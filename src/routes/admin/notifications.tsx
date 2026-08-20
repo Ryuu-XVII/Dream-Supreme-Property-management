@@ -22,6 +22,7 @@ import {
 import { ChevronDown, Bell } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/notifications")({
   head: () => ({
@@ -153,34 +154,52 @@ function NotificationsPage() {
 
   async function save() {
     if (!account) return;
-    const { error } = await supabase.from("notification_preference").upsert(
-      prefs.map((preference) => {
-        let parsedConditions = null;
-        if (preference.conditions) {
-          try {
-            parsedConditions = JSON.parse(preference.conditions);
-          } catch (e) {
-            console.error("Invalid JSON in conditions", e);
-            throw new Error(`Invalid JSON for condition in ${preference.type}`);
-          }
-        }
 
-        return {
-          agency_id: account.agencyId,
-          event_type: preference.type,
-          email_enabled: preference.email,
-          in_app_enabled: preference.inApp,
-          recipient_roles: preference.recipients.map((recipient) => recipient.toLowerCase()),
-          condition_config: parsedConditions,
-          updated_at: new Date().toISOString(),
-        };
-      }),
-      { onConflict: "agency_id,event_type" },
-    );
+    const invalid: string[] = [];
+    const rows = prefs.map((preference) => {
+      let parsedConditions = null;
+      if (preference.conditions) {
+        try {
+          parsedConditions = JSON.parse(preference.conditions);
+        } catch {
+          invalid.push(preference.type);
+        }
+      }
+
+      return {
+        agency_id: account.agencyId,
+        event_type: preference.type,
+        email_enabled: preference.email,
+        in_app_enabled: preference.inApp,
+        recipient_roles: preference.recipients.map((recipient) => recipient.toLowerCase()),
+        condition_config: parsedConditions,
+        updated_at: new Date().toISOString(),
+      };
+    });
+
+    if (invalid.length > 0) {
+      return toast.error("Invalid JSON in conditions", {
+        description: `Fix the conditions field for: ${invalid.join(", ")}`,
+      });
+    }
+
+    const { error } = await supabase
+      .from("notification_preference")
+      .upsert(rows, { onConflict: "agency_id,event_type" });
     if (error) return toast.error(error.message);
     toast.success("Notification preferences saved", {
       description: `${prefs.length} notification types updated.`,
     });
+  }
+
+  function isValidConditions(value: string | undefined) {
+    if (!value) return true;
+    try {
+      JSON.parse(value);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   return (
@@ -241,11 +260,18 @@ function NotificationsPage() {
                     </TableCell>
                     <TableCell>
                       <input
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        className={cn(
+                          "flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+                          isValidConditions(p.conditions) ? "border-input" : "border-destructive",
+                        )}
                         placeholder='e.g. {"min_price": 5000000}'
                         value={p.conditions || ""}
                         onChange={(e) => update(p.type, { conditions: e.target.value })}
+                        aria-invalid={!isValidConditions(p.conditions)}
                       />
+                      {!isValidConditions(p.conditions) && (
+                        <p className="mt-1 text-xs text-destructive">Invalid JSON</p>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
