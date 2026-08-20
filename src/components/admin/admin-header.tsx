@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Sun, Moon, Monitor, LogOut } from "lucide-react";
+import { Sun, Moon, Monitor, LogOut } from "lucide-react";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { useApp } from "@/lib/app-state";
 import { useAuth } from "@/lib/auth";
 
@@ -58,6 +59,8 @@ export function AdminHeader() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <NotificationBell accountId={account?.id} />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

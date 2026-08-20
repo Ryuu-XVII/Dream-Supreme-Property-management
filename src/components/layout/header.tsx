@@ -1,7 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Search, Sun, Moon, Monitor, LogOut, Calculator, PlusCircle } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Search, Sun, Moon, Monitor, LogOut, Calculator, PlusCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -22,14 +21,12 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { NotificationBell } from "./notification-bell";
 import { useApp } from "@/lib/app-state";
 import { useAuth } from "@/lib/auth";
-import { zar, relative, dateFmt } from "@/lib/format";
+import { zar } from "@/lib/format";
 import { useDealSearch } from "@/data/deals";
-import { supabase } from "@/lib/supabase";
 import { navItems } from "./sidebar";
-import { cn } from "@/lib/utils";
 
 import { FloatingCalculatorModal } from "@/components/calculators/floating-calculator-modal";
 
@@ -41,27 +38,6 @@ export function Header() {
   const { activeAccount, isReadOnly, signOut } = useAuth();
   const dealSearch = useDealSearch(open);
   const deals = dealSearch.data ?? [];
-  const queryClient = useQueryClient();
-  const notificationQueryKey = useMemo(
-    () => ["header-notifications", activeAccount?.id],
-    [activeAccount?.id],
-  );
-  const notificationQuery = useQuery({
-    queryKey: notificationQueryKey,
-    enabled: !!activeAccount,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("notification")
-        .select("id, subject, body, created_at, read_at")
-        .eq("user_account_id", activeAccount!.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-  const notifications = notificationQuery.data ?? [];
-  const unread = notifications.filter((n) => !n.read_at).length;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -73,56 +49,6 @@ export function Header() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
-
-  // Live Realtime Notification Listener
-  useEffect(() => {
-    if (!activeAccount?.id) return;
-
-    const channel = supabase
-      .channel(`user-notifications:${activeAccount.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notification",
-          filter: `user_account_id=eq.${activeAccount.id}`,
-        },
-        (payload) => {
-          const newNotif = payload.new as any;
-          toast.info(newNotif.subject || "New Deal Notification", {
-            description: newNotif.body,
-            action: newNotif.link
-              ? {
-                  label: "View",
-                  onClick: () => navigate({ to: newNotif.link }),
-                }
-              : undefined,
-          });
-          queryClient.setQueryData(
-            notificationQueryKey,
-            (prev: typeof notifications | undefined) => {
-              const next = [
-                {
-                  id: newNotif.id,
-                  subject: newNotif.subject,
-                  body: newNotif.body,
-                  created_at: newNotif.created_at,
-                  read_at: newNotif.read_at ?? null,
-                },
-                ...(prev ?? []),
-              ];
-              return next.slice(0, 20);
-            },
-          );
-        },
-      )
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [activeAccount?.id, navigate, queryClient, notificationQueryKey]);
 
   const me = activeAccount
     ? { name: activeAccount.fullName, email: activeAccount.email }
@@ -205,43 +131,7 @@ export function Header() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
-            <Bell className="size-5" />
-            {unread > 0 && (
-              <span className="absolute right-1 top-1 grid size-4 place-items-center rounded-full bg-destructive font-mono text-[9px] font-bold text-destructive-foreground">
-                {unread}
-              </span>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-80 p-0">
-          <div className="border-b border-border px-4 py-3 font-display text-sm font-semibold">
-            Notifications
-          </div>
-          <div className="max-h-80 overflow-y-auto">
-            {notifications.map((n) => (
-              <div
-                key={n.id}
-                className="flex gap-3 border-b border-border/60 px-4 py-3 last:border-0"
-              >
-                <span
-                  className={cn(
-                    "mt-1.5 size-2 shrink-0 rounded-full",
-                    n.read_at ? "bg-muted-foreground" : "bg-primary",
-                  )}
-                />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{n.subject}</p>
-                  <p className="text-xs text-muted-foreground">{n.body}</p>
-                  <p className="mt-1 text-[10px] text-muted-foreground">{dateFmt(n.created_at)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </PopoverContent>
-      </Popover>
+      <NotificationBell accountId={activeAccount?.id} />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
