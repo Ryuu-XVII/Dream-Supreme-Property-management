@@ -85,9 +85,9 @@ export function Property24ListingsTable({ className }: { className?: string }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="max-h-112 overflow-y-auto overflow-x-auto">
         <Table>
-          <TableHeader>
+          <TableHeader className="sticky top-0 z-10 bg-card">
             <TableRow>
               <TableHead>Property</TableHead>
               <TableHead>Agent</TableHead>
