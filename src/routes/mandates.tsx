@@ -82,83 +82,85 @@ function MandatesRegister() {
         initialType="mandate"
         onSuccess={() => mandatesQuery.refetch()}
       />
-      <GlassCard className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Property</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="text-right">Listing Price</TableHead>
-              <TableHead>Expiry</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mandatesQuery.isLoading ? (
+      <div className="flex min-h-0 flex-1 flex-col gap-6">
+        <GlassCard className="p-0">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  Loading mandates...
-                </TableCell>
+                <TableHead>Property</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead className="text-right">Listing Price</TableHead>
+                <TableHead>Expiry</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ) : mandatesQuery.data?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                  No active mandates found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              mandatesQuery.data?.map((mandate) => (
-                <TableRow key={mandate.id}>
-                  <TableCell>
-                    <div className="font-medium">{(mandate.property as any)?.address_line}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {(mandate.property as any)?.suburb}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="capitalize">
-                      {mandate.mandate_type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {zar(mandate.listing_price_cents, { decimals: false })}
-                  </TableCell>
-                  <TableCell>{getExpiryWarning(mandate.expires_on)}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        mandate.status === "active"
-                          ? "default"
-                          : mandate.status === "sold"
-                            ? "secondary"
-                            : "destructive"
-                      }
-                      className="capitalize"
-                    >
-                      {mandate.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        navigate({ to: "/deals/new", search: { mandateId: mandate.id } })
-                      }
-                      className="text-primary hover:text-primary/90 hover:bg-primary/10"
-                    >
-                      Convert to Deal <ArrowRight className="ml-2 size-4" />
-                    </Button>
+            </TableHeader>
+            <TableBody>
+              {mandatesQuery.isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    Loading mandates...
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </GlassCard>
+              ) : mandatesQuery.data?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    No active mandates found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                mandatesQuery.data?.map((mandate) => (
+                  <TableRow key={mandate.id}>
+                    <TableCell>
+                      <div className="font-medium">{(mandate.property as any)?.address_line}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {(mandate.property as any)?.suburb}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="capitalize">
+                        {mandate.mandate_type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {zar(mandate.listing_price_cents, { decimals: false })}
+                    </TableCell>
+                    <TableCell>{getExpiryWarning(mandate.expires_on)}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          mandate.status === "active"
+                            ? "default"
+                            : mandate.status === "sold"
+                              ? "secondary"
+                              : "destructive"
+                        }
+                        className="capitalize"
+                      >
+                        {mandate.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          navigate({ to: "/deals/new", search: { mandateId: mandate.id } })
+                        }
+                        className="text-primary hover:text-primary/90 hover:bg-primary/10"
+                      >
+                        Convert to Deal <ArrowRight className="ml-2 size-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </GlassCard>
 
-      <Property24ListingsTable className="mt-6" />
+        <Property24ListingsTable fillHeight />
+      </div>
     </AppShell>
   );
 }

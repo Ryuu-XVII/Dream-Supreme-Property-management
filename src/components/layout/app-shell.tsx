@@ -30,7 +30,7 @@ export function AppShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <ImpersonationBanner />
         <Header />
-        <main className="flex-1 px-3 pb-24 pt-5 sm:px-6 md:pb-10">
+        <main className="flex min-h-0 flex-1 flex-col px-3 pb-24 pt-5 sm:px-6 md:pb-10">
           {crumbs && crumbs.length > 0 && (
             <nav className="mb-3 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
               {crumbs.map((c, i) => (
@@ -62,6 +62,7 @@ export function AppShell({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.28, ease: "easeOut" }}
+            className="flex min-h-0 flex-1 flex-col"
           >
             {children}
           </motion.div>

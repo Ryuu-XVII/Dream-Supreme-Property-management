@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { relative } from "@/lib/format";
 import { useAgencyProperty24Listings } from "@/data/property24";
+import { cn } from "@/lib/utils";
 
 type PurposeFilter = "all" | "sale" | "rent";
 
@@ -30,7 +31,16 @@ type PurposeFilter = "all" | "sale" | "rent";
  * those properties, and presenting them together would show unmandated stock
  * as though it were mandated.
  */
-export function Property24ListingsTable({ className }: { className?: string }) {
+export function Property24ListingsTable({
+  className,
+  fillHeight,
+}: {
+  className?: string;
+  /** Stretch to fill the remaining vertical space in the page instead of
+   * capping at a fixed height, so the page doesn't end early with unused
+   * space below it when this is the last section on the page. */
+  fillHeight?: boolean;
+}) {
   const { data: listings = [], isLoading } = useAgencyProperty24Listings();
   const navigate = useNavigate();
   const { isReadOnly } = useAuth();
@@ -51,7 +61,7 @@ export function Property24ListingsTable({ className }: { className?: string }) {
     filter === "all" ? listings : listings.filter((listing) => listing.purpose === filter);
 
   return (
-    <GlassCard className={className ? `p-0 ${className}` : "p-0"}>
+    <GlassCard className={cn("flex flex-col p-0", fillHeight && "min-h-0 flex-1", className)}>
       <div className="flex flex-col gap-1 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="flex items-center gap-2 font-display text-base font-semibold">
@@ -85,7 +95,12 @@ export function Property24ListingsTable({ className }: { className?: string }) {
         </div>
       </div>
 
-      <div className="max-h-112 overflow-y-auto overflow-x-auto">
+      <div
+        className={cn(
+          "overflow-x-auto overflow-y-auto",
+          fillHeight ? "min-h-0 flex-1" : "max-h-112",
+        )}
+      >
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-card">
             <TableRow>
