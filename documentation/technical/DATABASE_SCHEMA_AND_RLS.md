@@ -557,3 +557,11 @@ Consolidated to 7, losing no legal or financial gate:
 **Two pre-existing bugs surfaced and fixed while touching this code**, unrelated to the consolidation itself but found because they used the same stage values:
 - `src/components/admin/admin-deals-pipeline.tsx` compared `usePipelineDeals()`'s raw db-value stage (e.g. `"otp_signed"`) against UI labels (e.g. `"OTP Signed"`) — the comparison could never match, so its progress stepper always showed step 1 and its active/closed filter always treated every deal as active. Fixed by mapping through `stageFromDb` once per deal.
 - `src/data/deals.ts`'s agent-earnings query checked `d.stage === "commission_paid"`, which was never a valid `deal_stage` value (should have been `commission_released`) — a deal that reached Commission Released was silently excluded from YTD earnings. Fixed to check the real value.
+
+## 23. In-App Notifications Never Pushed Live (`20260820000000`)
+
+The header bell (`src/components/layout/header.tsx`) subscribes to a Supabase Realtime `postgres_changes` INSERT listener on `public.notification` to toast new notifications and bump the unread badge without a reload. `.subscribe()` always resolves successfully even for a table that was never added to the `supabase_realtime` publication — Postgres just never emits change events for it, so the client sits subscribed and silent. Checked the live publication directly (`select * from pg_publication_tables where pubname = 'supabase_realtime'`): it had zero tables in it. No migration had ever added one.
+
+RLS was already correct (`Users can view their own notifications`, scoped to `user_account_id`), so this wasn't a permissions problem — Postgres simply never told Realtime a row had been inserted. The header's one-time `useQuery` fetch on mount still worked, so notifications *did* eventually appear, just only after a manual reload — exactly the intermittent "don't always work" symptom, since anything that arrived while already on the page never showed up until the next navigation.
+
+Fixed with `alter publication supabase_realtime add table public.notification`. `header.tsx` is the only place in the codebase using `postgres_changes`, so this was the complete fix rather than one of several affected listeners.
