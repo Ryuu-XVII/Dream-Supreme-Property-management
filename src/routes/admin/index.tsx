@@ -37,9 +37,9 @@ function AdminDashboard() {
             icon={FileText}
           />
         </div>
-        <div className="grid items-start gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2">
           <AdminDealsPipeline />
-          <GlassCard>
+          <GlassCard className="flex h-104 flex-col">
             <h3 className="font-display text-base font-semibold">Recent activity</h3>
             <p className="mb-4 text-xs text-muted-foreground">Latest persisted audit events</p>
             {dashboard.isLoading ? (
@@ -50,7 +50,7 @@ function AdminDashboard() {
                 message="Persisted agency actions will appear here."
               />
             ) : (
-              <div className="space-y-3">
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
                 {data?.auditEvents.map((event) => (
                   <div key={event.id} className="rounded-lg border p-3">
                     <div className="flex justify-between gap-3">
