@@ -2,7 +2,7 @@ import { useState } from "react";
 import { GlassCard } from "@/components/ui-kit";
 import { usePipelineDeals, type PipelineDeal } from "@/data/deals";
 import { FileText, ArrowRight, Eye, History, Loader2 } from "lucide-react";
-import { dateFmt, dateTimeFmt } from "@/lib/format";
+import { dateFmt, dateTimeFmt, zar } from "@/lib/format";
 import { stageFromDb } from "@/lib/domain";
 import { STAGES, type Stage } from "@/types";
 import { cn } from "@/lib/utils";
@@ -77,7 +77,7 @@ export function AdminDealsPipeline() {
                   </div>
                   <div className="text-right">
                     <p className="font-mono text-sm tabular-nums">
-                      R {deal.salePrice.toLocaleString()}
+                      {zar(deal.salePrice, { decimals: false })}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       Updated {dateFmt(deal.stageSince)}
@@ -178,7 +178,7 @@ export function AdminDealsPipeline() {
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Sale Value</p>
                   <p className="font-mono text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                    R {inspectingDeal.salePrice.toLocaleString()}
+                    {zar(inspectingDeal.salePrice, { decimals: false })}
                   </p>
                 </div>
                 <div>
