@@ -565,3 +565,14 @@ The header bell (`src/components/layout/header.tsx`) subscribes to a Supabase Re
 RLS was already correct (`Users can view their own notifications`, scoped to `user_account_id`), so this wasn't a permissions problem — Postgres simply never told Realtime a row had been inserted. The header's one-time `useQuery` fetch on mount still worked, so notifications *did* eventually appear, just only after a manual reload — exactly the intermittent "don't always work" symptom, since anything that arrived while already on the page never showed up until the next navigation.
 
 Fixed with `alter publication supabase_realtime add table public.notification`. `header.tsx` is the only place in the codebase using `postgres_changes`, so this was the complete fix rather than one of several affected listeners.
+
+## 24. Admin Notification Coverage Audit (`20260820001000`)
+
+Audited every place the platform writes to `public.notification`, to find real gaps in what admins get notified about rather than guess:
+
+- **`notify_agency_admins()`** (trigger on `deal` insert/stage/status, and on `audit_log` for `progress_note_added`) — deal registered, deal cancelled, deal stage advanced (generic), progress notes.
+- **`run_daily_sweeps()`** — already comprehensive: suspensive condition deadlines (14/7/3/1 days out, and overdue), mandate expiry (30/14/7/3/1 days out, and expired), and FFC certificate expiry (60/30/14/7/3/1 days out, and expired) — admins get notified about *every* agent's FFC, not just their own.
+- **`submit_conveyancer_status()`** — notifies deal participants when a conveyancer confirms lodgement.
+- **`process_monthly_section_86_4_interest_allocation()`** — trust interest processing.
+
+The one real gap: `trg_notify_deal_events` fires `after insert or update of stage, status`, so it runs on every new deal too, but `notify_agency_admins()`'s branches only ever matched an *update* — `registered`/`cancelled` can't be true on a brand-new deal, and the generic stage-change branch explicitly required `OLD is not null`. A freshly created deal fell through to `else return NEW`, so admins got nothing when a deal was opened. Added a `OLD is null` branch ("🆕 New Deal Opened") ahead of the others; the existing branches are unchanged (only their `OLD is null or ...` guards were dropped, since the new branch above them now handles that case).
