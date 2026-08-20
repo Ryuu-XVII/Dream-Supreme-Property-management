@@ -83,7 +83,7 @@ export function usePipelineDeals() {
           ref: d.reference,
           stage: d.stage,
           status: d.status,
-          salePrice: d.sale_price_cents, // Should be divided by 100 for display, handled in format.ts if it expects cents? wait, mock has salePrice. zar() divides by 100? No, zar(cents) takes cents. So salePrice is cents.
+          salePrice: d.sale_price_cents,
           stageSince,
           daysInStage,
           commissionBps,
