@@ -15,7 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileSignature, PlusCircle, ArrowRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { FileSignature, PlusCircle, ArrowRight, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { zar, dateFmt } from "@/lib/format";
@@ -39,6 +40,7 @@ function MandatesRegister() {
   const { account, isReadOnly } = useAuth();
   const navigate = useNavigate();
   const [openCapture, setOpenCapture] = useState(false);
+  const [search, setSearch] = useState("");
 
   const mandatesQuery = useQuery({
     queryKey: ["mandates", account?.agencyId],
@@ -65,6 +67,20 @@ function MandatesRegister() {
     },
   });
 
+  const query = search.trim().toLowerCase();
+  const visibleMandates = query
+    ? mandatesQuery.data?.filter((mandate) =>
+        [
+          (mandate.property as any)?.address_line,
+          (mandate.property as any)?.suburb,
+          mandate.mandate_type,
+          mandate.status,
+        ]
+          .filter(Boolean)
+          .some((field) => (field as string).toLowerCase().includes(query)),
+      )
+    : mandatesQuery.data;
+
   return (
     <AppShell
       title="Mandate Register"
@@ -84,6 +100,18 @@ function MandatesRegister() {
       />
       <div className="flex min-h-0 flex-1 flex-col gap-6">
         <GlassCard className="p-0">
+          <div className="flex items-center justify-between gap-4 border-b border-border p-4">
+            <h2 className="font-display text-base font-semibold">Mandates</h2>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search mandates..."
+                className="h-8 w-48 pl-7 text-xs sm:w-64"
+              />
+            </div>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -102,14 +130,14 @@ function MandatesRegister() {
                     Loading mandates...
                   </TableCell>
                 </TableRow>
-              ) : mandatesQuery.data?.length === 0 ? (
+              ) : visibleMandates?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                    No active mandates found.
+                    {query ? "No mandates match your search." : "No active mandates found."}
                   </TableCell>
                 </TableRow>
               ) : (
-                mandatesQuery.data?.map((mandate) => (
+                visibleMandates?.map((mandate) => (
                   <TableRow key={mandate.id}>
                     <TableCell>
                       <div className="font-medium">{(mandate.property as any)?.address_line}</div>
