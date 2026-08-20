@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Globe, ExternalLink, BedDouble, Bath, Ruler, ArrowRight } from "lucide-react";
+import { Globe, ExternalLink, BedDouble, Bath, Ruler, ArrowRight, Search } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { GlassCard } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -45,6 +46,7 @@ export function Property24ListingsTable({
   const navigate = useNavigate();
   const { isReadOnly } = useAuth();
   const [filter, setFilter] = useState<PurposeFilter>("all");
+  const [search, setSearch] = useState("");
 
   // Nothing synced yet — stay out of the way rather than showing an empty
   // table for a feature this agency may not use.
@@ -57,8 +59,16 @@ export function Property24ListingsTable({
 
   const saleCount = listings.filter((listing) => listing.purpose === "sale").length;
   const rentCount = listings.filter((listing) => listing.purpose === "rent").length;
-  const visibleListings =
+  const purposeFiltered =
     filter === "all" ? listings : listings.filter((listing) => listing.purpose === filter);
+  const query = search.trim().toLowerCase();
+  const visibleListings = query
+    ? purposeFiltered.filter((listing) =>
+        [listing.title, listing.location, listing.agentName]
+          .filter(Boolean)
+          .some((field) => field!.toLowerCase().includes(query)),
+      )
+    : purposeFiltered;
 
   return (
     <GlassCard className={cn("flex flex-col p-0", fillHeight && "min-h-0 flex-1", className)}>
@@ -74,6 +84,15 @@ export function Property24ListingsTable({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search listings..."
+              className="h-7 w-40 pl-7 text-xs sm:w-52"
+            />
+          </div>
           {(
             [
               ["all", "All", listings.length],
@@ -122,7 +141,9 @@ export function Property24ListingsTable({
             ) : visibleListings.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                  No {filter === "sale" ? "for sale" : "to rent"} listings synced.
+                  {query
+                    ? "No listings match your search."
+                    : `No ${filter === "sale" ? "for sale" : "to rent"} listings synced.`}
                 </TableCell>
               </TableRow>
             ) : (
