@@ -61,7 +61,7 @@ import {
 import { Plus, Pencil, Archive, Building2, Scale, Percent, Landmark } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
-import { uploadFileToR2, getR2FileUrl } from "@/lib/storage";
+import { uploadFileToR2, getR2FileUrl, recordStorageUsageDelta } from "@/lib/storage";
 
 import {
   validateEmailFormat,
@@ -297,6 +297,7 @@ function AgencyProfilePage() {
         file,
         `${account.agencyId}/branding/logo-${crypto.randomUUID()}.${ext}`,
       );
+      await recordStorageUsageDelta(account.id, file.size);
       const { error } = await supabase
         .from("agency")
         .update({ logo_key: storageKey })

@@ -181,7 +181,7 @@ function RegisterPage() {
         await recordStorageUsageDelta(createdAccount.id, avatarFile.size);
         const { error: avatarUpdateError } = await supabase
           .from("user_account")
-          .update({ avatar_key: avatarKey })
+          .update({ avatar_key: avatarKey, avatar_size_bytes: avatarFile.size })
           .eq("id", createdAccount.id);
         if (avatarUpdateError) throw avatarUpdateError;
       }

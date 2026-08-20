@@ -52,16 +52,26 @@ export function ProfilePhoto() {
         { currentStorageUsedBytes: usedBytes, storageLimitBytes: limitBytes },
       );
 
+      // The size of the photo being replaced, read just before overwriting
+      // avatar_key, so it can be released from the quota below -- there is
+      // no other record of it once the row points at the new key.
+      const { data: previousRow } = await supabase
+        .from("user_account")
+        .select("avatar_size_bytes")
+        .eq("id", account.id)
+        .maybeSingle();
+      const previousSize = previousKey ? (previousRow?.avatar_size_bytes ?? 0) : 0;
+
       const { error } = await supabase
         .from("user_account")
-        .update({ avatar_key: storageKey })
+        .update({ avatar_key: storageKey, avatar_size_bytes: file.size })
         .eq("id", account.id);
       if (error) {
         // Don't leave an orphaned object behind if the profile row rejected it.
         await removeStoredFile(storageKey).catch(() => undefined);
         throw error;
       }
-      await recordStorageUsageDelta(account.id, file.size);
+      await recordStorageUsageDelta(account.id, file.size - previousSize);
 
       // The old photo is unreachable once the row points at the new key, so
       // remove it rather than silently consuming the agent's quota forever.
@@ -88,12 +98,21 @@ export function ProfilePhoto() {
 
     setBusy(true);
     try {
+      const { data: currentRow } = await supabase
+        .from("user_account")
+        .select("avatar_size_bytes")
+        .eq("id", account.id)
+        .maybeSingle();
+
       const { error } = await supabase
         .from("user_account")
-        .update({ avatar_key: null })
+        .update({ avatar_key: null, avatar_size_bytes: null })
         .eq("id", account.id);
       if (error) throw error;
 
+      if (currentRow?.avatar_size_bytes) {
+        await recordStorageUsageDelta(account.id, -currentRow.avatar_size_bytes);
+      }
       await removeStoredFile(avatarKey).catch(() => undefined);
       await refreshAccount();
       await queryClient.invalidateQueries({ queryKey: ["avatar-url"] });

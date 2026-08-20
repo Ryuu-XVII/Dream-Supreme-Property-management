@@ -576,3 +576,15 @@ Audited every place the platform writes to `public.notification`, to find real g
 - **`process_monthly_section_86_4_interest_allocation()`** — trust interest processing.
 
 The one real gap: `trg_notify_deal_events` fires `after insert or update of stage, status`, so it runs on every new deal too, but `notify_agency_admins()`'s branches only ever matched an *update* — `registered`/`cancelled` can't be true on a brand-new deal, and the generic stage-change branch explicitly required `OLD is not null`. A freshly created deal fell through to `else return NEW`, so admins got nothing when a deal was opened. Added a `OLD is null` branch ("🆕 New Deal Opened") ahead of the others; the existing branches are unchanged (only their `OLD is null or ...` guards were dropped, since the new branch above them now handles that case).
+
+**Second problem while auditing the admin experience:** the admin portal (`src/components/admin/admin-header.tsx`) had no notification UI at all — it imported `Bell` from `lucide-react` and never rendered it. Every fix above was invisible to admins regardless. Extracted the agent portal's bell/popover/realtime logic into a shared `NotificationBell` component (`src/components/layout/notification-bell.tsx`, taking the account id as a prop) and wired it into both headers.
+
+## 25. Per-User Storage Quota Drifted From Reality (`20260820002000`)
+
+`user_account.storage_used_bytes` only ever went up for profile photos: replacing or removing one deletes the old R2 object (`removeStoredFile`) but the byte count was never decremented for it, only incremented for the new upload. Confirmed on production: Master Admin had `storage_used_bytes = 80` with `avatar_key = null` and zero `document` rows — bytes from a test avatar that were never released once it was replaced or removed.
+
+Root cause: there was nowhere to read the *previous* avatar's size from at the point of replacing/removing it, since only the current R2 key was persisted, never its byte size. Added `user_account.avatar_size_bytes`, set alongside `avatar_key` on every avatar write (`profile-photo.tsx`, `register.tsx`), and used to correctly net the delta on replace (`new size - old size`) and remove (`-old size`) instead of only ever adding.
+
+One-time reconciliation to ground truth in the same migration: every account had `avatar_key = null` on production at the time, so the correct `storage_used_bytes` was exactly the sum of `document.size_bytes` actually attributed to that user (`uploaded_by`) — no avatar contribution to account for. Fixed Master Admin's phantom 80 bytes; left the one account with real uploaded documents unchanged (its stored total already matched the sum exactly).
+
+**Separately found while auditing every `uploadFileToR2` call site:** `src/routes/admin/agency.tsx`'s agency-logo upload never called `recordStorageUsageDelta` at all — that upload was completely invisible to the quota system, an undercount rather than an overcount. Fixed by charging it against the uploading admin's account, consistent with how other admin-driven uploads on behalf of the agency work.
