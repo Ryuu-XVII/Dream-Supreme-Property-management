@@ -12,10 +12,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, FileText, History, Loader2 } from "lucide-react";
-import { dateFmt } from "@/lib/format";
+import { Search, FileText, History, Loader2, ShieldAlert, Ban } from "lucide-react";
+import { dateFmt, zar, pct } from "@/lib/format";
 import { stageFromDb } from "@/lib/domain";
 import { usePipelineDeals, type PipelineDeal } from "@/data/deals";
+
+const CONDITION_STATUS_STYLE: Record<string, string> = {
+  fulfilled: "border-success/30 bg-success/10 text-success",
+  waived: "border-muted-foreground/30 bg-muted text-muted-foreground",
+  failed: "border-destructive/30 bg-destructive/10 text-destructive",
+  extended: "border-warning/40 bg-warning/15 text-warning",
+  pending: "border-info/30 bg-info/10 text-info",
+};
 
 export const Route = createFileRoute("/admin/deals")({
   component: AdminDeals,
@@ -93,7 +101,7 @@ function AdminDeals() {
                         {d.property?.address || "No Address"}
                       </TableCell>
                       <TableCell className="font-mono tabular-nums">
-                        R {d.salePrice.toLocaleString()}
+                        {zar(d.salePrice, { decimals: false })}
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -125,6 +133,11 @@ function AdminDeals() {
                   <div>
                     <p className="text-xs text-muted-foreground">Property</p>
                     <p className="text-sm font-medium">{selectedDeal.property?.address || "N/A"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {[selectedDeal.property?.suburb, selectedDeal.property?.city]
+                        .filter(Boolean)
+                        .join(", ") || "Location unknown"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Agent</p>
@@ -135,12 +148,28 @@ function AdminDeals() {
                   <div>
                     <p className="text-xs text-muted-foreground">Value</p>
                     <p className="text-sm font-medium text-emerald-600">
-                      R {selectedDeal.salePrice.toLocaleString()}
+                      {zar(selectedDeal.salePrice, { decimals: false })}
                     </p>
                   </div>
                   <div>
+                    <p className="text-xs text-muted-foreground">Commission</p>
+                    <p className="text-sm font-medium">
+                      {pct(selectedDeal.commissionBps)} ·{" "}
+                      {zar(selectedDeal.grossCommissionCents, { decimals: false })} gross
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Stage</p>
+                    <Badge
+                      variant="outline"
+                      className="border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                    >
+                      {stageFromDb[selectedDeal.stage] ?? selectedDeal.stage}
+                    </Badge>
+                  </div>
+                  <div>
                     <p className="text-xs text-muted-foreground">Status</p>
-                    <p className="text-sm font-medium">{selectedDeal.status}</p>
+                    <p className="text-sm font-medium capitalize">{selectedDeal.status}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Days in Stage</p>
@@ -148,6 +177,49 @@ function AdminDeals() {
                   </div>
                 </div>
               </GlassCard>
+
+              {selectedDeal.conditions.length > 0 && (
+                <GlassCard>
+                  <h4 className="mb-3 flex items-center gap-2 font-display text-sm font-semibold">
+                    <ShieldAlert className="size-4 text-primary" /> Suspensive Conditions
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedDeal.conditions.map((condition, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-border/50 p-2.5 text-xs"
+                      >
+                        <Badge
+                          variant="outline"
+                          className={
+                            CONDITION_STATUS_STYLE[condition.status] ??
+                            "border-border text-muted-foreground"
+                          }
+                        >
+                          {condition.status}
+                        </Badge>
+                        <span className="text-muted-foreground">
+                          {condition.due_on ? `Due ${dateFmt(condition.due_on)}` : "No due date"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </GlassCard>
+              )}
+
+              {selectedDeal.cancelled && (
+                <GlassCard className="border-destructive/30">
+                  <h4 className="mb-2 flex items-center gap-2 font-display text-sm font-semibold text-destructive">
+                    <Ban className="size-4" /> Deal Cancelled
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedDeal.cancelled.reason} ·{" "}
+                    {selectedDeal.cancelled.at
+                      ? dateFmt(selectedDeal.cancelled.at)
+                      : "Unknown date"}
+                  </p>
+                </GlassCard>
+              )}
             </div>
           ) : (
             <GlassCard className="flex flex-col items-center justify-center text-center p-8 text-muted-foreground h-full min-h-75">
