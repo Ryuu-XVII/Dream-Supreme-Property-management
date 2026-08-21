@@ -62,6 +62,9 @@ jobs:
       - name: Run Production Build
         run: npm run build
 
+      - name: Check bundle size budget
+        run: npm run check:bundle
+
       - name: Generate Workflow Summary
         if: always()
         run: |

@@ -15,6 +15,14 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 1000,
+    // Emits dist/.vite/manifest.json (chunk graph with isEntry/imports/
+    // dynamicImports) so scripts/check-bundle-budget.mjs can tell an
+    // eagerly-loaded chunk from a lazy one — the distinction that made the
+    // PDF template designer's ~4MB bundle fine to ship (see
+    // src/routes/admin/pdf-templates/$documentType.tsx's React.lazy()) but
+    // would be a real regression if a future change pulled it into the
+    // chunks every page pays for on load.
+    manifest: true,
   },
   test: {
     // workers/property24-sync is its own npm package with its own

@@ -1,10 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Template } from "@pdfme/common";
-import { generate } from "@pdfme/generator";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { getPdfDocumentType } from "@/lib/pdf-document-types";
-import { PDF_PLUGINS } from "@/lib/pdf-plugins";
 import { buildReportBreakdownSchemas, stripReportChartSchemas } from "@/lib/pdf-template-layouts";
 import { buildDefaultTemplate } from "@/data/pdf-templates";
 import {
@@ -14,13 +12,23 @@ import {
   uploadFileToR2,
 } from "@/lib/storage";
 
-// Everything in this file pulls in @pdfme/generator and PDF_PLUGINS — the
-// same rendering stack the designer page needs, multiple megabytes of
-// bundle. Kept out of pdf-templates.ts on purpose (see the comment there):
-// import from here only in code that actually renders a PDF (a "Generate"
-// button), not in anything that merely lists, loads, or saves a template
-// row, or those pages pay for this bundle too even though they never call
-// generate().
+// Everything in this file's rendering path pulls in @pdfme/generator and
+// PDF_PLUGINS — the same rendering stack the designer page needs, ~860KB
+// gzipped (@pdfme/generator drags in @pdfme/converter's clawpdf/canvg/
+// html2canvas for PDF-to-image conversion this app never uses). Kept out of
+// pdf-templates.ts on purpose (see the comment there): import from here only
+// in code that actually renders a PDF (a "Generate" button), not in
+// anything that merely lists, loads, or saves a template row.
+//
+// That split alone isn't enough, though — every route that can generate a
+// PDF (documents.tsx, the lease wizard, reports, the FFC register) still
+// statically imported this module, so all of them paid the ~860KB cost on
+// render, not on click. `generate`/`PDF_PLUGINS` are dynamically imported
+// inside renderPdfFromTemplate below instead of at module top level, so
+// that weight only downloads the moment a user actually triggers a
+// generate/download action — see scripts/check-bundle-budget.mjs, which is
+// what caught this, and documentation/technical/DATABASE_SCHEMA_AND_RLS.md
+// §31.
 
 // Shared by both useGeneratePdfDocument (stores the result) and
 // useDownloadPdfFromTemplate (just hands it to the browser): loads the
@@ -61,6 +69,10 @@ async function renderPdfFromTemplate(
     ] as Template["schemas"][number];
   }
 
+  const [{ generate }, { PDF_PLUGINS }] = await Promise.all([
+    import("@pdfme/generator"),
+    import("@/lib/pdf-plugins"),
+  ]);
   const pdfBytes = await generate({ template, inputs: [inputs], plugins: PDF_PLUGINS });
   return { doc, pdfBytes };
 }
