@@ -68,7 +68,7 @@
     "react-hook-form": "^7.71.2",
     "recharts": "^2.15.4",
     "signature_pad": "^4.2.0",
-    "sonner": "^2.0.7",
+    "sonner": "^2.0.8",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1",
     "tw-animate-css": "^1.3.4",
