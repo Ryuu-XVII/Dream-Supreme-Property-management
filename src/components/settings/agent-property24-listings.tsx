@@ -1,115 +1,12 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  AlertTriangle,
-  Bath,
-  BedDouble,
-  Car,
-  ExternalLink,
-  Globe,
-  Loader2,
-  MapPin,
-  Ruler,
-  RefreshCw,
-  Unlink,
-} from "lucide-react";
-import { GlassCard, EmptyState } from "@/components/ui-kit";
+import { AlertTriangle, ExternalLink, Globe, Loader2, RefreshCw, Unlink } from "lucide-react";
+import { GlassCard } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { relative } from "@/lib/format";
-import {
-  useAgentProperty24,
-  useSetProperty24Url,
-  useSyncProperty24,
-  type Property24Listing,
-} from "@/data/property24";
-
-type PurposeFilter = "all" | "sale" | "rent";
-
-function ListingCard({ listing }: { listing: Property24Listing }) {
-  return (
-    <a
-      href={listing.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card/40 transition-colors hover:border-primary/50"
-    >
-      <div className="relative aspect-[3/2] overflow-hidden bg-muted">
-        {listing.imageUrl ? (
-          <img
-            src={listing.imageUrl}
-            alt={listing.title ?? "Property24 listing"}
-            loading="lazy"
-            className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <div className="grid size-full place-items-center text-muted-foreground">
-            <Globe className="size-6" />
-          </div>
-        )}
-        <Badge
-          variant="outline"
-          className={`absolute left-2 top-2 border-0 text-[11px] font-semibold ${
-            listing.purpose === "sale"
-              ? "bg-indigo-600/90 text-white"
-              : "bg-emerald-600/90 text-white"
-          }`}
-        >
-          {listing.purpose === "sale" ? "For Sale" : "To Rent"}
-        </Badge>
-      </div>
-
-      <div className="flex flex-1 flex-col gap-1.5 p-3">
-        <div className="flex items-start justify-between gap-2">
-          <span className="font-display text-sm font-semibold">
-            {listing.priceLabel ?? "Price on request"}
-          </span>
-          <ExternalLink className="mt-0.5 size-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-        </div>
-        <p className="text-xs font-medium">{listing.title ?? "Listing"}</p>
-        {listing.location && (
-          <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
-            <MapPin className="size-3" />
-            {listing.location}
-          </p>
-        )}
-        {listing.excerpt && (
-          <p className="line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
-            {listing.excerpt}
-          </p>
-        )}
-
-        <div className="mt-auto flex flex-wrap items-center gap-3 pt-2 text-[11px] text-muted-foreground">
-          {listing.bedrooms !== null && (
-            <span className="flex items-center gap-1" title="Bedrooms">
-              <BedDouble className="size-3.5" />
-              {listing.bedrooms}
-            </span>
-          )}
-          {listing.bathrooms !== null && (
-            <span className="flex items-center gap-1" title="Bathrooms">
-              <Bath className="size-3.5" />
-              {listing.bathrooms}
-            </span>
-          )}
-          {listing.parking !== null && (
-            <span className="flex items-center gap-1" title="Parking spaces">
-              <Car className="size-3.5" />
-              {listing.parking}
-            </span>
-          )}
-          {listing.sizeLabel && (
-            <span className="flex items-center gap-1" title={listing.sizeKind ?? "Size"}>
-              <Ruler className="size-3.5" />
-              {listing.sizeLabel}
-            </span>
-          )}
-        </div>
-      </div>
-    </a>
-  );
-}
+import { useAgentProperty24, useSetProperty24Url, useSyncProperty24 } from "@/data/property24";
 
 /**
  * Property24 profile and live listings for one agent. Renders on the agent's
@@ -126,7 +23,6 @@ export function AgentProperty24Listings({
   const { data, isLoading } = useAgentProperty24(userId);
   const sync = useSyncProperty24();
   const saveUrl = useSetProperty24Url();
-  const [filter, setFilter] = useState<PurposeFilter>("all");
   const [urlDraft, setUrlDraft] = useState("");
 
   // Saving the URL and syncing are one action from the user's point of view:
@@ -243,10 +139,6 @@ export function AgentProperty24Listings({
     );
   }
 
-  const listings = data.listings.filter((l) => filter === "all" || l.purpose === filter);
-  const saleCount = data.listings.filter((l) => l.purpose === "sale").length;
-  const rentCount = data.listings.filter((l) => l.purpose === "rent").length;
-
   return (
     <GlassCard className="lg:col-span-3">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -323,45 +215,6 @@ export function AgentProperty24Listings({
             <strong className="font-semibold">Last sync failed:</strong> {data.syncError}
           </span>
         </div>
-      )}
-
-      {data.listings.length === 0 ? (
-        <div className="mt-4">
-          <EmptyState
-            icon={Globe}
-            title="No listings synced yet"
-            message="Use “Sync now” to pull this agent's current listings from their public Property24 profile."
-          />
-        </div>
-      ) : (
-        <>
-          <div className="mt-4 flex flex-wrap gap-1.5 border-t border-border/50 pt-4">
-            {(
-              [
-                ["all", `All (${data.listings.length})`],
-                ["sale", `For sale (${saleCount})`],
-                ["rent", `To rent (${rentCount})`],
-              ] as const
-            ).map(([value, label]) => (
-              <Button
-                key={value}
-                type="button"
-                variant={filter === value ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilter(value)}
-                className="h-7 text-xs"
-              >
-                {label}
-              </Button>
-            ))}
-          </div>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {listings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
-            ))}
-          </div>
-        </>
       )}
     </GlassCard>
   );
