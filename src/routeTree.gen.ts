@@ -59,6 +59,10 @@ import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SetupIndexRouteImport } from './routes/setup/index'
 import { Route as SetupImportRouteImport } from './routes/setup/import'
 import { Route as AdminComplianceFfcRouteImport } from './routes/admin/compliance/ffc'
+import { Route as AdminEmailTemplatesIndexRouteImport } from './routes/admin/email-templates/index'
+import { Route as AdminEmailTemplatesEmailTypeRouteImport } from './routes/admin/email-templates/$emailType'
+import { Route as AdminPdfTemplatesIndexRouteImport } from './routes/admin/pdf-templates/index'
+import { Route as AdminPdfTemplatesDocumentTypeRouteImport } from './routes/admin/pdf-templates/$documentType'
 import { Route as AdminDealsDealIdDetailsRouteImport } from './routes/admin/deals_.$dealId_.details'
 
 const IndexRoute = IndexRouteImport.update({
@@ -313,6 +317,29 @@ const AdminComplianceFfcRoute = AdminComplianceFfcRouteImport.update({
   path: '/compliance/ffc',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminEmailTemplatesIndexRoute =
+  AdminEmailTemplatesIndexRouteImport.update({
+    id: '/email-templates/',
+    path: '/email-templates/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminEmailTemplatesEmailTypeRoute =
+  AdminEmailTemplatesEmailTypeRouteImport.update({
+    id: '/email-templates/$emailType',
+    path: '/email-templates/$emailType',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminPdfTemplatesIndexRoute = AdminPdfTemplatesIndexRouteImport.update({
+  id: '/pdf-templates/',
+  path: '/pdf-templates/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPdfTemplatesDocumentTypeRoute =
+  AdminPdfTemplatesDocumentTypeRouteImport.update({
+    id: '/pdf-templates/$documentType',
+    path: '/pdf-templates/$documentType',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminDealsDealIdDetailsRoute = AdminDealsDealIdDetailsRouteImport.update({
   id: '/deals_/$dealId_/details',
   path: '/deals/$dealId/details',
@@ -370,6 +397,10 @@ export interface FileRoutesByFullPath {
   '/reports/': typeof ReportsIndexRoute
   '/setup/': typeof SetupIndexRoute
   '/admin/compliance/ffc': typeof AdminComplianceFfcRoute
+  '/admin/email-templates/$emailType': typeof AdminEmailTemplatesEmailTypeRoute
+  '/admin/pdf-templates/$documentType': typeof AdminPdfTemplatesDocumentTypeRoute
+  '/admin/email-templates/': typeof AdminEmailTemplatesIndexRoute
+  '/admin/pdf-templates/': typeof AdminPdfTemplatesIndexRoute
   '/admin/deals/$dealId/details': typeof AdminDealsDealIdDetailsRoute
 }
 export interface FileRoutesByTo {
@@ -422,6 +453,10 @@ export interface FileRoutesByTo {
   '/reports': typeof ReportsIndexRoute
   '/setup': typeof SetupIndexRoute
   '/admin/compliance/ffc': typeof AdminComplianceFfcRoute
+  '/admin/email-templates/$emailType': typeof AdminEmailTemplatesEmailTypeRoute
+  '/admin/pdf-templates/$documentType': typeof AdminPdfTemplatesDocumentTypeRoute
+  '/admin/email-templates': typeof AdminEmailTemplatesIndexRoute
+  '/admin/pdf-templates': typeof AdminPdfTemplatesIndexRoute
   '/admin/deals/$dealId/details': typeof AdminDealsDealIdDetailsRoute
 }
 export interface FileRoutesById {
@@ -476,6 +511,10 @@ export interface FileRoutesById {
   '/reports/': typeof ReportsIndexRoute
   '/setup/': typeof SetupIndexRoute
   '/admin/compliance/ffc': typeof AdminComplianceFfcRoute
+  '/admin/email-templates/$emailType': typeof AdminEmailTemplatesEmailTypeRoute
+  '/admin/pdf-templates/$documentType': typeof AdminPdfTemplatesDocumentTypeRoute
+  '/admin/email-templates/': typeof AdminEmailTemplatesIndexRoute
+  '/admin/pdf-templates/': typeof AdminPdfTemplatesIndexRoute
   '/admin/deals_/$dealId_/details': typeof AdminDealsDealIdDetailsRoute
 }
 export interface FileRouteTypes {
@@ -531,6 +570,10 @@ export interface FileRouteTypes {
     | '/reports/'
     | '/setup/'
     | '/admin/compliance/ffc'
+    | '/admin/email-templates/$emailType'
+    | '/admin/pdf-templates/$documentType'
+    | '/admin/email-templates/'
+    | '/admin/pdf-templates/'
     | '/admin/deals/$dealId/details'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -583,6 +626,10 @@ export interface FileRouteTypes {
     | '/reports'
     | '/setup'
     | '/admin/compliance/ffc'
+    | '/admin/email-templates/$emailType'
+    | '/admin/pdf-templates/$documentType'
+    | '/admin/email-templates'
+    | '/admin/pdf-templates'
     | '/admin/deals/$dealId/details'
   id:
     | '__root__'
@@ -636,6 +683,10 @@ export interface FileRouteTypes {
     | '/reports/'
     | '/setup/'
     | '/admin/compliance/ffc'
+    | '/admin/email-templates/$emailType'
+    | '/admin/pdf-templates/$documentType'
+    | '/admin/email-templates/'
+    | '/admin/pdf-templates/'
     | '/admin/deals_/$dealId_/details'
   fileRoutesById: FileRoutesById
 }
@@ -1032,6 +1083,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminComplianceFfcRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/email-templates/': {
+      id: '/admin/email-templates/'
+      path: '/email-templates'
+      fullPath: '/admin/email-templates/'
+      preLoaderRoute: typeof AdminEmailTemplatesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/email-templates/$emailType': {
+      id: '/admin/email-templates/$emailType'
+      path: '/email-templates/$emailType'
+      fullPath: '/admin/email-templates/$emailType'
+      preLoaderRoute: typeof AdminEmailTemplatesEmailTypeRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/pdf-templates/': {
+      id: '/admin/pdf-templates/'
+      path: '/pdf-templates'
+      fullPath: '/admin/pdf-templates/'
+      preLoaderRoute: typeof AdminPdfTemplatesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/pdf-templates/$documentType': {
+      id: '/admin/pdf-templates/$documentType'
+      path: '/pdf-templates/$documentType'
+      fullPath: '/admin/pdf-templates/$documentType'
+      preLoaderRoute: typeof AdminPdfTemplatesDocumentTypeRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/deals_/$dealId_/details': {
       id: '/admin/deals_/$dealId_/details'
       path: '/deals/$dealId/details'
@@ -1054,6 +1133,10 @@ interface AdminRouteChildren {
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminComplianceFfcRoute: typeof AdminComplianceFfcRoute
+  AdminEmailTemplatesEmailTypeRoute: typeof AdminEmailTemplatesEmailTypeRoute
+  AdminPdfTemplatesDocumentTypeRoute: typeof AdminPdfTemplatesDocumentTypeRoute
+  AdminEmailTemplatesIndexRoute: typeof AdminEmailTemplatesIndexRoute
+  AdminPdfTemplatesIndexRoute: typeof AdminPdfTemplatesIndexRoute
   AdminDealsDealIdDetailsRoute: typeof AdminDealsDealIdDetailsRoute
 }
 
@@ -1069,6 +1152,10 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminComplianceFfcRoute: AdminComplianceFfcRoute,
+  AdminEmailTemplatesEmailTypeRoute: AdminEmailTemplatesEmailTypeRoute,
+  AdminPdfTemplatesDocumentTypeRoute: AdminPdfTemplatesDocumentTypeRoute,
+  AdminEmailTemplatesIndexRoute: AdminEmailTemplatesIndexRoute,
+  AdminPdfTemplatesIndexRoute: AdminPdfTemplatesIndexRoute,
   AdminDealsDealIdDetailsRoute: AdminDealsDealIdDetailsRoute,
 }
 

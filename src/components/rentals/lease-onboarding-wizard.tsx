@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
-import { zar } from "@/lib/format";
+import { dateFmt, zar } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,7 +38,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { useCreateLeaseOnboarding } from "@/data/rentals";
-import { useDocumentTemplates, useGenerateDocumentFromTemplate } from "@/data/templates";
+import { useGeneratePdfDocument } from "@/data/pdf-generate";
 
 interface LeaseOnboardingWizardProps {
   open: boolean;
@@ -48,8 +48,7 @@ interface LeaseOnboardingWizardProps {
 export function LeaseOnboardingWizard({ open, onOpenChange }: LeaseOnboardingWizardProps) {
   const { account } = useAuth();
   const createLeaseMutation = useCreateLeaseOnboarding();
-  const generateDocMutation = useGenerateDocumentFromTemplate();
-  const { data: templates = [] } = useDocumentTemplates();
+  const generatePdf = useGeneratePdfDocument();
 
   const [activeStep, setActiveStep] = useState("step1");
 
@@ -80,7 +79,7 @@ export function LeaseOnboardingWizard({ open, onOpenChange }: LeaseOnboardingWiz
   const [inspectionDate, setInspectionDate] = useState("");
   const [tenantFicaVerified, setTenantFicaVerified] = useState(true);
   const [landlordBankVerified, setLandlordBankVerified] = useState(true);
-  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [autoGenerateLeaseDoc, setAutoGenerateLeaseDoc] = useState(true);
 
   // Agency config query to load default settings
   const agencySettingsQuery = useQuery({
@@ -274,15 +273,33 @@ export function LeaseOnboardingWizard({ open, onOpenChange }: LeaseOnboardingWiz
         cpaNoticeApplicable,
       });
 
-      if (selectedTemplateId) {
+      if (autoGenerateLeaseDoc) {
         try {
-          await generateDocMutation.mutateAsync({
-            templateId: selectedTemplateId,
-            leaseId: newLeaseId,
+          const propertyLabel = propertiesQuery.data?.find((p) => p.id === propertyId)?.label ?? "";
+          const landlordName =
+            partiesQuery.data?.find((p) => p.id === landlordPartyId)?.full_name ?? "";
+          const tenantName =
+            partiesQuery.data?.find((p) => p.id === tenantPartyId)?.full_name ?? "";
+          await generatePdf.mutateAsync({
+            documentType: "lease_agreement",
+            filename: `lease_agreement_${newLeaseId}.pdf`,
+            inputs: {
+              propertyAddress: propertyLabel,
+              landlordName,
+              tenantName,
+              monthlyRent: zar(rentCents),
+              startDate: dateFmt(startDate),
+              endDate: dateFmt(endDate),
+            },
           });
-          toast.success("Lease contract auto-generated via Supabase!");
+          toast.success("Lease agreement PDF generated.");
         } catch (docErr) {
           console.error("Document auto-generation notice:", docErr);
+          toast.error(
+            docErr instanceof Error
+              ? `Lease onboarding completed, but the lease agreement PDF could not be generated: ${docErr.message}`
+              : "Lease onboarding completed, but the lease agreement PDF could not be generated.",
+          );
         }
       }
 
@@ -687,20 +704,18 @@ export function LeaseOnboardingWizard({ open, onOpenChange }: LeaseOnboardingWiz
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="template">Auto-Generate Lease Contract Template</Label>
-                <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-                  <SelectTrigger id="template">
-                    <SelectValue placeholder="Select contract template (optional)..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templates.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <Label htmlFor="auto-generate-lease-doc">Auto-generate lease agreement PDF</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Uses the admin's Lease Agreement PDF template (Admin → PDF Templates).
+                  </p>
+                </div>
+                <Switch
+                  id="auto-generate-lease-doc"
+                  checked={autoGenerateLeaseDoc}
+                  onCheckedChange={setAutoGenerateLeaseDoc}
+                />
               </div>
             </div>
 

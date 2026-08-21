@@ -262,18 +262,6 @@ export interface LeaseEscalationSchedule {
   createdAt: string;
 }
 
-export interface DocumentTemplate {
-  id: string;
-  agencyId: string;
-  name: string;
-  category: string;
-  bodyMarkdown: string;
-  version: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface AgencyRentalSettings {
   defaultManagementFeeBps: number;
   defaultProcurementFeeCents: number;

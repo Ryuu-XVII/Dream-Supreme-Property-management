@@ -11,6 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import { Download } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { EmptyState, GlassCard, TableSkeleton } from "@/components/ui-kit";
@@ -25,9 +26,9 @@ import {
 } from "@/components/ui/table";
 import { usePipelineDeals, type PipelineDeal } from "@/data/deals";
 import { useDashboardData } from "@/data/operations";
+import { useDownloadPdfFromTemplate } from "@/data/pdf-generate";
 import { stageFromDb } from "@/lib/domain";
 import { dateFmt, zar, zarCompact } from "@/lib/format";
-import { generateReportPdf } from "@/lib/report-pdf";
 
 export const Route = createFileRoute("/reports/$report")({ component: ReportPage });
 
@@ -81,8 +82,15 @@ function chartFor(report: string, deals: PipelineDeal[]) {
   return Array.from(byStage.entries()).map(([label, value]) => ({ label, value }));
 }
 
+const REPORT_DOCUMENT_TYPES: Record<string, string> = {
+  pipeline: "pipeline_report",
+  "fall-through": "fallthrough_report",
+  commission: "commission_report",
+};
+
 function DealReport({ report, title }: { report: string; title: string }) {
   const query = usePipelineDeals();
+  const downloadPdf = useDownloadPdfFromTemplate();
   const allDeals = useMemo(() => query.data ?? [], [query.data]);
   const rows = useMemo(
     () =>
@@ -95,6 +103,14 @@ function DealReport({ report, title }: { report: string; title: string }) {
           : allDeals,
     [allDeals, report],
   );
+  const active = useMemo(
+    () =>
+      allDeals.filter(
+        (deal) =>
+          !deal.cancelled && deal.stage !== "registered" && deal.stage !== "commission_released",
+      ),
+    [allDeals],
+  );
   const chartData = useMemo(() => chartFor(report, allDeals), [report, allDeals]);
   const chartLabel =
     report === "fall-through"
@@ -104,51 +120,35 @@ function DealReport({ report, title }: { report: string; title: string }) {
         : "Active deals by stage";
   const isCurrencyChart = report === "commission";
 
-  function downloadPdf() {
-    generateReportPdf({
-      title,
-      subtitle: "Live database records",
-      filename: `dream-supreme-${report}-report-${new Date().toISOString().slice(0, 10)}.pdf`,
-      kpis: [
-        { label: "Records", value: String(rows.length) },
-        ...(report === "commission"
-          ? [
-              {
-                label: "Total exposure",
-                value: zar(rows.reduce((sum, d) => sum + d.grossCommissionCents, 0)),
-              },
-            ]
-          : []),
-      ],
-      chart:
-        chartData.length > 0
+  async function downloadPdfClick() {
+    const documentType = REPORT_DOCUMENT_TYPES[report];
+    if (!documentType) return;
+    const generatedOn = dateFmt(new Date().toISOString());
+    const inputs: Record<string, string> =
+      report === "fall-through"
+        ? { generatedOn, totalCancelledDeals: String(rows.length) }
+        : report === "commission"
           ? {
-              title: chartLabel,
-              series: chartData,
-              valueFormatter: isCurrencyChart ? (v) => zarCompact(v) : undefined,
+              generatedOn,
+              totalCommissionExposure: zar(
+                rows.reduce((sum, d) => sum + d.grossCommissionCents, 0),
+              ),
             }
-          : undefined,
-      table: {
-        columns:
-          report === "commission"
-            ? ["Reference", "Property", "Stage", "Agent", "Sale price", "Gross commission"]
-            : report === "fall-through"
-              ? ["Reference", "Property", "Stage", "Agent", "Sale price", "Reason"]
-              : ["Reference", "Property", "Stage", "Agent", "Sale price", "Updated"],
-        rows: rows.map((deal) => [
-          deal.ref,
-          deal.property.address,
-          stageFromDb[deal.stage] ?? deal.stage,
-          deal.agent.name,
-          zar(deal.salePrice),
-          report === "commission"
-            ? zar(deal.grossCommissionCents)
-            : report === "fall-through"
-              ? (deal.cancelled?.reason ?? "—")
-              : dateFmt(deal.stageSince),
-        ]),
-      },
-    });
+          : {
+              generatedOn,
+              totalActiveDeals: String(active.length),
+              totalPipelineValue: zar(active.reduce((sum, d) => sum + d.salePrice, 0)),
+            };
+    try {
+      await downloadPdf.mutateAsync({
+        documentType,
+        inputs,
+        chartData,
+        filename: `dream-supreme-${report}-report-${new Date().toISOString().slice(0, 10)}.pdf`,
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not generate the report PDF.");
+    }
   }
 
   return (
@@ -157,8 +157,14 @@ function DealReport({ report, title }: { report: string; title: string }) {
       description="Live database records; export simulations have been removed."
       crumbs={[{ label: "Reports", to: "/reports" }, { label: title }]}
       actions={
-        <Button size="sm" variant="outline" className="gap-1.5" onClick={downloadPdf}>
-          <Download className="size-4" /> Download PDF
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5"
+          disabled={downloadPdf.isPending}
+          onClick={() => void downloadPdfClick()}
+        >
+          <Download className="size-4" /> {downloadPdf.isPending ? "Generating…" : "Download PDF"}
         </Button>
       }
     >
@@ -294,31 +300,23 @@ function ComplianceReport({ title }: { title: string }) {
     ];
   }, [rows]);
 
-  function downloadPdf() {
-    generateReportPdf({
-      title,
-      subtitle: "Live database records",
-      filename: `dream-supreme-compliance-report-${new Date().toISOString().slice(0, 10)}.pdf`,
-      kpis: [
-        { label: "Agents", value: String(rows.length) },
-        {
-          label: "FFC issues",
-          value: String(chartData[1].value + chartData[2].value),
-          tone: chartData[1].value + chartData[2].value ? "danger" : "success",
+  const downloadPdf = useDownloadPdfFromTemplate();
+
+  async function downloadPdfClick() {
+    const validCount = chartData[0].value;
+    try {
+      await downloadPdf.mutateAsync({
+        documentType: "compliance_report",
+        inputs: {
+          generatedOn: dateFmt(new Date().toISOString()),
+          agentsCovered: `${validCount} / ${rows.length}`,
         },
-      ],
-      chart: { title: "FFC status breakdown", series: chartData },
-      table: {
-        columns: ["Agent", "Role", "FFC number", "Expires", "Status"],
-        rows: rows.map((user) => [
-          user.name,
-          user.role,
-          user.ffc?.number ?? "—",
-          user.ffc?.expiry ? dateFmt(user.ffc.expiry) : "—",
-          statusOf(user),
-        ]),
-      },
-    });
+        chartData,
+        filename: `dream-supreme-compliance-report-${new Date().toISOString().slice(0, 10)}.pdf`,
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not generate the report PDF.");
+    }
   }
 
   return (
@@ -327,8 +325,14 @@ function ComplianceReport({ title }: { title: string }) {
       description="Live database records; export simulations have been removed."
       crumbs={[{ label: "Reports", to: "/reports" }, { label: title }]}
       actions={
-        <Button size="sm" variant="outline" className="gap-1.5" onClick={downloadPdf}>
-          <Download className="size-4" /> Download PDF
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5"
+          disabled={downloadPdf.isPending}
+          onClick={() => void downloadPdfClick()}
+        >
+          <Download className="size-4" /> {downloadPdf.isPending ? "Generating…" : "Download PDF"}
         </Button>
       }
     >

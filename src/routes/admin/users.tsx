@@ -1,5 +1,3 @@
-import { render } from "@react-email/render";
-import { InvitationEmailTemplate } from "@/emails/invitation";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -390,47 +388,60 @@ function AdminUsers() {
         // Step 4: Display invitation success and link
         setGeneratedLink(directRegisterUrl);
 
-        // Step 5: Render React Email template for local database audit history
-        const emailBodyHtml = await render(
-          InvitationEmailTemplate({
-            name,
-            role,
-            inviteUrl: directRegisterUrl,
-          }),
-        );
-
         let agencyId = account?.agencyId;
+        const { data: agencyRow } = await supabase
+          .from("agency")
+          .select("id, name")
+          .eq("id", agencyId ?? "")
+          .maybeSingle();
+        let agencyName = agencyRow?.name;
         if (!agencyId) {
-          const { data: agList } = await supabase.from("agency").select("id").limit(1);
+          const { data: agList } = await supabase.from("agency").select("id, name").limit(1);
           agencyId = agList?.[0]?.id;
+          agencyName = agList?.[0]?.name;
         }
 
-        // Step 4: Dispatch invitation email via Supabase Auth mailer
-        const { error: authInviteErr } = await supabase.auth.signInWithOtp({
-          email: email.toLowerCase(),
-          options: {
-            emailRedirectTo: directRegisterUrl,
-            shouldCreateUser: true,
-          },
-        });
-
-        if (authInviteErr) {
-          console.warn("Supabase Auth invite error (link still generated):", authInviteErr.message);
-        }
-
+        // Step 5: Queue the real invitation email — rendered from the
+        // agency's saved (or default) "Team Invitation" template by
+        // send-queued-emails right before it's sent, so what an admin
+        // designs in the email template builder is what the invitee
+        // actually receives, not a hardcoded email or Supabase Auth's own
+        // generic OTP mailer.
+        let emailQueued = false;
         if (agencyId) {
-          await supabase.from("email_queue").insert({
+          const { error: queueErr } = await supabase.from("email_queue").insert({
             agency_id: agencyId,
             recipient_email: email.toLowerCase(),
             subject: "You've been invited to join Dream Supreme Properties",
-            body_html: emailBodyHtml,
-            status: authInviteErr ? "failed" : "sent",
+            email_type: "team_invitation",
+            merge_values: {
+              recipientName: name,
+              role,
+              agencyName: agencyName ?? "Dream Supreme Properties",
+              inviteUrl: directRegisterUrl,
+            },
+            status: "pending",
           });
+          if (queueErr) {
+            console.error("Could not queue invitation email:", queueErr.message);
+          } else {
+            emailQueued = true;
+          }
         }
 
-        toast.success("Invitation Link Generated!", {
-          description: `Invitation link generated. Copy and share the direct link below with ${email}.`,
-        });
+        // The registration link itself (shown below, and copyable) is the
+        // part that actually matters — it works regardless of whether the
+        // email queue insert succeeded, so a queueing failure is a warning,
+        // not a blocker for the invitation itself.
+        if (emailQueued) {
+          toast.success("Invitation Link Generated!", {
+            description: `Invitation link generated. Copy and share the direct link below with ${email}.`,
+          });
+        } else {
+          toast.warning("Invitation link generated, but the email could not be queued.", {
+            description: "Copy and share the direct link below with the invitee manually.",
+          });
+        }
 
         refetch();
         return; // Keep dialog open so admin can copy the link
@@ -448,10 +459,9 @@ function AdminUsers() {
   const resendInvitation = async (user: AdminUser) => {
     try {
       const inviteId = user.id.replace("invite-", "");
-      // Fetch or re-generate token for invitation
       const { data: invData, error: fetchErr } = await supabase
         .from("user_invitation")
-        .select("token_hash, email, role")
+        .select("email, role, seniority, property24_url")
         .eq("id", inviteId)
         .maybeSingle();
 
@@ -460,18 +470,58 @@ function AdminUsers() {
         return;
       }
 
-      const inviteToken = invData.token_hash;
+      // `user_invitation.token_hash` is a one-way SHA-256 hash — it can't be
+      // turned back into a valid registration link. create_user_invitation
+      // deletes the existing unaccepted row and issues a fresh raw token,
+      // which is the only thing accept_user_invitation can verify against.
+      const { data: inviteToken, error: rpcErr } = await supabase.rpc("create_user_invitation", {
+        p_email: invData.email,
+        p_role: invData.role,
+        p_seniority: invData.seniority,
+        p_property24_url: invData.property24_url,
+      });
+      if (rpcErr || !inviteToken) {
+        toast.error(rpcErr?.message || "Could not regenerate the invitation.");
+        return;
+      }
+
       const appBaseUrl = window.location.origin;
       const directRegisterUrl = `${appBaseUrl}/register?token=${inviteToken}&email=${encodeURIComponent(user.email)}`;
 
-      // Re-trigger Supabase Auth OTP email
-      await supabase.auth.signInWithOtp({
-        email: user.email.toLowerCase(),
-        options: {
-          emailRedirectTo: directRegisterUrl,
-          shouldCreateUser: true,
-        },
-      });
+      let agencyId = account?.agencyId;
+      const { data: agencyRow } = await supabase
+        .from("agency")
+        .select("id, name")
+        .eq("id", agencyId ?? "")
+        .maybeSingle();
+      let agencyName = agencyRow?.name;
+      if (!agencyId) {
+        const { data: agList } = await supabase.from("agency").select("id, name").limit(1);
+        agencyId = agList?.[0]?.id;
+        agencyName = agList?.[0]?.name;
+      }
+
+      let emailQueued = false;
+      if (agencyId) {
+        const { error: queueErr } = await supabase.from("email_queue").insert({
+          agency_id: agencyId,
+          recipient_email: user.email.toLowerCase(),
+          subject: "You've been invited to join Dream Supreme Properties",
+          email_type: "team_invitation",
+          merge_values: {
+            recipientName: user.name.replace(" (Pending Invite)", ""),
+            role: user.role,
+            agencyName: agencyName ?? "Dream Supreme Properties",
+            inviteUrl: directRegisterUrl,
+          },
+          status: "pending",
+        });
+        if (queueErr) {
+          console.error("Could not queue invitation email:", queueErr.message);
+        } else {
+          emailQueued = true;
+        }
+      }
 
       // Show dialog with generated invitation link to copy
       setGeneratedLink(directRegisterUrl);
@@ -485,9 +535,15 @@ function AdminUsers() {
       setEditing(null);
       setDialogOpen(true);
 
-      toast.success(`Invitation resent to ${user.email}!`, {
-        description: "Invitation email dispatched and sign-up link ready.",
-      });
+      if (emailQueued) {
+        toast.success(`Invitation resent to ${user.email}!`, {
+          description: "Invitation email dispatched and sign-up link ready.",
+        });
+      } else {
+        toast.warning(`New sign-up link generated for ${user.email}.`, {
+          description: "The email could not be queued — copy and share the link manually.",
+        });
+      }
     } catch (err: any) {
       toast.error("Failed to resend invitation: " + err.message);
     }

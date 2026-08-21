@@ -28,6 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import { dateFmt, daysUntil } from "@/lib/format";
 import { useDashboardData } from "@/data/operations";
+import { useDownloadPdfFromTemplate } from "@/data/pdf-generate";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import {
@@ -45,6 +46,7 @@ import {
   Eye,
   UploadCloud,
   Award,
+  FileDown,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin/compliance/ffc")({
@@ -280,6 +282,24 @@ function FfcRegister() {
   const loading = dashboard.isLoading;
   const [viewUser, setViewUser] = useState<any | null>(null);
   const [uploadUser, setUploadUser] = useState<any | null>(null);
+  const downloadPdf = useDownloadPdfFromTemplate();
+
+  async function generateCoverSheet(user: any) {
+    if (!user.ffc) return;
+    try {
+      await downloadPdf.mutateAsync({
+        documentType: "ffc_certificate",
+        filename: `ffc_certificate_${user.name.replace(/\s+/g, "_")}.pdf`,
+        inputs: {
+          agentName: user.name,
+          certificateNumber: user.ffc.number,
+          expiresOn: dateFmt(user.ffc.expiry),
+        },
+      });
+    } catch (error: any) {
+      toast.error(error.message || "Could not generate the cover sheet");
+    }
+  }
 
   const rows = useMemo(
     () =>
@@ -406,6 +426,16 @@ function FfcRegister() {
                           onClick={() => setUploadUser(user)}
                         >
                           <UploadCloud className="size-3.5" /> Upload
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 gap-1"
+                          disabled={!user.ffc || downloadPdf.isPending}
+                          title={user.ffc ? undefined : "No certificate on file yet"}
+                          onClick={() => void generateCoverSheet(user)}
+                        >
+                          <FileDown className="size-3.5" /> Cover sheet
                         </Button>
                       </div>
                     </TableCell>

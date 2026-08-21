@@ -6,15 +6,19 @@
 // key as a bearer token (verified by the platform's own JWT check).
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { renderTemplatedEmail } from "./email-render.ts";
 
 const BATCH_SIZE = 25;
 const MAX_ATTEMPTS = 5;
 
 interface EmailQueueRow {
   id: string;
+  agency_id: string;
   recipient_email: string;
   subject: string;
-  body_html: string;
+  body_html: string | null;
+  email_type: string | null;
+  merge_values: Record<string, string> | null;
   attempts: number;
 }
 
@@ -46,7 +50,9 @@ Deno.serve(async () => {
 
   const { data: rows, error: fetchError } = await supabase
     .from("email_queue")
-    .select("id, recipient_email, subject, body_html, attempts")
+    .select(
+      "id, agency_id, recipient_email, subject, body_html, email_type, merge_values, attempts",
+    )
     .eq("status", "pending")
     .lt("attempts", MAX_ATTEMPTS)
     .order("created_at", { ascending: true })
@@ -63,11 +69,45 @@ Deno.serve(async () => {
   let failed = 0;
   for (const row of (rows ?? []) as EmailQueueRow[]) {
     try {
+      // Rows produced by a known email type (deal_notification,
+      // daily_notification_digest, team_invitation, ...) carry structured
+      // merge_values instead of pre-built HTML — render the agency's saved
+      // (or default) template for that type now, right before sending, so
+      // an admin's customization always reflects in the actual email. Falls
+      // back to the row's plain subject/body_html if there's no email_type,
+      // or if template rendering itself throws, so a broken custom template
+      // never blocks delivery outright.
+      let subject = row.subject;
+      let html = row.body_html;
+      if (row.email_type) {
+        try {
+          const rendered = await renderTemplatedEmail(
+            async () => {
+              const { data } = await supabase
+                .from("email_template")
+                .select("subject, document")
+                .eq("agency_id", row.agency_id)
+                .eq("email_type", row.email_type)
+                .maybeSingle();
+              return data ? { subject: data.subject, document: data.document } : null;
+            },
+            row.email_type,
+            row.merge_values ?? {},
+          );
+          subject = rendered.subject;
+          html = rendered.html;
+        } catch (renderErr) {
+          console.error(`Template render failed for email_queue row ${row.id}:`, renderErr);
+          if (!html) throw renderErr;
+        }
+      }
+      if (!html) throw new Error(`email_queue row ${row.id} has no renderable body`);
+
       await client.send({
         from: smtpFrom!,
         to: row.recipient_email,
-        subject: row.subject,
-        html: row.body_html,
+        subject,
+        html,
       });
       await supabase
         .from("email_queue")

@@ -24,8 +24,9 @@ import { useAuth } from "@/lib/auth";
 import { getR2FileUrl } from "@/lib/storage";
 import { useDocuments, useUploadDocument } from "@/data/documents";
 import { usePipelineDeals } from "@/data/deals";
-import { parseTemplateMerge, useDocumentTemplates } from "@/data/templates";
-import { dateTimeFmt } from "@/lib/format";
+import { useGeneratePdfDocument } from "@/data/pdf-generate";
+import { getPdfDocumentType } from "@/lib/pdf-document-types";
+import { dateFmt, dateTimeFmt } from "@/lib/format";
 
 export const Route = createFileRoute("/documents")({
   head: () => ({ meta: [{ title: "Documents | Dream Supreme Properties" }] }),
@@ -58,18 +59,25 @@ async function download(storageKey: string, filename: string) {
   }
 }
 
+// The only PDF document type that's fully mergeable from the lightweight
+// pipeline-deal data available on this page — the others (Offer to Purchase,
+// Mandate Agreement) need seller/purchaser/mandate fields this query doesn't
+// fetch, and generating a document with those left blank would be worse than
+// not offering it here at all.
+const GENERATABLE_DOCUMENT_TYPE = "deal_registration_certificate";
+
 function DocumentsPage() {
   const { activeAccount, isReadOnly } = useAuth();
   const dealsQuery = usePipelineDeals();
-  const templatesQuery = useDocumentTemplates();
   const [dealId, setDealId] = useState("");
   const [category, setCategory] = useState("other");
   const fileInput = useRef<HTMLInputElement>(null);
   const documentsQuery = useDocuments(dealId || undefined);
   const upload = useUploadDocument();
+  const generatePdf = useGeneratePdfDocument();
   const deals = dealsQuery.data ?? [];
-  const templates = templatesQuery.data ?? [];
   const selectedDeal = deals.find((deal) => deal.id === dealId);
+  const generatableDoc = getPdfDocumentType(GENERATABLE_DOCUMENT_TYPE)!;
 
   async function uploadFile(file: File) {
     if (isReadOnly) return toast.info("Read-only mode: exit impersonation to upload documents.");
@@ -82,17 +90,27 @@ function DocumentsPage() {
     }
   }
 
-  async function generate(templateId: string) {
+  async function generate() {
+    if (isReadOnly) return toast.info("Read-only mode: exit impersonation to generate documents.");
     if (!selectedDeal) return toast.error("Select a deal first.");
-    const template = templates.find((item) => item.id === templateId);
-    if (!template) return;
-    const content = parseTemplateMerge(template.bodyMarkdown, {
-      deal_reference: selectedDeal.ref,
-      property_address: selectedDeal.property.address,
-      sale_price: (selectedDeal.salePrice / 100).toFixed(2),
-    });
-    const filename = `${template.name.replace(/[^a-z0-9]+/gi, "_").toLowerCase()}_${selectedDeal.ref}.md`;
-    await uploadFile(new File([content], filename, { type: "text/markdown" }));
+    const filename = `deal_registration_certificate_${selectedDeal.ref}.pdf`;
+    try {
+      await generatePdf.mutateAsync({
+        documentType: GENERATABLE_DOCUMENT_TYPE,
+        dealId: selectedDeal.id,
+        filename,
+        inputs: {
+          dealReference: selectedDeal.ref,
+          propertyAddress: selectedDeal.property.address,
+          salePrice: `R ${(selectedDeal.salePrice / 100).toLocaleString("en-ZA", { minimumFractionDigits: 2 })}`,
+          registrationDate: dateFmt(new Date().toISOString()),
+          agentName: selectedDeal.agent.name,
+        },
+      });
+      toast.success(`${filename} generated`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not generate the document.");
+    }
   }
 
   return (
@@ -207,35 +225,26 @@ function DocumentsPage() {
       <GlassCard className="mt-6">
         <h2 className="font-display text-base font-semibold">Generate from template</h2>
         <p className="mb-4 text-xs text-muted-foreground">
-          Generated Markdown is merged in the browser, uploaded to private storage, and recorded as
-          a document.
+          Rendered from the admin-designed PDF template for this document type, uploaded to private
+          storage, and recorded as a document.
         </p>
-        {templates.length === 0 ? (
-          <EmptyState
-            title="No active templates"
-            message="An administrator must create document templates first."
-          />
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {templates
-              .filter((item) => item.isActive)
-              .map((template) => (
-                <div key={template.id} className="rounded-lg border p-3">
-                  <p className="font-medium">{template.name}</p>
-                  <p className="text-xs text-muted-foreground">{template.category}</p>
-                  <Button
-                    className="mt-3"
-                    size="sm"
-                    variant="outline"
-                    disabled={!dealId || upload.isPending || isReadOnly}
-                    onClick={() => void generate(template.id)}
-                  >
-                    {isReadOnly ? "Generate (Read-Only)" : "Generate and store"}
-                  </Button>
-                </div>
-              ))}
-          </div>
-        )}
+        <div className="rounded-lg border p-3 sm:max-w-xs">
+          <p className="font-medium">{generatableDoc.label}</p>
+          <p className="text-xs text-muted-foreground">{generatableDoc.description}</p>
+          <Button
+            className="mt-3"
+            size="sm"
+            variant="outline"
+            disabled={!dealId || generatePdf.isPending || isReadOnly}
+            onClick={() => void generate()}
+          >
+            {isReadOnly
+              ? "Generate (Read-Only)"
+              : generatePdf.isPending
+                ? "Generating…"
+                : "Generate and store"}
+          </Button>
+        </div>
       </GlassCard>
     </AppShell>
   );

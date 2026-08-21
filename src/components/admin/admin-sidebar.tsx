@@ -11,6 +11,8 @@ import {
   Activity,
   ShieldCheck,
   Bell,
+  FileStack,
+  Mail,
 } from "lucide-react";
 import { useApp } from "@/lib/app-state";
 import { useAuth } from "@/lib/auth";
@@ -28,6 +30,8 @@ export const adminNavItems = [
   { label: "Compliance", to: "/admin/compliance/ffc", icon: ShieldCheck },
   { label: "Agency Config", to: "/admin/agency", icon: Building2 },
   { label: "Notifications", to: "/admin/notifications", icon: Bell },
+  { label: "PDF Templates", to: "/admin/pdf-templates", icon: FileStack },
+  { label: "Email Templates", to: "/admin/email-templates", icon: Mail },
   { label: "Settings", to: "/admin/settings", icon: Settings },
 ] as const;
 
