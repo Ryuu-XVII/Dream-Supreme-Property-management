@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -113,6 +114,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return null;
   });
+  const accountRef = useRef(account);
+  accountRef.current = account;
   const [impersonatedAccount, setImpersonatedAccount] = useState<UserAccount | null>(() => {
     if (typeof window !== "undefined") {
       const stored = sessionStorage.getItem(IMPERSONATION_SESSION_KEY);
@@ -200,7 +203,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!active) return;
       if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
       if (event === "SIGNED_IN" || event === "SIGNED_OUT") setPasswordRecovery(false);
-      if (!account && typeof window !== "undefined" && !localStorage.getItem(MASTER_SESSION_KEY)) {
+      if (
+        !accountRef.current &&
+        typeof window !== "undefined" &&
+        !localStorage.getItem(MASTER_SESSION_KEY)
+      ) {
         setLoading(true);
       }
       setSession(nextSession);
