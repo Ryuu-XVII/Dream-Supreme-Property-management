@@ -43,6 +43,9 @@ function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+  const [verifyingMfa, setVerifyingMfa] = useState(false);
   // isAdminDomain() reads window.location.hostname, which doesn't exist during
   // server rendering — start with the server-safe default (false) so the
   // first client render matches the SSR output, then flip to the real value
@@ -56,6 +59,65 @@ function LoginPage() {
     resolver: zodResolver(credentialsSchema),
     defaultValues: { email: "", password: "" },
   });
+
+  function extractErrorMessage(error: unknown, fallback: string) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "message" in error &&
+      typeof error.message === "string"
+    ) {
+      return error.message;
+    }
+    return error instanceof Error ? error.message : fallback;
+  }
+
+  // Shared by both the direct sign-in path and the post-MFA-verification path
+  // below, since a successful step-up challenge lands here too.
+  const completeSignIn = async () => {
+    const nextAccount = await refreshAccount();
+    if (!isActiveAccount(nextAccount)) {
+      await signOut();
+      throw new Error("This account is not active or has not been provisioned.");
+    }
+
+    // Strict Domain Access Guard
+    if (isAdmin && !canAccessAdmin(nextAccount)) {
+      await signOut();
+      throw new Error("Access Denied: Your account does not have Admin Portal access privileges.");
+    }
+
+    toast.success("Signed in successfully");
+    // Route by which portal URL was actually used, not just by role: an
+    // admin_agent signing in from the agent URL should land in the agent
+    // portal, not be forced into /admin just because their role permits it.
+    // The domain guard above already rejects agent-only accounts on the
+    // admin URL, so by this point isAdmin implies canAccessAdmin(nextAccount).
+    navigate({ to: isAdmin ? "/admin" : "/" });
+  };
+
+  const onSubmitMfaCode = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!mfaFactorId || mfaCode.trim().length !== 6) {
+      toast.error("Enter the 6-digit code from your authenticator app.");
+      return;
+    }
+    setVerifyingMfa(true);
+    try {
+      const { error } = await supabase.auth.mfa.challengeAndVerify({
+        factorId: mfaFactorId,
+        code: mfaCode.trim(),
+      });
+      if (error) throw error;
+      await completeSignIn();
+      setMfaFactorId(null);
+      setMfaCode("");
+    } catch (error) {
+      toast.error(extractErrorMessage(error, "That code didn't verify. Try again."));
+    } finally {
+      setVerifyingMfa(false);
+    }
+  };
 
   const onSubmitCredentials = form.handleSubmit(async ({ email, password }) => {
     setSubmitting(true);
@@ -105,35 +167,22 @@ function LoginPage() {
       });
       if (error) throw error;
 
-      const nextAccount = await refreshAccount();
-      if (!isActiveAccount(nextAccount)) {
-        await signOut();
-        throw new Error("This account is not active or has not been provisioned.");
+      // Password alone only ever grants aal1. If this account has a verified
+      // TOTP factor, Supabase requires stepping up to aal2 before the session
+      // is fully trusted — pause here for the code instead of completing sign-in.
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aal && aal.nextLevel === "aal2" && aal.nextLevel !== aal.currentLevel) {
+        const { data: factorsData } = await supabase.auth.mfa.listFactors();
+        const totpFactor = factorsData?.totp[0];
+        if (totpFactor) {
+          setMfaFactorId(totpFactor.id);
+          return;
+        }
       }
 
-      // Strict Domain Access Guard
-      if (isAdmin && !canAccessAdmin(nextAccount)) {
-        await signOut();
-        throw new Error(
-          "Access Denied: Your account does not have Admin Portal access privileges.",
-        );
-      }
-
-      toast.success("Signed in successfully");
-      navigate({ to: canAccessAdmin(nextAccount) ? "/admin" : "/" });
+      await completeSignIn();
     } catch (error) {
-      let message = "Unable to sign in.";
-      if (
-        error &&
-        typeof error === "object" &&
-        "message" in error &&
-        typeof error.message === "string"
-      ) {
-        message = error.message;
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
-      toast.error(message);
+      toast.error(extractErrorMessage(error, "Unable to sign in."));
     } finally {
       setSubmitting(false);
     }
@@ -192,82 +241,127 @@ function LoginPage() {
             </p>
           </div>
 
-          <form onSubmit={onSubmitCredentials} className="space-y-5">
-            <div className="space-y-2">
-              <Label
-                htmlFor="email"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-              >
-                Email Address
-              </Label>
-              <div className="relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder={isAdmin ? "admin@dreamsupreme.co.za" : "agent@dreamsupreme.co.za"}
-                  className="h-11 rounded-xl bg-background/50 pl-10.5 text-sm transition focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/40"
-                  {...form.register("email")}
-                />
-              </div>
-              {form.formState.errors.email && (
-                <p className="text-xs font-medium text-destructive">
-                  {form.formState.errors.email.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
+          {mfaFactorId ? (
+            <form onSubmit={(event) => void onSubmitMfaCode(event)} className="space-y-5">
+              <div className="space-y-2">
                 <Label
-                  htmlFor="password"
+                  htmlFor="mfa-code"
                   className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
                 >
-                  Password
+                  Verification code
                 </Label>
-                <button
-                  type="button"
-                  className="text-xs font-medium text-primary transition-colors hover:underline hover:text-primary/80"
-                  onClick={() => void onForgotPassword()}
-                  disabled={resettingPassword}
-                >
-                  {resettingPassword ? "Sending…" : "Forgot password?"}
-                </button>
-              </div>
-              <div className="relative">
-                <Lock className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••••••"
-                  className="h-11 rounded-xl bg-background/50 pl-10.5 pr-10 text-sm transition focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/40"
-                  {...form.register("password")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/70 transition-colors hover:text-foreground focus:outline-none"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
-
-              {form.formState.errors.password && (
-                <p className="text-xs font-medium text-destructive">
-                  {form.formState.errors.password.message}
+                <p className="text-xs text-muted-foreground">
+                  Enter the 6-digit code from your authenticator app.
                 </p>
-              )}
-            </div>
+                <Input
+                  id="mfa-code"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  placeholder="000000"
+                  autoFocus
+                  className="h-11 rounded-xl bg-background/50 text-center font-mono text-lg tracking-[0.5em]"
+                  value={mfaCode}
+                  onChange={(event) => setMfaCode(event.target.value.replace(/\D/g, ""))}
+                />
+              </div>
 
-            <Button
-              type="submit"
-              className="h-11 w-full rounded-xl bg-primary font-display font-semibold text-primary-foreground shadow-md shadow-primary/20 transition hover:bg-primary/90 hover:shadow-lg active:scale-[0.99]"
-              disabled={submitting}
-            >
-              {submitting ? "Authenticating…" : "Sign in to Console"}
-            </Button>
-          </form>
+              <Button
+                type="submit"
+                className="h-11 w-full rounded-xl bg-primary font-display font-semibold text-primary-foreground shadow-md shadow-primary/20 transition hover:bg-primary/90 hover:shadow-lg active:scale-[0.99]"
+                disabled={verifyingMfa || mfaCode.length !== 6}
+              >
+                {verifyingMfa ? "Verifying…" : "Verify & sign in"}
+              </Button>
+              <button
+                type="button"
+                className="w-full text-center text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                onClick={() => {
+                  setMfaFactorId(null);
+                  setMfaCode("");
+                }}
+              >
+                Back to sign in
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={onSubmitCredentials} className="space-y-5">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="email"
+                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                >
+                  Email Address
+                </Label>
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder={isAdmin ? "admin@dreamsupreme.co.za" : "agent@dreamsupreme.co.za"}
+                    className="h-11 rounded-xl bg-background/50 pl-10.5 text-sm transition focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/40"
+                    {...form.register("email")}
+                  />
+                </div>
+                {form.formState.errors.email && (
+                  <p className="text-xs font-medium text-destructive">
+                    {form.formState.errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label
+                    htmlFor="password"
+                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                  >
+                    Password
+                  </Label>
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-primary transition-colors hover:underline hover:text-primary/80"
+                    onClick={() => void onForgotPassword()}
+                    disabled={resettingPassword}
+                  >
+                    {resettingPassword ? "Sending…" : "Forgot password?"}
+                  </button>
+                </div>
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••••••"
+                    className="h-11 rounded-xl bg-background/50 pl-10.5 pr-10 text-sm transition focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/40"
+                    {...form.register("password")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/70 transition-colors hover:text-foreground focus:outline-none"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
+
+                {form.formState.errors.password && (
+                  <p className="text-xs font-medium text-destructive">
+                    {form.formState.errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="h-11 w-full rounded-xl bg-primary font-display font-semibold text-primary-foreground shadow-md shadow-primary/20 transition hover:bg-primary/90 hover:shadow-lg active:scale-[0.99]"
+                disabled={submitting}
+              >
+                {submitting ? "Authenticating…" : "Sign in to Console"}
+              </Button>
+            </form>
+          )}
 
           <div className="mt-8 border-t border-border/40 pt-5 text-center text-xs text-muted-foreground">
             Protected by enterprise RBAC & Row Level Security
