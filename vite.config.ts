@@ -28,6 +28,9 @@ export default defineConfig({
     // workers/property24-sync is its own npm package with its own
     // dependencies (cheerio, etc.) and its own test script — the root
     // Vitest run must not try to import its tests without them installed.
-    exclude: [...configDefaults.exclude, "workers/**"],
+    // e2e/** is Playwright, not Vitest — `@playwright/test`'s test()/expect()
+    // aren't Vitest's, and Vitest picking the file up fails immediately with
+    // "Playwright Test did not expect test() to be called here."
+    exclude: [...configDefaults.exclude, "workers/**", "e2e/**"],
   },
 });

@@ -16,6 +16,7 @@
     "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run check:bundle",
     "check:drift": "node scripts/check-schema-drift.mjs",
     "check:bundle": "node scripts/check-bundle-budget.mjs",
+    "test:e2e": "playwright test",
     "format": "prettier --write .",
     "prepare": "husky",
     "r2:create": "wrangler r2 bucket create dream-supreme-documents",
@@ -76,6 +77,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.62.1",
     "@types/node": "^22.16.5",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19.2.0",
