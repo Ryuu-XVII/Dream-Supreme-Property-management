@@ -208,7 +208,9 @@ export function NotificationBell({ accountId }: { accountId: string | undefined 
                       {n.subject}
                     </p>
                     <p className="line-clamp-2 text-xs text-muted-foreground">{n.body}</p>
-                    <p className="mt-1 text-[10px] text-muted-foreground">{dateFmt(n.created_at)}</p>
+                    <p className="mt-1 text-[10px] text-muted-foreground">
+                      {dateFmt(n.created_at)}
+                    </p>
                   </div>
                 </button>
                 <button
