@@ -61,7 +61,7 @@
     "framer-motion": "^12.42.2",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
-    "lucide-react": "^0.575.0",
+    "lucide-react": "^1.32.0",
     "papaparse": "^5.5.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
