@@ -170,6 +170,16 @@ jobs:
       - run: supabase db reset
       - run: supabase db lint --level warning
 
+      # RLS cross-tenant/cross-deal isolation regression tests (pgTAP) —
+      # see supabase/tests/rls_isolation_test.sql for why this exists: two
+      # real access-control bugs (commission_allocation/commission_clawback
+      # with no agency scoping at all, and a leftover broad policy on
+      # bond_application reopening cross-deal visibility) sat live and
+      # undetected until a manual advisor-triage pass found them. Nothing
+      # else in this job would have caught either — `supabase db lint`
+      # checks schema hygiene, not who can see what.
+      - run: supabase test db
+
       # Catches objects that exist in the live database but in no migration.
       # This is how 19 functions -- several of them authorization logic --
       # ended up applied straight to production and reproducible nowhere; see
