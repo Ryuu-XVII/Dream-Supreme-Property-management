@@ -1,0 +1,65 @@
+name: Supabase Advisor Check
+
+# Catches drift that happens directly against the live database, between
+# pushes — CI on push/PR can never see that. See
+# scripts/check-supabase-advisors.mjs for the regression that motivated this.
+on:
+  schedule:
+    - cron: "17 6 * * *" # Daily, off the top of the hour to avoid the fleet-wide :00 spike.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  advisor_check:
+    name: Check for new Supabase advisor findings
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run advisor check
+        id: check
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: node scripts/check-supabase-advisors.mjs
+
+      - name: Open an issue on new findings
+        if: failure() && steps.check.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const title = "🚨 New Supabase advisor finding outside the accepted baseline";
+
+            const { data: existing } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "supabase-advisor",
+            });
+            if (existing.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing[0].number,
+                body: `Still failing as of this run. [Details](${runUrl})`,
+              });
+              return;
+            }
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body: `The scheduled Supabase advisor check found a security/performance warning that isn't in \`supabase/advisor-baseline.json\`.\n\n` +
+                `This can mean a real regression happened directly against the live database (not through a migration) — ` +
+                `see \`documentation/technical/DATABASE_SCHEMA_AND_RLS.md\` §30 for the exact bug class this is meant to catch.\n\n` +
+                `[Full findings](${runUrl})\n\n` +
+                `If each new finding is a deliberate, reviewed decision, add its \`cache_key\` to \`supabase/advisor-baseline.json\` ` +
+                `in a PR explaining why. Otherwise, fix the underlying issue.`,
+              labels: ["bug", "supabase-advisor"],
+            });
