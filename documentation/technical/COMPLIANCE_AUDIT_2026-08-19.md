@@ -44,21 +44,18 @@ officer. Worth a substantive review, not just a technical one.
 - RLS enforces agency-level data minimization: an agent's queries are scoped
   to their own agency and, per role, their own deals.
 
-**Gap 1 — No privacy notice on public data collection.** The public
-calculators (`src/components/calculators/calculator-shell.tsx`) collect name,
-email, and phone via `submit_public_lead` with no consent checkbox, no
-privacy-notice text, and no link to a privacy policy anywhere in the app —
-there is no `/privacy` route at all. POPIA §18 requires a data subject be told
-the purpose of collection, whether it's voluntary, and who will receive the
-data, at or before the point of collection (unless they're already aware from
-a public source, which doesn't apply here). This is the most concrete,
-immediately actionable gap in this audit.
+**Gap 1 — RESOLVED (2026-08-19).** The public calculators
+(`src/components/calculators/calculator-shell.tsx`) now require a consent
+checkbox linking to a real `/privacy` route before `submit_public_lead` can be
+called, and record consent + timestamp in the lead payload. Was open when
+this audit's remediation ordering was first drafted; fixed the same day.
 
-**Gap 2 — Erasure has no retention-floor check.** `popia_erase_party_data` can
-redact a party's identity fields at any time, including before the FICA
-5-year retention window has elapsed, with no guard against that. Either add a
-time check or get written confirmation that the audit-log snapshot is treated
-as the retained record of truth.
+**Gap 2 — RESOLVED (2026-08-21).** `popia_erase_party_data` now blocks
+erasure while a party is on an active deal or lease, and otherwise computes
+the most recent concluded deal/lease date across all their relationships and
+refuses to erase until 5 years have passed (raising an exception naming the
+exact date it becomes eligible). A party who never actually transacted can
+still be erased immediately, since there's nothing to retain against.
 
 **Gap 3 — No destruction schedule.** Since hard deletes are disabled
 everywhere, nothing currently *destroys* data once its retention purpose has
@@ -120,13 +117,17 @@ audit trail. Corrected to `admin`/`agent`/`admin_agent` in this pass.
 
 ## Priority order for remediation
 
-1. **Add a privacy policy + consent notice to the public lead-capture forms**
-   (Gap 1) — concrete, low-effort, and the only item here with live exposure
-   today (the calculators are already public and collecting emails).
-2. Decide the POPIA erasure-vs-retention policy (Gap 2) — a policy decision
-   more than an engineering one; implement the guard once decided.
+1. ~~Add a privacy policy + consent notice to the public lead-capture forms~~
+   — **done** (Gap 1, resolved 2026-08-19).
+2. ~~Decide the POPIA erasure-vs-retention policy~~ — **done**: implemented
+   as a hard retention-floor guard rather than relying on the audit log alone
+   (Gap 2, resolved 2026-08-21).
 3. Get counsel to confirm the cross-border processing basis and statute
-   citations — paperwork, not code.
-4. Everything else in this report is either already correctly implemented or
+   citations — paperwork, not code, still open.
+4. Decide and implement a destruction schedule for data past its retention
+   purpose (Gap 3) — still open; genuinely a policy decision (what "no longer
+   needed" means per data type) rather than something safe to guess at in
+   code, so it hasn't been auto-implemented.
+5. Everything else in this report is either already correctly implemented or
    already tracked as a known, deliberate gap in `RELEASE_READINESS.md` /
    `LEGAL_REVIEW_PACKAGE.md`.

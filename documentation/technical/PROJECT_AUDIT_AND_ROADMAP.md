@@ -5,6 +5,18 @@
 **Auditor**: Senior Real Estate Software Architect & Product Strategist  
 **Overall Health & Readiness Score**: **96 / 100** (Production Ready)
 
+> **Stale as of 2026-08-21.** Section 2.4 below describes a document-generation
+> implementation (markdown-substitution RPC + client-side jsPDF) that no
+> longer exists — it was replaced by an admin-customizable pdfme/EmailBuilder.js
+> template system (see `documentation/management/RELEASE_READINESS.md` and
+> `src/lib/pdf-template-layouts.ts` / `src/lib/email-template-layouts.ts`) and
+> the old `document_template` table was dropped
+> (`20260821011000_remove_dead_markdown_document_templates.sql`). The test
+> count in §3 is also stale (34 suites / 220 tests today, not 17). Treat this
+> document as a historical snapshot, not a current-state reference — for
+> release blockers see `RELEASE_READINESS.md`; for legal/compliance status see
+> `COMPLIANCE_AUDIT_2026-08-19.md`.
+
 ---
 
 ## 1. Executive Summary

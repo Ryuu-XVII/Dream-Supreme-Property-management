@@ -36,12 +36,11 @@ FICA compliance officer's sign-off).
   is a trigger that raises on any DELETE against protected tables, so data cannot
   be destroyed outside the audited erasure path.
 
-**Gap to flag:** `popia_erase_party_data` has no check against the FICA 5-year
-retention clock — a manager can erase a party's identity fields immediately after
-a transaction closes, before the retention period in Section 3 has elapsed. If
-that's a real risk for this agency's workflow, it needs either a policy control
-(only erase parties past retention) or a documented reliance on `audit_log`
-retaining the pre-erasure values as the record of truth.
+**Resolved (2026-08-21):** `popia_erase_party_data` now blocks erasure while a
+party is on an active deal or lease, and otherwise refuses to erase until 5
+years have passed since their most recent concluded deal/lease (raising an
+exception naming the exact eligible date). A party who never actually
+transacted can still be erased immediately.
 
 ## 3. Data Retention
 
@@ -84,6 +83,6 @@ seek legal sign-off to turn the feature on. Today it is intentionally inert
 2. `documentation/technical/COMPLIANCE.md` (the requirements it was built against).
 3. `documentation/requirements/CLIENT_ONBOARDING_REQUIREMENTS.md` and
    `DEAL_CAPTURE_REQUIREMENTS.md` (what data is actually captured and when).
-4. The two gaps flagged above (POPIA erasure vs. retention clock; no destruction
-   schedule) — these are the items most likely to need either a policy decision
-   or a follow-up engineering task before launch.
+4. The remaining open gap flagged above (no destruction schedule) — a policy
+   decision (what "no longer needed" means per data type) more than an
+   engineering task, needed before launch.
