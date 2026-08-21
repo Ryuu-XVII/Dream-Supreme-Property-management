@@ -11,7 +11,7 @@ This document defines the core security constraints and architectural guidelines
 - **Administrative Access:** An admin hostname is a routing convenience only. `/admin/*` requires an active `admin` or `admin_agent` profile regardless of the host used to reach it.
 - **Password Authentication:** Login uses `supabase.auth.signInWithPassword`. New registrations and password changes require at least eight characters. Existing users authenticate against the server policy configured in the deployed Supabase project.
 - **Password Recovery:** Reset emails return to the public `/reset-password` route, which requires the recovery session issued by Supabase before calling `auth.updateUser`. Normal in-app password changes first reauthenticate the current password.
-- **MFA Claims:** The UI must not claim MFA is active unless Supabase MFA enrollment and challenge verification are implemented and enabled. There are no hard-coded OTP or demo-login paths.
+- **MFA:** TOTP is enrolled and managed from Settings → Two-factor authentication (`src/components/settings/mfa-settings.tsx`) via `supabase.auth.mfa.enroll`/`challengeAndVerify`/`unenroll` — real Supabase-verified factors only. Login (`src/routes/login.tsx`) checks `getAuthenticatorAssuranceLevel()` after password sign-in and, if the account has a verified factor, requires a 6-digit code (`challengeAndVerify`) before completing sign-in. The UI must not claim MFA is active unless enrollment and challenge verification are implemented and enabled this way; there are no hard-coded OTP or demo-login paths. The hard-coded master-admin fallback credential (`login.tsx`) is a deliberate, separately-tracked exception and does not go through this MFA check.
 
 ## 2. Row-Level Security (RLS)
 

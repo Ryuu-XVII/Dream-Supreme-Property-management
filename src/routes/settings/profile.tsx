@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase";
 
 import { AgentComplianceDocuments } from "@/components/settings/agent-compliance-documents";
 import { AgentProperty24Listings } from "@/components/settings/agent-property24-listings";
+import { MfaSettings } from "@/components/settings/mfa-settings";
 import { ProfilePhoto } from "@/components/settings/profile-photo";
 
 export const Route = createFileRoute("/settings/profile")({
@@ -176,6 +177,7 @@ function ProfilePage() {
         </GlassCard>
         <AgentComplianceDocuments />
         <AgentProperty24Listings userId={account?.id} canSync={!isReadOnly} />
+        <MfaSettings />
         <GlassCard className="lg:col-span-3">
           <h2 className="mb-1 flex items-center gap-2 font-display text-base font-semibold">
             <ShieldCheck className="size-4 text-primary" /> Password
