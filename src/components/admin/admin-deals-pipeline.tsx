@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { GlassCard } from "@/components/ui-kit";
 import { usePipelineDeals, type PipelineDeal } from "@/data/deals";
-import { FileText, ArrowRight, Eye, History, Loader2 } from "lucide-react";
-import { dateFmt, dateTimeFmt, zar } from "@/lib/format";
+import { FileText, Eye, History, Loader2 } from "lucide-react";
+import { dateFmt, zar } from "@/lib/format";
 import { stageFromDb } from "@/lib/domain";
 import { STAGES, type Stage } from "@/types";
 import { cn } from "@/lib/utils";
@@ -69,7 +69,7 @@ export function AdminDealsPipeline() {
                       <span className="font-mono text-xs font-medium">{deal.ref}</span>
                     </div>
                     <p
-                      className="text-sm font-medium truncate max-w-[200px]"
+                      className="text-sm font-medium truncate max-w-50"
                       title={deal.property?.address}
                     >
                       {deal.property?.address || "No Address"}

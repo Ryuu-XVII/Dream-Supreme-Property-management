@@ -24,7 +24,7 @@ export function DealTimelineTab({ deal }: { deal: Deal }) {
           <ol className="relative space-y-5 border-l border-border pl-5">
             {deal.timeline.map((t) => (
               <li key={t.id} className="relative">
-                <span className="absolute -left-[26px] top-1 size-2.5 rounded-full bg-primary" />
+                <span className="absolute -left-6.5 top-1 size-2.5 rounded-full bg-primary" />
                 <p className="text-xs text-muted-foreground">{dateTimeFmt(t.at)}</p>
                 <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm font-medium">
                   {t.from && (

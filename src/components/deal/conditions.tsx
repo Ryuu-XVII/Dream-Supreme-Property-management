@@ -163,7 +163,7 @@ export function DealConditionsTab({
                           <Icon className="size-4 text-primary" /> {c.type}
                         </span>
                       </TableCell>
-                      <TableCell className="max-w-[240px] truncate text-sm">
+                      <TableCell className="max-w-60 truncate text-sm">
                         {c.description}
                       </TableCell>
                       <TableCell className="text-xs">{dateFmt(c.dueDate)}</TableCell>
