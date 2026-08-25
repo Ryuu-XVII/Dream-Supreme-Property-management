@@ -8,4 +8,18 @@
   // South African business hours and off Property24's daytime peak.
   "triggers": { "crons": ["0 2 * * *"] },
   "observability": { "enabled": true },
+  // Edge-local, per-IP first line of defense: rejects a flood before it even
+  // reaches Supabase, cheaper than the durable check_rate_limit RPC in
+  // src/index.ts (which stays as the real per-account limit — this binding
+  // is approximate per-colo, not a global count, so it's a pre-filter only).
+  "unsafe": {
+    "bindings": [
+      {
+        "name": "IP_RATE_LIMITER",
+        "type": "ratelimit",
+        "namespace_id": "1001",
+        "simple": { "limit": 20, "period": 60 },
+      },
+    ],
+  },
 }

@@ -52,11 +52,23 @@ function isH3SwallowedErrorBody(body: string): boolean {
 // supabase/migrations/20260817000000_rate_limiting.sql.
 const RATE_LIMIT_MAX_REQUESTS = 120;
 const RATE_LIMIT_WINDOW_MS = 60_000;
+// Bounds how large requestBuckets can grow between sweeps. Each distinct IP
+// gets its own entry that otherwise lingers forever once it stops sending
+// requests, so a long-lived isolate seeing many unique IPs would leak memory
+// without this.
+const SWEEP_THRESHOLD = 5_000;
 const requestBuckets = new Map<string, { count: number; resetAt: number }>();
+
+function sweepExpiredBuckets(now: number): void {
+  for (const [ip, bucket] of requestBuckets) {
+    if (now >= bucket.resetAt) requestBuckets.delete(ip);
+  }
+}
 
 function isRateLimited(request: Request): boolean {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const now = Date.now();
+  if (requestBuckets.size > SWEEP_THRESHOLD) sweepExpiredBuckets(now);
   const bucket = requestBuckets.get(ip);
   if (!bucket || now >= bucket.resetAt) {
     requestBuckets.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });

@@ -110,7 +110,7 @@ async function deleteObject(
 async function authorizeKey(
   authHeader: string | null,
   key: string,
-): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+): Promise<{ ok: true; userId: string } | { ok: false; status: number; error: string }> {
   // SECURITY: authorization is decided solely from the authenticated session and
   // the requested key. It deliberately does NOT trust any client-supplied
   // "isPublic" flag or "public/" key prefix — an earlier version did, which let
@@ -138,19 +138,19 @@ async function authorizeKey(
   if (!account) return { ok: false, status: 403, error: "No agent profile for this session" };
 
   const role = (account.role ?? "agent").toLowerCase();
-  if (role === "admin") return { ok: true };
+  if (role === "admin") return { ok: true, userId: user.id };
 
   const pathParts = key.split("/");
   if (pathParts[0] === "users" && pathParts[1]) {
     if (pathParts[1] !== account.id && pathParts[1] !== user.id) {
       return { ok: false, status: 403, error: "Cannot access another agent's private storage" };
     }
-    return { ok: true };
+    return { ok: true, userId: user.id };
   }
   if (pathParts[0] !== account.agency_id) {
     return { ok: false, status: 403, error: "Cannot access files outside your agency" };
   }
-  return { ok: true };
+  return { ok: true, userId: user.id };
 }
 
 Deno.serve(async (req) => {
@@ -186,6 +186,27 @@ Deno.serve(async (req) => {
   const authResult = await authorizeKey(req.headers.get("Authorization"), body.key);
   if (!authResult.ok) {
     return json({ error: authResult.error }, authResult.status);
+  }
+
+  // Every other write path a client can trigger directly (see
+  // supabase/migrations/20260817000000_rate_limiting.sql) goes through this
+  // same Postgres-backed limiter. This endpoint is auth-gated, not anonymous,
+  // but a compromised or malicious session could otherwise mint unlimited R2
+  // presigned URLs / deletes with no throttle at all.
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  if (serviceRoleKey && supabaseUrl) {
+    const admin = createClient(supabaseUrl, serviceRoleKey);
+    const { data: withinLimit, error: rateLimitErr } = await admin.rpc("check_rate_limit", {
+      p_key: `r2_storage:${authResult.userId}`,
+      p_max_attempts: 120,
+      p_window: "1 hour",
+    });
+    if (rateLimitErr) {
+      console.error("r2-storage rate limit check failed:", rateLimitErr.message);
+    } else if (withinLimit === false) {
+      return json({ error: "Too many storage requests. Please try again later." }, 429);
+    }
   }
 
   try {

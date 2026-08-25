@@ -21,6 +21,8 @@ export interface Env {
   SUPABASE_SECRET_KEY: string;
   /** Comma-separated list of browser origins allowed to call this Worker. */
   ALLOWED_ORIGINS: string;
+  /** Edge-local per-IP rate limiter binding, see wrangler.jsonc. */
+  IP_RATE_LIMITER: RateLimit;
 }
 
 // Parsing HTML with cheerio costs real CPU, and a Worker invocation has a
@@ -246,6 +248,15 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     if (request.method !== "POST") return json({ error: "Method not allowed" }, 405, cors);
 
+    // Cheap edge check before any Supabase round-trip. Not the real limit —
+    // see the check_rate_limit call below, keyed per target account — this
+    // just stops a raw flood from one IP from reaching Supabase at all.
+    const clientIp = request.headers.get("cf-connecting-ip") ?? "unknown";
+    const { success: withinIpLimit } = await env.IP_RATE_LIMITER.limit({ key: clientIp });
+    if (!withinIpLimit) {
+      return json({ error: "Too many requests. Please try again later." }, 429, cors);
+    }
+
     let body: { userAccountId?: string };
     try {
       body = (await request.json()) as { userAccountId?: string };
@@ -280,6 +291,29 @@ export default {
       return json(
         { error: "no_property24_url", message: "This agent has no Property24 profile URL." },
         400,
+        cors,
+      );
+    }
+
+    // Reuses the app's own Postgres rate limiter (see
+    // supabase/migrations/20260817000000_rate_limiting.sql) so on-demand syncs
+    // share the same durable, cross-invocation store as every other
+    // externally-triggerable write in this app — a plain in-memory counter
+    // here wouldn't survive across Worker isolates. Keyed by the target
+    // agent's account, not the caller, since that's what actually bounds how
+    // often their Property24 profile gets crawled regardless of who triggers it.
+    const { data: withinLimit, error: rateLimitError } = await admin.rpc("check_rate_limit", {
+      p_key: `property24_sync:${targetId}`,
+      p_max_attempts: 5,
+      p_window: "1 hour",
+    });
+    if (rateLimitError) {
+      return json({ error: rateLimitError.message }, 500, cors);
+    }
+    if (!withinLimit) {
+      return json(
+        { error: "rate_limited", message: "Too many sync attempts for this agent. Please try again later." },
+        429,
         cors,
       );
     }
