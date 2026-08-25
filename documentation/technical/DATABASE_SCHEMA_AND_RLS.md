@@ -168,6 +168,8 @@ Staff-only (`authenticated`, admin/admin_agent gated), agency-scoped POPIA data-
 
 Calls the `supabase/functions/send-queued-emails` Edge Function via `pg_net`/`net.http_post` (reading the function URL and service-role key from Supabase Vault, never hardcoded in SQL), scheduled every 5 minutes via `pg_cron`. This is the first consumer `email_queue` has ever had — `generate_daily_notification_digests()` and the invitation flow already produced rows, but nothing sent them until now. The Edge Function sends via SMTP (reusing the same relay configured for Supabase Auth). Added in `20260817000003_email_queue_dispatch.sql`, which also tightened `generate_daily_notification_digests()`'s aggregate-building loop.
 
+The initial version only sent an `Authorization` header on the `net.http_post` call; Supabase's edge gateway also requires an `apikey` header on every request or it 503s before the function ever runs, which meant every 5-minute tick failed silently (the Vault secrets themselves were also missing until this same session, so dispatch had never fired even once since the function was created). Fixed in `20260825000000_fix_email_dispatch_missing_apikey_header.sql`, which adds `apikey` alongside `Authorization`.
+
 ### `create_lease_onboarding(p_payload jsonb)`
 
 Executes atomic lease onboarding, inserting the `lease` record, trust deposit ledger entries, initial pro-rata rent invoice, and ingoing inspection schedule in a single audited transaction.
