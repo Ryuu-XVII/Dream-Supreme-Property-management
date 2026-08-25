@@ -312,7 +312,10 @@ export default {
     }
     if (!withinLimit) {
       return json(
-        { error: "rate_limited", message: "Too many sync attempts for this agent. Please try again later." },
+        {
+          error: "rate_limited",
+          message: "Too many sync attempts for this agent. Please try again later.",
+        },
         429,
         cors,
       );
