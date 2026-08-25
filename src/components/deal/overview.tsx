@@ -95,7 +95,7 @@ export function DealOverviewTab({ deal }: { deal: Deal }) {
               branch: deal.branch,
               active: true,
               role: "Agent",
-              seniority: "Mid-level",
+              seniority: "Non-Principal Agent",
               colour: "#1f7a52",
               ppra: "",
               ffc: null,

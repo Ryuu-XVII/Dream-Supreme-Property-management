@@ -14,7 +14,7 @@ import { useAdminUsers, useUpdateUserStorageQuota, type AdminUser } from "@/data
 import { DEFAULT_USER_STORAGE_LIMIT_BYTES } from "@/lib/storage";
 
 const ROLES: Role[] = ["Agent", "Admin", "Admin & Agent"];
-const SENIORITIES: AgentSeniority[] = ["Junior", "Mid-level", "Senior"];
+const SENIORITIES: AgentSeniority[] = ["Candidate", "Non-Principal Agent", "Principal"];
 
 // Mirrors the CHECK constraint and the RPC guard in
 // supabase/migrations/20260818000005_property24_agent_sync.sql, so a typo is
@@ -291,7 +291,7 @@ function AdminUsers() {
       name: "",
       email: "",
       role: "Agent",
-      seniority: "Junior",
+      seniority: "Candidate",
       active: true,
       commissionPct: 50,
       property24Url: "",
@@ -305,7 +305,7 @@ function AdminUsers() {
     const email = draft.email?.trim() ?? "";
     const role = (draft.role ?? "Agent") as Role;
     const dbRole = role === "Admin & Agent" ? "admin_agent" : role.toLowerCase();
-    const seniority = draft.seniority ?? "Junior";
+    const seniority = draft.seniority ?? "Candidate";
     const dbSeniority = seniorityToDb[seniority];
 
     const property24Url = draft.property24Url?.trim() || null;
@@ -1031,7 +1031,7 @@ function AdminUsers() {
               <div className="space-y-2">
                 <Label>Seniority</Label>
                 <Select
-                  value={draft.seniority ?? "Junior"}
+                  value={draft.seniority ?? "Candidate"}
                   onValueChange={(v: AgentSeniority) => setDraft((d) => ({ ...d, seniority: v }))}
                 >
                   <SelectTrigger>

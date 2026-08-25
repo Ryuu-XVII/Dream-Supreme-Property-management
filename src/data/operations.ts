@@ -126,7 +126,7 @@ export function useDashboardData() {
           name: user.full_name,
           email: user.email,
           role: role as any,
-          seniority: seniorityFromDb[user.seniority] ?? "Junior",
+          seniority: seniorityFromDb[user.seniority] ?? "Candidate",
           colour: "#1f7a52",
           ppra: user.ppra_reference || "Not captured",
           ffc: primaryFfc

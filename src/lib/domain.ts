@@ -73,15 +73,15 @@ export const ficaStatusFromDb: Record<string, "Complete" | "Partial" | "Not Star
 };
 
 export const seniorityFromDb: Record<string, AgentSeniority> = {
-  junior: "Junior",
-  mid_level: "Mid-level",
-  senior: "Senior",
+  junior: "Candidate",
+  mid_level: "Non-Principal Agent",
+  senior: "Principal",
 };
 
 export const seniorityToDb: Record<AgentSeniority, string> = {
-  Junior: "junior",
-  "Mid-level": "mid_level",
-  Senior: "senior",
+  Candidate: "junior",
+  "Non-Principal Agent": "mid_level",
+  Principal: "senior",
 };
 
 export interface TransferDutyBracket {

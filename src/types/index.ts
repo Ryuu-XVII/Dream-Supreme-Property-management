@@ -3,7 +3,7 @@ export type Role = "Agent" | "Admin" | "Admin & Agent";
 // An informal, admin-editable experience-tier label — independent of `role`
 // (permissions) and independent of the PPRA/FICA-regulated "candidate agent"
 // status (`is_candidate`). Set when inviting an agent, editable afterward.
-export type AgentSeniority = "Junior" | "Mid-level" | "Senior";
+export type AgentSeniority = "Candidate" | "Non-Principal Agent" | "Principal";
 
 export interface User {
   id: string;
