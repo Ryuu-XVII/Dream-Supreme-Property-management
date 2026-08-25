@@ -183,16 +183,40 @@ function buildDailyDigestEmail(): TReaderDocument {
   ]);
 }
 
+function buildPasswordResetEmail(): TReaderDocument {
+  return assembleDocument([
+    brandRow(),
+    heading("Reset your password", { fontSize: "h2" }),
+    divider(),
+    spacer(8),
+    text("Hello {{recipientName}},"),
+    text(
+      "We received a request to reset the password for your Dream Supreme Properties account. Click the button below to choose a new one.",
+    ),
+    spacer(4),
+    button("Reset Password", "{{resetUrl}}"),
+    spacer(8),
+    text("If you didn't request this, you can safely ignore this email.", {
+      fontSize: 12,
+      color: MUTED,
+    }),
+    divider(),
+    footer(),
+  ]);
+}
+
 const DEFAULT_SUBJECTS: Record<string, string> = {
   team_invitation: "You've been invited to join {{agencyName}}",
   deal_notification: "{{eventSubject}}",
   daily_notification_digest: "Daily Digest - Dream Supreme Properties",
+  password_reset: "Reset your Dream Supreme Properties password",
 };
 
 const BUILDERS: Record<string, () => TReaderDocument> = {
   team_invitation: buildTeamInvitationEmail,
   deal_notification: buildDealNotificationEmail,
   daily_notification_digest: buildDailyDigestEmail,
+  password_reset: buildPasswordResetEmail,
 };
 
 function buildDefaultEmailDocument(emailType: string): TReaderDocument {

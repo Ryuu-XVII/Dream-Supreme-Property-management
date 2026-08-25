@@ -48,6 +48,16 @@ export const EMAIL_DOCUMENT_TYPES: EmailDocumentTypeDef[] = [
       notificationsUrl: "https://app.dreamsupreme.co.za/notifications",
     },
   },
+  {
+    id: "password_reset",
+    label: "Password Reset",
+    description: "Sent when someone requests a password reset link from the login page.",
+    defaultSubject: "Reset your Dream Supreme Properties password",
+    sampleInput: {
+      recipientName: "Jane Agent",
+      resetUrl: "https://app.dreamsupreme.co.za/reset-password#access_token=...",
+    },
+  },
 ];
 
 export function getEmailDocumentType(id: string | undefined): EmailDocumentTypeDef | undefined {

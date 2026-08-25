@@ -5,7 +5,7 @@
 // by end users directly; the caller must present the project's service-role
 // key as a bearer token (verified by the platform's own JWT check).
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import nodemailer from "npm:nodemailer@6.9.16";
 import { renderTemplatedEmail } from "./email-render.ts";
 
 const BATCH_SIZE = 25;
@@ -39,13 +39,11 @@ Deno.serve(async () => {
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
-  const client = new SMTPClient({
-    connection: {
-      hostname: smtpHost,
-      port: smtpPort,
-      tls: smtpPort === 465,
-      auth: { username: smtpUser, password: smtpPass },
-    },
+  const client = nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpPort === 465,
+    auth: { user: smtpUser, pass: smtpPass },
   });
 
   const { data: rows, error: fetchError } = await supabase
@@ -103,7 +101,7 @@ Deno.serve(async () => {
       }
       if (!html) throw new Error(`email_queue row ${row.id} has no renderable body`);
 
-      await client.send({
+      await client.sendMail({
         from: smtpFrom!,
         to: row.recipient_email,
         subject,

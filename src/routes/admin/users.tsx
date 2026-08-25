@@ -549,6 +549,51 @@ function AdminUsers() {
     }
   };
 
+  // For an already-active member (a real user_account row, password already
+  // set) there's no registration token to reissue — this just re-queues the
+  // same "Team Invitation" welcome email as a reminder, pointing at the
+  // login page instead of a registration link.
+  const resendWelcomeEmail = async (user: AdminUser) => {
+    try {
+      let agencyId = account?.agencyId;
+      const { data: agencyRow } = await supabase
+        .from("agency")
+        .select("id, name")
+        .eq("id", agencyId ?? "")
+        .maybeSingle();
+      let agencyName = agencyRow?.name;
+      if (!agencyId) {
+        const { data: agList } = await supabase.from("agency").select("id, name").limit(1);
+        agencyId = agList?.[0]?.id;
+        agencyName = agList?.[0]?.name;
+      }
+
+      if (!agencyId) {
+        toast.error("Could not resend welcome email: no agency found.");
+        return;
+      }
+
+      const { error: queueErr } = await supabase.from("email_queue").insert({
+        agency_id: agencyId,
+        recipient_email: user.email.toLowerCase(),
+        subject: "You've been invited to join Dream Supreme Properties",
+        email_type: "team_invitation",
+        merge_values: {
+          recipientName: user.name,
+          role: user.role,
+          agencyName: agencyName ?? "Dream Supreme Properties",
+          inviteUrl: `${window.location.origin}/login`,
+        },
+        status: "pending",
+      });
+      if (queueErr) throw queueErr;
+
+      toast.success(`Welcome email resent to ${user.email}.`);
+    } catch (err: any) {
+      toast.error("Failed to resend welcome email: " + (err.message || "Unknown error"));
+    }
+  };
+
   const retireUser = async (id: string) => {
     if (
       confirm("Are you sure you want to retire this member? They will be removed from the team.")
@@ -834,6 +879,9 @@ function AdminUsers() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => startEdit(u)}>
                                   <Percent className="size-4" /> Adjust Split
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => void resendWelcomeEmail(u)}>
+                                  <Send className="size-4" /> Resend Invite
                                 </DropdownMenuItem>
                               </>
                             )}

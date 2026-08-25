@@ -159,6 +159,28 @@ function buildDailyDigestEmail(): TReaderDocument {
   ]);
 }
 
+function buildPasswordResetEmail(): TReaderDocument {
+  return assembleDocument([
+    brandRow(),
+    heading("Reset your password", { fontSize: "h2" }),
+    divider(),
+    spacer(8),
+    text("Hello {{recipientName}},"),
+    text(
+      "We received a request to reset the password for your Dream Supreme Properties account. Click the button below to choose a new one.",
+    ),
+    spacer(4),
+    button("Reset Password", "{{resetUrl}}"),
+    spacer(8),
+    text("If you didn't request this, you can safely ignore this email.", {
+      fontSize: 12,
+      color: MUTED,
+    }),
+    divider(),
+    footer(),
+  ]);
+}
+
 // A neutral fallback for any email type without a bespoke layout above —
 // one paragraph per sample field plus a button for the first URL-shaped
 // field, so a newly-registered type still opens to something reasonable.
@@ -178,6 +200,7 @@ const BUILDERS: Record<string, () => TReaderDocument> = {
   team_invitation: buildTeamInvitationEmail,
   deal_notification: buildDealNotificationEmail,
   daily_notification_digest: buildDailyDigestEmail,
+  password_reset: buildPasswordResetEmail,
 };
 
 // A fully laid-out starting point per real email type — matching copy, a
