@@ -216,17 +216,31 @@ export function Property24ListingsTable({
                           View on P24 <ExternalLink className="ml-1.5 size-3.5" />
                         </a>
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={isReadOnly}
-                        onClick={() =>
-                          navigate({ to: "/deals/new", search: { p24ListingId: listing.id } })
-                        }
-                        className="text-primary hover:bg-primary/10 hover:text-primary/90"
-                      >
-                        Convert to Deal <ArrowRight className="ml-2 size-4" />
-                      </Button>
+                      {listing.purpose === "rent" ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={isReadOnly}
+                          onClick={() =>
+                            navigate({ to: "/rentals", search: { p24ListingId: listing.id } })
+                          }
+                          className="text-primary hover:bg-primary/10 hover:text-primary/90"
+                        >
+                          Convert to Lease <ArrowRight className="ml-2 size-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={isReadOnly}
+                          onClick={() =>
+                            navigate({ to: "/deals/new", search: { p24ListingId: listing.id } })
+                          }
+                          className="text-primary hover:bg-primary/10 hover:text-primary/90"
+                        >
+                          Convert to Deal <ArrowRight className="ml-2 size-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

@@ -20,13 +20,23 @@ import { zar, dateFmt } from "@/lib/format";
 import { LeaseOnboardingWizard } from "@/components/rentals/lease-onboarding-wizard";
 
 export const Route = createFileRoute("/rentals/")({
+  validateSearch: (search: Record<string, unknown>): { p24ListingId?: string } => ({
+    p24ListingId: search.p24ListingId as string | undefined,
+  }),
   component: RentalsDashboard,
 });
 
 function RentalsDashboard() {
   const { activeAccount, isReadOnly } = useAuth();
   const navigate = useNavigate();
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const { p24ListingId } = Route.useSearch();
+  // Arriving from a "Convert to Lease" action on a Property24 rental listing
+  // (src/components/property24/property24-listings-table.tsx) should open
+  // straight into lease capture rather than dumping the agent on the list.
+  // The wizard doesn't prefill from the listing yet (its Step 1 picks an
+  // existing public.property row, whereas a P24 listing hasn't been created
+  // as one) -- this just gets them to the right flow instead of the wrong one.
+  const [isCreateOpen, setIsCreateOpen] = useState(!!p24ListingId);
 
   const leasesQuery = useQuery({
     queryKey: ["leases", activeAccount?.agencyId],
