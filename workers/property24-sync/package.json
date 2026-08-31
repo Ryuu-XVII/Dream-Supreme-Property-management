@@ -14,7 +14,7 @@
     "cheerio": "^1.1.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260815.1",
+    "@cloudflare/workers-types": "^5.20260828.1",
     "typescript": "^5.8.3",
     "wrangler": "^4.118.0",
     "vitest": "^4.1.10"
