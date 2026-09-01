@@ -41,9 +41,44 @@ function runDiff() {
     .join("\n");
 }
 
+// Splits on ";\n" like a naive tokenizer, except while inside a dollar-quoted
+// block (e.g. a `CREATE FUNCTION ... AS $function$ ... $function$;` body),
+// where ";\n" is just plpgsql, not a statement boundary. Without this, one
+// function-body diff explodes into dozens of fake "statements" (its `begin;`,
+// `end if;`, etc. lines), each innocently passing the NOISE filter below.
+function splitStatements(diff) {
+  const statements = [];
+  let current = "";
+  let dollarTag = null;
+  for (let i = 0; i < diff.length; i++) {
+    if (dollarTag === null) {
+      const tagMatch = diff.slice(i).match(/^(\$[a-zA-Z_]*\$)/);
+      if (tagMatch) {
+        dollarTag = tagMatch[1];
+        current += dollarTag;
+        i += dollarTag.length - 1;
+        continue;
+      }
+      if (diff.startsWith(";\n", i)) {
+        statements.push(current);
+        current = "";
+        i += 1;
+        continue;
+      }
+    } else if (diff.startsWith(dollarTag, i)) {
+      current += dollarTag;
+      i += dollarTag.length - 1;
+      dollarTag = null;
+      continue;
+    }
+    current += diff[i];
+  }
+  statements.push(current);
+  return statements;
+}
+
 function significantStatements(diff) {
-  return diff
-    .split(";\n")
+  return splitStatements(diff)
     .map((statement) => statement.trim())
     .filter(Boolean)
     .filter((statement) => !NOISE.some((pattern) => pattern.test(statement)));
