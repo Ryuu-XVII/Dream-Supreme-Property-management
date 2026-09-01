@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#34424a" />
+      <stop offset="100%" stop-color="#1f272c" />
+    </radialGradient>
+
+    <!-- Gold Gradients -->
+    <linearGradient id="goldLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fceda4" />
+      <stop offset="45%" stop-color="#dfb75c" />
+      <stop offset="100%" stop-color="#a67922" />
+    </linearGradient>
+
+    <linearGradient id="goldDark" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e8c76c" />
+      <stop offset="50%" stop-color="#ba8d30" />
+      <stop offset="100%" stop-color="#7a5513" />
+    </linearGradient>
+
+    <linearGradient id="goldShine" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#d6ab46" />
+      <stop offset="50%" stop-color="#fff4c2" />
+      <stop offset="100%" stop-color="#b88b28" />
+    </linearGradient>
+
+    <!-- Teal Architectural House Gradients -->
+    <linearGradient id="tealLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a4d5b" />
+      <stop offset="100%" stop-color="#0d2830" />
+    </linearGradient>
+
+    <linearGradient id="tealRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2c6777" />
+      <stop offset="100%" stop-color="#123640" />
+    </linearGradient>
+
+    <linearGradient id="roofRidge" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4aa4ba" />
+      <stop offset="100%" stop-color="#194854" />
+    </linearGradient>
+
+    <!-- Subtle Glow Filter -->
+    <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <rect width="512" height="512" rx="112" fill="none" stroke="url(#goldLight)" stroke-width="2" stroke-opacity="0.15" />
+
+  <!-- ==================== CROWN SECTION ==================== -->
+  <g filter="url(#goldGlow)">
+    <!-- Top Floating Diamond -->
+    <polygon points="256,42 272,66 256,90 240,66" fill="url(#goldShine)" />
+
+    <!-- Left Flanking Diamond -->
+    <polygon points="196,112 210,126 196,140 182,126" fill="url(#goldLight)" />
+    <!-- Right Flanking Diamond -->
+    <polygon points="316,112 330,126 316,140 302,126" fill="url(#goldDark)" />
+
+    <!-- Main Crown Structure -->
+    <!-- Center Peak Left Facet -->
+    <polygon points="256,86 200,208 256,218" fill="url(#goldLight)" />
+    <!-- Center Peak Right Facet -->
+    <polygon points="256,86 312,208 256,218" fill="url(#goldDark)" />
+
+    <!-- Crown Inner Diamond Cutout -->
+    <polygon points="256,144 268,168 256,192 244,168" fill="url(#bgGrad)" />
+
+    <!-- Left Crown Wing/Spire -->
+    <polygon points="144,126 210,214 176,214 116,160" fill="url(#goldLight)" />
+    <!-- Left Crown Facet Jewel -->
+    <polygon points="174,128 206,164 186,196 154,160" fill="url(#goldShine)" opacity="0.9" />
+
+    <!-- Right Crown Wing/Spire -->
+    <polygon points="368,126 302,214 336,214 396,160" fill="url(#goldDark)" />
+    <!-- Right Crown Facet Jewel -->
+    <polygon points="338,128 306,164 326,196 358,160" fill="url(#goldLight)" opacity="0.9" />
+
+    <!-- Crown Base Pillars / Architrave -->
+    <path d="M144,226 L200,226 L200,296 L180,296 L180,244 L164,244 L164,296 L144,296 Z" fill="url(#goldLight)" />
+    <path d="M368,226 L312,226 L312,296 L332,296 L332,244 L348,244 L348,296 L368,296 Z" fill="url(#goldDark)" />
+  </g>
+
+  <!-- ==================== ARCHITECTURAL HOUSE SECTION ==================== -->
+  <!-- Main Outer Roof / Facade Gable -->
+  <!-- Left Roof Slope -->
+  <polygon points="256,220 90,364 122,364 256,248" fill="url(#roofRidge)" />
+  <!-- Right Roof Slope -->
+  <polygon points="256,220 422,364 390,364 256,248" fill="url(#tealRight)" />
+
+  <!-- Central House Body -->
+  <!-- Left Half House Body -->
+  <polygon points="256,244 144,342 144,440 256,440" fill="url(#tealLeft)" />
+  <!-- Right Half House Body -->
+  <polygon points="256,244 368,342 368,440 256,440" fill="url(#tealRight)" />
+
+  <!-- Base Foundation Wings -->
+  <polygon points="80,440 144,440 144,424 96,424" fill="url(#tealLeft)" />
+  <polygon points="432,440 368,440 368,424 416,424" fill="url(#tealRight)" />
+
+  <!-- Inner Architectural Gable / Doorway Frame -->
+  <polygon points="256,268 214,306 214,440 236,440 236,354 256,336" fill="url(#tealRight)" />
+  <polygon points="256,268 298,306 298,440 276,440 276,354 256,336" fill="url(#tealLeft)" />
+
+  <!-- Golden Arched Doorway (The Portal to Supreme Living) -->
+  <path d="M236,440 L236,376 Q256,356 276,376 L276,440 Z" fill="url(#goldShine)" filter="url(#goldGlow)" />
+
+  <!-- Golden Accent Lines -->
+  <line x1="80" y1="440" x2="432" y2="440" stroke="url(#goldLight)" stroke-width="3" stroke-linecap="round" />
+</svg>
