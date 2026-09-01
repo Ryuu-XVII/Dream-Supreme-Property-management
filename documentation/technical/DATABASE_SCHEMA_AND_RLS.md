@@ -292,6 +292,20 @@ Both fixes were verified: an authenticated admin can still create invitations, a
 anonymous caller is rejected with "Only managers can invite users", and the master admin
 session now resolves `get_current_role() = 'admin'`.
 
+**Regression and re-fix (`20260901000000`).** `20260818000005_property24_agent_sync.sql`
+redefined `create_user_invitation` the next day (to add `p_property24_url`) by copying the
+pre-fix function body verbatim, silently reverting the guard above — the live function went
+back to only checking `v_user_account_id is not null`, so any caller without a
+`user_account` row (unauthenticated, or authenticated but not yet onboarded, since sign-ups
+are open) could again request an `admin` invitation token. `20260821060000_revoke_anon_
+execute_on_authenticated_only_rpcs.sql` later revoked `EXECUTE` from `anon`, closing the
+fully-unauthenticated path, but an authenticated caller with no account row remained
+unauthorized to self-grant `admin`. `20260901000000_fix_invitation_privilege_escalation_
+regression.sql` restores the `v_has_accounts` bootstrap-aware guard from `20260817000010`
+on the current four-parameter signature. Verified live: an authenticated caller with no
+manager account requesting `admin` now gets "Only managers can invite users."; existing
+admin/admin_agent invite flows are unaffected.
+
 ## 10. Storage Edge Function: `isPublic` Authorization Bypass (r2-storage)
 
 Not a database migration, but part of the same pentest and recorded here for completeness.
