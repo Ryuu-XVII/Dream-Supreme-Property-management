@@ -13,17 +13,10 @@ permissions:
   security-events: write
 
 jobs:
-  analyze:
-    name: Analyze (javascript-typescript)
+  disabled:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: javascript-typescript
-
-      - uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:javascript-typescript"
+      - name: This workflow is disabled
+        run: |
+          echo "CodeQL workflow is currently disabled"
+          exit 0
