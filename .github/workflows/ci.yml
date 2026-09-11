@@ -198,7 +198,7 @@ jobs:
           supabase stop || true
           docker volume ls -q | grep supabase || true | xargs -r docker volume rm || true
 
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
           version: 2.114.0
       - run: supabase start
